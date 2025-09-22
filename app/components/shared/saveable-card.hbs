@@ -1,0 +1,45 @@
+{{!-- Saveable Card Component --}}
+<div class="avitar-card">
+  <div class="avitar-card__header avitar-card__header--colored">
+    <div class="avitar-flex avitar-items-center avitar-justify-between">
+      <div>
+        <h3 class="avitar-card__title">{{@title}}</h3>
+        {{#if @subtitle}}
+          <div class="avitar-card__subtitle">{{@subtitle}}</div>
+        {{/if}}
+      </div>
+      
+      {{#if this.hasChanges}}
+        <div class="avitar-flex avitar-items-center avitar-gap-2">
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+            {{on "click" this.reset}}
+            disabled={{this.isSaving}}
+          >
+            <i class="fas fa-undo avitar-mr-1"></i>
+            Reset
+          </button>
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.save}}
+            disabled={{this.isSaving}}
+          >
+            {{#if this.isSaving}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Saving...
+            {{else}}
+              <i class="fas fa-save avitar-mr-2"></i>
+              Save Changes
+            {{/if}}
+          </button>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+  
+  <div class="avitar-card__body">
+    {{yield this}}
+  </div>
+</div>

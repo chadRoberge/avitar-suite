@@ -1,0 +1,66 @@
+{{!-- Settings Menu Component using Avitar Sidebar Classes --}}
+<nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar">
+  <div class="avitar-sidebar__header">
+    <h2 class="avitar-sidebar__title">Municipal Settings</h2>
+    <div class="avitar-sidebar__subtitle">Configure your municipality</div>
+  </div>
+
+  <div class="avitar-sidebar__nav">
+    <ul class="avitar-sidebar__nav-list">
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo 
+          @route="municipality.settings.municipal-info" 
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-building avitar-sidebar__nav-icon"></i>
+          <span>Municipal Info</span>
+        </LinkTo>
+      </li>
+      
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo 
+          @route="municipality.settings.users" 
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-users avitar-sidebar__nav-icon"></i>
+          <span>Users</span>
+        </LinkTo>
+      </li>
+      
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo 
+          @route="municipality.settings.system" 
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-server avitar-sidebar__nav-icon"></i>
+          <span>System Settings</span>
+        </LinkTo>
+      </li>
+      
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo 
+          @route="municipality.settings.modules" 
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-puzzle-piece avitar-sidebar__nav-icon"></i>
+          <span>Modules</span>
+        </LinkTo>
+      </li>
+      
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo 
+          @route="municipality.settings.features" 
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-star avitar-sidebar__nav-icon"></i>
+          <span>Features</span>
+        </LinkTo>
+      </li>
+    </ul>
+  </div>
+</nav>

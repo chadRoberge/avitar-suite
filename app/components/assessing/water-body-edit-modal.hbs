@@ -1,0 +1,110 @@
+{{!-- Water Body Edit Modal Component --}}
+<div class="avitar-modal-overlay {{if @isOpen 'avitar-modal-overlay--visible'}}" {{on "click" this.handleBackdropClick}}>
+  <div class="avitar-modal avitar-modal--md">
+        <div class="avitar-modal__header">
+          <h3 class="avitar-modal__title">
+            {{if @waterBody "Edit Water Body" "Add Water Body"}}
+          </h3>
+          <button type="button" class="avitar-modal__close" {{on "click" @onClose}} aria-label="Close modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          <form {{on "submit" this.handleSubmit}}>
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="water-body-name">Water Body Name <span class="avitar-text-danger">*</span></label>
+              <input 
+                type="text" 
+                id="water-body-name"
+                class="avitar-input {{if this.nameError 'avitar-input--error'}}" 
+                value={{this.name}} 
+                {{on "input" this.updateName}}
+                placeholder="Enter water body name..."
+                maxlength="100"
+                required
+              />
+              {{#if this.nameError}}
+                <div class="avitar-form-error">{{this.nameError}}</div>
+              {{/if}}
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="water-body-description">Description <span class="avitar-text-danger">*</span></label>
+              <textarea 
+                id="water-body-description"
+                class="avitar-textarea {{if this.descriptionError 'avitar-textarea--error'}}" 
+                rows="3"
+                value={{this.description}} 
+                {{on "input" this.updateDescription}}
+                placeholder="Describe this water body..."
+                maxlength="200"
+                required
+              ></textarea>
+              {{#if this.descriptionError}}
+                <div class="avitar-form-error">{{this.descriptionError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                200 characters maximum
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="water-body-type">Water Body Type <span class="avitar-text-danger">*</span></label>
+              <select 
+                id="water-body-type"
+                class="avitar-select {{if this.typeError 'avitar-select--error'}}" 
+                {{on "change" this.updateType}}
+                required
+              >
+                <option value="">Select water body type...</option>
+                <option value="lake" selected={{eq this.waterBodyType "lake"}}>Lake</option>
+                <option value="river" selected={{eq this.waterBodyType "river"}}>River</option>
+                <option value="ocean" selected={{eq this.waterBodyType "ocean"}}>Ocean</option>
+                <option value="pond" selected={{eq this.waterBodyType "pond"}}>Pond</option>
+                <option value="stream" selected={{eq this.waterBodyType "stream"}}>Stream</option>
+                <option value="bay" selected={{eq this.waterBodyType "bay"}}>Bay</option>
+                <option value="other" selected={{eq this.waterBodyType "other"}}>Other</option>
+              </select>
+              {{#if this.typeError}}
+                <div class="avitar-form-error">{{this.typeError}}</div>
+              {{/if}}
+            </div>
+
+            {{#if this.generalError}}
+              <div class="avitar-alert avitar-alert--danger avitar-mb-4">
+                <div class="avitar-alert__icon">
+                  <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="avitar-alert__content">
+                  <div class="avitar-alert__message">{{this.generalError}}</div>
+                </div>
+              </div>
+            {{/if}}
+          </form>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--secondary" 
+            {{on "click" @onClose}}
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary" 
+            {{on "click" this.handleSubmit}}
+            disabled={{this.isSaving}}
+          >
+            {{#if this.isSaving}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Saving...
+            {{else}}
+              {{if @waterBody "Update" "Create"}} Water Body
+            {{/if}}
+          </button>
+        </div>
+  </div>
+</div>

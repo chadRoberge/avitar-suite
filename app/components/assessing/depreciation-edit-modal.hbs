@@ -1,0 +1,227 @@
+{{!-- Depreciation Edit Modal --}}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
+  <div class="avitar-modal" style="max-width: 90%; width: 90%;" {{on "click" this.stopPropagation}} role="dialog" aria-labelledby="depreciation-edit-title" aria-modal="true">
+    <div class="avitar-modal__header">
+      <h2 id="depreciation-edit-title" class="avitar-modal__title">Edit Depreciation & Building Details</h2>
+      <div class="avitar-modal__subtitle">
+        Update year built and depreciation factors
+      </div>
+      <button class="avitar-modal__close" aria-label="Close modal" type="button" {{on "click" this.close}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="avitar-modal__body">
+      {{!-- Year Built Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Building Information</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-form-group">
+            <label for="year-built" class="avitar-label avitar-label--required">
+              Year Built
+            </label>
+            <input
+              type="number"
+              id="year-built"
+              class="avitar-input"
+              value={{this.yearBuilt}}
+              {{on "input" (fn this.updateField "yearBuilt")}}
+              placeholder="Enter year built"
+            />
+          </div>
+        </div>
+      </div>
+
+      {{!-- Depreciation Factors Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Depreciation Factors</h3>
+          <div class="avitar-card__subtitle">Adjust depreciation percentages and notes</div>
+        </div>
+        <div class="avitar-card__body">
+          {{!-- Normal Depreciation --}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Normal Depreciation</h4>
+            <div class="avitar-flex avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label for="normal-description" class="avitar-label">Condition</label>
+                <select
+                  id="normal-description"
+                  class="avitar-select"
+                  {{on "change" this.updateCondition}}
+                >
+                  <option value="">Select condition...</option>
+                  <option value="Excellent" selected={{if (eq this.normalDescription "Excellent") "selected"}}>Excellent</option>
+                  <option value="Very Good" selected={{if (eq this.normalDescription "Very Good") "selected"}}>Very Good</option>
+                  <option value="Good" selected={{if (eq this.normalDescription "Good") "selected"}}>Good</option>
+                  <option value="Average" selected={{if (eq this.normalDescription "Average") "selected"}}>Average</option>
+                  <option value="Fair" selected={{if (eq this.normalDescription "Fair") "selected"}}>Fair</option>
+                  <option value="Poor" selected={{if (eq this.normalDescription "Poor") "selected"}}>Poor</option>
+                  <option value="Very Poor" selected={{if (eq this.normalDescription "Very Poor") "selected"}}>Very Poor</option>
+                </select>
+              </div>
+              <div class="avitar-flex-1">
+                <label class="avitar-label">Percentage (%)</label>
+                <div class="avitar-input avitar-bg-gray-50">
+                  {{number-format (multiply this.normalPercentage 100) 2}}%
+                </div>
+                <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                  Calculated based on age, condition, and schedule
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Physical Depreciation --}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Physical Depreciation</h4>
+            <div class="avitar-flex avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label for="physical-notes" class="avitar-label">Notes</label>
+                <textarea
+                  id="physical-notes"
+                  class="avitar-textarea avitar-textarea--sm"
+                  value={{this.physicalNotes}}
+                  {{on "input" (fn this.updateField "physicalNotes")}}
+                  placeholder="Enter physical depreciation notes..."
+                  rows="2"
+                ></textarea>
+              </div>
+              <div class="avitar-flex-1">
+                <label for="physical-percentage" class="avitar-label">Percentage (%)</label>
+                <input
+                  type="number"
+                  id="physical-percentage"
+                  class="avitar-input"
+                  value={{number-format (multiply this.physicalPercentage 100)}}
+                  {{on "input" (fn this.updatePercentageField "physicalPercentage")}}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          {{!-- Functional Depreciation --}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Functional Depreciation</h4>
+            <div class="avitar-flex avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label for="functional-notes" class="avitar-label">Notes</label>
+                <textarea
+                  id="functional-notes"
+                  class="avitar-textarea avitar-textarea--sm"
+                  value={{this.functionalNotes}}
+                  {{on "input" (fn this.updateField "functionalNotes")}}
+                  placeholder="Enter functional depreciation notes..."
+                  rows="2"
+                ></textarea>
+              </div>
+              <div class="avitar-flex-1">
+                <label for="functional-percentage" class="avitar-label">Percentage (%)</label>
+                <input
+                  type="number"
+                  id="functional-percentage"
+                  class="avitar-input"
+                  value={{number-format (multiply this.functionalPercentage 100)}}
+                  {{on "input" (fn this.updatePercentageField "functionalPercentage")}}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          {{!-- Economic Depreciation --}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Economic Depreciation</h4>
+            <div class="avitar-flex avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label for="economic-notes" class="avitar-label">Notes</label>
+                <textarea
+                  id="economic-notes"
+                  class="avitar-textarea avitar-textarea--sm"
+                  value={{this.economicNotes}}
+                  {{on "input" (fn this.updateField "economicNotes")}}
+                  placeholder="Enter economic depreciation notes..."
+                  rows="2"
+                ></textarea>
+              </div>
+              <div class="avitar-flex-1">
+                <label for="economic-percentage" class="avitar-label">Percentage (%)</label>
+                <input
+                  type="number"
+                  id="economic-percentage"
+                  class="avitar-input"
+                  value={{number-format (multiply this.economicPercentage 100)}}
+                  {{on "input" (fn this.updatePercentageField "economicPercentage")}}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          {{!-- Temporary Depreciation --}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Temporary Depreciation</h4>
+            <div class="avitar-flex avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label for="temporary-notes" class="avitar-label">Notes</label>
+                <textarea
+                  id="temporary-notes"
+                  class="avitar-textarea avitar-textarea--sm"
+                  value={{this.temporaryNotes}}
+                  {{on "input" (fn this.updateField "temporaryNotes")}}
+                  placeholder="Enter temporary depreciation notes..."
+                  rows="2"
+                ></textarea>
+              </div>
+              <div class="avitar-flex-1">
+                <label for="temporary-percentage" class="avitar-label">Percentage (%)</label>
+                <input
+                  type="number"
+                  id="temporary-percentage"
+                  class="avitar-input"
+                  value={{number-format (multiply this.temporaryPercentage 100)}}
+                  {{on "input" (fn this.updatePercentageField "temporaryPercentage")}}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-modal__footer">
+      <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.close}}>
+        Cancel
+      </button>
+      <button 
+        type="button" 
+        class="avitar-btn avitar-btn--primary" 
+        disabled={{this.isSaving}}
+        {{on "click" this.save}}
+      >
+        {{#if this.isSaving}}
+          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+          Saving...
+        {{else}}
+          Save Changes
+        {{/if}}
+      </button>
+    </div>
+  </div>
+</div>

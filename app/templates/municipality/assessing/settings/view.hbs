@@ -1,0 +1,143 @@
+{{!-- View Attributes Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header avitar-flex avitar-items-center avitar-flex-row avitar-mb-2">
+    <div class="avitar-flex-5">
+      <h1 class="avitar-page-title avitar-skinny">View Attributes</h1>
+      <div class="avitar-page-subtitle">Configure property view valuation attributes</div>
+    </div>
+    <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+      <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.createDefaults}}>
+        <i class="fas fa-plus avitar-mr-2"></i>
+        Create Defaults
+      </button>
+    </div>
+  </div>
+
+  {{!-- View Attribute Sections --}}
+  {{#each this.viewAttributeTypes as |attributeType|}}
+    <div class="avitar-card avitar-mb-6">
+      <div class="avitar-card__header avitar-card__header--colored">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div>
+            <h3 class="avitar-card__title">
+              <i class="{{attributeType.icon}} avitar-mr-2"></i>
+              {{attributeType.title}}
+            </h3>
+            <div class="avitar-card__subtitle">{{attributeType.subtitle}}</div>
+          </div>
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" (fn this.openNewAttributeModal attributeType.key)}}>
+            <i class="fas fa-plus avitar-mr-1"></i>
+            Add {{attributeType.title}}
+          </button>
+        </div>
+      </div>
+      <div class="avitar-card__body">
+        {{#let (get this.attributesByType attributeType.key) as |attributes|}}
+        {{#if attributes.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--compact">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Display Text</th>
+                <th>Factor</th>
+                <th class="avitar-table__actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each attributes as |attribute|}}
+              <tr>
+                <td>
+                  <div class="avitar-font-semibold">{{attribute.name}}</div>
+                </td>
+                <td>
+                  <div class="avitar-text-sm">{{attribute.description}}</div>
+                </td>
+                <td>
+                  <span class="avitar-badge avitar-badge--primary">{{attribute.displayText}}</span>
+                </td>
+                <td>
+                  <span class="avitar-font-bold avitar-text-success">{{number-format attribute.factor}}</span>
+                </td>
+                <td class="avitar-table__actions">
+                  <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.openEditAttributeModal attributeType.key attribute)}} title="Edit Attribute">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteAttribute attribute)}} title="Delete Attribute">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        {{else}}
+        <div class="avitar-empty-state avitar-text-center avitar-py-6">
+          <i class="{{attributeType.icon}} avitar-text-2xl avitar-text-muted avitar-mb-2"></i>
+          <div class="avitar-font-semibold avitar-mb-1">No {{attributeType.title}} Attributes</div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-3">Add different types of {{attributeType.title}} attributes</div>
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" (fn this.openNewAttributeModal attributeType.key)}}>
+            <i class="fas fa-plus avitar-mr-1"></i>
+            Add First {{attributeType.title}}
+          </button>
+        </div>
+        {{/if}}
+        {{/let}}
+      </div>
+    </div>
+  {{/each}}
+
+  {{!-- View Guidelines --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">View Attribute Guidelines</h3>
+      <div class="avitar-card__subtitle">Understanding view attributes in property valuation</div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3">View Attribute Types</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li><strong>Subject:</strong> What the property has a view of (water, mountains, city)</li>
+            <li><strong>Width:</strong> The breadth or angle of the view from the property</li>
+            <li><strong>Distance:</strong> How far away the view subject is from the property</li>
+            <li><strong>Depth:</strong> The extent or depth of the viewable area</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3">Factor Guidelines</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li>Higher factors indicate greater impact on property value</li>
+            <li>Factors are used in valuation calculations (0-1000 range)</li>
+            <li>Consider market data and local preferences when setting factors</li>
+            <li>Review and adjust factors periodically based on market trends</li>
+          </ul>
+        </div>
+      </div>
+      <div class="avitar-alert avitar-alert--info avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">Valuation Impact</div>
+          <div class="avitar-alert__message">
+            View attributes work together to determine the overall view premium for a property. Multiple attributes within each type can be combined to create comprehensive view valuations.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Modal --}}
+  <Assessing::ViewAttributeEditModal 
+    @isOpen={{this.isViewAttributeModalOpen}} 
+    @attribute={{this.editingViewAttribute}} 
+    @attributeType={{this.editingAttributeType}}
+    @attributeTypeName={{this.editingAttributeTypeName}} 
+    @attributeTypeIcon={{this.editingAttributeTypeIcon}} 
+    @onClose={{this.closeViewAttributeModal}} 
+    @onSave={{this.saveViewAttribute}} 
+  />
+</div>

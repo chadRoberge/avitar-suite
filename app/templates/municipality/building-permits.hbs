@@ -1,0 +1,31 @@
+{{page-title "Building Permits - " this.municipality.currentMunicipality.name}}
+
+<div class="module-page">
+  <div class="module-header">
+    <h1>Building Permits</h1>
+    <p>Manage building permits and inspections</p>
+  </div>
+
+  <div class="module-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Active Permits</h3>
+        <div class="stat-value">{{this.model.permits.length}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Recent Applications</h3>
+        <div class="stat-value">{{this.model.recentApplications.length}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Pending Inspections</h3>
+        <div class="stat-value">{{this.model.pendingInspections.length}}</div>
+      </div>
+    </div>
+
+    <div class="module-placeholder">
+      <i class="icon-home"></i>
+      <h3>Building Permits Module</h3>
+      <p>This module is under development. Full functionality will be available soon.</p>
+    </div>
+  </div>
+</div>

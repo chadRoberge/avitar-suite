@@ -1,0 +1,110 @@
+{{!-- Sketch Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @onPropertyUpdate={{this.refreshSketchProperty}} />
+  
+  {{!-- Sketching Interface --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      {{#if this.currentSketch}}
+        {{!-- Sketch Info in Header --}}
+        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-w-full">
+          <div class="avitar-flex avitar-items-center avitar-gap-6">
+            <div>
+              <h3 class="avitar-card__title avitar-mb-1">{{this.currentSketch.name}} - Card {{@model.property.current_card}}</h3>
+              <div class="avitar-flex avitar-gap-4 avitar-text-sm avitar-text-gray-700">
+                <div>
+                  <span>Building Total:</span>
+                  <span class="avitar-font-semibold avitar-ml-1">{{number-format this.currentSketch.total_area}} sq ft</span>
+                </div>
+                <div>
+                  <span>Effective Area:</span>
+                  <span class="avitar-font-semibold avitar-ml-1">{{number-format this.currentSketch.total_effective_area}} sq ft</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {{#if (can "update" "assessing")}}
+            <div class="avitar-flex avitar-gap-2">
+              <button 
+                type="button"
+                class="avitar-btn avitar-btn--primary avitar-btn--sm"
+                {{on "click" (fn this.editSketch this.currentSketch)}}
+              >
+                <i class="fas fa-edit avitar-mr-2"></i>
+                Edit Sketch
+              </button>
+              <button 
+                type="button"
+                class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                {{on "click" (fn this.deleteSketch this.currentSketch)}}
+              >
+                <i class="fas fa-trash avitar-mr-2"></i>
+                Delete Sketch
+              </button>
+            </div>
+          {{/if}}
+        </div>
+      {{else}}
+        {{!-- No Sketch State --}}
+        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-w-full">
+          <div>
+            <h3 class="avitar-card__title">Building Sketches</h3>
+            <div class="avitar-card__subtitle">Create detailed building sketches with area calculations</div>
+          </div>
+          <button 
+            type="button"
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.addNewSketchModal}}
+          >
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Create Sketch
+          </button>
+        </div>
+      {{/if}}
+    </div>
+
+    <div class="avitar-card__body avitar-p-0">
+      {{#if this.currentSketch}}
+        {{!-- Read-Only Canvas Display --}}
+        <div class="avitar-border avitar-rounded" style="height: 60vh; width: 100%; overflow: hidden;">
+          <Assessing::SketchCanvas 
+            @shapes={{this.currentSketch.shapes}}
+            @sketch={{this.currentSketch}}
+            @drawingMode={{null}}
+            @selectedShape={{null}}
+            @onShapeAdd={{null}}
+            @onShapeSelect={{null}}
+            @onFinishPolygon={{null}}
+            @onForceUpdate={{this.handleViewCanvasUpdate}}
+          />
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <i class="fas fa-drafting-compass avitar-text-6xl avitar-mb-4"></i>
+          <div class="avitar-text-xl avitar-font-semibold avitar-mb-2">No Sketch for Card {{@model.property.current_card}}</div>
+          <div class="avitar-mb-4">Create a building sketch for this card</div>
+          <button 
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.addNewSketchModal}}
+          >
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Create Sketch
+          </button>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Edit Modal --}}
+  <Assessing::SketchEditModal 
+    @isOpen={{this.isEditModalOpen}}
+    @sketch={{this.sketchBeingEdited}}
+    @cardNumber={{@model.property.current_card}}
+    @isDirty={{this.isDirty}}
+    @onSave={{this.saveSketchFromModal}}
+    @onClose={{this.closeEditModal}}
+    @onShapeChange={{this.updateSketchBeingEdited}}
+  />
+</div>

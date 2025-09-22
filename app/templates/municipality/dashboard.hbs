@@ -1,0 +1,245 @@
+{{page-title "Dashboard - " this.model.municipality.name}}
+
+<div class="avitar-dashboard">
+  <div class="dashboard-header">
+    <h1>{{this.model.municipality.name}} Dashboard</h1>
+    <p class="dashboard-subtitle">Welcome back, {{this.model.user.name}}</p>
+  </div>
+
+  {{#if this.model.notifications}}
+    <div class="notifications-section">
+      {{#each this.model.notifications as |notification|}}
+        <div class="notification notification-{{notification.type}}">
+          <div class="notification-content">
+            <h4>{{notification.title}}</h4>
+            <p>{{notification.message}}</p>
+          </div>
+          {{#if notification.action}}
+            <button class="btn btn-sm btn-primary" type="button">{{notification.action}}</button>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
+  {{/if}}
+
+  <div class="dashboard-grid">
+    {{#if this.model.quickStats}}
+      <div class="stats-section card">
+        <div class="card-header">
+          <h3>Quick Stats</h3>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            {{#if this.model.quickStats.totalProperties}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.totalProperties}}</div>
+                <div class="stat-label">Total Properties</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.pendingRevaluations}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.pendingRevaluations}}</div>
+                <div class="stat-label">Pending Revaluations</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.unpaidTaxes}}
+              <div class="stat-item">
+                <div class="stat-value">${{this.model.quickStats.unpaidTaxes}}</div>
+                <div class="stat-label">Unpaid Taxes</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.collectionRate}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.collectionRate}}%</div>
+                <div class="stat-label">Collection Rate</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.activePermits}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.activePermits}}</div>
+                <div class="stat-label">Active Permits</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.pendingInspections}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.pendingInspections}}</div>
+                <div class="stat-label">Pending Inspections</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.totalUsers}}
+              <div class="stat-item">
+                <div class="stat-value">{{this.model.quickStats.totalUsers}}</div>
+                <div class="stat-label">Total Users</div>
+              </div>
+            {{/if}}
+
+            {{#if this.model.quickStats.systemHealth}}
+              <div class="stat-item">
+                <div class="stat-value status-good">
+                  {{this.model.quickStats.systemHealth}}
+                </div>
+                <div class="stat-label">System Health</div>
+              </div>
+            {{/if}}
+          </div>
+
+          {{#if this.model.quickStats.moduleUsage}}
+            <div class="module-usage">
+              <h4>Module Usage</h4>
+              <div class="usage-bars">
+                {{#each-in this.model.quickStats.moduleUsage as |module usage|}}
+                  <div class="usage-item">
+                    <span class="module-name">{{module}}</span>
+                    <div class="usage-bar">
+                      <div class="usage-fill" style="width: {{usage}}%"></div>
+                    </div>
+                    <span class="usage-percent">{{usage}}%</span>
+                  </div>
+                {{/each-in}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
+    {{#if this.model.recentActivity}}
+      <div class="activity-section card">
+        <div class="card-header">
+          <h3>Recent Activity</h3>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            {{#each this.model.recentActivity as |activity|}}
+              <div class="activity-item">
+                <div class="activity-icon">
+                  {{#if (eq activity.type "property_update")}}
+                    <i class="icon-home"></i>
+                  {{else if (eq activity.type "payment_received")}}
+                    <i class="icon-dollar-sign"></i>
+                  {{else if (eq activity.type "permit_issued")}}
+                    <i class="icon-file-text"></i>
+                  {{else}}
+                    <i class="icon-activity"></i>
+                  {{/if}}
+                </div>
+                <div class="activity-content">
+                  <p class="activity-message">{{activity.message}}</p>
+                  <span class="activity-time">{{activity.timestamp}}</span>
+                </div>
+                <span class="activity-module badge badge-secondary">{{activity.module}}</span>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+
+  {{#if this.model.availableModules}}
+    <div class="modules-section card">
+      <div class="card-header">
+        <h3>Available Modules</h3>
+      </div>
+      <div class="card-body">
+        <div class="modules-grid">
+          {{#each-in this.model.availableModules as |moduleKey enabled|}}
+            {{#if enabled}}
+              {{#if (eq moduleKey "buildingPermits")}}
+                <LinkTo @route="municipality.building-permits" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-home"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Building Permits</h4>
+                    <p>Manage building permits and inspections</p>
+                  </div>
+                </LinkTo>
+              {{else if (eq moduleKey "taxCollection")}}
+                <LinkTo @route="municipality.tax-collection" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-dollar-sign"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Tax Collection</h4>
+                    <p>Manage tax bills and collections</p>
+                  </div>
+                </LinkTo>
+              {{else if (eq moduleKey "townClerk")}}
+                <LinkTo @route="municipality.town-clerk" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-file-text"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Town Clerk</h4>
+                    <p>Manage records and licenses</p>
+                  </div>
+                </LinkTo>
+              {{else if (eq moduleKey "motorVehicle")}}
+                <LinkTo @route="municipality.motor-vehicle" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-truck"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Motor Vehicle</h4>
+                    <p>Vehicle registrations and renewals</p>
+                  </div>
+                </LinkTo>
+              {{else if (eq moduleKey "waterSewer")}}
+                <LinkTo @route="municipality.utility-billing" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-droplet"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Utility Billing</h4>
+                    <p>Water and sewer billing</p>
+                  </div>
+                </LinkTo>
+              {{else if (eq moduleKey "assessing")}}
+                <LinkTo @route="municipality.assessing" class="module-card">
+                  <div class="module-icon">
+                    <i class="icon-map"></i>
+                  </div>
+                  <div class="module-info">
+                    <h4>Assessing</h4>
+                    <p>Property assessments and valuations</p>
+                  </div>
+                </LinkTo>
+              {{/if}}
+            {{/if}}
+          {{/each-in}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  {{#if this.model.subscriptionInfo}}
+    <div class="subscription-section card">
+      <div class="card-header">
+        <h3>Subscription Information</h3>
+      </div>
+      <div class="card-body">
+        <div class="subscription-details">
+          <div class="subscription-tier">
+            <span class="label">Current Tier:</span>
+            <span class="tier-badge tier-standard">
+              {{this.model.subscriptionInfo.tier}}
+            </span>
+          </div>
+          {{#if this.model.subscriptionInfo.expiresAt}}
+            <div class="subscription-expiry">
+              <span class="label">Expires:</span>
+              <span>{{this.model.subscriptionInfo.expiresAt}}</span>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>

@@ -1,0 +1,398 @@
+{{!-- Land Assessment Edit Modal --}}
+{{!-- Access modalData to trigger initialization --}}
+{{#if this.modalData.isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.cancelEdit}}>
+    <div class="avitar-modal" style="max-width: 90%; width: 90%;" {{on "click" this.stopPropagation}} role="dialog" aria-labelledby="land-edit-title" aria-modal="true">
+      <div class="avitar-modal__header">
+      <h2 id="land-edit-title" class="avitar-modal__title">Edit Land Assessment</h2>
+      <button class="avitar-modal__close" aria-label="Close modal" type="button" {{on "click" this.cancelEdit}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="avitar-modal__body">
+      {{!-- Top Section: Dropdown Inputs --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Basic Information</h3>
+        </div>
+        <div class="avitar-card__body">
+          {{!-- Row 1: Zone and Neighborhood --}}
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Zone Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="zone-select" class="avitar-label">Zone</label>
+              <select 
+                id="zone-select"
+                class="avitar-select" 
+                {{on "change" (fn this.updateLandAssessmentFromEvent "zone")}}
+              >
+                <option value="">Select Zone...</option>
+                {{#each this.availableZones as |zone|}}
+                  <option value={{zone.id}} selected={{eq zone.id this.landAssessment.zone}}>{{zone.name}}-{{zone.description}}</option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Neighborhood Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="neighborhood-select" class="avitar-label">Neighborhood</label>
+              <select 
+                id="neighborhood-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateLandAssessmentFromEvent "neighborhood")}}
+              >
+                <option value="">Select Neighborhood...</option>
+                {{#each this.availableNeighborhoods as |neighborhood|}}
+                  <option value={{neighborhood._id}} selected={{eq neighborhood._id this.landAssessment.neighborhood}}>{{neighborhood.code}} - {{neighborhood.description}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+
+          {{!-- Row 2: Taxation Category --}}
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Land Taxation Category Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="taxation-category-select" class="avitar-label">Taxation Category</label>
+              <select 
+                id="taxation-category-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateLandAssessmentFromEvent "taxation_category")}}
+              >
+                <option value="">Select Taxation Category...</option>
+                {{#each this.availableTaxationCategories as |category|}}
+                  <option value={{category._id}} selected={{eq category._id this.landAssessment.taxation_category}}>{{category.name}} ({{category.taxPercentage}}%)</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+
+          {{!-- Row 3: Site, Driveway, and Road --}}
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Site Conditions Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="site-select" class="avitar-label">Site Conditions</label>
+              <select 
+                id="site-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateLandAssessmentFromEvent "site_conditions")}}
+              >
+                <option value="">Select Site...</option>
+                {{#each this.availableSites as |site|}}
+                  <option value={{site._id}} selected={{eq site._id this.landAssessment.site_conditions}}>{{site.displayText}}</option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Driveway Type Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="driveway-select" class="avitar-label">Driveway Type</label>
+              <select 
+                id="driveway-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateLandAssessmentFromEvent "driveway_type")}}
+              >
+                <option value="">Select Driveway...</option>
+                {{#each this.availableDriveways as |driveway|}}
+                  <option value={{driveway._id}} selected={{eq driveway._id this.landAssessment.driveway_type}}>{{driveway.displayText}}</option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Road Type Dropdown --}}
+            <div class="avitar-flex-1">
+              <label for="road-select" class="avitar-label">Road Type</label>
+              <select 
+                id="road-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateLandAssessmentFromEvent "road_type")}}
+              >
+                <option value="">Select Road...</option>
+                {{#each this.availableRoads as |road|}}
+                  <option value={{road._id}} selected={{eq road._id this.landAssessment.road_type}}>{{road.displayText}}</option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Land Use Entries Table --}}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <div class="avitar-flex avitar-items-center avitar-justify-between">
+            <h3 class="avitar-card__title">Land Use Breakdown</h3>
+            <button 
+              class="avitar-btn avitar-btn--primary avitar-btn--sm"
+              {{on "click" this.addLandUseEntry}}
+              type="button"
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>Add Entry
+            </button>
+          </div>
+        </div>
+        <div class="avitar-card__body avitar-p-0">
+          {{!-- Flexbox Table Header --}}
+          <div class="avitar-flex-table-header">
+            <div class="avitar-flex-table-cell avitar-flex-4">LND USE</div>
+            <div class="avitar-flex-table-cell avitar-flex-2">AC</div>
+            <div class="avitar-flex-table-cell avitar-flex-1">UNITS</div>
+            <div class="avitar-flex-table-cell avitar-flex-2">TOPO</div>
+            <div class="avitar-flex-table-cell avitar-flex-1">COND</div>
+            <div class="avitar-flex-table-cell avitar-flex-1">SPI</div>
+            <div class="avitar-flex-table-cell avitar-flex-1">XAC</div>
+            <div class="avitar-flex-table-cell avitar-flex-3">AD VOLOREM</div>
+            <div class="avitar-flex-table-cell avitar-flex-2">CU</div>
+            <div class="avitar-flex-table-cell avitar-flex-2">ASSESSED</div>
+            <div class="avitar-flex-table-cell avitar-flex-4">NOTES</div>
+            <div class="avitar-flex-table-cell avitar-flex-1">Actions</div>
+          </div>
+
+          {{!-- Land Use Entries --}}
+          <div class="avitar-flex-table-body">
+            {{#each this.landUseEntries as |entry index|}}
+              <div class="avitar-flex-table-row">
+                {{!-- Land Use Type --}}
+                <div class="avitar-flex-table-cell avitar-flex-4">
+                  <select 
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.updateLandUseEntryFromEvent index "land_use_type")}}
+                  >
+                    <option value="">Select Land Use...</option>
+                    {{!-- Regular Land Use Details --}}
+                    {{#each this.availableLandUseDetails as |landUse|}}
+                      <option value={{landUse.code}} selected={{eq landUse.code entry.land_use_type}}>{{landUse.displayText}}</option>
+                    {{/each}}
+                    {{!-- Current Use Categories --}}
+                    {{#if this.availableCurrentUseCategories.length}}
+                      <optgroup label="Current Use Categories">
+                        {{#each this.availableCurrentUseCategories as |currentUse|}}
+                          <option value={{currentUse.code}} selected={{eq currentUse.code entry.land_use_type}}>{{currentUse.displayText}} (Current Use)</option>
+                        {{/each}}
+                      </optgroup>
+                    {{/if}}
+                  </select>
+                </div>
+
+                {{!-- Size/Acreage --}}
+                <div class="avitar-flex-table-cell avitar-flex-2">
+                  <input 
+                    type="number"
+                    step="0.01"
+                    class="avitar-input avitar-input--sm"
+                    style="text-align: right;"
+                    value={{entry.size}}
+                    placeholder="0.00"
+                    {{on "input" (fn this.updateLandUseEntryFromEvent index "size")}}
+                    {{on "blur" (fn this.updateLandUseEntryFromEvent index "size")}}
+                  />
+                </div>
+
+                {{!-- Units (AC/FF) --}}
+                <div class="avitar-flex-table-cell avitar-flex-1">
+                  <select 
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.updateLandUseEntryFromEvent index "size_unit")}}
+                  >
+                    <option value="AC" selected={{eq entry.size_unit "AC"}}>AC</option>
+                    <option value="FF" selected={{eq entry.size_unit "FF"}}>FF</option>
+                  </select>
+                </div>
+
+                {{!-- Topography --}}
+                <div class="avitar-flex-table-cell avitar-flex-2">
+                  <select 
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.updateLandUseEntryFromEvent index "topography")}}
+                  >
+                    <option value="">Select Topography...</option>
+                    {{#each this.availableTopology as |topo|}}
+                      <option value={{topo.displayText}} selected={{eq topo.displayText entry.topography}}>{{topo.displayText}}</option>
+                    {{/each}}
+                  </select>
+                </div>
+
+                {{!-- Condition --}}
+                <div class="avitar-flex-table-cell avitar-flex-1">
+                  <input 
+                    type="text"
+                    class="avitar-input avitar-input--sm"
+                    value={{entry.condition}}
+                    placeholder="Condition"
+                    {{on "blur" (fn this.updateLandUseEntryFromEvent index "condition")}}
+                  />
+                </div>
+
+                {{!-- SPI (Soil Productivity Index) --}}
+                <div class="avitar-flex-table-cell avitar-flex-1">
+                  <input 
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    class="avitar-input avitar-input--sm"
+                    style="text-align: right;"
+                    value={{entry.spi}}
+                    placeholder="SPI"
+                    {{on "input" (fn this.updateLandUseEntryFromEvent index "spi")}}
+                    {{on "blur" (fn this.updateLandUseEntryFromEvent index "spi")}}
+                  />
+                </div>
+
+                {{!-- Excess Acreage Checkbox --}}
+                <div class="avitar-flex-table-cell avitar-flex-1">
+                  <div class="avitar-flex avitar-items-center avitar-justify-center">
+                    <input 
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{entry.is_excess_acreage}}
+                      {{on "change" (fn this.updateLandUseEntryFromEvent index "is_excess_acreage")}}
+                      title="Mark this land line as excess acreage"
+                    />
+                  </div>
+                </div>
+
+                {{!-- Market Value (Calculated) --}}
+                <div class="avitar-flex-table-cell avitar-flex-3">
+                  <div class="avitar-input avitar-input--sm avitar-input--readonly avitar-flex avitar-justify-end">
+                    {{#if this.isDataLoaded}}
+                      ${{number-format (this.getMarketValue entry index)}}
+                    {{else}}
+                      Loading...
+                    {{/if}}
+                  </div>
+                </div>
+
+                {{!-- Current Use Value (Calculated) --}}
+                <div class="avitar-flex-table-cell avitar-flex-2">
+                  <div class="avitar-input avitar-input--sm avitar-input--readonly avitar-flex avitar-justify-end">
+                    {{#if this.isDataLoaded}}
+                      ${{number-format (this.getCurrentUseValue entry index)}}
+                    {{else}}
+                      Loading...
+                    {{/if}}
+                  </div>
+                </div>
+
+                {{!-- Assessed Value (Calculated) --}}
+                <div class="avitar-flex-table-cell avitar-flex-2">
+                  <div class="avitar-input avitar-input--sm avitar-input--readonly avitar-flex avitar-justify-end">
+                    {{#if this.isDataLoaded}}
+                      ${{number-format (this.getAssessedValue entry index)}}
+                    {{else}}
+                      Loading...
+                    {{/if}}
+                  </div>
+                </div>
+
+                {{!-- Notes --}}
+                <div class="avitar-flex-table-cell avitar-flex-4">
+                  <input 
+                    type="text"
+                    class="avitar-input avitar-input--sm"
+                    value={{entry.notes}}
+                    placeholder="Notes"
+                    {{on "blur" (fn this.updateLandUseEntryFromEvent index "notes")}}
+                  />
+                </div>
+
+                {{!-- Actions --}}
+                <div class="avitar-flex-table-cell avitar-flex-1">
+                  <button 
+                    class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                    {{on "click" (fn this.removeLandUseEntry index)}}
+                    type="button"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            {{/each}}
+
+            {{!-- No entries message --}}
+            {{#unless this.landUseEntries.length}}
+              <div class="avitar-flex-table-row">
+                <div class="avitar-flex-table-cell avitar-text-center avitar-text-muted avitar-py-4" style="flex: 1;">
+                  No land use entries. Click "Add Entry" to get started.
+                </div>
+              </div>
+            {{/unless}}
+          </div>
+        </div>
+      </div>
+
+      {{!-- Totals Section --}}
+      <div class="avitar-card avitar-mt-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Calculated Totals</h3>
+        </div>
+        <div class="avitar-card__body">
+          {{#if this.isDataLoaded}}
+            {{!-- Align totals with columns using flex layout --}}
+            <div class="avitar-flex-table-row avitar-font-bold avitar-bg-gray-50">
+              <div class="avitar-flex-table-cell avitar-flex-4 avitar-text-right avitar-text-muted">
+                Total Acreage:
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-primary avitar-flex avitar-justify-end">
+                {{number-format this.totalAcreage}} AC
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- Units column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{!-- Topography column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- Condition column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- SPI column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1 avitar-text-right avitar-text-muted">
+                Total Market:
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-3 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
+                ${{number-format this.totalMarketValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-secondary avitar-flex avitar-justify-end">
+                ${{number-format this.calculatedTotals.totalCurrentUseValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
+                ${{number-format this.totalAssessedValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-4">
+                {{!-- Notes column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- Actions column - empty --}}
+              </div>
+            </div>
+          {{else}}
+            <div class="avitar-text-center avitar-text-muted">
+              Loading calculations...
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-modal__footer">
+      <button 
+        class="avitar-btn avitar-btn--secondary avitar-mr-3" disabled={{this.isSaving}} type="button" {{on "click" this.cancelEdit}}
+      >
+        Cancel
+      </button>
+      <button 
+        class="avitar-btn avitar-btn--primary" disabled={{this.isSaving}} type="button" {{on "click" this.saveLandAssessment}}
+      >
+        {{#if this.isSaving}}
+          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>Saving...
+        {{else}}
+          <i class="fas fa-save avitar-mr-2"></i>Save Changes
+        {{/if}}
+      </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

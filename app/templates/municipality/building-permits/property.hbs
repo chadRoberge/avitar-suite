@@ -1,0 +1,74 @@
+{{!-- Building Permits Property View --}}
+<div class="avitar-page-header">
+  <div class="avitar-page-title">
+    <h1>Building Permits</h1>
+    <p class="avitar-page-subtitle">
+      {{@model.streetAddress}} (PID: {{@model.pid}})
+    </p>
+  </div>
+  
+  <div class="avitar-page-actions">
+    {{#if (can "create" "buildingPermits")}}
+      <button type="button" class="avitar-button avitar-button--primary">
+        <i class="fas fa-plus"></i>
+        New Permit
+      </button>
+    {{/if}}
+    
+    {{#if (can "inspect" "buildingPermits")}}
+      <button type="button" class="avitar-button avitar-button--info">
+        <i class="fas fa-search"></i>
+        Schedule Inspection
+      </button>
+    {{/if}}
+  </div>
+</div>
+
+<div class="avitar-page-content">
+  <div class="avitar-grid avitar-grid--lg">
+    
+    {{!-- Property Information Card --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3>Property Information</h3>
+      </div>
+      <div class="avitar-card__content">
+        <dl class="avitar-description-list">
+          <dt>Property ID (PID)</dt>
+          <dd>{{@model.pid}}</dd>
+          
+          <dt>Address</dt>
+          <dd>{{@model.streetAddress}}</dd>
+          
+          <dt>Owner</dt>
+          <dd>{{@model.ownerName}}</dd>
+          
+          <dt>Property Type</dt>
+          <dd>{{capitalize @model.propertyType}}</dd>
+          
+          <dt>Zoning</dt>
+          <dd>Residential (R1)</dd>
+        </dl>
+      </div>
+    </div>
+
+    {{!-- Permits Card --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3>Active Permits</h3>
+      </div>
+      <div class="avitar-card__content">
+        <div class="avitar-empty-state">
+          <i class="fas fa-hard-hat"></i>
+          <p>No active permits for this property</p>
+          {{#if (can "create" "buildingPermits")}}
+            <button type="button" class="avitar-button avitar-button--outline">
+              Create New Permit
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

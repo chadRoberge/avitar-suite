@@ -1,0 +1,143 @@
+{{#if @isOpen}}
+  {{!-- Trigger getter to update form --}}
+  {{this.modalData}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if @entry._id "Edit Sales Entry" "Add Sales Entry"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-form-grid avitar-form-grid--3-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sale-date">Sale Date <span class="avitar-text-red-500">*</span></label>
+            <input
+              id="sale-date"
+              type="date"
+              class="avitar-input"
+              value={{this.saleDate}}
+              {{on "input" this.updateSaleDate}}
+              required
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sale-price">Sale Price <span class="avitar-text-red-500">*</span></label>
+            <div class="avitar-input-group">
+              <span class="avitar-input-group__addon">$</span>
+              <input
+                id="sale-price"
+                type="number"
+                step="0.01"
+                min="0"
+                class="avitar-input"
+                value={{this.salePrice}}
+                {{on "input" this.updateSalePrice}}
+                required
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sale-type">Sale Type</label>
+            <select
+              id="sale-type"
+              class="avitar-select"
+              {{on "change" this.updateSaleType}}
+            >
+              <option value="">Select type</option>
+              <option value="arm-length" selected={{eq this.saleType "arm-length"}}>Arm's Length</option>
+              <option value="family" selected={{eq this.saleType "family"}}>Family Transfer</option>
+              <option value="foreclosure" selected={{eq this.saleType "foreclosure"}}>Foreclosure</option>
+              <option value="estate" selected={{eq this.saleType "estate"}}>Estate</option>
+              <option value="other" selected={{eq this.saleType "other"}}>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="buyer">Buyer</label>
+            <input
+              id="buyer"
+              type="text"
+              class="avitar-input"
+              value={{this.buyer}}
+              {{on "input" this.updateBuyer}}
+              placeholder="Buyer name"
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="seller">Seller</label>
+            <input
+              id="seller"
+              type="text"
+              class="avitar-input"
+              value={{this.seller}}
+              {{on "input" this.updateSeller}}
+              placeholder="Seller name"
+            />
+          </div>
+        </div>
+
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-checkbox">
+              <input
+                type="checkbox"
+                checked={{this.verified}}
+                {{on "change" this.updateVerified}}
+              />
+              <span class="avitar-checkbox__checkmark"></span>
+              <span class="avitar-checkbox__label">Verified Sale</span>
+            </label>
+            <div class="avitar-help-text">Check if this sale has been verified</div>
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="notes">Notes</label>
+            <input
+              id="notes"
+              type="text"
+              class="avitar-input"
+              value={{this.notes}}
+              {{on "input" this.updateNotes}}
+              placeholder="Optional notes"
+            />
+          </div>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <div class="avitar-flex avitar-justify-between avitar-w-full">
+            <div>
+              {{#if @entry._id}}
+                <button 
+                  type="button" 
+                  class="avitar-btn avitar-btn--danger"
+                  {{on "click" this.handleDelete}}
+                >
+                  <i class="fas fa-trash avitar-mr-2"></i>
+                  Delete
+                </button>
+              {{/if}}
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="avitar-btn avitar-btn--primary"
+                disabled={{or (not this.saleDate) (not this.salePrice)}}
+              >
+                <i class="fas fa-save avitar-mr-2"></i>
+                {{if @entry._id "Update Sale" "Add Sale"}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

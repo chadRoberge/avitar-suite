@@ -1,0 +1,17 @@
+{{!-- Property Queue Button - Navigation Style --}}
+{{!-- template-lint-disable no-invalid-interactive --}}
+<a
+  class="avitar-topbar__nav-link {{if this.isDisabled 'disabled'}}"
+  title="{{this.buttonTitle}}"
+  href="#"
+  {{on "click" this.addToQueue}}
+>
+  <i class="fas fa-plus"></i>
+  Que
+  {{#if this.propertyQueue.hasProperties}}
+    <span class="avitar-badge avitar-badge--primary">
+      {{this.propertyQueue.queueCount}}
+    </span>
+  {{/if}}
+</a>
+{{!-- template-lint-enable no-invalid-interactive --}}

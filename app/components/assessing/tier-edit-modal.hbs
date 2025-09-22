@@ -1,0 +1,60 @@
+{{#if @isOpen}}
+  {{!-- Trigger getter to update form --}}
+  {{this.modalData}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--sm" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if @tier.id "Edit Tier" "Add Tier"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-form-group">
+          <label class="avitar-label" for="tier-acreage">Acreage</label>
+          <div class="avitar-input-group">
+            <input
+              id="tier-acreage"
+              type="number"
+              step="0.01"
+              min="0"
+              class="avitar-input"
+              value={{this.acreage}}
+              {{on "input" this.updateAcreage}}
+              required
+              placeholder="0.5"
+            />
+            <span class="avitar-input-group__addon">acres</span>
+          </div>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label" for="tier-value">Land Value</label>
+          <div class="avitar-input-group">
+            <span class="avitar-input-group__addon">$</span>
+            <input
+              id="tier-value"
+              type="number"
+              min="0"
+              class="avitar-input"
+              value={{this.value}}
+              {{on "input" this.updateValue}}
+              required
+              placeholder="40000"
+            />
+          </div>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+            Cancel
+          </button>
+          <button type="submit" class="avitar-btn avitar-btn--primary">
+            {{if @tier.id "Update Tier" "Add Tier"}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

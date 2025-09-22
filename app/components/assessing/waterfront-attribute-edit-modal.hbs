@@ -1,0 +1,144 @@
+{{!-- Waterfront Attribute Edit Modal Component --}}
+<div class="avitar-modal-overlay {{if @isOpen 'avitar-modal-overlay--visible'}}" {{on "click" this.handleBackdropClick}}>
+  <div class="avitar-modal avitar-modal--md">
+        <div class="avitar-modal__header">
+          <h3 class="avitar-modal__title">
+            {{if @attribute "Edit" "Add"}} {{@attributeTypeName}} Attribute
+          </h3>
+          <button type="button" class="avitar-modal__close" {{on "click" @onClose}} aria-label="Close modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          <div class="avitar-alert avitar-alert--info avitar-mb-4">
+            <div class="avitar-alert__icon">
+              <i class="{{@attributeTypeIcon}}"></i>
+            </div>
+            <div class="avitar-alert__content">
+              <div class="avitar-alert__message">
+                {{if @attribute "Editing" "Adding"}} attribute for <strong>{{@attributeTypeName}}</strong> category
+              </div>
+            </div>
+          </div>
+
+          <form {{on "submit" this.handleSubmit}}>
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="attribute-name">Attribute Name <span class="avitar-text-danger">*</span></label>
+              <input 
+                type="text" 
+                id="attribute-name"
+                class="avitar-input {{if this.nameError 'avitar-input--error'}}" 
+                value={{this.name}} 
+                {{on "input" this.updateName}}
+                placeholder="Enter attribute name..."
+                maxlength="100"
+                required
+              />
+              {{#if this.nameError}}
+                <div class="avitar-form-error">{{this.nameError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                e.g. "Beach", "Seawall", "Open Water", "Level"
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="attribute-description">Description <span class="avitar-text-danger">*</span></label>
+              <textarea 
+                id="attribute-description"
+                class="avitar-textarea {{if this.descriptionError 'avitar-textarea--error'}}" 
+                rows="3"
+                value={{this.description}} 
+                {{on "input" this.updateDescription}}
+                placeholder="Describe this attribute..."
+                maxlength="200"
+                required
+              ></textarea>
+              {{#if this.descriptionError}}
+                <div class="avitar-form-error">{{this.descriptionError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                200 characters maximum
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="attribute-display-text">Display Text <span class="avitar-text-danger">*</span></label>
+              <input 
+                type="text" 
+                id="attribute-display-text"
+                class="avitar-input {{if this.displayTextError 'avitar-input--error'}}" 
+                value={{this.displayText}} 
+                {{on "input" this.updateDisplayText}}
+                placeholder="Short display name..."
+                maxlength="50"
+                required
+              />
+              {{#if this.displayTextError}}
+                <div class="avitar-form-error">{{this.displayTextError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                50 characters maximum
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="attribute-factor">Factor (0-1000) <span class="avitar-text-danger">*</span></label>
+              <input 
+                type="number" 
+                id="attribute-factor"
+                class="avitar-input {{if this.factorError 'avitar-input--error'}}" 
+                value={{this.factor}} 
+                {{on "input" this.updateFactor}}
+                placeholder="Enter factor value..."
+                step="1"
+                min="0"
+                max="1000"
+                required
+              />
+              {{#if this.factorError}}
+                <div class="avitar-form-error">{{this.factorError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Higher numbers indicate greater impact on property value (0-1000)
+              </div>
+            </div>
+
+            {{#if this.generalError}}
+              <div class="avitar-alert avitar-alert--danger avitar-mb-4">
+                <div class="avitar-alert__icon">
+                  <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="avitar-alert__content">
+                  <div class="avitar-alert__message">{{this.generalError}}</div>
+                </div>
+              </div>
+            {{/if}}
+          </form>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--secondary" 
+            {{on "click" @onClose}}
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary" 
+            {{on "click" this.handleSubmit}}
+            disabled={{this.isSaving}}
+          >
+            {{#if this.isSaving}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Saving...
+            {{else}}
+              {{if @attribute "Update" "Add"}} Attribute
+            {{/if}}
+          </button>
+        </div>
+  </div>
+</div>

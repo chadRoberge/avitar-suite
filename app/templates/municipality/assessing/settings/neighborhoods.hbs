@@ -1,0 +1,746 @@
+{{!-- Land Details Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header avitar-mb-2">
+    <h1 class="avitar-page-title avitar-skinny">Land Details</h1>
+    <div class="avitar-page-subtitle">Configure neighborhood codes and property attributes</div>
+  </div>
+
+  {{!-- Neighborhood Codes Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Neighborhood Codes</h3>
+          <div class="avitar-card__subtitle">2-letter codes with descriptions and adjustment rates (0-1000)</div>
+        </div>
+        {{#unless (or this.isAddingNeighborhood this.isEditingNeighborhood)}}
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingNeighborhood}}>
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add Neighborhood Code
+          </button>
+        {{/unless}}
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+      {{#if (or this.isAddingNeighborhood this.isEditingNeighborhood)}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">
+            {{if this.isEditingNeighborhood "Edit Neighborhood Code" "Add New Neighborhood Code"}}
+          </h4>
+          <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-4">
+            <div class="avitar-form-group">
+              <label class="avitar-label">Description</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.newNeighborhoodDescription}}
+                {{on "input" this.updateNeighborhoodDescription}}
+                placeholder="e.g., Downtown Commercial"
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Code (1-2 characters)</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.newNeighborhoodCode}}
+                {{on "input" this.updateNeighborhoodCode}}
+                placeholder="e.g., DC"
+                maxlength="2"
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Rate (0-1000)</label>
+              <input
+                type="number"
+                class="avitar-input"
+                value={{this.newNeighborhoodRate}}
+                {{on "input" this.updateNeighborhoodRate}}
+                min="0"
+                max="1000"
+                placeholder="100"
+              />
+            </div>
+          </div>
+          <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+            <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveNeighborhoodCode}}>
+              {{if this.isEditingNeighborhood "Update Code" "Save Code"}}
+            </button>
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingNeighborhood this.cancelEditingNeighborhood this.cancelAddingNeighborhood)}}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      {{/if}}
+
+      {{#if this.reactiveNeighborhoodCodes.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Rate</th>
+                <th class="avitar-table__actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.reactiveNeighborhoodCodes as |code|}}
+                <tr>
+                  <td>
+                    <span class="avitar-badge avitar-badge--primary">{{code.code}}</span>
+                  </td>
+                  <td>{{code.description}}</td>
+                  <td>{{code.rate}}</td>
+                  <td class="avitar-table__actions">
+                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                      {{on "click" (fn this.startEditingNeighborhood code)}} title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-text-center avitar-py-6">
+          <i class="fas fa-map-marked-alt avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+          <div class="avitar-font-semibold avitar-mb-2">No Neighborhood Codes</div>
+          <div class="avitar-text-muted">Add your first neighborhood code to get started</div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Land Use Details Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Land Use Details</h3>
+          <div class="avitar-card__subtitle">Land use codes with display text and type classifications</div>
+        </div>
+        {{#unless (or this.isAddingLandUse this.isEditingLandUse)}}
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingLandUse}}>
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add Land Use Detail
+          </button>
+        {{/unless}}
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+      {{#if (or this.isAddingLandUse this.isEditingLandUse)}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">
+            {{if this.isEditingLandUse "Edit Land Use Detail" "Add New Land Use Detail"}}
+          </h4>
+          <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-4">
+            <div class="avitar-form-group">
+              <label class="avitar-label">Code</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.newLandUseCode}}
+                {{on "input" this.updateLandUseCode}}
+                placeholder="e.g., R1"
+                maxlength="10"
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Display Text</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.newLandUseDisplayText}}
+                {{on "input" this.updateLandUseDisplayText}}
+                placeholder="e.g., Single Family Residential"
+                maxlength="50"
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Land Use Type</label>
+              <select class="avitar-select" value={{this.newLandUseType}} {{on "change" this.updateLandUseType}}>
+                <option value="">Select land use type...</option>
+                <option value="residential">Residential</option>
+                <option value="residential_waterfront">Residential Waterfront</option>
+                <option value="commercial">Commercial</option>
+                <option value="residential_multifamily">Residential Multifamily</option>
+              </select>
+            </div>
+          </div>
+          <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+            <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveLandUseDetail}}>
+              {{if this.isEditingLandUse "Update Detail" "Save Detail"}}
+            </button>
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingLandUse this.cancelEditingLandUse this.cancelAddingLandUse)}}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      {{/if}}
+
+      {{#if this.reactiveLandUseDetails.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Display Text</th>
+                <th>Land Use Type</th>
+                <th class="avitar-table__actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.reactiveLandUseDetails as |detail|}}
+                <tr>
+                  <td>
+                    <span class="avitar-badge avitar-badge--secondary">{{detail.code}}</span>
+                  </td>
+                  <td>{{detail.displayText}}</td>
+                  <td>{{format-land-use-type detail.landUseType}}</td>
+                  <td class="avitar-table__actions">
+                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                      {{on "click" (fn this.startEditingLandUse detail)}} title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                      {{on "click" (fn this.deleteLandUseDetail detail)}} title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-text-center avitar-py-6">
+          <i class="fas fa-layer-group avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+          <div class="avitar-font-semibold avitar-mb-2">No Land Use Details</div>
+          <div class="avitar-text-muted avitar-mb-4">Add your first land use detail to get started</div>
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingLandUse}}>
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add First Land Use Detail
+          </button>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Land Taxation Categories --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Land Taxation Categories</h3>
+          <div class="avitar-card__subtitle">Configure tax status categories for different types of land ownership (Municipal, State, Federal, Taxed)</div>
+        </div>
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.addTaxationCategory}}
+        >
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Taxation Category
+        </button>
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+    <div class="avitar-space-y-4">
+      {{#if this.landTaxationCategories.length}}
+        {{#each this.landTaxationCategories as |category index|}}
+          <div class="avitar-flex avitar-items-center avitar-gap-4 avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+            <div class="avitar-flex-1">
+              <div class="avitar-form-group avitar-mb-0">
+                <label class="avitar-form-label avitar-text-sm">Category Name</label>
+                <input 
+                  type="text" 
+                  class="avitar-form-input" 
+                  placeholder="e.g., Exempt-Municipal, Taxed"
+                  value={{category.name}}
+                  {{on "blur" (fn this.updateTaxationCategory index "name")}}
+                />
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <div class="avitar-form-group avitar-mb-0">
+                <label class="avitar-form-label avitar-text-sm">Tax Percentage</label>
+                <input 
+                  type="number" 
+                  class="avitar-form-input" 
+                  placeholder="100"
+                  value={{category.taxPercentage}}
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  {{on "blur" (fn this.updateTaxationCategory index "taxPercentage")}}
+                />
+              </div>
+            </div>
+            <div class="avitar-flex-shrink-0">
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                {{on "click" (fn this.removeTaxationCategory index)}}
+                title="Remove Category"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        {{/each}}
+      {{else}}
+        <div class="avitar-empty-state avitar-text-center avitar-py-6">
+          <i class="fas fa-tags avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+          <div class="avitar-font-semibold avitar-mb-2">No Taxation Categories</div>
+          <div class="avitar-text-muted avitar-mb-4">Add categories to classify different types of land taxation</div>
+        </div>
+      {{/if}}
+      
+      
+      {{#if this.landTaxationCategories.length}}
+        <div class="avitar-alert avitar-alert--info">
+          <div class="avitar-alert__icon">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="avitar-alert__content">
+            <div class="avitar-alert__title">Taxation Category Usage</div>
+            <div class="avitar-alert__message">
+              These categories determine how different types of properties are taxed. 
+              0% = fully exempt, 100% = fully taxable. Intermediate values create partial exemptions.
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+    </div>
+  </div>
+
+  {{!-- Property Attributes Grid --}}
+  <div class="avitar-grid avitar-grid-cols-1 lg:avitar-grid-cols-2 avitar-gap-6">
+    
+    {{!-- Site Attributes --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header avitar-card__header--colored">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div>
+            <h3 class="avitar-card__title">Site Attributes</h3>
+            <div class="avitar-card__subtitle">Property site characteristics</div>
+          </div>
+          {{#unless (or this.isAddingSite this.isEditingSite)}}
+            <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.startAddingSite}}>
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+      
+      <div class="avitar-card__body">
+        {{#if (or this.isAddingSite this.isEditingSite)}}
+          <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-mb-4">
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Description</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newSiteDescription}}
+                {{on "input" this.updateSiteDescription}}
+                placeholder="e.g., Level lot"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Display Text (10 chars)</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newSiteDisplayText}}
+                {{on "input" this.updateSiteDisplayText}}
+                placeholder="e.g., Level"
+                maxlength="10"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Rate</label>
+              <input
+                type="number"
+                class="avitar-input avitar-input--sm"
+                value={{this.newSiteRate}}
+                {{on "input" this.updateSiteRate}}
+                placeholder="1.0"
+                step="0.1"
+              />
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--xs" {{on "click" this.saveSiteAttribute}}>
+                {{if this.isEditingSite "Update" "Save"}}
+              </button>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (if this.isEditingSite this.cancelEditingSite this.cancelAddingSite)}}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.reactiveSiteAttributes.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Display</th>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each this.reactiveSiteAttributes as |attr|}}
+                  <tr>
+                    <td><code class="avitar-text-xs">{{attr.displayText}}</code></td>
+                    <td>{{attr.description}}</td>
+                    <td>{{attr.rate}}</td>
+                    <td class="avitar-table__actions">
+                      <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                        {{on "click" (fn this.startEditingSite attr)}} title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                        {{on "click" (fn this.deleteSiteAttribute attr)}} title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-text-center avitar-py-4">
+            <i class="fas fa-mountain avitar-text-2xl avitar-text-muted avitar-mb-2"></i>
+            <div class="avitar-text-sm avitar-text-muted">No site attributes</div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Driveway Attributes --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header avitar-card__header--colored">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div>
+            <h3 class="avitar-card__title">Driveway Attributes</h3>
+            <div class="avitar-card__subtitle">Driveway access characteristics</div>
+          </div>
+          {{#unless (or this.isAddingDriveway this.isEditingDriveway)}}
+            <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.startAddingDriveway}}>
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+      
+      <div class="avitar-card__body">
+        {{#if (or this.isAddingDriveway this.isEditingDriveway)}}
+          <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-mb-4">
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Description</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newDrivewayDescription}}
+                {{on "input" this.updateDrivewayDescription}}
+                placeholder="e.g., Paved driveway"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Display Text (10 chars)</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newDrivewayDisplayText}}
+                {{on "input" this.updateDrivewayDisplayText}}
+                placeholder="e.g., Paved"
+                maxlength="10"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Rate</label>
+              <input
+                type="number"
+                class="avitar-input avitar-input--sm"
+                value={{this.newDrivewayRate}}
+                {{on "input" this.updateDrivewayRate}}
+                placeholder="1.0"
+                step="0.1"
+              />
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--xs" {{on "click" this.saveDrivewayAttribute}}>
+                {{if this.isEditingDriveway "Update" "Save"}}
+              </button>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (if this.isEditingDriveway this.cancelEditingDriveway this.cancelAddingDriveway)}}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.reactiveDrivewayAttributes.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Display</th>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each this.reactiveDrivewayAttributes as |attr|}}
+                  <tr>
+                    <td><code class="avitar-text-xs">{{attr.displayText}}</code></td>
+                    <td>{{attr.description}}</td>
+                    <td>{{attr.rate}}</td>
+                    <td class="avitar-table__actions">
+                      <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                        {{on "click" (fn this.startEditingDriveway attr)}} title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                        {{on "click" (fn this.deleteDrivewayAttribute attr)}} title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-text-center avitar-py-4">
+            <i class="fas fa-road avitar-text-2xl avitar-text-muted avitar-mb-2"></i>
+            <div class="avitar-text-sm avitar-text-muted">No driveway attributes</div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Road Attributes --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header avitar-card__header--colored">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div>
+            <h3 class="avitar-card__title">Road Attributes</h3>
+            <div class="avitar-card__subtitle">Road access characteristics</div>
+          </div>
+          {{#unless (or this.isAddingRoad this.isEditingRoad)}}
+            <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.startAddingRoad}}>
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+      
+      <div class="avitar-card__body">
+        {{#if (or this.isAddingRoad this.isEditingRoad)}}
+          <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-mb-4">
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Description</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newRoadDescription}}
+                {{on "input" this.updateRoadDescription}}
+                placeholder="e.g., Paved public road"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Display Text (10 chars)</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newRoadDisplayText}}
+                {{on "input" this.updateRoadDisplayText}}
+                placeholder="e.g., Paved Pub"
+                maxlength="10"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Rate</label>
+              <input
+                type="number"
+                class="avitar-input avitar-input--sm"
+                value={{this.newRoadRate}}
+                {{on "input" this.updateRoadRate}}
+                placeholder="1.0"
+                step="0.1"
+              />
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--xs" {{on "click" this.saveRoadAttribute}}>
+                {{if this.isEditingRoad "Update" "Save"}}
+              </button>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (if this.isEditingRoad this.cancelEditingRoad this.cancelAddingRoad)}}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.reactiveRoadAttributes.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Display</th>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each this.reactiveRoadAttributes as |attr|}}
+                  <tr>
+                    <td><code class="avitar-text-xs">{{attr.displayText}}</code></td>
+                    <td>{{attr.description}}</td>
+                    <td>{{attr.rate}}</td>
+                    <td class="avitar-table__actions">
+                      <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                        {{on "click" (fn this.startEditingRoad attr)}} title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                        {{on "click" (fn this.deleteRoadAttribute attr)}} title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-text-center avitar-py-4">
+            <i class="fas fa-route avitar-text-2xl avitar-text-muted avitar-mb-2"></i>
+            <div class="avitar-text-sm avitar-text-muted">No road attributes</div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Topology Attributes --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header avitar-card__header--colored">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div>
+            <h3 class="avitar-card__title">Topology Attributes</h3>
+            <div class="avitar-card__subtitle">Land topology characteristics</div>
+          </div>
+          {{#unless (or this.isAddingTopology this.isEditingTopology)}}
+            <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.startAddingTopology}}>
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+      
+      <div class="avitar-card__body">
+        {{#if (or this.isAddingTopology this.isEditingTopology)}}
+          <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-mb-4">
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Description</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newTopologyDescription}}
+                {{on "input" this.updateTopologyDescription}}
+                placeholder="e.g., Steep slope"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Display Text (10 chars)</label>
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                value={{this.newTopologyDisplayText}}
+                {{on "input" this.updateTopologyDisplayText}}
+                placeholder="e.g., Steep"
+                maxlength="10"
+              />
+            </div>
+            <div class="avitar-form-group avitar-mb-3">
+              <label class="avitar-label">Rate</label>
+              <input
+                type="number"
+                class="avitar-input avitar-input--sm"
+                value={{this.newTopologyRate}}
+                {{on "input" this.updateTopologyRate}}
+                placeholder="1.0"
+                step="0.1"
+              />
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--xs" {{on "click" this.saveTopologyAttribute}}>
+                {{if this.isEditingTopology "Update" "Save"}}
+              </button>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (if this.isEditingTopology this.cancelEditingTopology this.cancelAddingTopology)}}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.reactiveTopologyAttributes.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Display</th>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each this.reactiveTopologyAttributes as |attr|}}
+                  <tr>
+                    <td><code class="avitar-text-xs">{{attr.displayText}}</code></td>
+                    <td>{{attr.description}}</td>
+                    <td>{{attr.rate}}</td>
+                    <td class="avitar-table__actions">
+                      <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                        {{on "click" (fn this.startEditingTopology attr)}} title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                        {{on "click" (fn this.deleteTopologyAttribute attr)}} title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-text-center avitar-py-4">
+            <i class="fas fa-mountain avitar-text-2xl avitar-text-muted avitar-mb-2"></i>
+            <div class="avitar-text-sm avitar-text-muted">No topology attributes</div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+</div>

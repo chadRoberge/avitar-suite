@@ -2,6 +2,11 @@
 
 {{outlet}}
 
-{{! The following component displays Ember's default welcome message. }}
-<WelcomePage />
-{{! Feel free to remove this! }}
+{{! Global conflict resolver for local-first data sync }}
+<Shared::ConflictResolver />
+
+{{! Sync status indicator for monitoring data sync }}
+<Shared::SyncStatusIndicator />
+
+{{! Global loading overlay }}
+<Shared::LoadingOverlay @isVisible={{this.loading.isLoading}} @message={{this.loading.loadingMessage}} />

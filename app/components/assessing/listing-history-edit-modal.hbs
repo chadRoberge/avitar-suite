@@ -1,0 +1,103 @@
+{{#if @isOpen}}
+  {{!-- Trigger getter to update form --}}
+  {{this.modalData}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if @entry._id "Edit Listing Entry" "Add Listing Entry"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="visit-date">Visit Date <span class="avitar-text-red-500">*</span></label>
+            <input
+              id="visit-date"
+              type="date"
+              class="avitar-input"
+              value={{this.visitDate}}
+              {{on "input" this.updateVisitDate}}
+              required
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="visitor-code">Visitor Code <span class="avitar-text-red-500">*</span></label>
+            <input
+              id="visitor-code"
+              type="text"
+              maxlength="2"
+              class="avitar-input avitar-font-mono"
+              value={{this.visitorCode}}
+              {{on "input" this.updateVisitorCode}}
+              required
+              placeholder="AB"
+              style="text-transform: uppercase;"
+            />
+            <div class="avitar-help-text">2 initials (automatically uppercase)</div>
+          </div>
+        </div>
+
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label" for="reason-code">Reason Code <span class="avitar-text-red-500">*</span></label>
+          <input
+            id="reason-code"
+            type="text"
+            maxlength="2"
+            class="avitar-input avitar-font-mono"
+            value={{this.reasonCode}}
+            {{on "input" this.updateReasonCode}}
+            required
+            placeholder="IN"
+            style="text-transform: uppercase;"
+          />
+          <div class="avitar-help-text">2 initials (automatically uppercase)</div>
+        </div>
+
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label" for="notes">Notes</label>
+          <textarea
+            id="notes"
+            rows="3"
+            class="avitar-textarea"
+            value={{this.notes}}
+            {{on "input" this.updateNotes}}
+            placeholder="Optional visit notes..."
+          >{{this.notes}}</textarea>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <div class="avitar-flex avitar-justify-between avitar-w-full">
+            <div>
+              {{#if @entry._id}}
+                <button 
+                  type="button" 
+                  class="avitar-btn avitar-btn--danger"
+                  {{on "click" this.handleDelete}}
+                >
+                  <i class="fas fa-trash avitar-mr-2"></i>
+                  Delete
+                </button>
+              {{/if}}
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="avitar-btn avitar-btn--primary"
+                disabled={{or (not this.visitDate) (not this.visitorCode) (not this.reasonCode)}}
+              >
+                <i class="fas fa-save avitar-mr-2"></i>
+                {{if @entry._id "Update Entry" "Add Entry"}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

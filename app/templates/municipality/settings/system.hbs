@@ -1,0 +1,179 @@
+{{!-- System Settings --}}
+<div class="avitar-content" style="padding: var(--spacing-6); background: var(--color-gray-50);">
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header">
+      <h1 class="avitar-card__title">System Settings</h1>
+      <div class="avitar-card__subtitle">Configure system preferences and integrations</div>
+    </div>
+    <div class="avitar-card__body">
+      <p class="avitar-text-muted">Configure system-wide settings, API integrations, and technical preferences.</p>
+    </div>
+  </div>
+
+  {{!-- PID Display Formatting --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h2 class="avitar-card__title">PID Display Formatting</h2>
+          <div class="avitar-card__subtitle">Configure how Property IDs are displayed to users</div>
+        </div>
+        <div class="avitar-flex avitar-items-center avitar-gap-2">
+          <span class="avitar-badge avitar-badge--primary">Configured</span>
+          <i class="fas fa-format avitar-text-primary"></i>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid--cols-1 avitar-gap-4">
+        {{!-- Current Configuration --}}
+        <div class="avitar-p-4 avitar-bg-primary-pale avitar-rounded">
+          <h3 class="avitar-text-base avitar-font-semibold avitar-text-gray-900 avitar-mb-1">
+            Current PID Format
+          </h3>
+          <div class="avitar-text-sm avitar-text-muted avitar-mb-3">
+            18-digit raw PID is formatted as: Map-Lot-Sub
+          </div>
+          <div class="avitar-bg-white avitar-p-3 avitar-rounded avitar-font-mono avitar-border">
+            <div class="avitar-text-sm avitar-text-gray-700 avitar-mb-1">
+              Raw PID: <span class="avitar-font-bold">010010010000000000</span>
+            </div>
+            <div class="avitar-text-sm avitar-text-primary">
+              Displayed: <span class="avitar-font-bold avitar-text-lg">1-1-1</span>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Format Configuration --}}
+        <div class="avitar-grid avitar-grid--cols-2 avitar-gap-4">
+          <div class="avitar-card avitar-card--flat">
+            <div class="avitar-card__body">
+              <h4 class="avitar-font-semibold avitar-mb-3">
+                <i class="fas fa-ruler avitar-text-info avitar-mr-2"></i>
+                Digit Allocation
+              </h4>
+              <div class="avitar-space-y-3">
+                <div class="avitar-flex avitar-justify-between avitar-items-center">
+                  <label class="avitar-text-sm avitar-font-medium">Map Digits:</label>
+                  <select class="avitar-select avitar-select--sm" style="width: 80px;">
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+                <div class="avitar-flex avitar-justify-between avitar-items-center">
+                  <label class="avitar-text-sm avitar-font-medium">Lot Digits:</label>
+                  <select class="avitar-select avitar-select--sm" style="width: 80px;">
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+                <div class="avitar-flex avitar-justify-between avitar-items-center">
+                  <label class="avitar-text-sm avitar-font-medium">Sub Digits:</label>
+                  <select class="avitar-select avitar-select--sm" style="width: 80px;">
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="6">6</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="avitar-card avitar-card--flat">
+            <div class="avitar-card__body">
+              <h4 class="avitar-font-semibold avitar-mb-3">
+                <i class="fas fa-eye avitar-text-warning avitar-mr-2"></i>
+                Display Options
+              </h4>
+              <div class="avitar-space-y-3">
+                <div>
+                  <label class="avitar-text-sm avitar-font-medium avitar-mb-2 avitar-block">Separator:</label>
+                  <div class="avitar-flex avitar-gap-2">
+                    <label class="avitar-radio">
+                      <input type="radio" name="separator" value="-" checked>
+                      <span>Dash (-)</span>
+                    </label>
+                    <label class="avitar-radio">
+                      <input type="radio" name="separator" value=".">
+                      <span>Dot (.)</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="avitar-checkbox">
+                    <input type="checkbox" checked>
+                    <span>Remove leading zeros</span>
+                  </label>
+                </div>
+                <div>
+                  <label class="avitar-checkbox">
+                    <input type="checkbox">
+                    <span>Show sub-lot only when present</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Format Examples --}}
+        <div class="avitar-border-t avitar-pt-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">
+            <i class="fas fa-list avitar-text-success avitar-mr-2"></i>
+            Format Examples
+          </h4>
+          <div class="avitar-grid avitar-grid--cols-3 avitar-gap-3">
+            <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-text-center">
+              <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Raw: 010010010000000000</div>
+              <div class="avitar-font-mono avitar-font-bold">1-1-1</div>
+            </div>
+            <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-text-center">
+              <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Raw: 010010050000000000</div>
+              <div class="avitar-font-mono avitar-font-bold">1-1-5</div>
+            </div>
+            <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-text-center">
+              <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Raw: 200150000000000000</div>
+              <div class="avitar-font-mono avitar-font-bold">20-15-0</div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Administrative Controls --}}
+        <div class="avitar-border-t avitar-pt-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">
+            <i class="fas fa-cog avitar-text-primary avitar-mr-2"></i>
+            Configuration Actions
+          </h4>
+          <div class="avitar-flex avitar-gap-3 avitar-flex-wrap">
+            <button type="button" class="avitar-btn avitar-btn--primary">
+              <i class="fas fa-save avitar-mr-2"></i>
+              Save Format Settings
+            </button>
+            <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--secondary">
+              <i class="fas fa-undo avitar-mr-2"></i>
+              Reset to Default
+            </button>
+            <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--info">
+              <i class="fas fa-preview avitar-mr-2"></i>
+              Preview Changes
+            </button>
+          </div>
+        </div>
+
+        {{!-- Information Notice --}}
+        <div class="avitar-alert avitar-alert--info">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Display Formatting:</strong>
+            This controls how the 18-digit Property ID numbers are displayed throughout the system. Changes will apply to all property listings, reports, and user interfaces.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

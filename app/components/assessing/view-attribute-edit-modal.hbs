@@ -1,0 +1,114 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{if @attribute "Edit" "Add"}} {{@attributeTypeName}} Attribute
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-label--required">Name</label>
+            <input 
+              type="text" 
+              class="avitar-input {{if this.hasValidationErrors 'avitar-input--error'}}" 
+              value={{this.name}} 
+              {{on "input" this.updateName}} 
+              placeholder="e.g., Mountains, Ocean, Lake..."
+              maxlength="100"
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              100 characters maximum
+            </div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-label--required">Description</label>
+            <textarea 
+              class="avitar-textarea {{if this.hasValidationErrors 'avitar-textarea--error'}}" 
+              rows="3"
+              value={{this.description}} 
+              {{on "input" this.updateDescription}} 
+              placeholder="Detailed description of this view attribute..."
+              maxlength="200"
+            ></textarea>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              200 characters maximum
+            </div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-label--required">Display Text</label>
+            <input 
+              type="text" 
+              class="avitar-input {{if this.hasValidationErrors 'avitar-input--error'}}" 
+              value={{this.displayText}} 
+              {{on "input" this.updateDisplayText}} 
+              placeholder="Short display name for UI..."
+              maxlength="50"
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              50 characters maximum - used in dropdowns and labels
+            </div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-label--required">Factor</label>
+            <div class="avitar-input-group">
+              <input 
+                type="number" 
+                class="avitar-input {{if this.hasValidationErrors 'avitar-input--error'}}" 
+                value={{this.factor}} 
+                {{on "input" this.updateFactor}} 
+                step="1" 
+                min="0" 
+                max="1000"
+                placeholder="100" 
+              />
+            </div>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Factor used in valuation calculations (0-1000 range)
+            </div>
+          </div>
+        </div>
+
+        {{#if this.hasValidationErrors}}
+          <div class="avitar-alert avitar-alert--danger avitar-mt-4">
+            <div class="avitar-alert__icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="avitar-alert__content">
+              <div class="avitar-alert__title">Validation Errors</div>
+              <div class="avitar-alert__message">
+                <ul>
+                  {{#each this.validationErrors as |error|}}
+                    <li>{{error}}</li>
+                  {{/each}}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+          Cancel
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveAttribute}} disabled={{this.isSaving}}>
+          {{#if this.isSaving}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            {{if @attribute "Update" "Create"}} Attribute
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

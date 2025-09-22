@@ -1,0 +1,516 @@
+{{!-- Building Assessment Edit Modal --}}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
+  <div class="avitar-modal" style="max-width: 90%; width: 90%;" {{on "click" this.stopPropagation}} role="dialog" aria-labelledby="building-edit-title" aria-modal="true">
+    <div class="avitar-modal__header">
+      <h2 id="building-edit-title" class="avitar-modal__title">Edit Building Assessment</h2>
+      <button class="avitar-modal__close" aria-label="Close modal" type="button" {{on "click" this.close}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="avitar-modal__body">
+      {{!-- Debug Information --}}
+      <div class="avitar-alert avitar-alert--info avitar-mb-4">
+        <strong>Debug Info:</strong> 
+        Loading: {{this.isLoading}}, 
+        Feature Codes Keys: {{object-keys this.featureCodes}}, 
+        Building Codes Count: {{this.buildingCodes.length}},
+        Municipality ID: {{this.args.property.municipality_id}},
+        Current Municipality: {{this.municipality.current.id}},
+        Property Keys: {{object-keys this.args.property}}
+      </div>
+
+      {{!-- Basic Information Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Basic Information</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Building Model --}}
+            <div class="avitar-flex-1">
+              <label for="building-model" class="avitar-label">Building Model</label>
+              <input 
+                id="building-model"
+                type="text" 
+                class="avitar-input"
+                value={{this.buildingData.buildingModel}}
+                {{on "input" (fn this.updateField "buildingModel")}}
+              />
+            </div>
+            
+            {{!-- Frame --}}
+            <div class="avitar-flex-1">
+              <label for="frame-select" class="avitar-label">Frame</label>
+              <select 
+                id="frame-select"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "frame")}}
+              >
+                <option value="">Select Frame...</option>
+                {{#each this.featureCodes.frame as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.frame code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Year Built --}}
+            <div class="avitar-flex-1">
+              <label for="year-built" class="avitar-label">Year Built</label>
+              <input 
+                id="year-built"
+                type="number" 
+                class="avitar-input"
+                value={{this.buildingData.yearBuilt}}
+                {{on "input" (fn this.updateField "yearBuilt")}}
+              />
+            </div>
+          </div>
+
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Base Type --}}
+            <div class="avitar-flex-1">
+              <label for="base-type" class="avitar-label">Base Type</label>
+              <select 
+                id="base-type"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "baseType")}}
+              >
+                <option value="">Select Base Type...</option>
+                {{#each this.buildingCodes as |code|}}
+                  <option value={{code.code}} selected={{if (eq this.buildingData.baseType code.code) "selected"}}>
+                    {{code.code}} - {{code.description}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Quality Grade --}}
+            <div class="avitar-flex-1">
+              <label for="quality-grade" class="avitar-label">Quality Grade</label>
+              <select 
+                id="quality-grade"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "qualityGrade")}}
+              >
+                <option value="">Select Quality...</option>
+                {{#each this.featureCodes.quality as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.qualityGrade code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Story Height --}}
+            <div class="avitar-flex-1">
+              <label for="story-height" class="avitar-label">Story Height</label>
+              <select 
+                id="story-height"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "storyHeight")}}
+              >
+                <option value="">Select Story Height...</option>
+                {{#each this.featureCodes.story_height as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.storyHeight code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Roof Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Roof Details</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Roof Style --}}
+            <div class="avitar-flex-1">
+              <label for="roof-style" class="avitar-label">Roof Style</label>
+              <select 
+                id="roof-style"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "roofStyle")}}
+              >
+                <option value="">Select Roof Style...</option>
+                {{#each this.featureCodes.roof_style as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.roofStyle code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Roof Cover --}}
+            <div class="avitar-flex-1">
+              <label for="roof-cover" class="avitar-label">Roof Cover</label>
+              <select 
+                id="roof-cover"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "roofCover")}}
+              >
+                <option value="">Select Roof Cover...</option>
+                {{#each this.featureCodes.roofing as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.roofCover code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Walls Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Wall Details</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Exterior Wall 1 --}}
+            <div class="avitar-flex-1">
+              <label for="exterior-wall-1" class="avitar-label">Exterior Wall 1</label>
+              <select 
+                id="exterior-wall-1"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "exteriorWall1")}}
+              >
+                <option value="">Select Exterior Wall...</option>
+                {{#each this.featureCodes.exterior_wall as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.exteriorWall1 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{else}}
+                  <option value="" disabled>No exterior wall codes loaded</option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Exterior Wall 2 --}}
+            <div class="avitar-flex-1">
+              <label for="exterior-wall-2" class="avitar-label">Exterior Wall 2</label>
+              <select 
+                id="exterior-wall-2"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "exteriorWall2")}}
+              >
+                <option value="">Select Exterior Wall...</option>
+                {{#each this.featureCodes.exterior_wall as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.exteriorWall2 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Interior Wall 1 --}}
+            <div class="avitar-flex-1">
+              <label for="interior-wall-1" class="avitar-label">Interior Wall 1</label>
+              <select 
+                id="interior-wall-1"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "interiorWall1")}}
+              >
+                <option value="">Select Interior Wall...</option>
+                {{#each this.featureCodes.interior_wall as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.interiorWall1 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Interior Wall 2 --}}
+            <div class="avitar-flex-1">
+              <label for="interior-wall-2" class="avitar-label">Interior Wall 2</label>
+              <select 
+                id="interior-wall-2"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "interiorWall2")}}
+              >
+                <option value="">Select Interior Wall...</option>
+                {{#each this.featureCodes.interior_wall as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.interiorWall2 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Flooring Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Flooring</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Flooring 1 --}}
+            <div class="avitar-flex-1">
+              <label for="flooring-1" class="avitar-label">Flooring 1</label>
+              <select 
+                id="flooring-1"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "flooring1")}}
+              >
+                <option value="">Select Flooring...</option>
+                {{#each this.featureCodes.flooring as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.flooring1 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Flooring 2 --}}
+            <div class="avitar-flex-1">
+              <label for="flooring-2" class="avitar-label">Flooring 2</label>
+              <select 
+                id="flooring-2"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "flooring2")}}
+              >
+                <option value="">Select Flooring...</option>
+                {{#each this.featureCodes.flooring as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.flooring2 code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Heating Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Heating System</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Heating Fuel --}}
+            <div class="avitar-flex-1">
+              <label for="heating-fuel" class="avitar-label">Heating Fuel</label>
+              <select 
+                id="heating-fuel"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "heatingFuel")}}
+              >
+                <option value="">Select Heating Fuel...</option>
+                {{#each this.featureCodes.heating_fuel as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.heatingFuel code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Heating Type --}}
+            <div class="avitar-flex-1">
+              <label for="heating-type" class="avitar-label">Heating Type</label>
+              <select 
+                id="heating-type"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "heatingType")}}
+              >
+                <option value="">Select Heating Type...</option>
+                {{#each this.featureCodes.heating_type as |code|}}
+                  <option value={{code.displayText}} selected={{if (eq this.buildingData.heatingType code.displayText) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Rooms & Amenities Section --}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Rooms & Amenities</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Bedrooms --}}
+            <div class="avitar-flex-1">
+              <label for="bedrooms" class="avitar-label">Bedrooms</label>
+              <input 
+                id="bedrooms"
+                type="number" 
+                step="1"
+                min="0"
+                class="avitar-input"
+                value={{this.buildingData.bedrooms}}
+                {{on "input" (fn this.updateNumberField "bedrooms")}}
+              />
+            </div>
+
+            {{!-- Full Baths --}}
+            <div class="avitar-flex-1">
+              <label for="full-baths" class="avitar-label">Full Baths</label>
+              <input 
+                id="full-baths"
+                type="number"
+                step="1"
+                min="0"
+                class="avitar-input"
+                value={{this.buildingData.fullBaths}}
+                {{on "input" (fn this.updateNumberField "fullBaths")}}
+              />
+            </div>
+
+            {{!-- Half Baths --}}
+            <div class="avitar-flex-1">
+              <label for="half-baths" class="avitar-label">Half Baths</label>
+              <input 
+                id="half-baths"
+                type="number"
+                step="0.5"
+                min="0"
+                class="avitar-input"
+                value={{this.buildingData.halfBaths}}
+                {{on "input" (fn this.updateNumberField "halfBaths")}}
+              />
+            </div>
+
+            {{!-- Extra Kitchen --}}
+            <div class="avitar-flex-1">
+              <label for="extra-kitchen" class="avitar-label">Extra Kitchen</label>
+              <input 
+                id="extra-kitchen"
+                type="number" 
+                step="1"
+                min="0"
+                class="avitar-input"
+                value={{this.buildingData.extraKitchen}}
+                {{on "input" (fn this.updateNumberField "extraKitchen")}}
+              />
+            </div>
+          </div>
+
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            {{!-- Air Conditioning --}}
+            <div class="avitar-flex-1">
+              <label for="air-conditioning" class="avitar-label">Air Conditioning</label>
+              <select 
+                id="air-conditioning"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "airConditioning")}}
+              >
+                <option value="">Select...</option>
+                <option value="100%" selected={{if (eq this.buildingData.airConditioning "100%") "selected"}}>100%</option>
+                <option value="80%" selected={{if (eq this.buildingData.airConditioning "80%") "selected"}}>80%</option>
+                <option value="60%" selected={{if (eq this.buildingData.airConditioning "60%") "selected"}}>60%</option>
+                <option value="40%" selected={{if (eq this.buildingData.airConditioning "40%") "selected"}}>40%</option>
+                <option value="20%" selected={{if (eq this.buildingData.airConditioning "20%") "selected"}}>20%</option>
+                <option value="0%" selected={{if (eq this.buildingData.airConditioning "0%") "selected"}}>0%</option>
+              </select>
+            </div>
+
+            {{!-- Generator --}}
+            <div class="avitar-flex-1">
+              <label for="generator" class="avitar-label">Generator</label>
+              <select 
+                id="generator"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "generator")}}
+              >
+                <option value="">Select...</option>
+                <option value="yes" selected={{if (eq this.buildingData.generator "yes") "selected"}}>Yes</option>
+                <option value="no" selected={{if (eq this.buildingData.generator "no") "selected"}}>No</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{!-- Calculation Summary Section --}}
+      {{#if this.buildingAssessment.calculation_details}}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Calculation Summary</h3>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Base Rate</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{format-currency this.buildingAssessment.calculation_details.baseRate}}
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Quality Adjustment Factor</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{number-format this.buildingAssessment.calculation_details.qualityAdjustmentFactor}}
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Adjusted Base Rate</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{format-currency this.buildingAssessment.calculation_details.adjustedBaseRate}}
+              </div>
+            </div>
+          </div>
+          <div class="avitar-flex avitar-gap-4">
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Total Points</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{number-format this.buildingAssessment.calculation_details.totalPoints}}
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Building Value</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{format-currency this.buildingAssessment.calculation_details.buildingValue}}
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <label class="avitar-label">Last Calculated</label>
+              <div class="avitar-input avitar-bg-gray-50" style="cursor: not-allowed;">
+                {{#if this.buildingAssessment.last_calculated}}
+                  {{date-format this.buildingAssessment.last_calculated "MM/DD/YYYY h:mm A"}}
+                {{else}}
+                  Not calculated
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    
+    <div class="avitar-modal__footer">
+      <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.close}}>
+        Cancel
+      </button>
+      <button 
+        type="button" 
+        class="avitar-btn avitar-btn--primary" 
+        disabled={{this.isSaving}}
+        {{on "click" this.save}}
+      >
+        {{#if this.isSaving}}
+          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+          Saving...
+        {{else}}
+          Save Building
+        {{/if}}
+      </button>
+    </div>
+  </div>
+</div>

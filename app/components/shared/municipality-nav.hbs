@@ -1,0 +1,136 @@
+{{!-- Municipality Navigation Component using Avitar Topbar Design --}}
+<div class="municipal-navigation {{if this.hasActiveChildren 'has-children'}}" style={{this.navStyles}}>
+  
+  {{!-- Primary Top Bar with Brand and Modules --}}
+  <nav class="avitar-topbar">
+    {{!-- Municipal Brand --}}
+    {{#if this.currentMunicipalityName}}
+      <div class="avitar-topbar__brand">
+        {{#if this.brandingConfig.logo_url}}
+          <img src={{this.brandingConfig.logo_url}} alt="{{this.currentMunicipalityName}} Logo" class="municipal-logo">
+        {{else}}
+          <div class="avitar-topbar__brand-logo">
+            {{this.municipalityInitial}}
+          </div>
+        {{/if}}
+        <div>
+          <div class="municipal-name">{{this.currentMunicipalityName}}</div>
+          {{#if this.brandingConfig.header_text}}
+            <div class="municipal-subtitle">{{this.brandingConfig.header_text}}</div>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
+    {{!-- Module Navigation --}}
+    {{#if this.navigationItems.length}}
+      <ul class="avitar-topbar__nav">
+        {{#each this.navigationItems as |navItem|}}
+          <li class="avitar-topbar__nav-item">
+            <LinkTo 
+              @route={{navItem.route}} 
+              class="avitar-topbar__nav-link {{if (this.isModuleActive navItem) 'avitar-topbar__nav-link--active'}}"
+            >
+              <i class="fas fa-{{navItem.icon}}"></i>
+              {{navItem.title}}
+              {{#if navItem.tier}}
+                <span class="avitar-badge avitar-badge--{{navItem.tier}}">
+                  {{navItem.tier}}
+                </span>
+              {{/if}}
+            </LinkTo>
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <div class="avitar-empty-state">
+        <i class="fas fa-cube"></i>
+        <span>No modules available</span>
+      </div>
+    {{/if}}
+
+    {{!-- User Actions --}}
+    <div class="avitar-topbar__user">
+      {{!-- Subscription Info --}}
+      {{#if this.municipality.subscriptionInfo}}
+        <span class="avitar-badge avitar-badge--{{this.municipality.subscriptionInfo.tier}}">
+          {{this.municipality.subscriptionInfo.tier}} Plan
+        </span>
+      {{/if}}
+      
+      {{!-- Municipality Selection Button --}}
+      <button 
+        class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-ml-2"
+        {{on "click" this.goToMunicipalitySelection}}
+        type="button"
+        title="Switch Municipality"
+      >
+        <i class="fas fa-building avitar-mr-1"></i>
+        Switch
+      </button>
+      
+      {{!-- Logout Button --}}
+      <button 
+        class="avitar-btn avitar-btn--danger avitar-btn--sm avitar-ml-2"
+        {{on "click" this.logout}}
+        type="button"
+        title="Logout"
+      >
+        <i class="fas fa-sign-out-alt avitar-mr-1"></i>
+        Logout
+      </button>
+    </div>
+  </nav>
+
+  {{!-- Secondary Navigation for Active Module Children --}}
+  {{#if this.hasActiveChildren}}
+    <nav class="avitar-topbar module-children-nav">
+      <ul class="avitar-topbar__nav">
+        {{#each this.activeModuleChildren as |child|}}
+          <li class="avitar-topbar__nav-item">
+            {{#if child.component}}
+              {{!-- Render component directly instead of link --}}
+              {{component child.component property=this.selectedProperty selectedYear=this.assessmentYear onYearChange=this.onAssessmentYearChange onAddToQueue=this.addSelectedToQueue onOpenPrint=this.openPrintModal}}
+            {{else if child.models}}
+              <LinkTo 
+                @route={{child.route}} 
+                @models={{child.models}}
+                class="avitar-topbar__nav-link"
+                @activeClass="avitar-topbar__nav-link--active"
+              >
+                <i class="fas fa-{{child.icon}}"></i>
+                {{child.title}}
+                {{#if child.badge}}
+                  <span class="avitar-badge avitar-badge--warning">
+                    {{child.badge}}
+                  </span>
+                {{/if}}
+              </LinkTo>
+            {{else}}
+              <LinkTo 
+                @route={{child.route}} 
+                class="avitar-topbar__nav-link"
+                @activeClass="avitar-topbar__nav-link--active"
+              >
+                <i class="fas fa-{{child.icon}}"></i>
+                {{child.title}}
+                {{#if child.badge}}
+                  <span class="avitar-badge avitar-badge--warning">
+                    {{child.badge}}
+                  </span>
+                {{/if}}
+              </LinkTo>
+            {{/if}}
+          </li>
+        {{/each}}
+      </ul>
+    </nav>
+  {{/if}}
+
+  {{!-- Property Record Card Print Modal --}}
+  <Assessing::PropertyRecordCardModal 
+    @isOpen={{this.isPrintModalOpen}}
+    @onClose={{this.closePrintModal}}
+  />
+
+</div>

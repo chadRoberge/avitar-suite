@@ -1,0 +1,399 @@
+{{!-- General Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header with owner, type, location, and total assessment --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @onPropertyUpdate={{this.refreshGeneralProperty}} />
+  
+  {{!-- Assessment Breakdown Row --}}
+  <div class="avitar-flex avitar-gap-6 avitar-mb-6">
+    {{!-- Assessment Details --}}
+    <div class="avitar-flex-1">
+      <div class="avitar-card avitar-mb-4">
+        <div class="avitar-card__header avitar-card__header--colored">
+          <h3 class="avitar-card__title">Assessment Breakdown</h3>
+          <div class="avitar-card__subtitle">Current vs Last Changed Assessment</div>
+        </div>
+        <div class="avitar-card__body">
+          {{!-- Assessment Comparison - Side by Side --}}
+          <div class="avitar-flex avitar-gap-6 avitar-mb-4">
+            {{!-- Current Year Assessment --}}
+            <div class="avitar-flex-1">
+              <h4 class="avitar-text-lg avitar-font-semibold avitar-text-primary avitar-mb-3">{{@model.property.taxYear}} Assessment</h4>
+              <div class="avitar-grid avitar-grid--cols-3 avitar-gap-4">
+                <div class="avitar-card avitar-card--flat avitar-text-center">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Building</div>
+                    <div class="avitar-text-xl avitar-font-bold avitar-text-success">
+                      ${{number-format @model.property.buildingValue}}
+                    </div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-card--flat avitar-text-center">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Land</div>
+                    <div class="avitar-text-xl avitar-font-bold avitar-text-info">
+                      ${{number-format @model.property.landValue}}
+                    </div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-card--flat avitar-text-center">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Features</div>
+                    <div class="avitar-text-xl avitar-font-bold avitar-text-warning">
+                      ${{number-format (or @model.property.otherValue 0)}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {{!-- Last Changed Assessment --}}
+            <div class="avitar-flex-1">
+              <h4 class="avitar-text-lg avitar-font-semibold avitar-text-gray-700 avitar-mb-3">{{@model.assessment.lastChangedYear}} Assessment (Last Changed)</h4>
+              <div class="avitar-grid avitar-grid--cols-3 avitar-gap-4">
+                <div class="avitar-card avitar-card--flat avitar-text-center avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Building</div>
+                    <div class="avitar-text-lg avitar-font-medium avitar-text-gray-600">
+                      ${{number-format (or @model.assessment.previousBuildingValue @model.property.buildingValue)}}
+                    </div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-card--flat avitar-text-center avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Land</div>
+                    <div class="avitar-text-lg avitar-font-medium avitar-text-gray-600">
+                      ${{number-format (or @model.assessment.previousLandValue @model.property.landValue)}}
+                    </div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-card--flat avitar-text-center avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-card__body--compact">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Features</div>
+                    <div class="avitar-text-lg avitar-font-medium avitar-text-gray-600">
+                      ${{number-format (or @model.assessment.previousOtherValue 0)}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {{!-- Totals Row --}}
+          <div class="avitar-border-t avitar-pt-4">
+            <div class="avitar-flex avitar-justify-between avitar-items-start">
+              {{!-- Current Year Totals --}}
+              <div class="avitar-flex-1 avitar-text-center">
+                <h5 class="avitar-text-sm avitar-font-semibold avitar-text-primary avitar-mb-2">{{@model.property.taxYear}} Totals</h5>
+                <div class="avitar-space-y-2">
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Card Total</div>
+                    <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                      ${{number-format (add @model.property.buildingValue @model.property.landValue (or @model.property.otherValue 0))}}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Parcel Total</div>
+                    <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                      ${{number-format @model.property.totalValue}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {{!-- Last Changed Year Totals --}}
+              <div class="avitar-flex-1 avitar-text-center">
+                <h5 class="avitar-text-sm avitar-font-semibold avitar-text-gray-700 avitar-mb-2">{{@model.assessment.lastChangedYear}} Totals</h5>
+                <div class="avitar-space-y-2">
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Card Total</div>
+                    <div class="avitar-text-lg avitar-font-medium avitar-text-gray-600">
+                      ${{number-format (add @model.assessment.previousBuildingValue @model.assessment.previousLandValue (or @model.assessment.previousOtherValue 0))}}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Parcel Total</div>
+                    <div class="avitar-text-lg avitar-font-medium avitar-text-gray-600">
+                      ${{number-format @model.assessment.previousTotalValue}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {{!-- Assessment History --}}
+    <div class="avitar-flex-1">
+      <div class="avitar-card">
+        <div class="avitar-card__header avitar-card__header--colored">
+          <h3 class="avitar-card__title">Assessment History</h3>
+          <div class="avitar-card__subtitle">Recent Changes</div>
+        </div>
+        <div class="avitar-card__body">
+          {{#if @model.assessmentHistory}}
+            {{#each @model.assessmentHistory as |history|}}
+              <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3 avitar-pb-3 avitar-border-b">
+                <div>
+                  <div class="avitar-font-medium">{{history.effective_year}}</div>
+                  <div class="avitar-text-sm avitar-text-muted">{{history.change_reason}}</div>
+                </div>
+                <div class="avitar-text-right">
+                  <div class="avitar-font-semibold">${{number-format history.total_value}}</div>
+                  <div class="avitar-text-sm avitar-text-muted">{{date-format history.created_at "MMM DD, YYYY"}}</div>
+                </div>
+              </div>
+            {{/each}}
+          {{else}}
+            <div class="avitar-text-center avitar-text-muted avitar-py-4">
+              <div class="avitar-text-sm">No assessment history available</div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {{!-- Listing History --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">Listing History</h3>
+          <div class="avitar-card__subtitle">Property visits and inspections</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openListingHistoryModal}}
+          >
+            <i class="fas fa-edit avitar-mr-2"></i>
+            Edit
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+      {{#if this.listingEntries}}
+        <div class="avitar-table-wrapper">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Visit Date</th>
+                <th>Visitor Code</th>
+                <th>Reason Code</th>
+                <th>Notes</th>
+                <th>Added By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.listingEntries as |entry|}}
+                <tr>
+                  <td>{{date-format entry.visitDate "MMM DD, YYYY"}}</td>
+                  <td><span class="avitar-badge">{{entry.visitorCode}}</span></td>
+                  <td><span class="avitar-badge">{{entry.reasonCode}}</span></td>
+                  <td>{{or entry.notes "—"}}</td>
+                  <td>
+                    {{#if entry.createdBy}}
+                      <div class="avitar-text-sm">
+                        <div>{{entry.createdBy.firstName}} {{entry.createdBy.lastName}}</div>
+                        <div class="avitar-text-muted">{{date-format entry.createdAt "MMM DD, YYYY"}}</div>
+                      </div>
+                    {{else}}
+                      <span class="avitar-text-muted">—</span>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <i class="fas fa-clipboard-list avitar-text-4xl avitar-mb-4"></i>
+          <div class="avitar-text-lg avitar-font-medium">No listing history entries</div>
+          <div class="avitar-text-sm avitar-mt-2">Property visit records will appear here</div>
+          {{#if (can "update" "assessing")}}
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-mt-4"
+              {{on "click" this.openListingHistoryModal}}
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add First Entry
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+  
+  {{!-- Sales History --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">Sales History</h3>
+          <div class="avitar-card__subtitle">Property transfer records</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openSalesHistoryModal}}
+          >
+            <i class="fas fa-edit avitar-mr-2"></i>
+            Edit
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+      {{#if this.salesEntries}}
+        <div class="avitar-table-wrapper">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Sale Date</th>
+                <th>Sale Price</th>
+                <th>Sale Type</th>
+                <th>Buyer</th>
+                <th>Seller</th>
+                <th>Verified</th>
+                <th>Notes</th>
+                <th>Added By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.salesEntries as |entry|}}
+                <tr>
+                  <td>{{date-format entry.saleDate "MMM DD, YYYY"}}</td>
+                  <td>${{format-currency entry.salePrice}}</td>
+                  <td>
+                    {{#if entry.saleType}}
+                      <span class="avitar-badge">{{format-land-use-type entry.saleType}}</span>
+                    {{else}}
+                      —
+                    {{/if}}
+                  </td>
+                  <td>{{or entry.buyer "—"}}</td>
+                  <td>{{or entry.seller "—"}}</td>
+                  <td>
+                    {{#if entry.verified}}
+                      <span class="avitar-badge avitar-badge--success">
+                        <i class="fas fa-check avitar-mr-1"></i>Verified
+                      </span>
+                    {{else}}
+                      <span class="avitar-badge avitar-badge--warning">Unverified</span>
+                    {{/if}}
+                  </td>
+                  <td>{{or entry.notes "—"}}</td>
+                  <td>
+                    {{#if entry.createdBy}}
+                      <div class="avitar-text-sm">
+                        <div>{{entry.createdBy.firstName}} {{entry.createdBy.lastName}}</div>
+                        <div class="avitar-text-muted">{{date-format entry.createdAt "MMM DD, YYYY"}}</div>
+                      </div>
+                    {{else}}
+                      <span class="avitar-text-muted">—</span>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <i class="fas fa-dollar-sign avitar-text-4xl avitar-mb-4"></i>
+          <div class="avitar-text-lg avitar-font-medium">No sales history entries</div>
+          <div class="avitar-text-sm avitar-mt-2">Property sales records will appear here</div>
+          {{#if (can "update" "assessing")}}
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-mt-4"
+              {{on "click" this.openSalesHistoryModal}}
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add First Sale
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+  
+  {{!-- Property Notes --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">Property Notes</h3>
+          <div class="avitar-card__subtitle">Assessment and inspection notes</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openPropertyNotesModal}}
+          >
+            <i class="fas fa-edit avitar-mr-2"></i>
+            Edit
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    
+    <div class="avitar-card__body">
+      <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded-lg">
+        {{#if this.propertyNotes.notes}}
+          <p class="avitar-text-sm avitar-whitespace-pre-line">{{this.propertyNotes.notes}}</p>
+        {{else}}
+          <div class="avitar-text-center avitar-text-muted avitar-py-8">
+            <i class="fas fa-sticky-note avitar-text-4xl avitar-mb-4"></i>
+            <div class="avitar-text-lg avitar-font-medium">No notes recorded</div>
+            <div class="avitar-text-sm avitar-mt-2">Property notes and observations will appear here</div>
+            {{#if (can "update" "assessing")}}
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-mt-4"
+                {{on "click" this.openPropertyNotesModal}}
+              >
+                <i class="fas fa-plus avitar-mr-2"></i>
+                Add Notes
+              </button>
+            {{/if}}
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Modals --}}
+<Assessing::ListingHistoryEditModal
+  @isOpen={{this.showListingHistoryModal}}
+  @entry={{null}}
+  @onClose={{this.closeListingHistoryModal}}
+  @onSave={{this.saveListingEntry}}
+  @onDelete={{this.deleteListingEntry}}
+/>
+
+<Assessing::SalesHistoryEditModal
+  @isOpen={{this.showSalesHistoryModal}}
+  @entry={{null}}
+  @onClose={{this.closeSalesHistoryModal}}
+  @onSave={{this.saveSalesEntry}}
+  @onDelete={{this.deleteSalesEntry}}
+/>
+
+<Assessing::PropertyNotesEditModal
+  @isOpen={{this.showPropertyNotesModal}}
+  @notes={{this.propertyNotes}}
+  @onClose={{this.closePropertyNotesModal}}
+  @onSave={{this.savePropertyNotes}}
+/>

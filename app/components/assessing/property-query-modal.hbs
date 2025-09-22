@@ -1,0 +1,255 @@
+{{!-- Property Query Modal --}}
+{{#if @isOpen}}
+  {{!-- template-lint-disable no-invalid-interactive --}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeModal}}>
+    <div class="avitar-modal avitar-modal-lg" {{on "click" this.stopPropagation}}>
+    {{!-- template-lint-enable no-invalid-interactive --}}
+      {{!-- Modal Header --}}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-search avitar-mr-2"></i>
+          Query Properties
+        </h2>
+        <button 
+          type="button" 
+          class="avitar-modal__close"
+          {{on "click" this.closeModal}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{!-- Modal Body --}}
+      <form id="property-query-form" {{on "submit" this.executeQuery}} class="avitar-modal__body">
+        
+        {{!-- Basic Property Info --}}
+        <div class="avitar-form-grid avitar-form-grid--3-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="bedrooms">Bedrooms</label>
+            <select 
+              id="bedrooms"
+              class="avitar-input"
+              value={{this.queryParams.bedrooms}}
+              {{on "change" (fn this.updateParam "bedrooms")}}
+            >
+              <option value="">Any</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6+">6+</option>
+            </select>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="bathrooms">Bathrooms</label>
+            <select 
+              id="bathrooms"
+              class="avitar-input"
+              value={{this.queryParams.bathrooms}}
+              {{on "change" (fn this.updateParam "bathrooms")}}
+            >
+              <option value="">Any</option>
+              <option value="1">1</option>
+              <option value="1.5">1.5</option>
+              <option value="2">2</option>
+              <option value="2.5">2.5</option>
+              <option value="3">3</option>
+              <option value="3.5">3.5</option>
+              <option value="4+">4+</option>
+            </select>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="zone">Zone</label>
+            <select 
+              id="zone"
+              class="avitar-input"
+              value={{this.queryParams.zone}}
+              {{on "change" (fn this.updateParam "zone")}}
+            >
+              <option value="">Any Zone</option>
+              {{#each this.availableZones as |zone|}}
+                <option value={{zone}}>{{zone}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+
+        {{!-- Building Size --}}
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="building-size-min">Building Size Min (sq ft)</label>
+            <input 
+              id="building-size-min"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 1000"
+              value={{this.queryParams.buildingSizeMin}}
+              {{on "input" (fn this.updateParam "buildingSizeMin")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="building-size-max">Building Size Max (sq ft)</label>
+            <input 
+              id="building-size-max"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 5000"
+              value={{this.queryParams.buildingSizeMax}}
+              {{on "input" (fn this.updateParam "buildingSizeMax")}}
+            />
+          </div>
+        </div>
+
+        {{!-- Building Height --}}
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="building-height-min">Building Height Min (stories)</label>
+            <input 
+              id="building-height-min"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 1"
+              value={{this.queryParams.buildingHeightMin}}
+              {{on "input" (fn this.updateParam "buildingHeightMin")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="building-height-max">Building Height Max (stories)</label>
+            <input 
+              id="building-height-max"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 3"
+              value={{this.queryParams.buildingHeightMax}}
+              {{on "input" (fn this.updateParam "buildingHeightMax")}}
+            />
+          </div>
+        </div>
+
+        {{!-- Year Built --}}
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="year-built-min">Year Built Min</label>
+            <input 
+              id="year-built-min"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 1950"
+              value={{this.queryParams.yearBuiltMin}}
+              {{on "input" (fn this.updateParam "yearBuiltMin")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="year-built-max">Year Built Max</label>
+            <input 
+              id="year-built-max"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 2020"
+              value={{this.queryParams.yearBuiltMax}}
+              {{on "input" (fn this.updateParam "yearBuiltMax")}}
+            />
+          </div>
+        </div>
+
+        {{!-- Assessment Value --}}
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="assessment-min">Assessment Min ($)</label>
+            <input 
+              id="assessment-min"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 100000"
+              value={{this.queryParams.assessmentMin}}
+              {{on "input" (fn this.updateParam "assessmentMin")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="assessment-max">Assessment Max ($)</label>
+            <input 
+              id="assessment-max"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 500000"
+              value={{this.queryParams.assessmentMax}}
+              {{on "input" (fn this.updateParam "assessmentMax")}}
+            />
+          </div>
+        </div>
+
+        {{!-- Land Area --}}
+        <div class="avitar-form-grid avitar-form-grid--2-col avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="land-area-min">Land Area Min (sq ft)</label>
+            <input 
+              id="land-area-min"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 5000"
+              value={{this.queryParams.landAreaMin}}
+              {{on "input" (fn this.updateParam "landAreaMin")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="land-area-max">Land Area Max (sq ft)</label>
+            <input 
+              id="land-area-max"
+              type="number" 
+              class="avitar-input"
+              placeholder="e.g. 20000"
+              value={{this.queryParams.landAreaMax}}
+              {{on "input" (fn this.updateParam "landAreaMax")}}
+            />
+          </div>
+        </div>
+
+      </form>
+
+      {{!-- Modal Footer --}}
+      <div class="avitar-modal__footer">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <button 
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.clearFilters}}
+            disabled={{unless this.hasFilters true}}
+          >
+            Clear Filters
+          </button>
+
+          <div class="avitar-flex avitar-gap-2">
+            <button 
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.closeModal}}
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              class="avitar-btn avitar-btn--primary"
+              form="property-query-form"
+              disabled={{or this.isLoading (not this.hasFilters)}}
+              {{on "click" this.executeQuery}}
+            >
+              {{#if this.isLoading}}
+                Searching...
+              {{else}}
+                Search Properties
+              {{/if}}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}

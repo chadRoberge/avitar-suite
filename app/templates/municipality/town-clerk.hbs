@@ -1,0 +1,31 @@
+{{page-title "Town Clerk - " this.municipality.currentMunicipality.name}}
+
+<div class="module-page">
+  <div class="module-header">
+    <h1>Town Clerk</h1>
+    <p>Manage records and licenses</p>
+  </div>
+
+  <div class="module-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Records</h3>
+        <div class="stat-value">{{this.model.records.length}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Licenses</h3>
+        <div class="stat-value">{{this.model.licenses.length}}</div>
+      </div>
+      <div class="stat-card">
+        <h3>Meetings</h3>
+        <div class="stat-value">{{this.model.meetings.length}}</div>
+      </div>
+    </div>
+
+    <div class="module-placeholder">
+      <i class="icon-file-text"></i>
+      <h3>Town Clerk Module</h3>
+      <p>This module is under development. Full functionality will be available soon.</p>
+    </div>
+  </div>
+</div>

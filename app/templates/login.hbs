@@ -1,0 +1,271 @@
+{{page-title "Login - Avitar Municipal Portal"}}
+
+<div class="avitar-auth-container">
+  <div class="avitar-auth-background">
+    <div class="avitar-auth-background__pattern"></div>
+  </div>
+  
+  <div class="avitar-auth-content">
+    {{!-- Logo and Branding --}}
+    <div class="avitar-auth-brand">
+      <div class="avitar-auth-brand__logo">
+        <div class="avitar-topbar__brand-logo">A</div>
+      </div>
+      <h1 class="avitar-auth-brand__title">Municipal Portal</h1>
+      <p class="avitar-auth-brand__subtitle">Powered by Avitar</p>
+    </div>
+
+    {{!-- Form Container --}}
+    <div class="avitar-auth-form-container">
+      {{#if this.showLogin}}
+        {{!-- Login Form --}}
+        <div class="avitar-auth-form" data-form="login">
+          <div class="avitar-auth-form__header">
+            <h2 class="avitar-auth-form__title">Welcome Back</h2>
+            <p class="avitar-auth-form__subtitle">Sign in to access your municipal services</p>
+          </div>
+
+          <form {{on "submit" this.handleLogin}} class="avitar-auth-form__form">
+            {{#if this.errorMessage}}
+              <div class="avitar-alert avitar-alert--danger avitar-auth-form__error">
+                <div class="avitar-alert__content">
+                  <p class="avitar-alert__message">{{this.errorMessage}}</p>
+                </div>
+              </div>
+            {{/if}}
+
+            <div class="avitar-form-group">
+              <label class="avitar-label avitar-label--required" for="login-email">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="login-email"
+                class="avitar-input"
+                placeholder="Enter your email address"
+                value={{this.model.loginForm.email}}
+                {{on "input" (fn this.updateLoginField "email")}}
+                required
+              />
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label avitar-label--required" for="login-password">
+                Password
+              </label>
+              <input
+                type="password"
+                id="login-password"
+                class="avitar-input"
+                placeholder="Enter your password"
+                value={{this.model.loginForm.password}}
+                {{on "input" (fn this.updateLoginField "password")}}
+                required
+              />
+            </div>
+
+            <div class="avitar-auth-form__actions">
+              <button
+                type="submit"
+                class="avitar-btn avitar-btn--primary avitar-btn--full {{if this.isLoading 'avitar-btn--loading'}}"
+                disabled={{this.isLoading}}
+              >
+                {{#if this.isLoading}}
+                  Signing In...
+                {{else}}
+                  Sign In
+                {{/if}}
+              </button>
+            </div>
+          </form>
+
+          <div class="avitar-auth-form__footer">
+            <p class="avitar-auth-form__switch">
+              Don't have an account?
+              <button
+                type="button"
+                class="avitar-btn--link"
+                {{on "click" this.toggleForm}}
+              >
+                Sign up here
+              </button>
+            </p>
+          </div>
+        </div>
+
+      {{else}}
+        {{!-- Signup Form --}}
+        <div class="avitar-auth-form" data-form="signup">
+          <div class="avitar-auth-form__header">
+            <h2 class="avitar-auth-form__title">Create Account</h2>
+            <p class="avitar-auth-form__subtitle">Join the municipal services portal</p>
+          </div>
+
+          <form {{on "submit" this.handleSignup}} class="avitar-auth-form__form">
+            {{#if this.errorMessage}}
+              <div class="avitar-alert avitar-alert--danger avitar-auth-form__error">
+                <div class="avitar-alert__content">
+                  <p class="avitar-alert__message">{{this.errorMessage}}</p>
+                </div>
+              </div>
+            {{/if}}
+
+            {{!-- User Type Selection --}}
+            <div class="avitar-form-group">
+              <label class="avitar-label">Account Type</label>
+              <div class="avitar-user-type-selector">
+                <button
+                  type="button"
+                  class="avitar-user-type-option {{if (eq this.model.signupForm.userType 'residential') 'avitar-user-type-option--active'}}"
+                  {{on "click" (fn this.selectUserType "residential")}}
+                >
+                  <div class="avitar-user-type-option__icon">🏠</div>
+                  <div class="avitar-user-type-option__content">
+                    <h3 class="avitar-user-type-option__title">Residential</h3>
+                    <p class="avitar-user-type-option__description">
+                      For homeowners and residential property management
+                    </p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  class="avitar-user-type-option {{if (eq this.model.signupForm.userType 'commercial') 'avitar-user-type-option--active'}}"
+                  {{on "click" (fn this.selectUserType "commercial")}}
+                >
+                  <div class="avitar-user-type-option__icon">🏢</div>
+                  <div class="avitar-user-type-option__content">
+                    <h3 class="avitar-user-type-option__title">Commercial</h3>
+                    <p class="avitar-user-type-option__description">
+                      For businesses and commercial property owners
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {{!-- Name Fields --}}
+            <div class="avitar-form-row">
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required" for="signup-firstname">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="signup-firstname"
+                  class="avitar-input"
+                  placeholder="First name"
+                  value={{this.model.signupForm.firstName}}
+                  {{on "input" (fn this.updateSignupField "firstName")}}
+                  required
+                />
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required" for="signup-lastname">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="signup-lastname"
+                  class="avitar-input"
+                  placeholder="Last name"
+                  value={{this.model.signupForm.lastName}}
+                  {{on "input" (fn this.updateSignupField "lastName")}}
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label avitar-label--required" for="signup-email">
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="signup-email"
+                class="avitar-input"
+                placeholder="Enter your email address"
+                value={{this.model.signupForm.email}}
+                {{on "input" (fn this.updateSignupField "email")}}
+                required
+              />
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label avitar-label--required" for="signup-password">
+                Password
+              </label>
+              <input
+                type="password"
+                id="signup-password"
+                class="avitar-input"
+                placeholder="Create a password (8+ characters)"
+                value={{this.model.signupForm.password}}
+                {{on "input" (fn this.updateSignupField "password")}}
+                required
+              />
+              <div class="avitar-form-help">
+                Password must be at least 8 characters long
+              </div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label avitar-label--required" for="signup-confirm-password">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="signup-confirm-password"
+                class="avitar-input"
+                placeholder="Confirm your password"
+                value={{this.model.signupForm.confirmPassword}}
+                {{on "input" (fn this.updateSignupField "confirmPassword")}}
+                required
+              />
+            </div>
+
+            <div class="avitar-auth-form__actions">
+              <button
+                type="submit"
+                class="avitar-btn avitar-btn--primary avitar-btn--full {{if this.isLoading 'avitar-btn--loading'}}"
+                disabled={{this.isLoading}}
+              >
+                {{#if this.isLoading}}
+                  Creating Account...
+                {{else}}
+                  Create Account
+                {{/if}}
+              </button>
+            </div>
+          </form>
+
+          <div class="avitar-auth-form__footer">
+            <p class="avitar-auth-form__switch">
+              Already have an account?
+              <button
+                type="button"
+                class="avitar-btn--link"
+                {{on "click" this.toggleForm}}
+              >
+                Sign in here
+              </button>
+            </p>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+
+    {{!-- Footer --}}
+    <div class="avitar-auth-footer">
+      <p class="avitar-auth-footer__text">
+        © 2024 Avitar Associates. Secure municipal services platform.
+      </p>
+      <div class="avitar-auth-footer__links">
+        <a href="#" class="avitar-auth-footer__link">Privacy Policy</a>
+        <a href="#" class="avitar-auth-footer__link">Terms of Service</a>
+        <a href="#" class="avitar-auth-footer__link">Support</a>
+      </div>
+    </div>
+  </div>
+</div>

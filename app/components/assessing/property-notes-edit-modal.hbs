@@ -1,0 +1,41 @@
+{{#if @isOpen}}
+  {{!-- Trigger getter to update form --}}
+  {{this.modalData}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">Edit Property Notes</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label" for="notes">Notes</label>
+          <textarea
+            id="notes"
+            rows="6"
+            class="avitar-textarea"
+            value={{this.notes}}
+            {{on "input" this.updateNotes}}
+            placeholder="Property notes and observations..."
+          >{{this.notes}}</textarea>
+          <div class="avitar-help-text">Notes about the property</div>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <div class="avitar-flex avitar-justify-end avitar-gap-2">
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+              Cancel
+            </button>
+            <button type="submit" class="avitar-btn avitar-btn--primary">
+              <i class="fas fa-save avitar-mr-2"></i>
+              Save Notes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

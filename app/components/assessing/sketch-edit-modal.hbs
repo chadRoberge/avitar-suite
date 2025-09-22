@@ -1,0 +1,326 @@
+{{!-- Sketch Edit Modal --}}
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.handleOverlayClick}}>
+    <div class="avitar-modal avitar-modal--xl" style="width: 95vw; max-width: 1400px;" {{on "click" this.preventClose}}>
+      <div class="avitar-modal__header">
+        <div class="avitar-flex avitar-items-center avitar-gap-4 avitar-flex-grow">
+          {{!-- Drawing Tools in Header --}}
+          <div class="avitar-flex avitar-gap-2">
+            <button 
+              type="button"
+              class="avitar-btn avitar-btn--sm {{if (eq this.drawingMode 'rectangle') 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+              {{on "click" (fn this.setDrawingMode "rectangle")}}
+            >
+              <i class="fas fa-square"></i>
+              Rectangle
+            </button>
+            <button 
+              type="button"
+              class="avitar-btn avitar-btn--sm {{if (eq this.drawingMode 'circle') 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+              {{on "click" (fn this.setDrawingMode "circle")}}
+            >
+              <i class="fas fa-circle"></i>
+              Circle
+            </button>
+            <button 
+              type="button"
+              class="avitar-btn avitar-btn--sm {{if (eq this.drawingMode 'polygon') 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+              {{on "click" (fn this.setDrawingMode "polygon")}}
+            >
+              <i class="fas fa-draw-polygon"></i>
+              Polygon
+            </button>
+            
+            {{!-- Clear Selection Button --}}
+            {{#if this.selectedShape}}
+              <div class="avitar-border-l avitar-pl-2">
+                <button 
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                  {{on "click" this.clearSelection}}
+                >
+                  <i class="fas fa-times-circle"></i>
+                  Clear Selection
+                </button>
+              </div>
+            {{/if}}
+            
+            {{!-- Shape Completion Controls --}}
+            {{#if this.drawingMode}}
+              <div class="avitar-border-l avitar-pl-2 avitar-flex avitar-gap-2">
+                {{#if (eq this.drawingMode "polygon")}}
+                  <div class="avitar-text-sm avitar-text-muted avitar-px-2 avitar-flex avitar-items-center">
+                    <i class="fas fa-info-circle avitar-mr-1"></i>
+                    Left click: add vertex | Right click: complete
+                  </div>
+                {{/if}}
+                <button 
+                  type="button"
+                  class="avitar-btn avitar-btn--warning avitar-btn--sm"
+                  {{on "click" this.cancelDrawing}}
+                >
+                  <i class="fas fa-times"></i>
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                  {{on "click" this.startNewShape}}
+                >
+                  <i class="fas fa-plus"></i>
+                  New Shape
+                </button>
+              </div>
+            {{/if}}
+          </div>
+
+          {{!-- Status indicator --}}
+          {{#if @isDirty}}
+            <span class="avitar-text-warning">
+              <i class="fas fa-circle avitar-text-xs"></i>
+              Unsaved changes
+            </span>
+          {{/if}}
+        </div>
+
+        <button 
+          type="button" 
+          class="avitar-modal__close"
+          {{on "click" @onClose}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <form {{on "submit" this.handleSave}}>
+
+          {{!-- Canvas and Right Panel Layout --}}
+          <div class="avitar-flex avitar-gap-4">
+            {{!-- Canvas (Left Side) --}}
+            <div class="avitar-flex-4">
+              <div class="avitar-border avitar-rounded" style="height: 60vh; overflow: hidden;">
+                <Assessing::SketchCanvas 
+                  @shapes={{this.shapesForCanvas}}
+                  @sketch={{this.editedSketch}}
+                  @drawingMode={{this.drawingMode}}
+                  @selectedShape={{this.selectedShape}}
+                  @onShapeAdd={{this.addShape}}
+                  @onShapeSelect={{this.selectShape}}
+                  @onFinishPolygon={{this.finishPolygon}}
+                  @onForceUpdate={{this.handleCanvasUpdate}}
+                  @onCanvasReady={{this.handleCanvasReady}}
+                  @width={{800}}
+                  @height={{500}}
+                />
+              </div>
+            </div>
+
+            {{!-- Right Panel --}}
+            <div class="avitar-flex-6">
+              <div class="avitar-border avitar-rounded" style="height: 60vh; overflow-y: auto;">
+                {{#if this.drawingMode}}
+                  <div class="avitar-p-4">
+                    {{!-- Drawing Mode: Show Description Selection --}}
+                    <h5 class="avitar-font-semibold avitar-mb-3">
+                      <i class="fas fa-tags avitar-mr-2"></i>
+                      Shape Attributes
+                    </h5>
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-3">
+                      Click attributes to add them to new shapes (order matters):
+                    </div>
+                    
+                    {{!-- Available Description Buttons --}}
+                    <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2 avitar-mb-4">
+                      {{#if this.factorsLoaded}}
+                        {{#each this.availableDescriptions as |desc|}}
+                          <button 
+                            type="button"
+                            class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-text-xs avitar-p-2"
+                            {{on "click" (fn this.addPreSelectedAttribute desc.code)}}
+                          >
+                            <div class="avitar-font-semibold">{{desc.code}}</div>
+                            <div class="avitar-text-xs avitar-text-muted">{{desc.points}}%</div>
+                          </button>
+                        {{else}}
+                          <div class="avitar-text-center avitar-text-muted avitar-py-4 avitar-col-span-2">
+                            No sub-area factors available. Please add some in the municipality settings.
+                          </div>
+                        {{/each}}
+                      {{else}}
+                        <div class="avitar-text-center avitar-text-muted avitar-py-4 avitar-col-span-2">
+                          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                          Loading sub-area factors...
+                        </div>
+                      {{/if}}
+                    </div>
+                    
+                    {{!-- Selected Attributes List --}}
+                    {{#if this.preSelectedAttributes.length}}
+                      <div class="avitar-bg-success-light avitar-p-3 avitar-rounded">
+                        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-2">
+                          <strong class="avitar-text-sm">Selected (Top to Bottom):</strong>
+                          <button 
+                            type="button" 
+                            class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                            {{on "click" this.clearPreSelectedAttributes}}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                        <div class="avitar-space-y-1">
+                          {{#each this.preSelectedAttributes as |code index|}}
+                            <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-2 avitar-bg-white avitar-border avitar-rounded avitar-text-sm">
+                              <span>
+                                <span class="avitar-font-semibold">{{code}}</span>
+                                <span class="avitar-text-xs avitar-text-muted avitar-ml-1">
+                                  ({{this.getDescriptionRate code}}x)
+                                </span>
+                              </span>
+                              <button 
+                                type="button"
+                                class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                                {{on "click" (fn this.removePreSelectedAttribute index)}}
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </div>
+                          {{/each}}
+                        </div>
+                        <div class="avitar-mt-2 avitar-text-sm">
+                          <strong>Total Multiplier:</strong> {{this.preSelectedEffectiveRate}}x
+                        </div>
+                      </div>
+                    {{/if}}
+                  </div>
+                {{else if this.selectedShape}}
+                  {{!-- Selected Shape Mode: Show Shape Properties --}}
+                  {{!-- Sticky Shape Info Section --}}
+                  <div class="avitar-sticky avitar-top-0 avitar-bg-white avitar-z-10 avitar-pb-4 avitar-border-b avitar-mb-4" style="position: sticky; top: 0; z-index: 10;">
+                    {{!-- Shape Info --}}
+                    <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded avitar-mb-3">
+                      <div class="avitar-flex avitar-justify-end avitar-mb-2">
+                        <button 
+                          type="button"
+                          class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                          {{on "click" (fn this.deleteShape this.selectedShape._id)}}
+                        >
+                          <i class="fas fa-trash avitar-mr-1"></i>
+                          Delete
+                        </button>
+                      </div>
+                      <div class="avitar-text-sm avitar-mb-2">
+                        <div><strong>Total Area:</strong> {{number-format this.selectedShape.area}} sq ft</div>
+                        <div><strong>Total Effective:</strong> {{number-format this.selectedShape.total_effective_area}} sq ft</div>
+                      </div>
+                      
+                      {{!-- Compact Description Breakdown --}}
+                      {{#if (and this.selectedShape.descriptions this.selectedShape.descriptions.length)}}
+                        <div class="avitar-border-t avitar-pt-2">
+                          <div class="avitar-text-xs avitar-font-semibold avitar-mb-1 avitar-text-gray-600">Description Breakdown:</div>
+                          {{#each this.selectedShape.descriptions as |desc index|}}
+                            <div class="avitar-flex avitar-justify-between avitar-items-center avitar-text-xs avitar-py-1">
+                              <span class="avitar-font-semibold">{{this.getDescriptionLabel desc}}</span>
+                              <span>{{this.getDescriptionRate (this.getDescriptionLabel desc)}}x</span>
+                              <span class="avitar-font-semibold avitar-text-green-600">
+                                {{number-format (this.getDescriptionEffectiveArea desc)}} sq ft
+                              </span>
+                              <div class="avitar-flex avitar-gap-1 avitar-ml-2">
+                                {{!-- Move Up Button --}}
+                                <button 
+                                  type="button"
+                                  class="avitar-btn avitar-btn--secondary avitar-btn--xs {{if (eq index 0) 'avitar-opacity-50' ''}}"
+                                  disabled={{eq index 0}}
+                                  {{on "click" (fn this.moveShapeDescriptionUp this.selectedShape._id index)}}
+                                >
+                                  <i class="fas fa-chevron-up"></i>
+                                </button>
+                                {{!-- Move Down Button --}}
+                                <button 
+                                  type="button"
+                                  class="avitar-btn avitar-btn--secondary avitar-btn--xs {{if (eq index (subtract this.selectedShape.descriptions.length 1)) 'avitar-opacity-50' ''}}"
+                                  disabled={{eq index (subtract this.selectedShape.descriptions.length 1)}}
+                                  {{on "click" (fn this.moveShapeDescriptionDown this.selectedShape._id index)}}
+                                >
+                                  <i class="fas fa-chevron-down"></i>
+                                </button>
+                                {{!-- Remove Button --}}
+                                <button 
+                                  type="button"
+                                  class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                                  {{on "click" (fn this.removeShapeDescription this.selectedShape._id index)}}
+                                >
+                                  <i class="fas fa-times"></i>
+                                </button>
+                              </div>
+                            </div>
+                          {{/each}}
+                        </div>
+                      {{/if}}
+                    </div>
+                  </div>
+
+                  {{!-- Add Descriptions --}}
+                  <div class="avitar-mb-4 avitar-p-4">
+                    <div class="avitar-font-semibold avitar-mb-2">Add Descriptions:</div>
+                    <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2">
+                      {{#if this.factorsLoaded}}
+                        {{#each this.availableDescriptions as |desc|}}
+                          <button 
+                            type="button"
+                            class="avitar-btn avitar-btn--secondary avitar-btn--xs avitar-p-2"
+                            {{on "click" (fn this.addShapeDescription this.selectedShape._id desc.code)}}
+                          >
+                            <div class="avitar-font-semibold">{{desc.code}}</div>
+                            <div class="avitar-text-xs avitar-text-muted">{{desc.points}}%</div>
+                          </button>
+                        {{else}}
+                          <div class="avitar-text-center avitar-text-muted avitar-py-4 avitar-col-span-2">
+                            No sub-area factors available. Please add some in the municipality settings.
+                          </div>
+                        {{/each}}
+                      {{else}}
+                        <div class="avitar-text-center avitar-text-muted avitar-py-4 avitar-col-span-2">
+                          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                          Loading sub-area factors...
+                        </div>
+                      {{/if}}
+                    </div>
+                  </div>
+
+                {{else}}
+                  {{!-- Default State --}}
+                  <div class="avitar-text-center avitar-py-8 avitar-p-4">
+                    <i class="fas fa-mouse-pointer avitar-text-4xl avitar-text-muted avitar-mb-3"></i>
+                    <div class="avitar-text-muted">
+                      <div class="avitar-font-semibold avitar-mb-1">Select a drawing tool</div>
+                      <div class="avitar-text-sm">Or click a shape to edit it</div>
+                    </div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" @onClose}}
+        >
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.handleSave}}
+        >
+          <i class="fas fa-save avitar-mr-2"></i>
+          Save Sketch
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

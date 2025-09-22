@@ -1,0 +1,153 @@
+{{!-- Current Use Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header avitar-mb-2">
+    <h1 class="avitar-page-title avitar-skinny">Current Use</h1>
+    <div class="avitar-page-subtitle">Configure current use categories with rates</div>
+  </div>
+
+  {{!-- Ad Valorem Display Toggle --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Ad Valorem Display Settings</h3>
+          <div class="avitar-card__subtitle">Control whether ad valorem values are shown on current use land</div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-center avitar-gap-3">
+        <label class="avitar-toggle">
+          <input 
+            type="checkbox" 
+            class="avitar-toggle__input" 
+            checked={{this.showAdValorem}} 
+            {{on "change" this.toggleAdValorem}}
+          />
+          <span class="avitar-toggle__slider"></span>
+        </label>
+        <div>
+          <div class="avitar-font-semibold">Show Ad Valorem Values</div>
+          <div class="avitar-text-sm avitar-text-muted">
+            {{if this.showAdValorem 
+              "Ad valorem values will be displayed on current use land properties" 
+              "Ad valorem values will be hidden on current use land properties"
+            }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Current Use Categories</h3>
+          <div class="avitar-card__subtitle">Categories with codes, descriptions, display text, and rate ranges</div>
+        </div>
+        {{#unless (or this.isAddingCurrentUse this.isEditingCurrentUse)}}
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingCurrentUse}}>
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add Current Use Category
+          </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if (or this.isAddingCurrentUse this.isEditingCurrentUse)}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">
+            {{if this.isEditingCurrentUse "Edit Current Use Category" "Add New Current Use Category"}}
+          </h4>
+          
+          <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-4">
+            <div class="avitar-form-group">
+              <label class="avitar-label">Code</label>
+              <input type="text" class="avitar-input" value={{this.newCurrentUseCode}} {{on "input" this.updateCurrentUseCode}} placeholder="e.g., FARM" maxlength="10" />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Display Text</label>
+              <input type="text" class="avitar-input" value={{this.newCurrentUseDisplayText}} {{on "input" this.updateCurrentUseDisplayText}} placeholder="e.g., Farm Land" maxlength="50" />
+            </div>
+          </div>
+
+          <div class="avitar-form-group avitar-mb-4">
+            <label class="avitar-label">Description</label>
+            <textarea class="avitar-input" rows="2" value={{this.newCurrentUseDescription}} {{on "input" this.updateCurrentUseDescription}} placeholder="e.g., Agricultural property used for farming operations"></textarea>
+          </div>
+
+          <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-4">
+            <div class="avitar-form-group">
+              <label class="avitar-label">Minimum Rate</label>
+              <input type="number" class="avitar-input" value={{this.newCurrentUseMinRate}} {{on "input" this.updateCurrentUseMinRate}} step="0.01" min="0" placeholder="e.g., 500.00" />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Maximum Rate</label>
+              <input type="number" class="avitar-input" value={{this.newCurrentUseMaxRate}} {{on "input" this.updateCurrentUseMaxRate}} step="0.01" min="0" placeholder="e.g., 5000.00" />
+            </div>
+          </div>
+
+          <div class="avitar-flex avitar-gap-2">
+            <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveCurrentUse}}>
+              {{if this.isEditingCurrentUse "Update Category" "Save Category"}}
+            </button>
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingCurrentUse this.cancelEditingCurrentUse this.cancelAddingCurrentUse)}}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      {{/if}}
+
+      {{#if this.reactiveCurrentUseCategories.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Display Text</th>
+                <th>Description</th>
+                <th>Min Rate</th>
+                <th>Max Rate</th>
+                <th class="avitar-table__actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.reactiveCurrentUseCategories as |category|}}
+                <tr>
+                  <td>
+                    <span class="avitar-badge avitar-badge--primary">{{category.code}}</span>
+                  </td>
+                  <td>{{category.displayText}}</td>
+                  <td>{{category.description}}</td>
+                  <td>{{format-currency category.minRate}}</td>
+                  <td>{{format-currency category.maxRate}}</td>
+                  <td class="avitar-table__actions">
+                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                      {{on "click" (fn this.startEditingCurrentUse category)}} title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                      {{on "click" (fn this.deleteCurrentUse category)}} title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-text-center avitar-py-6">
+          <i class="fas fa-tags avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+          <div class="avitar-font-semibold avitar-mb-2">No Current Use Categories</div>
+          <div class="avitar-text-muted avitar-mb-4">Add your first current use category to get started</div>
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingCurrentUse}}>
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add First Category
+          </button>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

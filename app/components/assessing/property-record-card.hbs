@@ -1,0 +1,473 @@
+{{!-- Property Record Card Component --}}
+<div class="property-record-card-page property-record-card-page--{{@cardNumber}}">
+  <div class="property-record-card__header">
+    <div class="avitar-flex avitar-flex-row avitar-flex-20">
+      <div class="avitar-flex-2">
+        <h5 class="avitar-skinny">Parcel ID: {{@property.pid_formatted}}</h5>
+      </div>
+      <div class="avitar-flex-2">
+        <h5 class="avitar-skinny">{{this.cardTitle}} of {{@property.cards.total_cards}}</h5>
+      </div>
+      <div class="avitar-flex-2">
+        <h4 class="avitar-skinny">
+          <uppercase>{{@property.location.address}}</uppercase>
+        </h4>
+      </div>
+      <div class="avitar-flex-2">
+        <h4 class="avitar-skinny">
+          <uppercase>{{@municipalityName.name}}</uppercase>
+        </h4>
+      </div>
+      <div class="avitar-flex-2 avitar-items-end">
+        <div class="">
+          <h5 class="avitar-skinny avitar-flex avitar-justify-end">Printed: {{date-format 'now'}}</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{#if (eq @cardNumber 1)}}
+  {{!-- Page 1 Content --}}
+  {{!-- Top content (natural height) --}}
+  <div class="property-record-content-top">
+    <div class="avitar-flex avitar-flex-row" style="border-right: 1px black solid;">
+      <div class="avitar-flex-5">
+        <div class="avitar-flex avitar-flex-row property-record-owner-row">
+          {{!-- Owner Information Section --}}
+          <div class="avitar-flex-2 property-record-section">
+            <div class="avitar-text-center avitar-text-lg">
+              <h5>OWNER INFORMATION</h5>
+            </div>
+            <div class="property-record-grid">
+              <div class="avitar-flex-1">
+                <div class="avitar-flex"><span>{{@property.owners.primary.primary_name}}</span></div>
+                <div class="avitar-flex">
+                  <span>{{@property.owners.primary.mailing_street}}</span>
+                </div>
+                <div class="avitar-flex">
+                  <span>{{@property.owners.primary.mailing_city}}, {{@property.owners.primary.mailing_state}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {{!-- Sale Information Section --}}
+          <div class="avitar-flex-4 property-record-section">
+            <div class="avitar-text-center">
+              <h5>SALES HISTORY</h5>
+            </div>
+          </div>
+        </div>
+        <div class="avitar-flex avitar-flex-row property-record-listing-row">
+          {{!-- Listing Information Section --}}
+          <div class="avitar-flex-2 property-record-section">
+            <div class="avitar-text-center">
+              <h5>LISTING HISTORY</h5>
+            </div>
+            <div class="property-record-grid">
+              <div class="avitar-flex-1">
+                <div class="avitar-flex"><span>{{@property.owners.primary.primary_name}}</span></div>
+                <div class="avitar-flex">
+                  <span>{{@property.owners.primary.mailing_street}}</span>
+                </div>
+                <div class="avitar-flex">
+                  <span>{{@property.owners.primary.mailing_city}}, {{@property.owners.primary.mailing_state}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {{!-- Notes Information Section --}}
+          <div class="avitar-flex-4 property-record-section">
+            <div class="avitar-text-center">
+              <h5>PROPERTY NOTES</h5>
+            </div>
+            <div class="property-record-grid">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="avitar-flex-2">
+        <div class="property-record-section">
+        </div>
+      </div>
+    </div>
+  </div>
+  {{!-- Bottom content (flex-based height) --}}
+  <div class="property-record-content-bottom">
+    {{!-- Features section (minimum 2.25in) --}}
+    <div class="property-record-features-section" style="border-right: 1px black solid;">
+      <div class="avitar-flex avitar-flex-row">
+        <div class="avitar-flex-5 property-record-features-section property-record-section">
+          <div class="avitar-text-center">
+            <h5>EXTRA FEATURES VALUATION</h5>
+          </div>
+          <div class="avitar-pl-1 avitar-pr-1">
+            {{#if this.hasFeatures}}
+            {{!-- Flexbox Table Header --}}
+            <div class="avitar-flex-row avitar-flex property-record-table-header avitar-border-b">
+              <div class="avitar-text-left avitar-flex-8">Feature Type</div>
+              <div class="avitar-text-right avitar-flex-3">Units</div>
+              <div class="avitar-text-right avitar-flex-4">Length x Width</div>
+              <div class="avitar-text-right avitar-flex-3">Size Adj</div>
+              <div class="avitar-text-right avitar-flex-3">Rate</div>
+              <div class="avitar-text-right avitar-flex-3">Cond</div>
+              <div class="avitar-text-right avitar-flex-4">Tax Value</div>
+              <div class="avitar-text-left avitar-flex-8">
+                <div class="avitar-pl-1">Notes</div>
+              </div>
+            </div>
+            {{!-- Features Details --}}
+            <div class="avitar-flex-table-body">
+              {{#each @propertyFeatures.features as |feature|}}
+              <div class="avitar-flex avitar-flex-row property-record-table-row">
+                {{!-- Feature Type --}}
+                <div class="avitar-flex-8">
+                  {{feature.description}}
+                </div>
+                {{!-- Units --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+                  {{feature.units}}
+                </div>
+                {{!-- Length x Width --}}
+                <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                  {{#if (eq feature.measurement_type "length_width")}}
+                  {{feature.length}} x {{feature.width}}
+                  {{else}}
+                  {{feature.units}}
+                  {{/if}}
+                </div>
+                {{!-- Size Adj --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+                  {{number-format feature.size_adjustment 2}}
+                </div>
+                {{!-- Rate --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+                  ${{number-format feature.rate 0}}
+                </div>
+                {{!-- Condition --}}
+                <div class="avitar-flex-3 avitar-text-right">
+                  <div class="avitar-pr-1">
+                    {{feature.condition}}
+                  </div>
+                </div>
+                {{!-- Tax Value --}}
+                <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                  ${{number-format feature.calculated_value}}
+                </div>
+                {{!-- Notes --}}
+                <div class="avitar-flex-8">
+                  <div class="avitar-pl-1">
+                    {{feature.notes}}
+                  </div>
+                </div>
+              </div>
+              {{/each}}
+            </div>
+            {{else}}
+            <div class="avitar-text-center avitar-text-muted avitar-py-8">
+              <div>No property features recorded</div>
+              <div class="avitar-text-sm avitar-mt-2">Property features will appear here when available</div>
+            </div>
+            {{/if}}
+          </div>
+        </div>
+        <div class="avitar-flex-2">
+          <div class="property-record-section" style="min-height: 1.25in;">
+            <div class="avitar-text-center">
+              <h5>MUNICIPAL SOFTWARE BY AVITAR</h5>
+            </div>
+          </div>
+          <div class="property-record-section" style="min-height: 1.25in;">
+            <div class="avitar-text-center">
+              <h5>PARCEL TOTAL TAXABLE VALUE</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{!-- Land assessment (fill remaining space) --}}
+    <div class="property-record-land-section property-record-section">
+      <div class="avitar-text-center">
+        <h5>LAND ASSESSMENT</h5>
+      </div>
+      <div class="avitar-pl-1 avitar-pr-1">
+        {{#if this.hasLandData}}
+        <div class="avitar-flex avitar-flex-row property-record-table-header avitar-pb-1">
+          {{!-- Zone Info --}}
+          <div class="avitar-flex-3">
+            Zone Name: {{@landAssessment.assessment.zone_name}}
+          </div>
+          <div class="avitar-flex-5 avitar-pl-4">
+            Zone Dsc:{{@landAssessment.assessment.zone_description}}
+          </div>
+          <div class="avitar-flex-4 avitar-pl-4">
+            Minimum Acreage:{{@landAssessment.assessment.zone_minimum_acreage}}
+          </div>
+          <div class="avitar-flex-4 avitar-pl-4">
+            Minimum Frontage:{{@landAssessment.assessment.zone_minimum_frontage}}
+          </div>
+          <div class="avitar-flex-3 avitar-pl-4">
+            Site: {{@landAssessment.assessment.site_conditions_name}}
+          </div>
+          <div class="avitar-flex-3">
+            Driveway: {{@landAssessment.assessment.driveway_type_name}}
+          </div>
+          <div class="avitar-flex-3">
+            Road: {{@landAssessment.assessment.road_type_name}}
+          </div>
+        </div>
+        {{!-- Flexbox Table Header --}}
+        <div class="avitar-flex-row avitar-flex property-record-table-header avitar-border-b">
+          <div class="avitar-text-left avitar-flex-8">Land Type</div>
+          <div class="avitar-text-right avitar-flex-4">Units</div>
+          <div class="avitar-text-right avitar-flex-4">Base Rate</div>
+          <div class="avitar-text-right avitar-flex-2">NC</div>
+          <div class="avitar-text-right avitar-flex-2">Adj</div>
+          <div class="avitar-text-right avitar-flex-2">Site</div>
+          <div class="avitar-text-right avitar-flex-2">DWay</div>
+          <div class="avitar-text-right avitar-flex-2">Road</div>
+          <div class="avitar-text-right avitar-flex-4">Topography</div>
+          <div class="avitar-text-right avitar-flex-2">Cond</div>
+          <div class="avitar-text-right avitar-flex-4">AD VOLOREM</div>
+          <div class="avitar-text-right avitar-flex-2">SPI</div>
+          <div class="avitar-text-right avitar-flex-2">R</div>
+          <div class="avitar-text-right avitar-flex-4">Tax Value</div>
+          <div class="avitar-text-left avitar-flex-12">
+            <div class="avitar-pl-1">Notes</div>
+          </div>
+        </div>
+        {{!-- Land Use Details --}}
+        <div class="avitar-flex-table-body">
+          {{#each @landAssessment.assessment.land_use_details as |detail index|}}
+          <div class="avitar-flex avitar-flex-row property-record-table-row">
+            {{!-- Land Use Type --}}
+            <div class="avitar-flex-8">
+              {{detail.land_use_type}}
+            </div>
+            {{!-- Size with Units --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              {{detail.size}} {{detail.size_unit}}
+            </div>
+            {{!-- Base Rate --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              {{#if detail.is_excess_acreage}}
+              {{number-format detail.baseRate 0}}
+              {{else}}
+              {{number-format detail.baseValue 0}}
+              {{/if}}
+            </div>
+            {{!-- NC --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{#if detail.is_excess_acreage}}
+                X
+                {{else}}
+                {{@landAssessment.assessment.neighborhood_code}}
+                {{/if}}
+              </div>
+            </div>
+            {{!-- Adjustment --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="">
+                {{#if detail.is_excess_acreage}}
+                {{subtract 100 detail.economyOfScaleFactor}}
+                {{else}}
+                {{multiply detail.neighborhoodFactor 100}}
+                {{/if}}
+              </div>
+            </div>
+            {{!-- Site --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{#if (eq index 0)}}
+                {{multiply 100 detail.siteFactor}}
+                {{/if}}
+              </div>
+            </div>
+            {{!-- Driveway --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{#if (eq index 0)}}
+                {{multiply 100 detail.drivewayFactor}}
+                {{/if}}
+              </div>
+            </div>
+            {{!-- Road --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{#if (eq index 0)}}
+                {{multiply 100 detail.roadFactor}}
+                {{/if}}
+              </div>
+            </div>
+            {{!-- Topography --}}
+            <div class="avitar-flex-4 avitar-text-right">
+              <div class="">
+                <uppercase>{{detail.topography}}-{{multiply 100 detail.topographyFactor}}</uppercase>
+              </div>
+            </div>
+            {{!-- Condition --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{detail.condition}}
+              </div>
+            </div>
+            {{!-- Market Value --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              ${{number-format detail.marketValue}}
+            </div>
+            {{!-- SPI --}}
+            <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+              {{detail.spi}}
+            </div>
+            {{!-- Recreational --}}
+            <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+            </div>
+            {{!-- Tax Value --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              ${{number-format detail.assessedValue}}
+            </div>
+            {{!-- Notes --}}
+            <div class="avitar-flex-12">
+              <div class="avitar-pl-1">
+                {{detail.notes}}
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{!-- Calculated Totals Section - Aligned with columns --}}
+        {{#if @landAssessment.assessment.calculated_totals}}
+        <div class="avitar-border-t avitar-bg-gray-50">
+          <div class="avitar-flex avitar-flex-row property-record-table-row">
+            <div class="avitar-flex-8 avitar-text-right avitar-text-muted">
+              {{!-- Total Acreage: --}}
+            </div>
+            <div class="avitar-flex-4 avitar-border-t border-black avitar-font-semibold avitar-text-primary avitar-flex avitar-justify-end">
+              {{number-format @landAssessment.assessment.calculated_totals.totalAcreage 2}} AC
+            </div>
+            <div class="avitar-flex-4"></div>
+            <div class="avitar-flex-2">
+              {{!-- Topography column - empty --}}
+            </div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              {{!-- Total Market: --}}
+            </div>
+            <div class="avitar-flex-4 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
+            </div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-4 avitar-border-t border-black avitar-font-semibold avitar-text-secondary avitar-flex avitar-justify-end">
+              ${{number-format @landAssessment.assessment.calculated_totals.totalMarketValue}}
+            </div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-2"></div>
+            <div class="avitar-flex-4 avitar-border-t border-black avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
+              ${{number-format @landAssessment.assessment.calculated_totals.totalAssessedValue}}
+            </div>
+            <div class="avitar-flex-12">
+              {{!-- Notes column - empty --}}
+            </div>
+          </div>
+        </div>
+        {{/if}}
+        {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <div>No land use details available for this property</div>
+          <div class="avitar-text-sm avitar-mt-2">Land use breakdown will appear here when available</div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  {{else}}
+  {{!-- Page 2+ Content --}}
+  {{!-- Property Features Section --}}
+  <div class="avitar-flex avitar-flex-row">
+    <div class="avitar-flex-4">
+      <div class="property-record-section" style="min-height: 2.75in;">
+        <div class="avitar-text-center">
+          <h5>PICTURE</h5>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-flex-6">
+      <div class="avitar-flex-1">
+        <div class="avitar-flex avitar-flex-row">
+          <div class="avitar-flex-5 property-record-section" style="min-height: 1.25in;">
+            <div class="avitar-text-center">
+              <h5>OWNER</h5>
+            </div>
+          </div>
+          <div class="avitar-flex-3 property-record-section">
+            <div class="avitar-text-center">
+              <h5>TAXABLE DISTRICTS</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="avitar-flex-1">
+        <div class="property-record-section" style="min-height: 1.5in;">
+          <div class="avitar-text-center">
+            <h5>PERMITS</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-flex-4">
+      <div class="property-record-section" style="min-height: 2.75in;">
+        <div class="avitar-text-center">
+          <h5>BUILDING DETAILS</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{!-- Sketch Section --}}
+  <div class="avitar-flex avitar-flex-row">
+    <div class="avitar-flex-10 property-record-section" style="min-height: 5.25in;">
+      <h5>SKETCH</h5>
+      <div class="property-record-sketch">
+        {{#if this.hasSketchData}}
+        {{!-- Display actual sketch data when available --}}
+        {{#each @sketchData as |sketch|}}
+        <div class="property-record-sketch__item">
+          {{!-- Sketch content would go here --}}
+          <p>Sketch ID: {{sketch.id}} - {{sketch.description}}</p>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="property-record-sketch__placeholder">
+          <i class="fas fa-drafting-compass"></i>
+          <p>Property sketch will be displayed here</p>
+          <small>Sketch data integration pending</small>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    <div class="avitar-flex-4">
+      <div class="avitar-flex-1 property-record-section" style="min-height: 3in;">
+        <div class="avitar-text-center">
+          <h5>BUILDING SUB AREA DETAILS</h5>
+        </div>
+        {{#if this.hasBuildingData}}
+        {{!-- Display building assessment data --}}
+        <div class="property-record-grid">
+          {{!-- Building data content would go here --}}
+        </div>
+        {{/if}}
+      </div>
+      <div class="avitar-flex-1 property-record-section" style="min-height: 2.25in;">
+        <div class="avitar-text-center">
+          <h5>BASE YEAR BUILDING VALUATION</h5>
+        </div>
+        {{#if this.hasBuildingData}}
+        {{!-- Display building valuation data --}}
+        <div class="property-record-grid">
+          {{!-- Building valuation content would go here --}}
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+  {{/if}}
+</div>

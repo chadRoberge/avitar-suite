@@ -1,0 +1,131 @@
+{{#if @isOpen}}
+  {{!-- Trigger ladder tracking --}}
+  {{this.ladderTracker}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">Edit Land Ladder - {{@zoneName}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+          <p class="avitar-text-muted">Configure land value tiers for this zone</p>
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.addTier}}>
+            <i class="fas fa-plus avitar-mr-1"></i>
+            Add Tier
+          </button>
+        </div>
+
+        {{#if this.tiers.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Acreage</th>
+                  <th>Land Value</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each this.tiers as |tier index|}}
+                  <tr>
+                    <td>
+                      <div class="avitar-flex avitar-gap-1">
+                        {{#unless (eq index 0)}}
+                          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                            {{on "click" (fn this.moveTierUp index)}} title="Move Up">
+                            <i class="fas fa-arrow-up"></i>
+                          </button>
+                        {{/unless}}
+                        {{#if (not-eq index (subtract this.tiers.length 1))}}
+                          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" 
+                            {{on "click" (fn this.moveTierDown index)}} title="Move Down">
+                            <i class="fas fa-arrow-down"></i>
+                          </button>
+                        {{/if}}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="avitar-input-group avitar-input-group--sm">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="avitar-input avitar-input--sm"
+                          value={{tier.acreage}}
+                          {{on "input" (fn this.updateTierAcreage index)}}
+                          placeholder="0.5"
+                        />
+                        <span class="avitar-input-group__addon">acres</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="avitar-input-group avitar-input-group--sm">
+                        <span class="avitar-input-group__addon">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          class="avitar-input avitar-input--sm"
+                          value={{tier.value}}
+                          {{on "input" (fn this.updateTierValue index)}}
+                          placeholder="40000"
+                        />
+                      </div>
+                    </td>
+                    <td class="avitar-table__actions">
+                      <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" 
+                        {{on "click" (fn this.removeTier index)}} title="Remove Tier">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-text-center avitar-py-6">
+            <i class="fas fa-layer-group avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+            <div class="avitar-font-semibold avitar-mb-2">No Tiers Configured</div>
+            <div class="avitar-text-muted avitar-mb-4">Add your first land value tier to get started</div>
+            <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.addTier}}>
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add First Tier
+            </button>
+          </div>
+        {{/if}}
+
+        {{#if this.hasValidationErrors}}
+          <div class="avitar-alert avitar-alert--danger avitar-mt-4">
+            <div class="avitar-alert__icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="avitar-alert__content">
+              <div class="avitar-alert__title">Validation Errors</div>
+              <div class="avitar-alert__message">
+                <ul>
+                  {{#each this.validationErrors as |error|}}
+                    <li>{{error}}</li>
+                  {{/each}}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+          Cancel
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveLadder}}>
+          Save Land Ladder
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

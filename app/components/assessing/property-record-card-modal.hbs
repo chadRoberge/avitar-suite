@@ -1,0 +1,53 @@
+{{#if @isOpen}}
+{{!-- Trigger data loading when modal opens --}}
+{{this.triggerDataLoading}}
+{{!-- Full Page Modal Overlay --}}
+{{!-- template-lint-disable no-invalid-interactive --}}
+<div class="property-record-modal-overlay" {{on "click" this.closeModal}}>
+  <div class="property-record-modal" {{on "click" this.stopPropagation}}>
+    {{!-- Modal Header --}}
+    <div class="property-record-modal__header">
+      <div class="property-record-modal__title">
+        <h2>Property Record Card</h2>
+        {{#if this.selectedProperty}}
+        <p>{{this.selectedProperty.pid_formatted}} - {{this.selectedProperty.location.address}}</p>
+        {{/if}}
+      </div>
+      <div class="property-record-modal__actions">
+        <button type="button" class="avitar-button avitar-button--sm avitar-button--primary" {{on "click" this.printCard}} title="Print Property Record Card">
+          <i class="fas fa-print"></i>
+          Print
+        </button>
+        <button type="button" class="avitar-button avitar-button--sm avitar-button--outline" {{on "click" this.closeModal}} title="Close Modal">
+          <i class="fas fa-times"></i>
+          Close
+        </button>
+      </div>
+    </div>
+    {{!-- Modal Content --}}
+    <div class="property-record-modal__content">
+      {{#if this.isLoading}}
+      <div class="property-record-modal__loading">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Loading property data...</p>
+      </div>
+      {{else}}
+      {{!-- Render all cards using the reusable component --}}
+      {{#each this.cardData as |cardInfo|}}
+        <Assessing::PropertyRecordCard 
+          @property={{this.selectedProperty}}
+          @landAssessment={{cardInfo.landAssessment}}
+          @buildingAssessment={{cardInfo.buildingAssessment}}
+          @propertyFeatures={{cardInfo.propertyFeatures}}
+          @sketchData={{cardInfo.sketchData}}
+          @cardNumber={{cardInfo.cardNumber}}
+          @assessmentYear={{this.assessmentYear}}
+          @municipalityName={{this.municipalityName}}
+        />
+      {{/each}}
+      {{/if}}
+    </div>
+  </div>
+</div>
+{{!-- template-lint-enable no-invalid-interactive --}}
+{{/if}}

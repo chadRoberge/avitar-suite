@@ -1,0 +1,78 @@
+{{!-- Assessing Property View --}}
+<div class="avitar-page-header">
+  <div class="avitar-page-title">
+    <h1>Property Assessment</h1>
+    <p class="avitar-page-subtitle">
+      {{@model.streetAddress}} (PID: {{@model.pid}})
+    </p>
+  </div>
+  
+  <div class="avitar-page-actions">
+    {{#if (can "update" "assessing")}}
+      <button type="button" class="avitar-button avitar-button--primary">
+        <i class="fas fa-edit"></i>
+        Edit Assessment
+      </button>
+    {{/if}}
+    
+    {{#if (can "approve" "assessing")}}
+      <button type="button" class="avitar-button avitar-button--success">
+        <i class="fas fa-check"></i>
+        Approve
+      </button>
+    {{/if}}
+  </div>
+</div>
+
+<div class="avitar-page-content">
+  <div class="avitar-grid avitar-grid--lg">
+    
+    {{!-- Property Information Card --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3>Property Information</h3>
+      </div>
+      <div class="avitar-card__content">
+        <dl class="avitar-description-list">
+          <dt>Property ID (PID)</dt>
+          <dd>{{@model.pid}}</dd>
+          
+          <dt>Address</dt>
+          <dd>{{@model.streetAddress}}</dd>
+          
+          <dt>Owner</dt>
+          <dd>{{@model.ownerName}}</dd>
+          
+          <dt>Property Type</dt>
+          <dd>{{capitalize @model.propertyType}}</dd>
+          
+          <dt>Map/Lot</dt>
+          <dd>{{@model.mapNumber}}-{{@model.lotNumber}}{{#if @model.subLot}}-{{@model.subLot}}{{/if}}</dd>
+        </dl>
+      </div>
+    </div>
+
+    {{!-- Assessment Information Card --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3>{{@model.taxYear}} Assessment</h3>
+      </div>
+      <div class="avitar-card__content">
+        <dl class="avitar-description-list">
+          <dt>Total Value</dt>
+          <dd class="avitar-text-success avitar-text-lg">${{format-currency @model.totalValue}}</dd>
+          
+          <dt>Land Value</dt>
+          <dd>${{format-currency @model.landValue}}</dd>
+          
+          <dt>Building Value</dt>
+          <dd>${{format-currency @model.buildingValue}}</dd>
+          
+          <dt>Assessment Ratio</dt>
+          <dd>100%</dd>
+        </dl>
+      </div>
+    </div>
+
+  </div>
+</div>

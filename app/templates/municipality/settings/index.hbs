@@ -1,0 +1,52 @@
+{{!-- Settings Index - Default view when navigating to settings --}}
+<div class="avitar-content" style="padding: var(--spacing-6); background: var(--color-gray-50);">
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h1 class="avitar-card__title">Municipal Settings</h1>
+      <div class="avitar-card__subtitle">Configure your municipality settings and preferences</div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid--cols-2 avitar-gap-4">
+        <LinkTo @route="municipality.settings.municipal-info" class="avitar-card avitar-card--hover">
+          <div class="avitar-card__body avitar-text-center">
+            <i class="fas fa-building avitar-text-2xl avitar-text-info avitar-mb-3"></i>
+            <h3 class="avitar-card__title">Municipal Information</h3>
+            <p class="avitar-text-muted avitar-text-sm">Update municipality details, contact info, and branding</p>
+          </div>
+        </LinkTo>
+        
+        <LinkTo @route="municipality.settings.users" class="avitar-card avitar-card--hover">
+          <div class="avitar-card__body avitar-text-center">
+            <i class="fas fa-users avitar-text-2xl avitar-text-success avitar-mb-3"></i>
+            <h3 class="avitar-card__title">Users</h3>
+            <p class="avitar-text-muted avitar-text-sm">Manage user accounts, roles, and permissions</p>
+          </div>
+        </LinkTo>
+        
+        <LinkTo @route="municipality.settings.system" class="avitar-card avitar-card--hover">
+          <div class="avitar-card__body avitar-text-center">
+            <i class="fas fa-server avitar-text-2xl avitar-text-warning avitar-mb-3"></i>
+            <h3 class="avitar-card__title">System Settings</h3>
+            <p class="avitar-text-muted avitar-text-sm">Configure system preferences and integrations</p>
+          </div>
+        </LinkTo>
+        
+        <LinkTo @route="municipality.settings.modules" class="avitar-card avitar-card--hover">
+          <div class="avitar-card__body avitar-text-center">
+            <i class="fas fa-puzzle-piece avitar-text-2xl avitar-text-primary avitar-mb-3"></i>
+            <h3 class="avitar-card__title">Modules</h3>
+            <p class="avitar-text-muted avitar-text-sm">Enable and configure available modules</p>
+          </div>
+        </LinkTo>
+        
+        <LinkTo @route="municipality.settings.features" class="avitar-card avitar-card--hover">
+          <div class="avitar-card__body avitar-text-center">
+            <i class="fas fa-star avitar-text-2xl avitar-text-warning avitar-mb-3"></i>
+            <h3 class="avitar-card__title">Features</h3>
+            <p class="avitar-text-muted avitar-text-sm">Manage premium features and subscriptions</p>
+          </div>
+        </LinkTo>
+      </div>
+    </div>
+  </div>
+</div>

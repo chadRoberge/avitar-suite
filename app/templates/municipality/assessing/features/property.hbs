@@ -1,0 +1,261 @@
+{{!-- Features Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header with owner, type, location, and total assessment --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @onPropertyUpdate={{this.refreshFeaturesProperty}} />
+  
+  {{!-- Features and Outbuildings --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Property Features & Outbuildings</h3>
+      <div class="avitar-card__subtitle">Detached structures and property improvements</div>
+      {{#if (can "update" "assessing")}}
+        <button 
+          type="button"
+          class="avitar-btn avitar-btn--primary avitar-btn--sm"
+          {{on "click" this.addFeature}}
+        >
+          {{{lnr-icon "plus"}}}
+          Add Feature
+        </button>
+      {{/if}}
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if this.features.length}}
+        <div class="avitar-card__content">
+          {{!-- Table Headers --}}
+          <div class="avitar-flex avitar-flex-row avitar-bg-gray-50 avitar-p-3 avitar-border-b avitar-font-semibold">
+            <div class="avitar-flex-4 avitar-text-sm">Feature Code</div>
+            <div class="avitar-flex-2 avitar-text-sm">Length</div>
+            <div class="avitar-flex-2 avitar-text-sm">Width</div>
+            <div class="avitar-flex-2 avitar-text-sm">Units</div>
+            <div class="avitar-flex-2 avitar-text-sm">Size Adj</div>
+            <div class="avitar-flex-2 avitar-text-sm">Rate</div>
+            <div class="avitar-flex-2 avitar-text-sm">Cond</div>
+            <div class="avitar-flex-3 avitar-text-sm">Value</div>
+            <div class="avitar-flex-4 avitar-text-sm">Notes</div>
+            <div class="avitar-flex-2 avitar-text-sm avitar-text-center">Actions</div>
+          </div>
+
+          {{!-- Table Rows --}}
+          {{#each this.features as |feature|}}
+            <div class="avitar-flex avitar-flex-row avitar-p-3 avitar-border-b avitar-items-center {{if feature.isEditing 'avitar-bg-blue-25 avitar-border-l-primary'}}">
+              {{#if feature.isEditing}}
+                {{!-- Edit Mode --}}
+                <div class="avitar-flex-4">
+                  <select 
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.selectFeatureCode feature)}}
+                  >
+                    <option value="">Select Feature Code...</option>
+                    {{#each this.availableFeatureCodes as |code|}}
+                      <option 
+                        value={{or code._id code.id}}
+                        selected={{eq feature.featureCodeId (or code._id code.id)}}
+                      >
+                        {{code.code}} - {{code.description}}
+                      </option>
+                    {{/each}}
+                  </select>
+                </div>
+                {{#if (eq feature.measurementType "length_width")}}
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <input 
+                      type="number" 
+                      class="avitar-input avitar-input--sm"
+                      value={{feature.length}}
+                      {{on "blur" (fn this.updateFeatureField feature "length")}}
+                      placeholder="Length"
+                    />
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <input 
+                      type="number" 
+                      class="avitar-input avitar-input--sm"
+                      value={{feature.width}}
+                      {{on "blur" (fn this.updateFeatureField feature "width")}}
+                      placeholder="Width"
+                    />
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm avitar-font-medium">
+                      {{feature.calculatedArea}} SF
+                    </div>
+                  </div>
+                {{else}}
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm avitar-text-muted">--</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm avitar-text-muted">--</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <input 
+                      type="number" 
+                      class="avitar-input avitar-input--sm"
+                      value={{feature.units}}
+                      {{on "blur" (fn this.updateFeatureField feature "units")}}
+                      placeholder="Units"
+                    />
+                  </div>
+                {{/if}}
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-medium avitar-text-muted">
+                    {{feature.size_adjustment}}
+                  </div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-medium avitar-text-muted">
+                    ${{number-format feature.rate}}
+                  </div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <select 
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.updateFeatureField feature "condition")}}
+                  >
+                    <option value="Excellent" selected={{eq feature.condition "Excellent"}}>Excellent</option>
+                    <option value="Good" selected={{eq feature.condition "Good"}}>Good</option>
+                    <option value="Average" selected={{eq feature.condition "Average"}}>Average</option>
+                    <option value="Fair" selected={{eq feature.condition "Fair"}}>Fair</option>
+                    <option value="Poor" selected={{eq feature.condition "Poor"}}>Poor</option>
+                  </select>
+                </div>
+                <div class="avitar-flex-3 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-semibold avitar-text-success">
+                    ${{number-format feature.calculatedValue}}
+                  </div>
+                </div>
+                <div class="avitar-flex-4 avitar-ml-2">
+                  <input 
+                    type="text" 
+                    class="avitar-input avitar-input--sm"
+                    value={{feature.notes}}
+                    {{on "blur" (fn this.updateFeatureField feature "notes")}}
+                    placeholder="Notes"
+                  />
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2 avitar-flex avitar-justify-center">
+                  <div class="avitar-button-group">
+                    <button 
+                      type="button"
+                      class="avitar-btn avitar-btn--success avitar-btn--xs"
+                      {{on "click" (fn this.saveFeature feature)}}
+                      title="Save"
+                    >
+                      {{{lnr-icon "checkmark"}}}
+                    </button>
+                    <button 
+                      type="button"
+                      class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+                      {{on "click" (fn this.cancelEdit feature)}}
+                      title="Cancel"
+                    >
+                      {{{lnr-icon "cross"}}}
+                    </button>
+                    {{#unless feature.isNew}}
+                      <button 
+                        type="button"
+                        class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                        {{on "click" (fn this.deleteFeature feature)}}
+                        title="Delete"
+                      >
+                        {{{lnr-icon "trash"}}}
+                      </button>
+                    {{/unless}}
+                  </div>
+                </div>
+              {{else}}
+                {{!-- Display Mode --}}
+                <div class="avitar-flex-4">
+                  <div class="avitar-text-sm avitar-font-medium">
+                    {{feature.description}}
+                  </div>
+                </div>
+                {{#if (eq feature.measurementType "length_width")}}
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm">{{feature.length}}'</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm">{{feature.width}}'</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm">{{feature.calculatedArea}} SF</div>
+                  </div>
+                {{else}}
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm avitar-text-muted">--</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm avitar-text-muted">--</div>
+                  </div>
+                  <div class="avitar-flex-2 avitar-ml-2">
+                    <div class="avitar-text-sm">{{feature.units}} units</div>
+                  </div>
+                {{/if}}
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm">{{feature.size_adjustment}}</div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm">${{number-format feature.rate}}</div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <span class="avitar-badge avitar-badge--{{if (eq feature.condition 'Excellent') 'success' (if (eq feature.condition 'Good') 'info' (if (eq feature.condition 'Average') 'secondary' (if (eq feature.condition 'Fair') 'warning' 'danger')))}}">
+                    {{feature.condition}}
+                  </span>
+                </div>
+                <div class="avitar-flex-3 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-semibold avitar-text-success">
+                    ${{number-format feature.calculatedValue}}
+                  </div>
+                </div>
+                <div class="avitar-flex-4 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-text-muted">{{feature.notes}}</div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2 avitar-flex avitar-justify-center">
+                  {{#if (can "update" "assessing")}}
+                    <button 
+                      type="button"
+                      class="avitar-btn avitar-btn--ghost avitar-btn--primary avitar-btn--xs"
+                      {{on "click" (fn this.editFeature feature)}}
+                      title="Edit"
+                    >
+                      {{{lnr-icon "pencil"}}}
+                    </button>
+                  {{/if}}
+                </div>
+              {{/if}}
+            </div>
+          {{/each}}
+
+          {{!-- Total Row --}}
+          <div class="avitar-bg-gray-50 avitar-p-4 avitar-border-t-2">
+            <div class="avitar-flex avitar-justify-between avitar-items-center">
+              <div class="avitar-text-base avitar-font-semibold">
+                Total Features Value:
+              </div>
+              <div class="avitar-text-xl avitar-font-bold avitar-text-success">
+                ${{number-format this.totalFeaturesValue}}
+              </div>
+            </div>
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          {{{lnr-icon "warehouse" size="4x" class="avitar-mb-3"}}}
+          <div>No features or outbuildings recorded</div>
+          <div class="avitar-text-sm avitar-mt-2">Property improvements and detached structures will appear here</div>
+          {{#if (can "update" "assessing")}}
+            <button 
+              type="button"
+              class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-mt-4"
+              {{on "click" this.addFeature}}
+            >
+              {{{lnr-icon "plus"}}}
+              Add First Feature
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

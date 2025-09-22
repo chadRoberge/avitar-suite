@@ -1,0 +1,1681 @@
+{{!-- Building Details Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header">
+    <div class="avitar-flex avitar-flex-row avitar-justify-between avitar-items-center avitar-mb-2">
+      <div class="avitar-flex-5">
+        <h1 class="avitar-page-title avitar-skinny">Building Details</h1>
+        <div class="avitar-page-subtitle">Configure building rate codes and classification settings</div>
+      </div>
+      <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+        <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--sm" {{on "click" this.showGuidelines}} title="Show Guidelines">
+          <i class="fas fa-question-circle"></i>
+          Guidelines
+        </button>
+      </div>
+    </div>
+  </div>
+  {{!-- Building Rate Codes Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Building Rate Codes</h3>
+          <div class="avitar-card__subtitle">3-letter codes with descriptions, rates, and building type classifications</div>
+        </div>
+        {{#unless (or this.isAddingBuildingCode this.isEditingBuildingCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Building Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if (or this.isAddingBuildingCode this.isEditingBuildingCode)}}
+      <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+        <h4 class="avitar-font-semibold avitar-mb-3">
+          {{if this.isEditingBuildingCode "Edit Building Code" "Add New Building Code"}}
+        </h4>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 lg:avitar-grid-cols-3 avitar-gap-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Description</label>
+            <input type="text" class="avitar-input" value={{this.newBuildingDescription}} {{on "input" this.updateBuildingDescription}} placeholder="e.g., Single Family Residential" />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Code (3 letters)</label>
+            <input type="text" class="avitar-input" value={{this.newBuildingCode}} {{on "input" this.updateBuildingCode}} placeholder="e.g., SFR" maxlength="3" />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Rate</label>
+            <input type="number" class="avitar-input" value={{this.newBuildingRate}} {{on "input" this.updateBuildingRate}} step="0.01" placeholder="1.0" />
+          </div>
+        </div>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-4 avitar-mt-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Building Type</label>
+            <select class="avitar-select" value={{this.newBuildingType}} {{on "change" this.updateBuildingType}}>
+              <option value="">Select building type...</option>
+              {{#each this.buildingTypes as |type|}}
+              <option value={{type.value}}>{{type.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Size Adjustment Category</label>
+            <select class="avitar-select" value={{this.newSizeAdjustmentCategory}} {{on "change" this.updateSizeAdjustmentCategory}}>
+              <option value="">Select category...</option>
+              {{#each this.buildingTypes as |type|}}
+              <option value={{type.value}}>{{type.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Depreciation (%)</label>
+            <input type="number" class="avitar-input" value={{this.newBuildingDepreciation}} {{on "input" this.updateBuildingDepreciation}} step="0.1" min="0" max="100" placeholder="e.g., 15.5" />
+          </div>
+        </div>
+        <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveBuildingCode}}>
+            {{if this.isEditingBuildingCode "Update Code" "Save Code"}}
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingBuildingCode this.cancelEditingBuildingCode this.cancelAddingBuildingCode)}}>
+            Cancel
+          </button>
+        </div>
+      </div>
+      {{/if}}
+      {{#if this.reactiveBuildingCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Description</th>
+              <th>Rate</th>
+              <th>Building Type</th>
+              <th>Size Adjustment Category</th>
+              <th>Depreciation (%)</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.reactiveBuildingCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.code}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.rate}}</td>
+              <td>
+                <span class="avitar-badge avitar-badge--secondary">{{capitalize code.buildingType}}</span>
+              </td>
+              <td>
+                <span class="avitar-badge avitar-badge--outline">{{capitalize code.sizeAdjustmentCategory}}</span>
+              </td>
+              <td>{{code.depreciation}}%</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingBuildingCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteBuildingCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-building avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Building Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add your first building code to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Building Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Interior Wall Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Interior Wall</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Interior Wall features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Interior Wall Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.interiorWallCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.interiorWallCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-th-large avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Interior Wall Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add interior wall feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Interior Wall Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Exterior Wall Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Exterior Wall</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Exterior Wall features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Exterior Wall Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.exteriorWallCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.exteriorWallCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-building avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Exterior Wall Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add exterior wall feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Exterior Wall Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Roofing Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Roofing</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Roofing features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "roofing")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Roofing Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.roofingCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.roofingCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-home avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Roofing Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add roofing feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "roofing")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Roofing Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Roof Style Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Roof Style</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Roof Style features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "roof_style")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Roof Style Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.roofStyleCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.roofStyleCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-caret-up avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Roof Style Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add roof style feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "roof_style")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Roof Style Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Flooring Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Flooring</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Flooring features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "flooring")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Flooring Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.flooringCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.flooringCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-grip-lines avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Flooring Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add flooring feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "flooring")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Flooring Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Heating Fuel Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Heating Fuel</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Heating Fuel features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "heating_fuel")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Heating Fuel Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.heatingFuelCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.heatingFuelCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-fire avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Heating Fuel Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add heating fuel feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "heating_fuel")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Heating Fuel Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Heating Type Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Heating Type</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Heating Type features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "heating_type")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Heating Type Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.heatingTypeCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.heatingTypeCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-thermometer-half avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Heating Type Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add heating type feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "heating_type")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Heating Type Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Quality Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Quality</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Quality features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "quality")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Quality Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.qualityCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.qualityCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-star avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Quality Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add quality feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "quality")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Quality Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Story Height Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Story Height</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Story Height features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "story_height")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Story Height Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.storyHeightCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.storyHeightCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-arrows-alt-v avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Story Height Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add story height feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "story_height")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Story Height Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Frame Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Frame</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Frame features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "frame")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Frame Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.frameCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.frameCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-th-large avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Frame Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add frame feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "frame")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Frame Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Miscellaneous Points Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Miscellaneous</h3>
+          <div class="avitar-card__subtitle">Point values for air conditioning, extra kitchens, and generators</div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-6">
+        <div class="avitar-form-group">
+          <label class="avitar-label">Air Conditioning Points</label>
+          <input type="number" class="avitar-input" value={{this.airConditioningPoints}} {{on "input" this.updateAirConditioningPoints}} step="1" min="-1000" max="1000" placeholder="0" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Points applied per percentage of AC coverage</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Extra Kitchen Points</label>
+          <input type="number" class="avitar-input" value={{this.extraKitchenPoints}} {{on "input" this.updateExtraKitchenPoints}} step="1" min="-1000" max="1000" placeholder="0" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Points applied per extra kitchen</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Generator Points</label>
+          <input type="number" class="avitar-input" value={{this.generatorPoints}} {{on "input" this.updateGeneratorPoints}} step="1" min="-1000" max="1000" placeholder="0" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Points applied when generator is present</div>
+        </div>
+      </div>
+      <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveMiscellaneousPoints}}>
+          Save Points
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Building Calculation Settings Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Building Calculation Settings</h3>
+          <div class="avitar-card__subtitle">Configure bedroom/bathroom rate calculation parameters</div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 lg:avitar-grid-cols-4 avitar-gap-4">
+        <div class="avitar-form-group">
+          <label class="avitar-label">Base Rate</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.base}} {{on "input" this.updateCalculationBase}} step="0.1" min="0" max="100" placeholder="5" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Starting point for rate calculation</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Per Bedroom</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.perBedroom}} {{on "input" this.updateCalculationPerBedroom}} step="0.1" min="0" max="100" placeholder="3" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Rate added per bedroom</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Per Full Bath</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.perFullBath}} {{on "input" this.updateCalculationPerFullBath}} step="0.1" min="0" max="100" placeholder="2" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Rate added per full bathroom</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Per Half Bath</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.perHalfBath}} {{on "input" this.updateCalculationPerHalfBath}} step="0.1" min="0" max="100" placeholder="0.8" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Rate added per half bathroom</div>
+        </div>
+      </div>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
+        <div class="avitar-form-group">
+          <label class="avitar-label">Point Multiplier</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.pointMultiplier}} {{on "input" this.updateCalculationPointMultiplier}} step="0.1" min="0" max="10" placeholder="1.0" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">How much each feature point is worth</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Base Rate Multiplier</label>
+          <input type="number" class="avitar-input" value={{this.calculationConfig.baseRate}} {{on "input" this.updateCalculationBaseRate}} step="1" min="0" max="1000" placeholder="100" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Multiplier for bedroom/bath rate</div>
+        </div>
+      </div>
+      <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveCalculationSettings}}>
+          Save Calculation Settings
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.resetCalculationSettings}}>
+          Reset to Defaults
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Mass Recalculation Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Mass Recalculation</h3>
+          <div class="avitar-card__subtitle">Recalculate building values after changing rates or feature points</div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.recalculationStatus}}
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 lg:avitar-grid-cols-4 avitar-gap-4 avitar-mb-4">
+        <div class="avitar-bg-blue-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-blue-600">{{this.recalculationStatus.totalAssessments}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Total Assessments</div>
+        </div>
+        <div class="avitar-bg-yellow-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-yellow-600">{{this.recalculationStatus.needsRecalculation}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Need Recalculation</div>
+        </div>
+        <div class="avitar-bg-green-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-green-600">{{this.recalculationStatus.recentCalculations}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Recent (24hrs)</div>
+        </div>
+        <div class="avitar-bg-red-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-red-600">{{this.recalculationStatus.nullValueAssessments}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Missing Values</div>
+        </div>
+      </div>
+      {{/if}}
+      
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+        <div class="avitar-form-group">
+          <label class="avitar-label">Recalculation Year</label>
+          <input type="number" class="avitar-input" value={{this.massRecalcYear}} {{on "input" this.updateMassRecalcYear}} min="2020" max="2030" placeholder="2024" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Assessment year to recalculate</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Batch Size</label>
+          <input type="number" class="avitar-input" value={{this.massRecalcBatchSize}} {{on "input" this.updateMassRecalcBatchSize}} min="10" max="200" placeholder="50" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Number to process at once</div>
+        </div>
+      </div>
+      
+      {{#if this.isRecalculating}}
+      <div class="avitar-alert avitar-alert--info avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">Recalculation in Progress</div>
+          <div class="avitar-alert__message">
+            Please wait while building assessments are being recalculated. This may take several minutes for large municipalities.
+          </div>
+        </div>
+      </div>
+      {{/if}}
+      
+      {{#if this.recalculationResult}}
+      <div class="avitar-alert {{if this.recalculationResult.success 'avitar-alert--success' 'avitar-alert--error'}} avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas {{if this.recalculationResult.success 'fa-check-circle' 'fa-exclamation-circle'}}"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">
+            {{if this.recalculationResult.success "Recalculation Completed" "Recalculation Failed"}}
+          </div>
+          <div class="avitar-alert__message">
+            {{#if this.recalculationResult.success}}
+              Processed {{this.recalculationResult.result.totalProcessed}} assessments, 
+              updated {{this.recalculationResult.result.totalUpdated}} values,
+              {{this.recalculationResult.result.totalErrors}} errors.
+            {{else}}
+              {{this.recalculationResult.message}}
+            {{/if}}
+          </div>
+        </div>
+      </div>
+      {{/if}}
+      
+      <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startMassRecalculation}} disabled={{this.isRecalculating}}>
+          <i class="fas {{if this.isRecalculating 'fa-spinner fa-spin' 'fa-calculator'}} avitar-mr-2"></i>
+          {{if this.isRecalculating "Recalculating..." "Recalculate All Buildings"}}
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.refreshRecalculationStatus}} disabled={{this.isRecalculating}}>
+          <i class="fas fa-sync avitar-mr-2"></i>
+          Refresh Status
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--outline" {{on "click" this.recalculateOnlyMissing}} disabled={{this.isRecalculating}}>
+          <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+          Recalculate Only Missing
+        </button>
+      </div>
+      
+      <div class="avitar-mt-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+        <h4 class="avitar-font-semibold avitar-mb-2">When to Use Mass Recalculation</h4>
+        <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+          <li>After updating feature points for building attributes (walls, roofing, heating, etc.)</li>
+          <li>After changing building calculation settings (bedroom/bathroom rates)</li>
+          <li>After updating building base rates or depreciation factors</li>
+          <li>When building values appear outdated or inconsistent</li>
+          <li>After importing new building assessment data</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Economies of Scale Configuration Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Economies of Scale Configuration</h3>
+      <div class="avitar-card__subtitle">Configure median building sizes and fixed site costs for different building types</div>
+    </div>
+    <div class="avitar-card__body">
+      {{!-- Residential Buildings --}}
+      <div class="avitar-mb-8">
+        <div class="avitar-bg-gray-100 avitar-px-4 avitar-py-3 avitar-mb-6">
+          <h4 class="avitar-text-lg avitar-font-semibold avitar-text-gray-700 avitar-m-0">Residential Buildings</h4>
+        </div>
+        
+        {{!-- Median Size Row --}}
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-6">
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-flex avitar-items-center avitar-gap-2">
+              Median Building Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500">
+                {{#if (gt this.buildingTypeStats.residential.count 0)}}
+                  (Calculated: {{this.buildingTypeStats.residential.median}} sq ft from {{this.buildingTypeStats.residential.count}} buildings)
+                {{else}}
+                  (No data available)
+                {{/if}}
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.residential.median_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "median_size")}}
+              placeholder="Enter median size"
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Calculated Median from Data</label>
+            <div class="avitar-input avitar-bg-gray-50" readonly>
+              {{#if (gt this.buildingTypeStats.residential.count 0)}}
+                {{this.buildingTypeStats.residential.median}} sq ft
+                <div class="avitar-text-xs avitar-text-gray-500 avitar-mt-1">
+                  From {{this.buildingTypeStats.residential.count}} buildings (Range: {{this.buildingTypeStats.residential.min}} - {{this.buildingTypeStats.residential.max}} sq ft)
+                </div>
+              {{else}}
+                <span class="avitar-text-gray-500">No building data available</span>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Smallest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for highest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.residential.smallest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "smallest_size")}}
+              placeholder="e.g., 100"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for smallest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.residential.smallest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "smallest_factor")}}
+              placeholder="e.g., 3.0"
+            />
+          </div>
+        </div>
+
+        {{!-- Largest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for lowest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.residential.largest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "largest_size")}}
+              placeholder="e.g., 15000"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for largest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.residential.largest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "largest_factor")}}
+              placeholder="e.g., 0.75"
+            />
+          </div>
+        </div>
+      </div>
+
+      {{!-- Commercial Buildings --}}
+      <div class="avitar-mb-8">
+        <div class="avitar-bg-gray-100 avitar-px-4 avitar-py-3 avitar-mb-6">
+          <h4 class="avitar-text-lg avitar-font-semibold avitar-text-gray-700 avitar-m-0">Commercial Buildings</h4>
+        </div>
+        
+        {{!-- Median Size Row --}}
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-6">
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-flex avitar-items-center avitar-gap-2">
+              Median Building Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500">
+                {{#if (gt this.buildingTypeStats.commercial.count 0)}}
+                  (Calculated: {{this.buildingTypeStats.commercial.median}} sq ft from {{this.buildingTypeStats.commercial.count}} buildings)
+                {{else}}
+                  (No data available)
+                {{/if}}
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.commercial.median_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "median_size")}}
+              placeholder="Enter median size"
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Calculated Median from Data</label>
+            <div class="avitar-input avitar-bg-gray-50" readonly>
+              {{#if (gt this.buildingTypeStats.commercial.count 0)}}
+                {{this.buildingTypeStats.commercial.median}} sq ft
+                <div class="avitar-text-xs avitar-text-gray-500 avitar-mt-1">
+                  From {{this.buildingTypeStats.commercial.count}} buildings (Range: {{this.buildingTypeStats.commercial.min}} - {{this.buildingTypeStats.commercial.max}} sq ft)
+                </div>
+              {{else}}
+                <span class="avitar-text-gray-500">No building data available</span>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Smallest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for highest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.commercial.smallest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "smallest_size")}}
+              placeholder="e.g., 500"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for smallest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.commercial.smallest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "smallest_factor")}}
+              placeholder="e.g., 2.5"
+            />
+          </div>
+        </div>
+
+        {{!-- Largest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for lowest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.commercial.largest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "largest_size")}}
+              placeholder="e.g., 50000"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for largest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.commercial.largest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "largest_factor")}}
+              placeholder="e.g., 0.80"
+            />
+          </div>
+        </div>
+      </div>
+
+      {{!-- Industrial Buildings --}}
+      <div class="avitar-mb-8">
+        <div class="avitar-bg-gray-100 avitar-px-4 avitar-py-3 avitar-mb-6">
+          <h4 class="avitar-text-lg avitar-font-semibold avitar-text-gray-700 avitar-m-0">Industrial Buildings</h4>
+        </div>
+        
+        {{!-- Median Size Row --}}
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-6">
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-flex avitar-items-center avitar-gap-2">
+              Median Building Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500">
+                {{#if (gt this.buildingTypeStats.industrial.count 0)}}
+                  (Calculated: {{this.buildingTypeStats.industrial.median}} sq ft from {{this.buildingTypeStats.industrial.count}} buildings)
+                {{else}}
+                  (No data available)
+                {{/if}}
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.industrial.median_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "median_size")}}
+              placeholder="Enter median size"
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Calculated Median from Data</label>
+            <div class="avitar-input avitar-bg-gray-50" readonly>
+              {{#if (gt this.buildingTypeStats.industrial.count 0)}}
+                {{this.buildingTypeStats.industrial.median}} sq ft
+                <div class="avitar-text-xs avitar-text-gray-500 avitar-mt-1">
+                  From {{this.buildingTypeStats.industrial.count}} buildings (Range: {{this.buildingTypeStats.industrial.min}} - {{this.buildingTypeStats.industrial.max}} sq ft)
+                </div>
+              {{else}}
+                <span class="avitar-text-gray-500">No building data available</span>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Smallest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for highest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.industrial.smallest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "smallest_size")}}
+              placeholder="e.g., 1000"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for smallest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.industrial.smallest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "smallest_factor")}}
+              placeholder="e.g., 2.0"
+            />
+          </div>
+        </div>
+
+        {{!-- Largest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for lowest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.industrial.largest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "largest_size")}}
+              placeholder="e.g., 100000"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for largest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.industrial.largest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "largest_factor")}}
+              placeholder="e.g., 0.85"
+            />
+          </div>
+        </div>
+      </div>
+
+      {{!-- Manufactured Buildings --}}
+      <div class="avitar-mb-8">
+        <div class="avitar-bg-gray-100 avitar-px-4 avitar-py-3 avitar-mb-6">
+          <h4 class="avitar-text-lg avitar-font-semibold avitar-text-gray-700 avitar-m-0">Manufactured Buildings</h4>
+        </div>
+        
+        {{!-- Median Size Row --}}
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mb-6">
+          <div class="avitar-form-group">
+            <label class="avitar-label avitar-flex avitar-items-center avitar-gap-2">
+              Median Building Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500">
+                {{#if (gt this.buildingTypeStats.manufactured.count 0)}}
+                  (Calculated: {{this.buildingTypeStats.manufactured.median}} sq ft from {{this.buildingTypeStats.manufactured.count}} buildings)
+                {{else}}
+                  (No data available)
+                {{/if}}
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.manufactured.median_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "median_size")}}
+              placeholder="Enter median size"
+            />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Calculated Median from Data</label>
+            <div class="avitar-input avitar-bg-gray-50" readonly>
+              {{#if (gt this.buildingTypeStats.manufactured.count 0)}}
+                {{this.buildingTypeStats.manufactured.median}} sq ft
+                <div class="avitar-text-xs avitar-text-gray-500 avitar-mt-1">
+                  From {{this.buildingTypeStats.manufactured.count}} buildings (Range: {{this.buildingTypeStats.manufactured.min}} - {{this.buildingTypeStats.manufactured.max}} sq ft)
+                </div>
+              {{else}}
+                <span class="avitar-text-gray-500">No building data available</span>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Smallest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for highest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.manufactured.smallest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "smallest_size")}}
+              placeholder="e.g., 50"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Smallest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for smallest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.manufactured.smallest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "smallest_factor")}}
+              placeholder="e.g., 4.0"
+            />
+          </div>
+        </div>
+
+        {{!-- Largest Size and Factor Row --}}
+        <div class="avitar-flex avitar-gap-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Size (sq ft)
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Size threshold for lowest factor
+              </span>
+            </label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{this.economiesOfScale.manufactured.largest_size}} 
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "largest_size")}}
+              placeholder="e.g., 3000"
+            />
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Largest Factor
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Factor for largest buildings
+              </span>
+            </label>
+            <input 
+              type="number" 
+              step="0.1"
+              class="avitar-input" 
+              value={{this.economiesOfScale.manufactured.largest_factor}} 
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "largest_factor")}}
+              placeholder="e.g., 0.70"
+            />
+          </div>
+        </div>
+      </div>
+
+      {{!-- Save/Reset Actions --}}
+      <div class="avitar-flex avitar-gap-3 avitar-justify-end avitar-mt-6">
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--secondary" 
+          {{on "click" this.resetEconomiesOfScale}}
+        >
+          Reset to Defaults
+        </button>
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--primary" 
+          {{on "click" this.saveEconomiesOfScale}}
+          disabled={{this.isSavingEconomies}}
+        >
+          {{#if this.isSavingEconomies}}
+            <span class="avitar-spinner avitar-spinner--sm avitar-mr-2"></span>
+            Saving...
+          {{else}}
+            Save Economies Settings
+          {{/if}}
+        </button>
+      </div>
+
+      {{#if this.economiesSaveStatus}}
+        <div class="avitar-alert avitar-alert--{{if this.economiesSaveStatus.success "success" "error"}} avitar-mt-4">
+          {{this.economiesSaveStatus.message}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Sketch Sub Area Factors Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Sketch Sub Area Factors</h3>
+          <div class="avitar-card__subtitle">Point-based factors for sketch sub areas with living space designation</div>
+        </div>
+        {{#unless (or this.isAddingSubAreaFactor this.isEditingSubAreaFactor)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingSubAreaFactor}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Sub Area Factor
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if (or this.isAddingSubAreaFactor this.isEditingSubAreaFactor)}}
+      <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+        <h4 class="avitar-font-semibold avitar-mb-3">
+          {{if this.isEditingSubAreaFactor "Edit Sub Area Factor" "Add New Sub Area Factor"}}
+        </h4>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Description</label>
+            <input type="text" class="avitar-input" value={{this.newSubAreaDescription}} {{on "input" this.updateSubAreaDescription}} placeholder="e.g., Finished Basement" />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Display Text (15 chars max)</label>
+            <input type="text" class="avitar-input" value={{this.newSubAreaDisplayText}} {{on "input" this.updateSubAreaDisplayText}} placeholder="e.g., FIN-BSMT" maxlength="15" />
+          </div>
+        </div>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Points</label>
+            <input type="number" class="avitar-input" value={{this.newSubAreaPoints}} {{on "input" this.updateSubAreaPoints}} step="1" min="-1000" max="1000" placeholder="e.g., 50" />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Living Space</label>
+            <select class="avitar-select" value={{this.newSubAreaLivingSpace}} {{on "change" this.updateSubAreaLivingSpace}}>
+              <option value="">Select living space...</option>
+              <option value="true">Yes (Living Space)</option>
+              <option value="false">No (Not Living Space)</option>
+            </select>
+          </div>
+        </div>
+        <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveSubAreaFactor}}>
+            {{if this.isEditingSubAreaFactor "Update Factor" "Save Factor"}}
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingSubAreaFactor this.cancelEditingSubAreaFactor this.cancelAddingSubAreaFactor)}}>
+            Cancel
+          </button>
+        </div>
+      </div>
+      {{/if}}
+      {{#if this.reactiveSubAreaFactors.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th>Living Space</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.reactiveSubAreaFactors as |factor|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{factor.displayText}}</span>
+              </td>
+              <td>{{factor.description}}</td>
+              <td>{{factor.points}}</td>
+              <td>
+                <span class="avitar-badge {{if factor.livingSpace 'avitar-badge--success' 'avitar-badge--secondary'}}">
+                  {{if factor.livingSpace 'Yes' 'No'}}
+                </span>
+              </td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingSubAreaFactor factor)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteSubAreaFactor factor)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-th-large avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Sub Area Factors</div>
+        <div class="avitar-text-muted avitar-mb-4">Add your first sketch sub area factor to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingSubAreaFactor}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Sub Area Factor
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{!-- Guidelines Modal --}}
+  {{#if this.showGuidelinesModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.hideGuidelines}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">Building Code Guidelines</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.hideGuidelines}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="avitar-modal__body">
+        <div class="avitar-text-muted avitar-mb-6">Understanding building rate codes and classifications</div>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Building Types</h4>
+            <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+              <li><strong>Residential:</strong> Single-family homes, condos, apartments</li>
+              <li><strong>Commercial:</strong> Offices, retail stores, restaurants</li>
+              <li><strong>Industrial:</strong> Factories, warehouses, manufacturing</li>
+              <li><strong>Manufactured:</strong> Mobile homes, prefabricated buildings</li>
+              <li><strong>Utility:</strong> Power plants, substations, water facilities</li>
+              <li><strong>Exempt:</strong> Churches, government, non-profit buildings</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Code Structure</h4>
+            <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+              <li>Codes must be exactly 3 letters (A-Z)</li>
+              <li>Use descriptive abbreviations (SFR = Single Family Residential)</li>
+              <li>Rates typically range from 0.5 to 2.0</li>
+              <li>Size adjustment category usually matches building type</li>
+              <li>Codes should be unique within each municipality</li>
+            </ul>
+          </div>
+        </div>
+        <div class="avitar-alert avitar-alert--info avitar-mt-6">
+          <div class="avitar-alert__icon">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="avitar-alert__content">
+            <div class="avitar-alert__title">Rate Examples</div>
+            <div class="avitar-alert__message">
+              Single Family Residential (SFR): Rate 1.0, Commercial Office (COF): Rate 1.2, Industrial Warehouse (IWH): Rate 0.8
+            </div>
+          </div>
+        </div>
+        <div class="avitar-mt-6">
+          <h4 class="avitar-font-semibold avitar-mb-3">Feature Point System</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li>Feature codes use a point system ranging from -1000 to +1000 points</li>
+            <li>Points are applied to adjust the base building rate</li>
+            <li>Higher quality features typically have positive points</li>
+            <li>Lower quality or missing features may have negative points</li>
+            <li>Display text should be short and descriptive (max 15 characters)</li>
+          </ul>
+        </div>
+        <div class="avitar-mt-6">
+          <h4 class="avitar-font-semibold avitar-mb-3">Sub Area Factors</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li>Used for different types of sketch sub areas (basements, garages, etc.)</li>
+            <li>Living space designation affects how areas are calculated</li>
+            <li>Points are applied based on the type and quality of the sub area</li>
+            <li>Living space areas typically have different valuation rates</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- Feature Code Modal --}}
+  {{#if (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" (if this.isEditingFeatureCode this.cancelEditingFeatureCode this.cancelAddingFeatureCode)}}>
+    <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{if this.isEditingFeatureCode "Edit Feature Code" "Add New Feature Code"}}
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" (if this.isEditingFeatureCode this.cancelEditingFeatureCode this.cancelAddingFeatureCode)}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="avitar-modal__body">
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Feature Type</label>
+            <select class="avitar-select" value={{this.newFeatureType}} {{on "change" this.updateFeatureType}} disabled={{or this.isEditingFeatureCode this.newFeatureType}}>
+              <option value="">Select feature type...</option>
+              {{#each this.featureTypes as |type|}}
+              <option value={{type.value}} selected={{eq this.newFeatureType type.value}}>{{type.label}}</option>
+              {{/each}}
+            </select>
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Description</label>
+            <input type="text" class="avitar-input" value={{this.newFeatureDescription}} {{on "input" this.updateFeatureDescription}} placeholder="e.g., Drywall Standard" />
+          </div>
+        </div>
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Display Text (15 chars max)</label>
+            <input type="text" class="avitar-input" value={{this.newFeatureDisplayText}} {{on "input" this.updateFeatureDisplayText}} placeholder="e.g., DRY-STD" maxlength="15" />
+          </div>
+          <div class="avitar-form-group">
+            <label class="avitar-label">Points</label>
+            <input type="number" class="avitar-input" value={{this.newFeaturePoints}} {{on "input" this.updateFeaturePoints}} step="1" min="-1000" max="1000" placeholder="e.g., 25" />
+          </div>
+        </div>
+      </div>
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingFeatureCode this.cancelEditingFeatureCode this.cancelAddingFeatureCode)}}>
+          Cancel
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveFeatureCode}}>
+          {{if this.isEditingFeatureCode "Update Code" "Save Code"}}
+        </button>
+      </div>
+    </div>
+  </div>
+  {{/if}}
+</div>

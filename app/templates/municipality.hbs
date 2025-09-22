@@ -1,0 +1,9 @@
+<div class="avitar-layout">
+  <Shared::MunicipalityNav />
+  {{#unless this.isOnSettingsRoute}}
+    <Assessing::PropertySidebar />
+  {{/unless}}
+  <main class="municipality-page">
+    {{outlet}}
+  </main>
+</div>

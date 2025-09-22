@@ -1,0 +1,145 @@
+{{!-- General Assessing Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header">
+    <h1 class="avitar-page-title">General Settings</h1>
+    <div class="avitar-page-subtitle">Configure general assessing parameters</div>
+  </div>
+
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">Assessment Configuration</h3>
+      <div class="avitar-card__subtitle">Basic settings for property assessments</div>
+    </div>
+    
+    <div class="avitar-card__body">
+      <form>
+        <div class="avitar-form-grid avitar-form-grid--2-col">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Assessment Year</label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{@model.generalSettings.assessmentYear}}
+              min="2000"
+              max="2099"
+            >
+            <div class="avitar-help-text">The current assessment year for property valuations</div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">Property Tax Rate (%)</label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{@model.generalSettings.propertyTaxRate}}
+              step="0.01"
+              min="0"
+            >
+            <div class="avitar-help-text">Tax rate as a percentage of assessed value</div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">Assessment Ratio (%)</label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{@model.generalSettings.assessmentRatio}}
+              min="1"
+              max="100"
+            >
+            <div class="avitar-help-text">Percentage of market value used for assessment</div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">Exemption Threshold ($)</label>
+            <input 
+              type="number" 
+              class="avitar-input" 
+              value={{@model.generalSettings.exemptionThreshold}}
+              min="0"
+              step="100"
+            >
+            <div class="avitar-help-text">Minimum assessed value for taxation</div>
+          </div>
+        </div>
+
+        <div class="avitar-form-section">
+          <h4 class="avitar-form-section-title">Module Settings</h4>
+          
+          <div class="avitar-form-group">
+            <label class="avitar-checkbox">
+              <input 
+                type="checkbox" 
+                checked={{@model.generalSettings.enableSketch}}
+              >
+              <span class="avitar-checkbox__checkmark"></span>
+              <span class="avitar-checkbox__label">Enable Sketch Module</span>
+            </label>
+            <div class="avitar-help-text">Allow users to create building sketches</div>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-checkbox">
+              <input 
+                type="checkbox" 
+                checked={{@model.generalSettings.enableAIReview}}
+              >
+              <span class="avitar-checkbox__checkmark"></span>
+              <span class="avitar-checkbox__label">Enable AI Review (Enterprise)</span>
+            </label>
+            <div class="avitar-help-text">Use AI to review and validate assessments</div>
+          </div>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Default Building Type</label>
+          <select class="avitar-select">
+            <option value="residential" selected={{eq @model.generalSettings.defaultBuildingType "residential"}}>Residential</option>
+            <option value="commercial" selected={{eq @model.generalSettings.defaultBuildingType "commercial"}}>Commercial</option>
+            <option value="industrial" selected={{eq @model.generalSettings.defaultBuildingType "industrial"}}>Industrial</option>
+            <option value="mixed-use" selected={{eq @model.generalSettings.defaultBuildingType "mixed-use"}}>Mixed Use</option>
+          </select>
+          <div class="avitar-help-text">Default building type for new properties</div>
+        </div>
+
+        <div class="avitar-form-section">
+          <h4 class="avitar-form-section-title">State Reporting</h4>
+          
+          <div class="avitar-form-grid avitar-form-grid--2-col">
+            <div class="avitar-form-group">
+              <label class="avitar-label">State ID</label>
+              <input 
+                type="text" 
+                class="avitar-input" 
+                value={{@model.generalSettings.stateId}}
+                placeholder="Enter state identifier"
+              >
+              <div class="avitar-help-text">State identifier for matching exemptions and reports</div>
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label">State Reporting URL</label>
+              <input 
+                type="url" 
+                class="avitar-input" 
+                value={{@model.generalSettings.stateUrl}}
+                placeholder="https://state-reporting-system.gov/api"
+              >
+              <div class="avitar-help-text">URL endpoint for sending reports to the state</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avitar-form-actions">
+          <button type="submit" class="avitar-btn avitar-btn--primary">
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Settings
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--secondary">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

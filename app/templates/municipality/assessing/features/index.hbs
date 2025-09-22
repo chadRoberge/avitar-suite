@@ -1,0 +1,24 @@
+{{!-- Features Assessment Index View --}}
+<div class="avitar-content">
+  {{#if @model.showPropertySelection}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h2 class="avitar-card__title">Features Assessment</h2>
+        <div class="avitar-card__subtitle">Select a property to view or manage features and outbuildings</div>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-text-center avitar-py-8">
+          <i class="fas fa-warehouse avitar-text-6xl avitar-text-muted avitar-mb-4"></i>
+          <div class="avitar-text-xl avitar-font-semibold avitar-mb-2">Property Features & Outbuildings</div>
+          <div class="avitar-text-muted avitar-mb-6">
+            Manage detached structures, property improvements, and outbuildings including sheds, barns, pools, and other features that contribute to property value.
+          </div>
+          <LinkTo @route="municipality.assessing.properties" class="avitar-btn avitar-btn--primary">
+            <i class="fas fa-search avitar-mr-2"></i>
+            Select Property
+          </LinkTo>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>

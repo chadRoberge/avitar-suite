@@ -1,0 +1,438 @@
+{{!-- Land Details Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header avitar-flex avitar-items-center avitar-flex-row avitar-mb-2">
+    <div class="avitar-flex-5">
+      <h1 class="avitar-page-title avitar-skinny">Zones & Land Curves</h1>
+      <div class="avitar-page-subtitle">Configure zones and land valuation ladders</div>
+    </div>
+    <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+      <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.openNewZoneModal}}>
+        <i class="fas fa-plus avitar-mr-2"></i>
+        Add New Zone
+      </button>
+    </div>
+  </div>
+  {{!-- Zone Cards with Integrated Land Ladders --}}
+  {{#each this.reactiveZones as |zone|}}
+  {{#let (get this.laddersByZone zone.id) as |ladder|}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-w-full">
+        <div class="avitar-flex avitar-items-center avitar-gap-4">
+          <div>
+            <h3 class="avitar-card__title">
+              <span class="avitar-badge avitar-badge--primary avitar-mr-2">{{zone.name}}</span>
+              {{zone.description}}
+            </h3>
+            <div class="avitar-card__subtitle">
+              Min. {{zone.minimumAcreage}} acres • {{zone.minimumFrontage}} ft frontage • Excess: {{format-currency (or zone.excessLandCostPerAcre 0)}}/acre
+            </div>
+          </div>
+        </div>
+        <div class="avitar-flex avitar-gap-2">
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" (fn this.openEditZoneModal zone)}}>
+            <i class="fas fa-edit avitar-mr-1"></i>
+            Edit Zone
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--sm" {{on "click" (fn this.deleteZone zone.id)}}>
+            <i class="fas fa-trash avitar-mr-1"></i>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if ladder}}
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+        <h4 class="avitar-font-semibold">Land Valuation Ladder</h4>
+        <div class="avitar-flex avitar-gap-2">
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" (fn this.openNewTierModal zone)}}>
+            <i class="fas fa-plus avitar-mr-1"></i>
+            Add Tier
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--sm" {{on "click" (fn this.openLadderModal zone)}}>
+            <i class="fas fa-edit avitar-mr-1"></i>
+            Edit All
+          </button>
+        </div>
+      </div>
+      <div class="avitar-flex avitar-gap-6">
+        {{!-- Land Ladder Table --}}
+        <div class="avitar-flex-4">
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--compact">
+              <thead>
+                <tr>
+                  <th>Acreage</th>
+                  <th>Land Value</th>
+                  <th class="avitar-table__actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each ladder.tiers as |tier index|}}
+                <tr>
+                  <td>
+                    <span class="avitar-font-semibold">{{tier.acreage}} acres</span>
+                  </td>
+                  <td>
+                    <span class="avitar-text-success avitar-font-semibold">
+                      {{format-currency tier.value}}
+                    </span>
+                  </td>
+                  <td class="avitar-table__actions">
+                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.openTierModal zone tier)}} title="Edit Tier">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteTier zone tier)}} title="Remove Tier">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </td>
+                </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {{!-- Land Curve Visualization --}}
+        <div class="avitar-flex-6">
+          <div class="avitar-border avitar-rounded avitar-p-4">
+            <LineGraph 
+              @data={{ladder.tiers}}
+              @xField="acreage"
+              @yField="value"
+              @xLabel="Acreage"
+              @yLabel="Land Value ($)"
+              @yFormatFunction={{this.formatCurrency}}
+              @lineColor="#10b981"
+              @title="{{zone.name}} Land Value Curve"
+            />
+          </div>
+        </div>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-layer-group avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Land Ladder</div>
+        <div class="avitar-text-muted avitar-mb-4">Create a land valuation ladder for this zone</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.openLadderModal zone)}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Create Land Ladder
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/let}}
+  {{/each}}
+  {{#unless this.reactiveZones.length}}
+  <div class="avitar-empty-state avitar-text-center avitar-py-8">
+    <i class="fas fa-map-marked-alt avitar-text-4xl avitar-text-muted avitar-mb-3"></i>
+    <div class="avitar-text-xl avitar-font-semibold avitar-mb-2">No Zones Configured</div>
+    <div class="avitar-text-muted avitar-mb-4">Create your first zoning district to get started</div>
+    <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.openNewZoneModal}}>
+      <i class="fas fa-plus avitar-mr-2"></i>
+      Create First Zone
+    </button>
+  </div>
+  {{/unless}}
+
+  {{!-- Acreage Discounts Card --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Acreage Discounts</h3>
+          <div class="avitar-card__subtitle">Economy of scale discounts for larger lots</div>
+        </div>
+        {{#unless this.isEditingAcreageDiscounts}}
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.startEditingAcreageDiscounts}}>
+            <i class="fas fa-edit avitar-mr-1"></i>
+            Edit Settings
+          </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.isEditingAcreageDiscounts}}
+        {{!-- Edit Form --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
+          <h4 class="avitar-font-semibold avitar-mb-3">Edit Acreage Discount Settings</h4>
+          
+          <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-4">
+            <div class="avitar-form-group">
+              <label class="avitar-label">Minimum Qualifying Acreage</label>
+              <div class="avitar-input-group">
+                <input 
+                  type="number" 
+                  class="avitar-input" 
+                  value={{this.acreageDiscountMinimum}} 
+                  {{on "input" this.updateAcreageDiscountMinimum}} 
+                  step="0.1" 
+                  min="0.1" 
+                  max="1000"
+                  placeholder="10.0" 
+                />
+                <span class="avitar-input-group__addon">acres</span>
+              </div>
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Maximum Qualifying Acreage</label>
+              <div class="avitar-input-group">
+                <input 
+                  type="number" 
+                  class="avitar-input" 
+                  value={{this.acreageDiscountMaximum}} 
+                  {{on "input" this.updateAcreageDiscountMaximum}} 
+                  step="1" 
+                  min="1" 
+                  max="10000"
+                  placeholder="200.0" 
+                />
+                <span class="avitar-input-group__addon">acres</span>
+              </div>
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-label">Maximum Discount</label>
+              <div class="avitar-input-group">
+                <input 
+                  type="number" 
+                  class="avitar-input" 
+                  value={{this.acreageDiscountPercentage}} 
+                  {{on "input" this.updateAcreageDiscountPercentage}} 
+                  step="1" 
+                  min="1" 
+                  max="95"
+                  placeholder="75" 
+                />
+                <span class="avitar-input-group__addon">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+            <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveAcreageDiscountSettings}}>Save Settings</button>
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.cancelEditingAcreageDiscounts}}>Cancel</button>
+          </div>
+        </div>
+      {{else}}
+        {{!-- Display Current Settings --}}
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-6">
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary avitar-mb-1">
+              {{number-format this.acreageDiscountSettings.minimumQualifyingAcreage}} acres
+            </div>
+            <div class="avitar-text-sm avitar-text-muted">Minimum Qualifying Acreage</div>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Properties below this size get no discount</div>
+          </div>
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary avitar-mb-1">
+              {{number-format this.acreageDiscountSettings.maximumQualifyingAcreage}} acres
+            </div>
+            <div class="avitar-text-sm avitar-text-muted">Maximum Qualifying Acreage</div>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Properties above this size get maximum discount</div>
+          </div>
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-success avitar-mb-1">
+              {{this.acreageDiscountSettings.maximumDiscountPercentage}}%
+            </div>
+            <div class="avitar-text-sm avitar-text-muted">Maximum Discount</div>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Applied to properties at maximum acreage</div>
+          </div>
+        </div>
+
+        {{!-- Discount Calculator --}}
+        <div class="avitar-border-t avitar-pt-4 avitar-mt-4">
+          <h5 class="avitar-font-semibold avitar-mb-3">Discount Calculator</h5>
+          <div class="avitar-flex avitar-items-center avitar-gap-4">
+            <div class="avitar-form-group avitar-mb-0" style="min-width: 200px;">
+              <label class="avitar-label avitar-text-sm">Property Acreage</label>
+              <div class="avitar-input-group">
+                <input 
+                  type="number" 
+                  class="avitar-input avitar-input--sm" 
+                  value={{this.calculatorAcreage}} 
+                  {{on "input" this.updateCalculatorAcreage}} 
+                  step="0.1" 
+                  min="0.1"
+                  placeholder="Enter acreage" 
+                />
+                <span class="avitar-input-group__addon">acres</span>
+              </div>
+            </div>
+            <div class="avitar-flex avitar-items-end">
+              <div class="avitar-text-center">
+                <div class="avitar-text-sm avitar-text-muted">Discount</div>
+                <div class="avitar-text-lg avitar-font-bold {{if this.calculatedDiscount 'avitar-text-success' 'avitar-text-muted'}}">
+                  {{if this.calculatedDiscount (concat this.calculatedDiscount "%") "0%"}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Land Mass Recalculation Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Land Mass Recalculation</h3>
+          <div class="avitar-card__subtitle">Recalculate land values with zone minimum acreage adjustments</div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.landRecalculationStatus}}
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 lg:avitar-grid-cols-4 avitar-gap-4 avitar-mb-4">
+        <div class="avitar-bg-blue-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-blue-600">{{this.landRecalculationStatus.totalAssessments}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Total Land Assessments</div>
+        </div>
+        <div class="avitar-bg-yellow-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-yellow-600">{{this.landRecalculationStatus.needsRecalculation}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Need Recalculation</div>
+        </div>
+        <div class="avitar-bg-green-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-green-600">{{this.landRecalculationStatus.recentCalculations}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Recent (24hrs)</div>
+        </div>
+        <div class="avitar-bg-red-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-red-600">{{this.landRecalculationStatus.nullValueAssessments}}</div>
+          <div class="avitar-text-sm avitar-text-muted">Missing Values</div>
+        </div>
+      </div>
+      {{/if}}
+      
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+        <div class="avitar-form-group">
+          <label class="avitar-label">Recalculation Year</label>
+          <input type="number" class="avitar-input" value={{this.landMassRecalcYear}} {{on "input" this.updateLandMassRecalcYear}} min="2020" max="2030" placeholder="2024" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Assessment year to recalculate</div>
+        </div>
+        <div class="avitar-form-group">
+          <label class="avitar-label">Batch Size</label>
+          <input type="number" class="avitar-input" value={{this.landMassRecalcBatchSize}} {{on "input" this.updateLandMassRecalcBatchSize}} min="10" max="200" placeholder="50" />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">Number to process at once</div>
+        </div>
+      </div>
+      
+      {{#if this.isLandRecalculating}}
+      <div class="avitar-alert avitar-alert--info avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">Land Recalculation in Progress</div>
+          <div class="avitar-alert__message">
+            Please wait while land assessments are being recalculated with zone minimum acreage adjustments. This may take several minutes for large municipalities.
+          </div>
+        </div>
+      </div>
+      {{/if}}
+      
+      {{#if this.landRecalculationResult}}
+      <div class="avitar-alert {{if this.landRecalculationResult.success 'avitar-alert--success' 'avitar-alert--error'}} avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas {{if this.landRecalculationResult.success 'fa-check-circle' 'fa-exclamation-circle'}}"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">
+            {{if this.landRecalculationResult.success "Land Recalculation Completed" "Land Recalculation Failed"}}
+          </div>
+          <div class="avitar-alert__message">
+            {{#if this.landRecalculationResult.success}}
+              Processed {{this.landRecalculationResult.result.processed}} assessments, 
+              updated {{this.landRecalculationResult.result.updated}} values,
+              {{this.landRecalculationResult.result.zoneAdjustments}} zone adjustments made,
+              {{this.landRecalculationResult.result.excessAcreageCreated}} new excess acreage lines created,
+              {{this.landRecalculationResult.result.errors}} errors.
+            {{else}}
+              {{this.landRecalculationResult.message}}
+            {{/if}}
+          </div>
+        </div>
+      </div>
+      {{/if}}
+      
+      <div class="avitar-flex avitar-gap-2 avitar-mt-4">
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startLandMassRecalculation}} disabled={{this.isLandRecalculating}}>
+          <i class="fas {{if this.isLandRecalculating 'fa-spinner fa-spin' 'fa-calculator'}} avitar-mr-2"></i>
+          {{if this.isLandRecalculating "Recalculating..." "Recalculate All Land Values"}}
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--warning" {{on "click" this.startLandMassRecalculationWithZoneAdjustments}} disabled={{this.isLandRecalculating}}>
+          <i class="fas {{if this.isLandRecalculating 'fa-spinner fa-spin' 'fa-layer-group'}} avitar-mr-2"></i>
+          {{if this.isLandRecalculating "Adjusting..." "Recalc with Zone Adjustments"}}
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.refreshLandRecalculationStatus}} disabled={{this.isLandRecalculating}}>
+          <i class="fas fa-sync avitar-mr-2"></i>
+          Refresh Status
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--outline" {{on "click" this.recalculateLandOnlyMissing}} disabled={{this.isLandRecalculating}}>
+          <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+          Recalculate Only Missing
+        </button>
+      </div>
+      
+      <div class="avitar-mt-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+        <h4 class="avitar-font-semibold avitar-mb-2">When to Use Land Mass Recalculation</h4>
+        <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+          <li><strong>Recalculate All Land Values:</strong> Use after changing land ladder values, rates, or factors. Updates all land line calculations with new rates.</li>
+          <li><strong>Recalc with Zone Adjustments:</strong> Use after changing zone minimum acreage requirements. Redistributes excess acreage to comply with zone minimums.</li>
+          <li>After updating neighborhood adjustment factors</li>
+          <li>When land values appear outdated or inconsistent</li>
+          <li>After importing new land assessment data</li>
+          <li><strong>Zone Adjustments:</strong> Automatically redistributes excess acreage when land lines exceed zone minimums</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Land Ladder Guidelines --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Land Ladder Guidelines</h3>
+      <div class="avitar-card__subtitle">Understanding land valuation ladders</div>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3">How Land Ladders Work</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li>Land values are calculated based on property acreage</li>
+            <li>Each zone can have its own valuation ladder</li>
+            <li>Higher acreage typically has higher total value but lower per-acre value</li>
+            <li>Values are interpolated between ladder tiers</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3">Best Practices</h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-2">
+            <li>Start with smallest typical lot size for the zone</li>
+            <li>Include common lot sizes (0.5, 1, 2, 5 acres)</li>
+            <li>Consider market data for each zone</li>
+            <li>Review and update annually</li>
+          </ul>
+        </div>
+      </div>
+      <div class="avitar-alert avitar-alert--info avitar-mt-4">
+        <div class="avitar-alert__icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="avitar-alert__content">
+          <div class="avitar-alert__title">Example Calculation</div>
+          <div class="avitar-alert__message">
+            For a 1.5 acre property in Residential A: The system interpolates between 1.0 acres ($120,000) and 2.0 acres ($140,000) to calculate $130,000 for 1.5 acres.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{!-- Zone Edit Modal --}}
+  <Assessing::ZoneEditModal @isOpen={{this.isZoneModalOpen}} @zone={{this.editingZone}} @onClose={{this.closeZoneModal}} @onSave={{this.saveZone}} />
+  {{!-- Land Ladder Edit Modal --}}
+  <Assessing::LandLadderEditModal @isOpen={{this.isLadderModalOpen}} @zone={{this.editingLadderZone}} @zoneName={{this.editingLadderZone.name}} @ladder={{this.editingLadder}} @onClose={{this.closeLadderModal}} @onSave={{this.saveLadder}} />
+  {{!-- Tier Edit Modal --}}
+  <Assessing::TierEditModal @isOpen={{this.isTierModalOpen}} @tier={{this.editingTier}} @onClose={{this.closeTierModal}} @onSave={{this.saveTier}} />
+</div>

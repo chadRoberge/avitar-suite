@@ -1,0 +1,210 @@
+{{#if this.isVisible}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" role="dialog" aria-modal="true">
+    <div class="avitar-modal avitar-modal--lg">
+      <div class="avitar-modal__header">
+        <h3 class="avitar-modal__title">
+          <i class="fas fa-exclamation-triangle text-warning"></i>
+          Data Conflict Detected
+        </h3>
+        <button type="button" class="avitar-modal__close-btn" {{on "click" this.dismiss}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__content">
+        {{#if this.conflictDetails}}
+          <div class="conflict-resolver">
+            <p class="conflict-resolver__description">
+              Changes were made to the same {{this.conflictDetails.collection}} record by multiple users. 
+              Please choose which version to keep:
+            </p>
+
+            {{#if (gt this.remainingConflicts 1)}}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                {{this.remainingConflicts}} conflicts remaining to resolve
+              </div>
+            {{/if}}
+
+            <div class="conflict-resolver__options">
+              {{!-- Local Version --}}
+              <div class="conflict-option conflict-option--local">
+                <div class="conflict-option__header">
+                  <h4>
+                    <i class="fas fa-laptop"></i>
+                    Your Local Changes
+                  </h4>
+                  <small class="text-muted">
+                    Last modified: {{moment-format this.conflictDetails.localUpdated "MM/DD/YYYY h:mm A"}}
+                  </small>
+                </div>
+                
+                <div class="conflict-option__content">
+                  {{#each this.conflictDetails.differences as |diff|}}
+                    <div class="field-diff">
+                      <label class="field-diff__label">{{diff.field}}:</label>
+                      <div class="field-diff__value field-diff__value--local">
+                        {{diff.local}}
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+                
+                <div class="conflict-option__actions">
+                  <button type="button" 
+                          class="avitar-btn avitar-btn--primary avitar-btn--block"
+                          {{on "click" this.resolveWithLocal}}>
+                    <i class="fas fa-check"></i>
+                    Keep My Changes
+                  </button>
+                </div>
+              </div>
+
+              {{!-- Server Version --}}
+              <div class="conflict-option conflict-option--server">
+                <div class="conflict-option__header">
+                  <h4>
+                    <i class="fas fa-server"></i>
+                    Server Changes
+                  </h4>
+                  <small class="text-muted">
+                    Last modified: {{moment-format this.conflictDetails.serverUpdated "MM/DD/YYYY h:mm A"}}
+                  </small>
+                </div>
+                
+                <div class="conflict-option__content">
+                  {{#each this.conflictDetails.differences as |diff|}}
+                    <div class="field-diff">
+                      <label class="field-diff__label">{{diff.field}}:</label>
+                      <div class="field-diff__value field-diff__value--server">
+                        {{diff.server}}
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+                
+                <div class="conflict-option__actions">
+                  <button type="button" 
+                          class="avitar-btn avitar-btn--secondary avitar-btn--block"
+                          {{on "click" this.resolveWithServer}}>
+                    <i class="fas fa-download"></i>
+                    Use Server Version
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="conflict-resolver__info">
+              <p class="text-muted small">
+                <i class="fas fa-info-circle"></i>
+                This occurs when the same data was modified by multiple users. 
+                Choose the version you want to keep - the other version will be discarded.
+              </p>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+<style>
+.conflict-resolver {
+  max-width: 800px;
+}
+
+.conflict-resolver__description {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.conflict-resolver__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.conflict-option {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #f8f9fa;
+}
+
+.conflict-option--local {
+  border-color: #007bff;
+  background: #f0f7ff;
+}
+
+.conflict-option--server {
+  border-color: #6c757d;
+  background: #f8f9fa;
+}
+
+.conflict-option__header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.conflict-option__header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.conflict-option__header h4 i {
+  margin-right: 0.5rem;
+}
+
+.conflict-option__content {
+  margin-bottom: 1rem;
+}
+
+.field-diff {
+  margin-bottom: 0.75rem;
+}
+
+.field-diff__label {
+  font-weight: 600;
+  color: #555;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.field-diff__value {
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.field-diff__value--local {
+  background: #d4edda;
+  border-left: 4px solid #28a745;
+}
+
+.field-diff__value--server {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+
+.conflict-resolver__info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #17a2b8;
+}
+
+@media (max-width: 768px) {
+  .conflict-resolver__options {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+</style>

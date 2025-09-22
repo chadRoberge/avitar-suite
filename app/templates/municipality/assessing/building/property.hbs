@@ -1,0 +1,474 @@
+{{!-- Building Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header with owner, type, location, and total assessment --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @onPropertyUpdate={{this.refreshBuildingProperty}} />
+  
+  {{!-- Building Assessment Details --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Building Assessment Details</h3>
+      <div class="avitar-card__subtitle">Construction details and building characteristics</div>
+      {{#if (can "update" "assessing")}}
+        <div class="avitar-card__actions">
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openBuildingEditModal}}
+          >
+            <i class="fas fa-edit"></i>
+            Edit Building Details
+          </button>
+        </div>
+      {{/if}}
+    </div>
+    <div class="avitar-card__body">
+      {{!-- Two Column Layout --}}
+      <div class="avitar-flex avitar-gap-8">
+        {{!-- Column 1: Construction Details --}}
+        <div class="avitar-flex-1">
+          {{!-- Building Model --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Building Model:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.building_model}}</span>
+            </div>
+          </div>
+
+          {{!-- Roof Style --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Roof Style:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_style}}</span>
+            </div>
+          </div>
+
+          {{!-- Roof Cover --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Roof Cover:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_cover}}</span>
+            </div>
+          </div>
+
+          {{!-- Ext Wall --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Ext Wall:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_1}}</div>
+              {{#if @model.buildingAssessment.exterior_wall_2}}
+                <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_2}}</div>
+              {{/if}}
+            </div>
+          </div>
+
+          {{!-- Int Wall --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Int Wall:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_1}}</div>
+              {{#if @model.buildingAssessment.interior_wall_2}}
+                <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_2}}</div>
+              {{/if}}
+            </div>
+          </div>
+
+          {{!-- Flooring --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Flooring:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_1}}</div>
+              {{#if @model.buildingAssessment.flooring_2}}
+                <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_2}}</div>
+              {{/if}}
+            </div>
+          </div>
+
+          {{!-- Heating Fuel --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Heating Fuel:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_fuel}}</span>
+            </div>
+          </div>
+
+          {{!-- Heating Type --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Heating Type:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_type}}</span>
+            </div>
+          </div>
+          {{!-- A/C --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">A/C:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.air_conditioning}}</span>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Column 2: Building Features --}}
+        <div class="avitar-flex-1">
+          {{!-- Bedrooms --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Bedrooms:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.bedrooms}}</span>
+            </div>
+          </div>
+
+          {{!-- Full Baths --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Full Baths:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.full_baths}}</span>
+            </div>
+          </div>
+
+          {{!-- Half Baths --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Half Baths:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.half_baths}}</span>
+            </div>
+          </div>
+
+          {{!-- Extra Kitchen --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Extra Kitch:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.extra_kitchen}}</span>
+            </div>
+          </div>
+           {{!-- Generator --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Generator:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.generator}}</span>
+            </div>
+          </div>
+
+          {{!-- Quality --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Quality:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm avitar-font-semibold avitar-text-primary">
+                {{@model.buildingAssessment.quality_grade}}
+              </span>
+            </div>
+          </div>
+
+          {{!-- Story Height --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Story Height:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.story_height}}</span>
+            </div>
+          </div>
+
+          {{!-- Base Type --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Base Type:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.base_type}}</span>
+            </div>
+          </div>
+
+          {{!-- Base Rate --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Base Rate:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm avitar-font-semibold avitar-text-success">
+                ${{number-format @model.buildingAssessment.base_rate}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Depreciation and Building Photos Row --}}
+  <div class="avitar-flex avitar-gap-6 avitar-mb-6">
+    {{!-- Card 1: Depreciation and Building Value --}}
+    <div class="avitar-flex-1">
+      <div class="avitar-card">
+        <div class="avitar-card__header avitar-card__header--colored">
+          <h3 class="avitar-card__title">Depreciation & Building Value</h3>
+          <div class="avitar-card__subtitle">Age and condition factors</div>
+          {{#if (can "update" "assessing")}}
+            <div class="avitar-card__actions">
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--primary avitar-btn--sm"
+                {{on "click" this.openDepreciationEditModal}}
+              >
+                <i class="fas fa-edit"></i>
+                Edit Depreciation
+              </button>
+            </div>
+          {{/if}}
+        </div>
+        <div class="avitar-card__body">
+          {{!-- Year Built --}}
+          <div class="avitar-flex avitar-items-center avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Year Built:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.year_built}}</span>
+            </div>
+            <div class="avitar-flex-3 avitar-text-right">
+            </div>
+          </div>
+
+          {{!-- Normal Depreciation --}}
+          <div class="avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-skinny">
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Normal:</span>
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-sm avitar-mb-1">
+                  {{@model.buildingAssessment.depreciation.normal.description}}
+                </div>                
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">                
+                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
+                  {{number-format @model.buildingAssessment.depreciation.normal.percentage 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Physical Depreciation --}}
+          <div class="avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-skinny">
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Physical:</span>
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-sm avitar-mb-1">
+                  {{@model.buildingAssessment.depreciation.physical.notes}}
+                </div>                
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">                
+                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
+                  {{number-format @model.buildingAssessment.depreciation.physical.percentage 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Functional Depreciation --}}
+          <div class="avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-skinny">
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Functional:</span>
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-sm avitar-mb-1">
+                  {{@model.buildingAssessment.depreciation.functional.notes}}
+                </div>                
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">                
+                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
+                  {{number-format @model.buildingAssessment.depreciation.functional.percentage 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Economic Depreciation --}}
+          <div class="avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-skinny">
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Economic:</span>
+              </div>
+             <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-sm avitar-mb-1">
+                  {{@model.buildingAssessment.depreciation.economic.notes}}
+                </div>                
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">                
+                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
+                  {{number-format @model.buildingAssessment.depreciation.economic.percentage 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Temporary Depreciation --}}
+          <div class="avitar-mb-4">
+            <div class="avitar-flex avitar-items-start avitar-skinny">
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Temporary:</span>
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-sm avitar-mb-1">
+                  {{@model.buildingAssessment.depreciation.temporary.notes}}
+                </div>                
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">                
+                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
+                  {{number-format @model.buildingAssessment.depreciation.temporary.percentage 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Total Depreciation --}}
+          <div class="avitar-border-t avitar-pt-3 avitar-mb-3">
+            <div class="avitar-flex avitar-items-center avitar-skinny">
+              <div class="avitar-flex-3 avitar-ml-3">                          
+              </div>
+              <div class="avitar-flex-3 avitar-text-right">
+                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Total Depreciation:</span>
+              </div>
+              <div class="avitar-flex-3 avitar-ml-3">
+                <div class="avitar-text-lg avitar-font-bold avitar-text-right avitar-text-danger">
+                  {{number-format (add 
+                    @model.buildingAssessment.depreciation.normal.percentage
+                    @model.buildingAssessment.depreciation.physical.percentage  
+                    @model.buildingAssessment.depreciation.functional.percentage
+                    @model.buildingAssessment.depreciation.economic.percentage
+                    @model.buildingAssessment.depreciation.temporary.percentage
+                  ) 2}}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Building Value (Centered) --}}
+          <div class="avitar-text-center avitar-border-t avitar-pt-4">
+            <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Building Value</div>
+            <div class="avitar-text-3xl avitar-font-bold avitar-text-success">
+              ${{number-format @model.buildingAssessment.building_value}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Card 2: Building Photos --}}
+    <div class="avitar-flex-1">
+      <div class="avitar-card">
+        <div class="avitar-card__header avitar-card__header--colored">
+          <h3 class="avitar-card__title">Building Photos</h3>
+          <div class="avitar-card__subtitle">Property images and documentation</div>
+        </div>
+        <div class="avitar-card__body">
+          {{#if @model.buildingAssessment.photos}}
+            <div class="building-photo-viewer">
+              <div class="building-photo-container">
+                <img 
+                  src={{this.currentPhoto.url}} 
+                  alt={{this.currentPhoto.description}}
+                  class="building-photo"
+                />
+                
+                {{!-- Photo Navigation --}}
+                {{#if (gt @model.buildingAssessment.photos.length 1)}}
+                  <div class="photo-navigation">
+                    <button 
+                      type="button"
+                      class="photo-nav-btn photo-nav-btn--prev {{unless this.hasPreviousPhoto 'photo-nav-btn--disabled'}}"
+                      {{on "click" this.previousPhoto}}
+                      disabled={{unless this.hasPreviousPhoto "disabled"}}
+                    >
+                      <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <div class="photo-counter">
+                      {{this.currentPhotoIndex}} of {{@model.buildingAssessment.photos.length}}
+                    </div>
+                    
+                    <button 
+                      type="button"
+                      class="photo-nav-btn photo-nav-btn--next {{unless this.hasNextPhoto 'photo-nav-btn--disabled'}}"
+                      {{on "click" this.nextPhoto}}
+                      disabled={{unless this.hasNextPhoto "disabled"}}
+                    >
+                      <i class="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                {{/if}}
+              </div>
+              
+              {{!-- Photo Description --}}
+              {{#if this.currentPhoto.description}}
+                <div class="photo-description">
+                  <p class="avitar-text-sm avitar-text-muted avitar-text-center avitar-mt-3">
+                    {{this.currentPhoto.description}}
+                  </p>
+                </div>
+              {{/if}}
+            </div>
+          {{else}}
+            <div class="avitar-text-center avitar-text-muted avitar-py-8">
+              <i class="fas fa-camera avitar-text-4xl avitar-mb-3"></i>
+              <div>No photos available</div>
+              <div class="avitar-text-sm avitar-mt-2">Building photos will appear here when uploaded</div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {{!-- Building Edit Modal --}}
+  {{#if this.showBuildingEditModal}}
+    <Assessing::BuildingEditModal
+      @buildingAssessment={{@model.buildingAssessment}}
+      @property={{@model.property}}
+      @onSave={{this.refreshBuildingProperty}}
+      @onClose={{this.closeBuildingEditModal}}
+    />
+  {{/if}}
+
+  {{!-- Depreciation Edit Modal --}}
+  {{#if this.showDepreciationEditModal}}
+    <Assessing::DepreciationEditModal
+      @buildingAssessment={{@model.buildingAssessment}}
+      @property={{@model.property}}
+      @onSave={{this.refreshBuildingProperty}}
+      @onClose={{this.closeDepreciationEditModal}}
+    />
+  {{/if}}
+</div>

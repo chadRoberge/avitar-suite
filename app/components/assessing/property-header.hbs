@@ -1,0 +1,180 @@
+{{!-- Property Header Component - Owner info and property details --}}
+<div class="avitar-card avitar-mb-6">
+  <div class="avitar-card__body">
+    {{!-- Card Navigation Row --}}
+    {{#if (gt @property.cards.total_cards 1)}}
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4 avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <span class="avitar-text-sm avitar-font-medium avitar-text-gray-700">
+            Card {{@property.current_card}} of {{@property.cards.total_cards}}
+          </span>
+          {{#if @property.cards.card_descriptions}}
+            {{#each @property.cards.card_descriptions as |cardDesc|}}
+              {{#if (eq cardDesc.card_number @property.current_card)}}
+                {{#if cardDesc.description}}
+                  <span class="avitar-text-sm avitar-text-muted">- {{cardDesc.description}}</span>
+                {{/if}}
+              {{/if}}
+            {{/each}}
+          {{/if}}
+        </div>
+        <div class="avitar-flex avitar-gap-2">
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless (gt @property.current_card 1) 'avitar-btn--disabled'}}"
+            {{on "click" this.previousCard}}
+            disabled={{unless (gt @property.current_card 1) "disabled"}}
+          >
+            <i class="fas fa-chevron-left avitar-mr-1"></i>
+            Previous
+          </button>
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless (lt @property.current_card @property.cards.total_cards) 'avitar-btn--disabled'}}"
+            {{on "click" this.nextCard}}
+            disabled={{unless (lt @property.current_card @property.cards.total_cards) "disabled"}}
+          >
+            Next
+            <i class="fas fa-chevron-right avitar-ml-1"></i>
+          </button>
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--primary"
+            {{on "click" this.addCard}}
+            title="Add New Card"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    {{else}}
+      <div class="avitar-flex avitar-justify-end avitar-mb-2">
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--primary"
+          {{on "click" this.addCard}}
+          title="Add Card"
+        >
+          <i class="fas fa-plus avitar-mr-1"></i>
+          Add Card
+        </button>
+      </div>
+    {{/if}}
+
+    {{!-- Top row: Owner info left, Property type/acreage right --}}
+    <div class="avitar-flex avitar-justify-between avitar-gap-6 avitar-mb-4">
+      {{!-- Owner Information --}}
+      <div class="avitar-flex-1">
+        <div class="avitar-flex avitar-items-center avitar-skinny">
+          <div class="avitar-text-right" style="width: 80px; flex-shrink: 0;">
+            <span class="avitar-text-sm avitar-text-muted avitar-font-bold">PID:</span>
+          </div>
+          <div class="avitar-ml-3 avitar-flex-1">
+            <span class="avitar-text-sm avitar-text-muted">{{@property.pid_formatted}}</span>
+          </div>
+        </div>
+        <div class="avitar-flex avitar-items-center avitar-skinny">
+          <div class="avitar-text-right" style="width: 80px; flex-shrink: 0;">
+            <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Owner:</span>
+          </div>
+          <div class="avitar-ml-3 avitar-flex-1 avitar-flex avitar-items-center avitar-gap-2">
+            <h2 class="avitar-text-xl avitar-font-semibold avitar-text-primary avitar-skinny">
+              {{this.primaryOwnerName}}
+            </h2>
+            {{#if this.hasAdditionalOwners}}
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                {{on "click" this.showOwnersModal}}
+                title="View All Owners ({{this.totalOwnersCount}})"
+              >
+                <i class="fas fa-users avitar-mr-1"></i>
+                +{{this.additionalOwnersCount}}
+              </button>
+            {{/if}}
+            <button 
+              type="button" 
+              class="avitar-button avitar-button--sm avitar-button--primary"
+              {{on "click" this.editOwner}}
+              title="Edit Owner Information"
+            >
+              <i class="fas fa-edit"></i>
+              Edit
+            </button>
+          </div>
+        </div>
+        {{#if this.primaryOwnerAddress}}
+          <div class="avitar-flex avitar-items-center avitar-text-sm avitar-text-muted avitar-skinny">
+            <div class="avitar-text-right" style="width: 80px; flex-shrink: 0;">
+              <span class="avitar-font-bold">Address:</span>
+            </div>
+            <div class="avitar-ml-3 avitar-flex-1">
+              <span>{{this.primaryOwnerAddress}}</span>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+      
+      {{!-- Property Type and Acreage --}}
+      <div class="avitar-text-right">
+        <div class="avitar-text-lg avitar-font-medium avitar-text-gray-900 avitar-mb-1">
+          {{or @property.property_type @property.property_class "Unknown Type"}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">
+          {{#if this.acreage}}
+            {{number-format this.acreage 3}} acres
+          {{else}}
+            Acreage TBD
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    
+    {{!-- Bottom row: Property location left, Total assessment right --}}
+    <div class="avitar-flex avitar-justify-between avitar-gap-6">
+      {{!-- Property Location --}}
+      <div class="avitar-flex-1">
+        <div class="avitar-flex avitar-items-center avitar-skinny">
+          <div class="avitar-text-right" style="width: 80px; flex-shrink: 0;">
+            <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Location:</span>
+          </div>
+          <div class="avitar-ml-3 avitar-flex-1">
+            <div class="avitar-text-base avitar-font-medium avitar-text-gray-900 avitar-skinny">
+              {{@property.location.address}}
+            </div>
+          </div>
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">
+          {{#if @property.location.neighborhood}}
+            {{@property.location.neighborhood}}
+            {{#if @property.location.zone}}, {{@property.location.zone}}{{/if}}
+          {{else if @property.location.zone}}
+            Zone {{@property.location.zone}}
+          {{else}}
+            PID: {{@property.pid_formatted}}
+          {{/if}}
+        </div>
+      </div>
+      
+      {{!-- Total Property Assessment --}}
+      <div class="avitar-text-right">
+        <div class="avitar-text-2xl avitar-font-bold avitar-text-primary avitar-mb-1">
+          ${{number-format @property.assessed_value}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">
+          {{@property.tax_year}} Total Assessment
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- Owner Management Modal --}}
+{{#if this.showOwnerModal}}
+  <Assessing::OwnerManagementModal
+    @isOpen={{this.showOwnerModal}}
+    @property={{@property}}
+    @onClose={{this.closeOwnerModal}}
+    @onOwnerUpdate={{this.handleOwnerUpdate}}
+  />
+{{/if}}

@@ -1,0 +1,102 @@
+{{!-- Module Card Component --}}
+<div class="avitar-card module-card {{@module.color}}-theme {{if @module.hasAccess 'enabled' 'disabled'}}">
+  <div class="avitar-card-header">
+    <div class="module-icon">
+      <i class="fas fa-{{@module.icon}}"></i>
+    </div>
+    <div class="module-info">
+      <h4 class="module-name">{{@module.name}}</h4>
+      <span class="module-tier avitar-badge avitar-badge--{{@module.tier}}">
+        {{capitalize @module.tier}}
+      </span>
+    </div>
+    <div class="module-status">
+      {{#if @module.hasAccess}}
+        <span class="status-indicator enabled">
+          <i class="fas fa-check-circle"></i>
+          Enabled
+        </span>
+      {{else}}
+        <span class="status-indicator disabled">
+          <i class="fas fa-times-circle"></i>
+          Disabled
+        </span>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="avitar-card-body">
+    <p class="module-description">{{@module.description}}</p>
+
+    {{#if @module.hasAccess}}
+      {{#if @module.features}}
+        <div class="module-features">
+          <h5>Available Features:</h5>
+          <ul class="feature-list">
+            {{#each @module.features as |feature|}}
+              <li class="feature-item">
+                <i class="fas fa-check text-success"></i>
+                {{this.getFeatureDisplayName feature}}
+              </li>
+            {{/each}}
+          </ul>
+        </div>
+      {{/if}}
+
+      {{#if @module.version}}
+        <div class="module-version">
+          <small class="text-muted">Version: {{@module.version}}</small>
+        </div>
+      {{/if}}
+
+      {{#if @showDetails}}
+        <div class="module-details">
+          {{#if @module.activatedDate}}
+            <div class="detail-item">
+              <strong>Activated:</strong> {{date-format @module.activatedDate}}
+            </div>
+          {{/if}}
+          
+          {{#if @module.expirationDate}}
+            <div class="detail-item">
+              <strong>Expires:</strong> {{date-format @module.expirationDate}}
+              {{#if (is-date-past @module.expirationDate)}}
+                <span class="text-danger">(Expired)</span>
+              {{/if}}
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+    {{else}}
+      {{#if @module.disabledReason}}
+        <div class="disabled-reason">
+          <i class="fas fa-info-circle text-warning"></i>
+          <em>{{@module.disabledReason}}</em>
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
+
+  {{#if @module.hasAccess}}
+    <div class="avitar-card-footer">
+      <LinkTo 
+        @route="{{@module.name}}" 
+        class="avitar-btn avitar-btn--primary"
+      >
+        <i class="fas fa-external-link-alt"></i>
+        Open {{@module.name}}
+      </LinkTo>
+      
+      {{#if (and @showManagement @currentUser.canManageModules)}}
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--outline-secondary"
+          {{on "click" (fn @onManage @module)}}
+        >
+          <i class="fas fa-cog"></i>
+          Manage
+        </button>
+      {{/if}}
+    </div>
+  {{/if}}
+</div>

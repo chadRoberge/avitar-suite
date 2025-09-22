@@ -1,0 +1,610 @@
+{{!-- Exemptions & Credits Settings --}}
+<div class="avitar-content">
+  <div class="avitar-page-header">
+    <h1 class="avitar-page-title">Exemptions & Credits</h1>
+    <div class="avitar-page-subtitle">Configure tax exemptions and assessment credits</div>
+  </div>
+
+  {{!-- Elderly Exemptions --}}
+  <Shared::SaveableCard
+    @title="Elderly Exemptions"
+    @subtitle="Assessment exemption amounts by age group and eligibility limits (deducted from assessed value)"
+    @data={{this.elderlyExemptions}}
+    @onSave={{this.saveElderlySettings}}
+    @onReset={{this.resetElderlySettings}}
+    as |card|
+  >
+    {{!-- Exemption Amounts --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Exemption Amounts</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-6">
+        <div class="avitar-form-group">
+          <label class="avitar-form-label" for="elderly-65-74">Ages 65-74</label>
+          <div class="avitar-form-input-wrapper">
+            <span class="avitar-form-input-prefix">$</span>
+            <input 
+              type="number" 
+              id="elderly-65-74"
+              class="avitar-form-input" 
+              placeholder="0"
+              value={{this.elderlyExemptions.elderly6574}}
+              min="0"
+              step="100"
+              {{on "input" (fn this.updateElderlySettings "elderly6574")}}
+              {{on "input" card.checkForChanges}}
+            />
+          </div>
+        </div>
+        
+        <div class="avitar-form-group">
+          <label class="avitar-form-label" for="elderly-75-79">Ages 75-79</label>
+          <div class="avitar-form-input-wrapper">
+            <span class="avitar-form-input-prefix">$</span>
+            <input 
+              type="number" 
+              id="elderly-75-79"
+              class="avitar-form-input" 
+              placeholder="0"
+              value={{this.elderlyExemptions.elderly7579}}
+              min="0"
+              step="100"
+              {{on "input" (fn this.updateElderlySettings "elderly7579")}}
+              {{on "input" card.checkForChanges}}
+            />
+          </div>
+        </div>
+        
+        <div class="avitar-form-group">
+          <label class="avitar-form-label" for="elderly-80-plus">Ages 80+</label>
+          <div class="avitar-form-input-wrapper">
+            <span class="avitar-form-input-prefix">$</span>
+            <input 
+              type="number" 
+              id="elderly-80-plus"
+              class="avitar-form-input" 
+              placeholder="0"
+              value={{this.elderlyExemptions.elderly80plus}}
+              min="0"
+              step="100"
+              {{on "input" (fn this.updateElderlySettings "elderly80plus")}}
+              {{on "input" card.checkForChanges}}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Eligibility Limits --}}
+    <div>
+      <h4 class="avitar-font-semibold avitar-mb-4">Eligibility Limits</h4>
+      <div class="avitar-flex avitar-flex-row avitar-gap-8">
+        {{!-- Income Limits --}}
+        <div class="avitar-flex-1">
+          <h5 class="avitar-font-medium avitar-mb-3">Income Limits</h5>
+          <div class="avitar-space-y-4">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="single-income-limit">Single Person</label>
+              <div class="avitar-form-input-wrapper">
+                <span class="avitar-form-input-prefix">$</span>
+                <input 
+                  type="number" 
+                  id="single-income-limit"
+                  class="avitar-form-input" 
+                  placeholder="0"
+                  value={{this.elderlyExemptions.singleIncomeLimit}}
+                  min="0"
+                  step="1000"
+                  {{on "input" (fn this.updateElderlySettings "singleIncomeLimit")}}
+                  {{on "input" card.checkForChanges}}
+                />
+              </div>
+            </div>
+            
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="married-income-limit">Married Person</label>
+              <div class="avitar-form-input-wrapper">
+                <span class="avitar-form-input-prefix">$</span>
+                <input 
+                  type="number" 
+                  id="married-income-limit"
+                  class="avitar-form-input" 
+                  placeholder="0"
+                  value={{this.elderlyExemptions.marriedIncomeLimit}}
+                  min="0"
+                  step="1000"
+                  {{on "input" (fn this.updateElderlySettings "marriedIncomeLimit")}}
+                  {{on "input" card.checkForChanges}}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Asset Limits --}}
+        <div class="avitar-flex-1">
+          <h5 class="avitar-font-medium avitar-mb-3">Asset Limits</h5>
+          <div class="avitar-space-y-4">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="single-asset-limit">Single Person</label>
+              <div class="avitar-form-input-wrapper">
+                <span class="avitar-form-input-prefix">$</span>
+                <input 
+                  type="number" 
+                  id="single-asset-limit"
+                  class="avitar-form-input" 
+                  placeholder="0"
+                  value={{this.elderlyExemptions.singleAssetLimit}}
+                  min="0"
+                  step="1000"
+                  {{on "input" (fn this.updateElderlySettings "singleAssetLimit")}}
+                  {{on "input" card.checkForChanges}}
+                />
+              </div>
+            </div>
+            
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="married-asset-limit">Married Person</label>
+              <div class="avitar-form-input-wrapper">
+                <span class="avitar-form-input-prefix">$</span>
+                <input 
+                  type="number" 
+                  id="married-asset-limit"
+                  class="avitar-form-input" 
+                  placeholder="0"
+                  value={{this.elderlyExemptions.marriedAssetLimit}}
+                  min="0"
+                  step="1000"
+                  {{on "input" (fn this.updateElderlySettings "marriedAssetLimit")}}
+                  {{on "input" card.checkForChanges}}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Shared::SaveableCard>
+
+  {{!-- Physical & Disability Exemptions --}}
+  <Shared::SaveableCard
+    @title="Physical & Disability Exemptions"
+    @subtitle="Assessment exemption amounts for physical disabilities (deducted from assessed value)"
+    @data={{this.disabilityExemptions}}
+    @onSave={{this.saveDisabilitySettings}}
+    @onReset={{this.resetDisabilitySettings}}
+    as |card|
+  >
+    <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="blind-exemption">Blind Exemption Amount</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="blind-exemption"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.disabilityExemptions.blindExemption}}
+            min="0"
+            step="100"
+            {{on "input" (fn this.updateDisabilitySettings "blindExemption")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+      
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="physical-handicap-exemption">Physical Handicap Exemption Amount</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="physical-handicap-exemption"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.disabilityExemptions.physicalHandicapExemption}}
+            min="0"
+            step="100"
+            {{on "input" (fn this.updateDisabilitySettings "physicalHandicapExemption")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+    </div>
+  </Shared::SaveableCard>
+
+  {{!-- Veteran Credits --}}
+  <Shared::SaveableCard
+    @title="Veteran Credits"
+    @subtitle="Tax credit amounts for veterans and surviving spouses (deducted from tax burden)"
+    @data={{this.veteranCredits}}
+    @onSave={{this.saveVeteranSettings}}
+    @onReset={{this.resetVeteranSettings}}
+    as |card|
+  >
+    <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="veteran-credit">Veteran Credit</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="veteran-credit"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.veteranCredits.veteranCredit}}
+            min="0"
+            step="50"
+            {{on "input" (fn this.updateVeteranSettings "veteranCredit")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+      
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="all-veteran-credit">All Veteran Credit</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="all-veteran-credit"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.veteranCredits.allVeteranCredit}}
+            min="0"
+            step="50"
+            {{on "input" (fn this.updateVeteranSettings "allVeteranCredit")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+      
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="disabled-veteran-credit">Disabled Veteran Credit</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="disabled-veteran-credit"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.veteranCredits.disabledVeteranCredit}}
+            min="0"
+            step="50"
+            {{on "input" (fn this.updateVeteranSettings "disabledVeteranCredit")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+      
+      <div class="avitar-form-group">
+        <label class="avitar-form-label" for="surviving-spouse-credit">Surviving Spouse Credit</label>
+        <div class="avitar-form-input-wrapper">
+          <span class="avitar-form-input-prefix">$</span>
+          <input 
+            type="number" 
+            id="surviving-spouse-credit"
+            class="avitar-form-input" 
+            placeholder="0"
+            value={{this.veteranCredits.survivingSpouseCredit}}
+            min="0"
+            step="50"
+            {{on "input" (fn this.updateVeteranSettings "survivingSpouseCredit")}}
+            {{on "input" card.checkForChanges}}
+          />
+        </div>
+      </div>
+    </div>
+  </Shared::SaveableCard>
+
+
+  {{!-- Institutional Exemptions --}}
+  <Shared::SaveableCard
+    @title="Institutional Exemptions"
+    @subtitle="Categories for Religious, Educational, and Charitable property exemptions (RSA 72:23)"
+    @data={{this.institutionalExemptions}}
+    @onSave={{this.saveInstitutionalSettings}}
+    @onReset={{this.resetInstitutionalSettings}}
+    as |card|
+  >
+    <div class="avitar-space-y-6">
+      {{!-- Religious Exemptions --}}
+      <div class="avitar-border-l-4 avitar-border-l-primary avitar-pl-4">
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4 avitar-w-full">
+          <div class="avitar-flex-1">
+            <h4 class="avitar-font-semibold avitar-text-lg avitar-text-primary">Religious Exemptions</h4>
+            <p class="avitar-text-sm avitar-text-muted">RSA 72:23 - Property used for religious worship</p>
+          </div>
+          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-flex-shrink-0">
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+              {{on "click" (fn this.showRsaInfo "religious")}}
+            >
+              <i class="fas fa-info-circle avitar-mr-1"></i>
+              RSA Info
+            </button>
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--primary avitar-btn--xs"
+              {{on "click" (fn this.addCategory "religious")}}
+            >
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add Category
+            </button>
+          </div>
+        </div>
+        
+        <div class="avitar-space-y-3">
+          {{#each this.institutionalExemptions.religious as |category index|}}
+            <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-bg-gray-50 avitar-p-3 avitar-rounded">
+              <div class="avitar-flex-1">
+                <input 
+                  type="text" 
+                  class="avitar-form-input" 
+                  placeholder="Enter category name..."
+                  value={{category.name}}
+                  {{on "blur" (fn this.updateCategoryAndCheck "religious" index "name" card.checkForChanges)}}
+                />
+              </div>
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                {{on "click" (fn this.removeCategory "religious" index)}}
+                {{on "click" card.checkForChanges}}
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Educational Exemptions --}}
+      <div class="avitar-border-l-4 avitar-border-l-success avitar-pl-4">
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4 avitar-w-full">
+          <div class="avitar-flex-1">
+            <h4 class="avitar-font-semibold avitar-text-lg avitar-text-success">Educational Exemptions</h4>
+            <p class="avitar-text-sm avitar-text-muted">RSA 72:23-a - Property used for educational purposes</p>
+          </div>
+          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-flex-shrink-0">
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+              {{on "click" (fn this.showRsaInfo "educational")}}
+            >
+              <i class="fas fa-info-circle avitar-mr-1"></i>
+              RSA Info
+            </button>
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--primary avitar-btn--xs"
+              {{on "click" (fn this.addCategory "educational")}}
+            >
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add Category
+            </button>
+          </div>
+        </div>
+        
+        <div class="avitar-space-y-3">
+          {{#each this.institutionalExemptions.educational as |category index|}}
+            <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-bg-gray-50 avitar-p-3 avitar-rounded">
+              <div class="avitar-flex-1">
+                <input 
+                  type="text" 
+                  class="avitar-form-input" 
+                  placeholder="Enter category name..."
+                  value={{category.name}}
+                  {{on "blur" (fn this.updateCategoryAndCheck "educational" index "name" card.checkForChanges)}}
+                />
+              </div>
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                {{on "click" (fn this.removeCategory "educational" index)}}
+                {{on "click" card.checkForChanges}}
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Charitable Exemptions --}}
+      <div class="avitar-border-l-4 avitar-border-l-warning avitar-pl-4">
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4 avitar-w-full">
+          <div class="avitar-flex-1">
+            <h4 class="avitar-font-semibold avitar-text-lg avitar-text-warning">Charitable Exemptions</h4>
+            <p class="avitar-text-sm avitar-text-muted">RSA 72:23-b - Property used for charitable purposes</p>
+          </div>
+          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-flex-shrink-0">
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+              {{on "click" (fn this.showRsaInfo "charitable")}}
+            >
+              <i class="fas fa-info-circle avitar-mr-1"></i>
+              RSA Info
+            </button>
+            <button 
+              type="button" 
+              class="avitar-btn avitar-btn--primary avitar-btn--xs"
+              {{on "click" (fn this.addCategory "charitable")}}
+            >
+              <i class="fas fa-plus avitar-mr-1"></i>
+              Add Category
+            </button>
+          </div>
+        </div>
+        
+        <div class="avitar-space-y-3">
+          {{#each this.institutionalExemptions.charitable as |category index|}}
+            <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-bg-gray-50 avitar-p-3 avitar-rounded">
+              <div class="avitar-flex-1">
+                <input 
+                  type="text" 
+                  class="avitar-form-input" 
+                  placeholder="Enter category name..."
+                  value={{category.name}}
+                  {{on "blur" (fn this.updateCategoryAndCheck "charitable" index "name" card.checkForChanges)}}
+                />
+              </div>
+              <button 
+                type="button" 
+                class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                {{on "click" (fn this.removeCategory "charitable" index)}}
+                {{on "click" card.checkForChanges}}
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  </Shared::SaveableCard>
+
+  {{!-- Information Card --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">Exemptions vs Credits</h3>
+      <div class="avitar-card__subtitle">Understanding how these values affect property taxes</div>
+    </div>
+    
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3 avitar-text-success">
+            <i class="fas fa-shield-alt avitar-mr-2"></i>
+            Exemptions
+          </h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+            <li>Reduces the assessed value before tax calculation</li>
+            <li>Fixed dollar amounts deducted from property assessment</li>
+            <li>Examples: Elderly, blind, physical handicap exemptions</li>
+            <li>Lower assessed value = lower tax burden</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-3 avitar-text-info">
+            <i class="fas fa-percentage avitar-mr-2"></i>
+            Credits
+          </h4>
+          <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+            <li>Reduces the final tax amount after calculation</li>
+            <li>Fixed dollar amounts deducted from tax bill</li>
+            <li>Examples: Veteran, disabled veteran, surviving spouse credits</li>
+            <li>Direct reduction from total tax owed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{!-- RSA Information Modal --}}
+{{#if this.showRsaModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeRsaModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{#if (eq this.currentRsaType "religious")}}
+            Religious Exemption (RSA 72:23)
+          {{else if (eq this.currentRsaType "educational")}}
+            Educational Exemption (RSA 72:23-a)
+          {{else if (eq this.currentRsaType "charitable")}}
+            Charitable Exemption (RSA 72:23-b)
+          {{/if}}
+        </h2>
+        <button 
+          type="button" 
+          class="avitar-modal__close"
+          {{on "click" this.closeRsaModal}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="avitar-modal__body">
+        {{#if (eq this.currentRsaType "religious")}}
+          <div class="avitar-space-y-4">
+            <div>
+              <h4 class="avitar-font-semibold avitar-mb-2">NH RSA 72:23 - Religious Property</h4>
+              <p class="avitar-text-sm avitar-text-muted avitar-mb-4">
+                Property of any religious organization or society which is used for religious worship and the 
+                accessories thereof including the land upon which they stand, but not to exceed 2 acres, 
+                is exempt from property taxation.
+              </p>
+            </div>
+            
+            <div>
+              <h5 class="avitar-font-medium avitar-mb-2">Requirements:</h5>
+              <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+                <li>Property must be owned by a religious organization or society</li>
+                <li>Property must be used primarily for religious worship</li>
+                <li>Land exemption limited to 2 acres maximum</li>
+                <li>Property must not be operated for profit</li>
+                <li>Organization must be organized for religious purposes</li>
+              </ul>
+            </div>
+          </div>
+        {{else if (eq this.currentRsaType "educational")}}
+          <div class="avitar-space-y-4">
+            <div>
+              <h4 class="avitar-font-semibold avitar-mb-2">NH RSA 72:23-a - Educational Property</h4>
+              <p class="avitar-text-sm avitar-text-muted avitar-mb-4">
+                Property of educational institutions, including academies, colleges, schools, and 
+                universities, used for educational purposes is exempt from property taxation.
+              </p>
+            </div>
+            
+            <div>
+              <h5 class="avitar-font-medium avitar-mb-2">Requirements:</h5>
+              <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+                <li>Property must be owned by an educational institution</li>
+                <li>Property must be used primarily for educational purposes</li>
+                <li>Institution must be non-profit</li>
+                <li>Property must not be operated for commercial gain</li>
+                <li>Institution must provide educational services to the community</li>
+              </ul>
+            </div>
+          </div>
+        {{else if (eq this.currentRsaType "charitable")}}
+          <div class="avitar-space-y-4">
+            <div>
+              <h4 class="avitar-font-semibold avitar-mb-2">NH RSA 72:23-b - Charitable Property</h4>
+              <p class="avitar-text-sm avitar-text-muted avitar-mb-4">
+                Property of charitable organizations used exclusively for charitable purposes 
+                is exempt from property taxation.
+              </p>
+            </div>
+            
+            <div>
+              <h5 class="avitar-font-medium avitar-mb-2">Requirements:</h5>
+              <ul class="avitar-list avitar-text-sm avitar-space-y-1">
+                <li>Property must be owned by a charitable organization</li>
+                <li>Property must be used exclusively for charitable purposes</li>
+                <li>Organization must be recognized as tax-exempt under IRS code</li>
+                <li>Property must not generate income for private benefit</li>
+                <li>Organization must serve public charitable purposes</li>
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+      
+      <div class="avitar-modal__footer">
+        <button 
+          type="button" 
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeRsaModal}}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

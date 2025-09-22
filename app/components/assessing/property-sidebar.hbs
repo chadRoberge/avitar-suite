@@ -1,0 +1,161 @@
+{{!-- Property Sidebar Component --}}
+<div class="property-sidebar {{if this.isOpen 'property-sidebar--open' 'property-sidebar--closed'}}">
+  
+  {{!-- Sidebar Header --}}
+  <div class="property-sidebar__header">
+    <div class="property-sidebar__title">
+      <i class="fas fa-home"></i>
+      Properties
+    </div>
+    <button 
+      type="button" 
+      class="property-sidebar__toggle avitar-button avitar-button--ghost avitar-button--sm"
+      {{on "click" this.toggleSidebar}}
+    >
+      <i class="fas fa-{{if this.isOpen 'chevron-left' 'chevron-right'}}"></i>
+    </button>
+  </div>
+
+  {{#if this.isOpen}}
+    {{!-- Search Bar --}}
+    <div class="property-sidebar__search">
+      <div class="avitar-input-group">
+        <input 
+          type="text" 
+          class="avitar-input"
+          placeholder="Search properties..."
+          value={{this.searchTerm}}
+          {{on "input" this.updateSearch}}
+        />
+        <div class="avitar-input-group__icon">
+          <i class="fas fa-search"></i>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Group By Controls --}}
+    <div class="property-sidebar__controls">
+      <label class="avitar-label avitar-label--sm">Group by:</label>
+      <div class="avitar-button-group">
+        <button 
+          type="button"
+          class="avitar-button avitar-button--sm {{if (eq this.groupBy 'pid') 'avitar-button--primary' 'avitar-button--outline'}}"
+          {{on "click" (fn this.setGroupBy "pid")}}
+        >
+          PID
+        </button>
+        <button 
+          type="button"
+          class="avitar-button avitar-button--sm {{if (eq this.groupBy 'street') 'avitar-button--primary' 'avitar-button--outline'}}"
+          {{on "click" (fn this.setGroupBy "street")}}
+        >
+          Street
+        </button>
+        <button 
+          type="button"
+          class="avitar-button avitar-button--sm {{if (eq this.groupBy 'lastname') 'avitar-button--primary' 'avitar-button--outline'}}"
+          {{on "click" (fn this.setGroupBy "lastname")}}
+        >
+          Owner
+        </button>
+        <button 
+          type="button"
+          class="avitar-button avitar-button--sm avitar-button--success"
+          {{on "click" this.openQueryModal}}
+          title="Query properties by criteria"
+        >
+          <i class="fas fa-search"></i>
+          Query
+        </button>
+        {{#if this.propertyQueue.hasProperties}}
+          <button 
+            type="button"
+            class="avitar-button avitar-button--sm avitar-button--info"
+            {{on "click" this.loadQueue}}
+            title="Load {{this.propertyQueue.queueCount}} properties from queue"
+          >
+            <i class="fas fa-list"></i>
+            Queue ({{this.propertyQueue.queueCount}})
+          </button>
+        {{/if}}
+      </div>
+      
+      {{!-- Show query results info and clear button when in query mode --}}
+      {{#if this.isQueryMode}}
+        <div class="property-sidebar__query-info">
+          <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mt-2">
+            <small class="avitar-text-muted">
+              <i class="fas fa-filter avitar-mr-1"></i>
+              Showing {{this.properties.length}} query results
+            </small>
+            <div class="avitar-button-group">
+              <button 
+                type="button"
+                class="avitar-button avitar-button--xs avitar-button--outline"
+                {{on "click" this.clearQuery}}
+                title="Clear query results and return to all properties"
+              >
+                <i class="fas fa-times avitar-mr-1"></i>
+                Clear
+              </button>
+              {{#if this.propertyQueue.hasProperties}}
+                <button 
+                  type="button"
+                  class="avitar-button avitar-button--xs avitar-button--warning"
+                  {{on "click" this.clearAll}}
+                  title="Clear both query results and empty the queue"
+                >
+                  <i class="fas fa-trash avitar-mr-1"></i>
+                  Clear All
+                </button>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+
+    {{!-- Property Tree --}}
+    <div class="property-sidebar__content">
+      {{#if this.isLoading}}
+        <div class="avitar-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          Loading properties...
+        </div>
+      {{else if (eq (get (object-keys this.filteredGroupedProperties) "length") 0)}}
+        <div class="avitar-empty-state">
+          <i class="fas fa-search"></i>
+          <p>No properties found</p>
+        </div>
+      {{else}}
+        <div class="property-tree">
+          {{#each-in this.filteredGroupedProperties as |groupKey properties|}}
+            <Assessing::PropertyTreeGroup 
+              @groupKey={{groupKey}}
+              @properties={{properties}}
+              @groupBy={{this.groupBy}}
+              @selectedPropertyId={{this.selectedPropertyId}}
+              @onSelectProperty={{this.selectProperty}}
+              @getDisplayName={{this.getPropertyDisplayName}}
+              @getSecondaryInfo={{this.getPropertySecondaryInfo}}
+            />
+          {{/each-in}}
+        </div>
+      {{/if}}
+    </div>
+
+    {{!-- Footer with Property Count --}}
+    <div class="property-sidebar__footer">
+      <small class="avitar-text-muted">
+        {{this.properties.length}} properties total
+      </small>
+    </div>
+  {{/if}}
+
+  {{!-- Query Modal --}}
+  <Assessing::PropertyQueryModal 
+    @isOpen={{this.isQueryModalOpen}}
+    @onClose={{this.closeQueryModal}}
+    @onQueryResults={{this.handleQueryResults}}
+  />
+</div>

@@ -1,0 +1,174 @@
+{{page-title "Select Municipality"}}
+
+<div class="avitar-auth-container">
+  <div class="avitar-auth-background">
+    <div class="avitar-auth-background__pattern"></div>
+  </div>
+  
+  <div class="avitar-auth-content">
+    <div class="avitar-auth-brand">
+      <div class="avitar-auth-brand__logo">
+        <div class="avitar-topbar__brand-logo">A</div>
+      </div>
+      <h1 class="avitar-auth-brand__title">Municipal Portal</h1>
+      <p class="avitar-auth-brand__subtitle">Powered by Avitar</p>
+    </div>
+
+    {{!-- Page Header - Using Avitar Header Style --}}
+    <div class="avitar-auth-form__header">
+      <h1 class="avitar-auth-title">Select Municipality</h1>
+      <p class="avitar-auth-subtitle">Choose the municipality you'd like to access</p>
+
+      {{#if this.model.length}}
+        {{!-- Search Bar --}}
+        <div class="avitar-search-container">
+          <div class="avitar-form-group search-group">
+            <input 
+              type="text" 
+              class="avitar-form-input search-input" 
+              placeholder="Search municipalities..."
+              value={{this.searchTerm}}
+              {{on "input" this.updateSearch}}
+            />
+            <div class="search-icon">
+              <i class="icon-search"></i>
+            </div>
+          </div>
+
+          {{!-- Results Count --}}
+          {{#if this.searchTerm}}
+            <p class="search-results">
+              {{this.filteredMunicipalities.length}} 
+              {{if (eq this.filteredMunicipalities.length 1) "municipality" "municipalities"}} found
+            </p>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+
+    {{#if this.model.length}}
+      {{!-- Municipality Cards - Full Width Grid --}}
+      <div class="avitar-cards-container">
+        <div class="avitar-grid">
+          {{#each this.filteredMunicipalities as |municipality|}}
+            <div 
+              class="avitar-card {{if (eq this.selectedMunicipality municipality) 'selected'}}"
+              {{on "click" (fn this.selectMunicipality municipality)}}
+              role="button"
+              tabindex="0"
+              {{on "keydown" (fn this.handleKeydown municipality)}}
+              style={{this.getMunicipalityCardStyle municipality (eq this.selectedMunicipality municipality)}}
+            >
+              <div 
+                class="avitar-card-header"
+                style={{this.getMunicipalityHeaderStyle municipality}}
+              >
+                <div 
+                  class="avitar-logo-container {{if municipality.branding_config.logo_url 'has-logo' 'has-placeholder'}}"
+                  style={{this.getLogoPlaceholderStyle municipality}}
+                >
+                  {{#if municipality.branding_config.logo_url}}
+                    <img 
+                      src={{municipality.branding_config.logo_url}} 
+                      alt="{{municipality.name}} Logo" 
+                      class="municipality-logo"
+                    />
+                  {{else}}
+                    <i class="icon-building"></i>
+                  {{/if}}
+                </div>
+                
+                {{#if (eq this.selectedMunicipality municipality)}}
+                  <div 
+                    class="selected-indicator"
+                    style="{{if municipality.branding_config.primary_color (concat 'color: ' municipality.branding_config.primary_color ';')}}"
+                  >
+                    <i class="icon-check-circle"></i>
+                  </div>
+                {{/if}}
+              </div>
+              
+              <div class="avitar-card-body">
+                <h3 
+                  class="municipality-name"
+                  style="{{if municipality.branding_config.primary_color (concat 'color: ' municipality.branding_config.primary_color ';')}}"
+                >
+                  {{municipality.displayName}}
+                </h3>
+                <p class="municipality-details">
+                  {{municipality.type}} • {{municipality.state}}
+                </p>
+                
+                {{#if municipality.branding_config.header_text}}
+                  <p class="municipality-tagline">{{municipality.branding_config.header_text}}</p>
+                {{/if}}
+                
+                <div 
+                  class="municipality-color-bar"
+                  style="background: linear-gradient(90deg, {{if municipality.branding_config.primary_color municipality.branding_config.primary_color '#1f4788'}} 0%, {{if municipality.branding_config.secondary_color municipality.branding_config.secondary_color '#ffffff'}} 100%);"
+                ></div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Action Form - Centered Container --}}
+      <div class="avitar-auth-form-container">
+        <div class="avitar-auth-form municipality-actions-form">
+          {{!-- Default Municipality Option --}}
+          {{#if this.selectedMunicipality}}
+            <div class="avitar-form-group checkbox-group">
+              <label class="avitar-checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={{this.setAsDefault}}
+                  {{on "change" this.toggleDefault}}
+                />
+                <span class="avitar-checkbox-custom"></span>
+                Remember this selection for future logins
+              </label>
+            </div>
+          {{/if}}
+
+          {{!-- Action Buttons --}}
+          <div class="avitar-auth-actions">
+            <button 
+              class="avitar-btn avitar-btn--primary avitar-btn--full"
+              disabled={{not this.selectedMunicipality}} type="button" {{on "click" this.proceed}}
+            >
+              {{#if this.isLoading}}
+                <span class="loading-spinner"></span>
+                Loading...
+              {{else}}
+                Continue to {{this.selectedMunicipality.displayName}}
+              {{/if}}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    {{else}}
+      {{!-- No Municipalities Available --}}
+      <div class="avitar-auth-form-container">
+        <div class="avitar-auth-form">
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <i class="icon-building"></i>
+            </div>
+            <h3 class="empty-state-title">No Municipalities Available</h3>
+            <p class="empty-state-message">
+              You don't currently have access to any municipalities. 
+              Please contact your administrator for assistance.
+            </p>
+            <button 
+              class="avitar-btn avitar-btn--secondary" type="button" {{on "click" this.logout}}
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>

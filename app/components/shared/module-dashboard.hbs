@@ -1,0 +1,111 @@
+{{!-- Module Dashboard Component --}}
+<div class="module-dashboard">
+  <div class="dashboard-header">
+    <h2>Municipal Services Dashboard</h2>
+    {{#if @municipality}}
+      <div class="municipality-info">
+        <h3>{{@municipality.displayName}}</h3>
+        <span class="billing-tier-badge {{@municipality.tierBadge.class}}">
+          {{@municipality.tierBadge.text}} Plan
+        </span>
+        <span class="subscription-badge {{@municipality.statusBadge.class}}">
+          {{@municipality.statusBadge.text}}
+        </span>
+      </div>
+    {{/if}}
+  </div>
+
+  {{#if this.moduleAccess.isLoading}}
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading your modules...</p>
+    </div>
+  {{else}}
+    {{#if this.availableModules.length}}
+      <div class="modules-grid">
+        {{#each this.availableModules as |module|}}
+          <Shared::ModuleCard 
+            @module={{module}}
+            @currentUser={{@currentUser}}
+            @showDetails={{true}}
+            @showManagement={{@showManagement}}
+            @onManage={{@onManageModule}}
+          />
+        {{/each}}
+      </div>
+
+      {{#if this.disabledModules.length}}
+        <div class="disabled-modules-section">
+          <h4>Disabled Modules</h4>
+          <div class="modules-grid disabled">
+            {{#each this.disabledModules as |module|}}
+              <Shared::ModuleCard 
+                @module={{module}}
+                @currentUser={{@currentUser}}
+                @showDetails={{false}}
+                @showManagement={{@showManagement}}
+                @onManage={{@onManageModule}}
+              />
+            {{/each}}
+          </div>
+        </div>
+      {{/if}}
+    {{else}}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-cube"></i>
+        </div>
+        <h3>No Modules Available</h3>
+        <p>
+          {{#if @currentUser.isSystem}}
+            No modules have been configured for this municipality.
+          {{else if @currentUser.isMunicipal}}
+            Your municipality doesn't have any modules enabled yet. Contact your system administrator.
+          {{else}}
+            You don't have access to any modules at this time.
+          {{/if}}
+        </p>
+        
+        {{#if @currentUser.canManageModules}}
+          <button 
+            type="button" 
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" @onConfigureModules}}
+          >
+            <i class="fas fa-plus"></i>
+            Configure Modules
+          </button>
+        {{/if}}
+      </div>
+    {{/if}}
+  {{/if}}
+
+  {{#if @showQuickStats}}
+    <div class="quick-stats">
+      <div class="stat-card">
+        <h4>{{this.availableModules.length}}</h4>
+        <p>Active Modules</p>
+      </div>
+      <div class="stat-card">
+        <h4>{{this.totalFeatures}}</h4>
+        <p>Available Features</p>
+      </div>
+      <div class="stat-card">
+        <h4>{{@municipality.billingTier}}</h4>
+        <p>Service Tier</p>
+      </div>
+      {{#if @municipality.subscriptionExpiresAt}}
+        <div class="stat-card {{if @municipality.isSubscriptionExpired 'danger'}}">
+          <h4>{{date-format @municipality.subscriptionExpiresAt "MMM DD"}}</h4>
+          <p>
+            {{#if @municipality.isSubscriptionExpired}}
+              Expired
+            {{else}}
+              Expires
+            {{/if}}
+          </p>
+        </div>
+      {{/if}}
+    </div>
+  {{/if}}
+</div>

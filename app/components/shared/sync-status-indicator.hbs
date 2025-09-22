@@ -1,0 +1,179 @@
+{{! Sync Status Indicator - Fixed position indicator showing data sync status }}
+<div class="sync-status-indicator" {{on "click" this.toggleExpanded}}>
+  <div class="sync-status-indicator__main">
+    <i class="{{this.statusIcon}} {{this.statusColor}}"></i>
+    <span class="sync-status-indicator__text {{this.statusColor}}">
+      {{this.statusText}}
+    </span>
+  </div>
+
+  {{#if this.isExpanded}}
+    <div class="sync-status-indicator__details">
+      <div class="sync-status-detail">
+        <i class="fas fa-wifi"></i>
+        <span>Connection:</span>
+        <span class="{{if this.isOnline "text-success" "text-danger"}}">
+          {{if this.isOnline "Online" "Offline"}}
+        </span>
+      </div>
+
+      <div class="sync-status-detail">
+        <i class="fas fa-bolt"></i>
+        <span>Real-time:</span>
+        <span class="{{if this.realtimeStatus.isConnected "text-success" "text-danger"}}">
+          {{if this.realtimeStatus.isConnected "Connected" "Disconnected"}}
+        </span>
+      </div>
+
+      <div class="sync-status-detail">
+        <i class="fas fa-clock"></i>
+        <span>Last sync:</span>
+        <span>{{this.lastSyncText}}</span>
+      </div>
+
+      {{#if this.hasPendingChanges}}
+        <div class="sync-status-detail">
+          <i class="fas fa-upload"></i>
+          <span>Pending:</span>
+          <span class="text-primary">{{this.syncStatus.pendingItems}} items</span>
+        </div>
+      {{/if}}
+
+      {{#if this.hasConflicts}}
+        <div class="sync-status-detail">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Conflicts:</span>
+          <span class="text-warning">{{this.syncStatus.conflictCount}} items</span>
+        </div>
+      {{/if}}
+
+      <div class="sync-status-detail">
+        <i class="fas fa-database"></i>
+        <span>Storage:</span>
+        <span>{{this.syncStatus.storageInfo.totalSizeMB}}MB used</span>
+      </div>
+
+      <div class="sync-status-indicator__actions">
+        {{#if this.isOnline}}
+          <button type="button" 
+                  class="avitar-btn avitar-btn--sm avitar-btn--outline-primary"
+                  {{on "click" this.forceSync}}
+                  disabled={{this.isSyncing}}>
+            <i class="fas fa-sync-alt {{if this.isSyncing "fa-spin"}}"></i>
+            {{if this.isSyncing "Syncing..." "Force Sync"}}
+          </button>
+        {{/if}}
+
+        {{#unless this.realtimeStatus.isConnected}}
+          <button type="button" 
+                  class="avitar-btn avitar-btn--sm avitar-btn--outline-secondary"
+                  {{on "click" this.reconnectRealtime}}>
+            <i class="fas fa-bolt"></i>
+            Reconnect
+          </button>
+        {{/unless}}
+      </div>
+    </div>
+  {{/if}}
+</div>
+
+<style>
+.sync-status-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+}
+
+.sync-status-indicator__main {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.sync-status-indicator__text {
+  font-weight: 500;
+}
+
+.sync-status-indicator__details {
+  border-top: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+  min-width: 250px;
+}
+
+.sync-status-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.sync-status-detail:last-of-type {
+  margin-bottom: 0;
+}
+
+.sync-status-detail i {
+  width: 16px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.sync-status-detail span:first-of-type {
+  flex: 1;
+  color: #6c757d;
+}
+
+.sync-status-indicator__actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sync-status-indicator__actions .avitar-btn {
+  flex: 1;
+}
+
+/* Hover effects */
+.sync-status-indicator:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation for spinning sync icon */
+.fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sync-status-indicator {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .sync-status-indicator__details {
+    min-width: 200px;
+  }
+  
+  .sync-status-indicator__actions {
+    flex-direction: column;
+  }
+}
+</style>

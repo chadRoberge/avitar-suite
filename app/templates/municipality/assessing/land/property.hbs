@@ -1,0 +1,229 @@
+{{!-- Land Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header with owner, type, location, and total assessment --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @landAssessment={{@model.landAssessment}} @onPropertyUpdate={{this.refreshLandProperty}} />
+  
+  {{!-- Land Assessment Information --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">Land Assessment Details</h3>
+          <div class="avitar-card__subtitle">Zoning, valuation, and use information</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button 
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openLandEditModal}}
+            type="button"
+          >
+            <i class="fas fa-edit avitar-mr-2"></i>Edit
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{!-- Row 1: Zone and Market Value --}}
+      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Zone:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{or @model.landAssessment.zone_name 'No Zone'}}</span>
+        </div>
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Market Value:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-success">
+            ${{number-format @model.landAssessment.calculated_totals.totalMarketValue}}
+          </span>
+        </div>
+      </div>
+
+      {{!-- Row 2: Neighborhood and Current Use Credit --}}
+      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Neighborhood:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.property.location.neighborhood}}</span>
+        </div>
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Current Use Credit:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">
+            ${{number-format @model.landAssessment.calculated_totals.totalCurrentUseCredit}}
+          </span>
+        </div>
+      </div>
+
+      {{!-- Row 3: Land Use and Taxable Value --}}
+      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Land Use:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.land_use}}</span>
+        </div>
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Taxable Value:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">
+            ${{number-format @model.landAssessment.taxable_value}}
+          </span>
+        </div>
+      </div>
+
+      {{!-- Row 4: Site, Driveway, and Road --}}
+      <div class="avitar-flex avitar-flex-row">
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Site:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.site_conditions_name}}</span>
+        </div>
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Driveway:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.driveway_type_name}}</span>
+        </div>
+        <div class="avitar-flex-3 avitar-text-right">
+          <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Road:</span>
+        </div>
+        <div class="avitar-flex-3 avitar-ml-3">
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.road_type_name}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Land Use Details Table --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Land Use Breakdown</h3>
+      <div class="avitar-card__subtitle">Detailed assessment by land use category</div>
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if @model.landAssessment.land_use_details}}
+        {{!-- Flexbox Table Header --}}
+        <div class="avitar-flex-table-header">
+          <div class="avitar-flex-table-cell avitar-flex-3">LND USE</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">SIZE</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">TOPO</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">COND</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">SPI</div>
+          <div class="avitar-flex-table-cell avitar-flex-3">AD VOLOREM</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">CU</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">ASSESSED</div>
+          <div class="avitar-flex-table-cell avitar-flex-4">NOTES</div>
+        </div>
+
+        {{!-- Land Use Details --}}
+        <div class="avitar-flex-table-body">
+          {{#each @model.landAssessment.land_use_details as |detail|}}
+            <div class="avitar-flex-table-row">
+              {{!-- Land Use Type --}}
+              <div class="avitar-flex-table-cell avitar-flex-3">
+                {{detail.land_use_type}}
+              </div>
+
+              {{!-- Size with Units --}}
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-flex avitar-justify-end">
+                {{detail.size}} {{detail.size_unit}}
+              </div>
+
+              {{!-- Topography --}}
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{detail.topography}}
+              </div>
+
+              {{!-- Condition --}}
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{detail.condition}}
+              </div>
+
+              {{!-- SPI --}}
+              <div class="avitar-flex-table-cell avitar-flex-1 avitar-flex avitar-justify-end">
+                {{detail.spi}}
+              </div>
+
+              {{!-- Market Value --}}
+              <div class="avitar-flex-table-cell avitar-flex-3 avitar-flex avitar-justify-end">
+                ${{number-format detail.marketValue}}
+              </div>
+
+              {{!-- Current Use Value --}}
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-flex avitar-justify-end">
+                ${{number-format detail.currentUseValue}}
+              </div>
+
+              {{!-- Assessed Value --}}
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-flex avitar-justify-end">
+                ${{number-format detail.assessedValue}}
+              </div>
+
+              {{!-- Notes --}}
+              <div class="avitar-flex-table-cell avitar-flex-4">
+                {{detail.notes}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+
+        {{!-- Calculated Totals Section - Aligned with columns --}}
+        {{#if @model.landAssessment.calculated_totals}}
+          <div class="avitar-border-t avitar-bg-gray-50">
+            <div class="avitar-flex-table-row avitar-font-bold avitar-py-4">
+              <div class="avitar-flex-table-cell avitar-flex-3 avitar-text-right avitar-text-muted">
+                Total Acreage:
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-primary avitar-flex avitar-justify-end">
+                {{number-format @model.landAssessment.calculated_totals.totalAcreage 2}} AC
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- Topography column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{!-- Condition column - empty --}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1 avitar-text-right avitar-text-muted">
+                Total Market:
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-3 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
+                ${{number-format @model.landAssessment.calculated_totals.totalMarketValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-secondary avitar-flex avitar-justify-end">
+                ${{number-format @model.landAssessment.calculated_totals.totalCurrentUseValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
+                ${{number-format @model.landAssessment.calculated_totals.totalAssessedValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-4">
+                {{!-- Notes column - empty --}}
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <div>No land use details available for this property</div>
+          <div class="avitar-text-sm avitar-mt-2">Land use breakdown will appear here when available</div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+{{!-- Land Edit Modal --}}
+<Assessing::LandEditModal 
+  @isOpen={{this.showLandEditModal}}
+  @property={{@model.property}}
+  @landAssessment={{@model.landAssessment}}
+  @onSave={{this.refreshLandProperty}}
+  @onClose={{this.closeLandEditModal}}
+/>
