@@ -401,6 +401,39 @@ uppercase {
   }
 }
 
+/* Page Break Styles */
+.property-record-page-break {
+  page-break-before: always;
+  break-before: page;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Screen Display - Hide page breaks on screen but show visual indicator */
+@media screen {
+  .property-record-page-break {
+    height: 2rem;
+    border-top: 2px dashed #e5e7eb;
+    margin: 1rem 0;
+    position: relative;
+  }
+
+  .property-record-page-break::after {
+    content: "Page 2";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+}
+
 /* Print Styles */
 @media print {
   .property-record-modal-overlay {
