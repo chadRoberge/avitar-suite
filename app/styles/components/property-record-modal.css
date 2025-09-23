@@ -64,7 +64,8 @@ uppercase {
 .property-record-modal__content {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
+  padding: 20px;
+  background: #f5f5f5;
 }
 
 .property-record-modal__loading {
@@ -83,37 +84,53 @@ uppercase {
 
 /* Property Record Card Pages */
 .property-record-card-page {
-  min-height: 100vh;
   padding: 30px;
   background: white;
-  page-break-after: always;
-  border-bottom: 2px solid #dee2e6;
+  border-bottom: 3px solid #dee2e6;
+  margin-bottom: 2rem;
 }
 
 .property-record-card-page:last-child {
   border-bottom: none;
-  min-height: calc(100vh - 60px);
+  margin-bottom: 0;
 }
 
-.property-record-card-page--1 {
-  background: #fdfdfd;
-  display: flex;
-  flex-direction: column;
-  height: 8.5in; /* Landscape page height */
-  width: 11in; /* Landscape page width */
-}
-
+.property-record-card-page--1,
 .property-record-card-page--2 {
-  background: #fafafa;
   display: flex;
   flex-direction: column;
-  height: 8.5in; /* Landscape page height */
-  width: 11in; /* Landscape page width */
+  width: 100%;
+  max-width: 11in;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* Flex layout content groups for landscape page */
 .property-record-content-top {
   flex-shrink: 0; /* Fixed size for top sections */
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Page 2 content visual separation */
+.property-record-card-page [style*="page-break-before"] {
+  border-top: 2px dashed #dee2e6;
+  margin: 1rem 0;
+  position: relative;
+}
+
+.property-record-card-page [style*="page-break-before"]::after {
+  content: "Page 2";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 /* Individual row height constraints */
@@ -436,6 +453,16 @@ uppercase {
 
   .property-record-card-page:last-child {
     page-break-after: auto;
+  }
+
+  /* Hide page break indicators in print */
+  .property-record-card-page [style*="page-break-before"] {
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .property-record-card-page [style*="page-break-before"]::after {
+    display: none !important;
   }
 }
 
