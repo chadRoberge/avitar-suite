@@ -421,6 +421,7 @@ buildingAssessmentSchema.statics.calculateBuildingValue = async function (
     buildingFeatureCodes,
     buildingCodes,
     calculationConfig: config,
+    municipalityId: buildingAssessment.municipality_id,
   });
 
   return calculator.calculateBuildingValue(buildingAssessment, config);

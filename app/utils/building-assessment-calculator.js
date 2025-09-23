@@ -15,6 +15,9 @@ class BuildingAssessmentCalculator {
     this.buildingCodes = referenceData.buildingCodes || [];
     this.calculationConfig = referenceData.calculationConfig || {};
 
+    // Store municipality info for validation
+    this.municipalityId = referenceData.municipalityId || null;
+
     // Caching for batch processing efficiency
     this.featureCache = new Map();
     this.codeCache = new Map();
@@ -354,13 +357,18 @@ class BuildingAssessmentCalculator {
   getBuildingCodeByType(baseType) {
     if (!baseType) return null;
 
-    const cacheKey = baseType;
+    // Include municipality in cache key for safety (though codes should already be filtered)
+    const cacheKey = `${this.municipalityId || 'default'}:${baseType}`;
     if (this.codeCache.has(cacheKey)) {
       return this.codeCache.get(cacheKey);
     }
 
+    // Find building code - codes should already be filtered by municipality
+    // but we double-check municipalityId if available
     const buildingCode = this.buildingCodes.find(
-      (code) => code.code === baseType && code.isActive
+      (code) => code.code === baseType &&
+                code.isActive &&
+                (!this.municipalityId || code.municipalityId?.toString() === this.municipalityId?.toString())
     );
 
     this.codeCache.set(cacheKey, buildingCode);
