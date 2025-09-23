@@ -235,9 +235,12 @@ class BuildingAssessmentCalculator {
     if (buildingCode) {
       calculations.baseRate = buildingCode.rate;
       calculations.baseDepreciationRate = buildingCode.depreciation / 100; // Convert percentage to decimal
+      console.log(`Found building code for ${baseType}: Rate $${buildingCode.rate}, Depreciation ${buildingCode.depreciation}%`);
     } else {
       calculations.baseRate = config.defaultBaseRate || 0;
       calculations.baseDepreciationRate = config.defaultDepreciationRate || 0;
+      console.warn(`No building code found for base_type '${baseType}', using defaults. Available codes:`,
+        this.buildingCodes.map(c => c.code).join(', '));
     }
 
     return calculations;
