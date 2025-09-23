@@ -25,53 +25,17 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       const assessmentYear = transition.to.queryParams.assessment_year;
       const municipalityId = this.municipality.currentMunicipality?.id;
 
-      // Load property, current assessment, assessment history, and listing history
-      const currentYear = assessmentYear
-        ? parseInt(assessmentYear, 10)
-        : new Date().getFullYear();
+      // Use optimized single call to load all property data
+      const data = await this.assessing.getPropertyFullData(
+        property_id,
+        cardNumber,
+        assessmentYear ? parseInt(assessmentYear, 10) : null
+      );
 
-      const [
-        propertyResponse,
-        assessmentResponse,
-        assessmentHistoryResponse,
-        listingHistoryResponse,
-      ] = await Promise.all([
-        this.assessing.getPropertyWithCard(property_id, cardNumber),
-        this.assessing.getCurrentAssessmentForYear(
-          property_id,
-          cardNumber,
-          assessmentYear,
-        ),
-        this.api
-          .get(
-            `/properties/${property_id}/assessment-history`,
-            {},
-            { showLoading: false },
-          )
-          .catch((error) => {
-            console.warn('No assessment history found:', error);
-            return { assessments: [] };
-          }),
-        this.api
-          .get(
-            `/municipalities/${municipalityId}/properties/${property_id}/listing-history`,
-            {},
-            { showLoading: false },
-          )
-          .catch((error) => {
-            console.warn('Failed to load listing history:', error);
-            return {
-              listingHistory: [],
-              propertyNotes: null,
-              salesHistory: [],
-            };
-          }),
-      ]);
-
-      // Set the current card on the property for display
-      const property = propertyResponse.property || propertyResponse;
-      const assessment = assessmentResponse.assessment || assessmentResponse;
-      const assessmentHistory = assessmentHistoryResponse?.assessments || [];
+      // Extract data from optimized response
+      const property = data.property;
+      const assessment = data.assessment;
+      const assessmentHistory = data.assessmentHistory;
 
       // Find the last assessment that was different from current assessment
       const currentTotalValue =
@@ -174,10 +138,9 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
         assessment: enhancedAssessment,
         lastChangedAssessment: lastChangedAssessment,
         assessmentHistory: assessmentHistory,
-        salesHistory:
-          listingHistoryResponse.salesHistory || property.salesHistory || [],
-        listingHistory: listingHistoryResponse.listingHistory || [],
-        propertyNotes: listingHistoryResponse.propertyNotes || {
+        salesHistory: data.salesHistory || property.salesHistory || [],
+        listingHistory: data.listingHistory || [],
+        propertyNotes: data.propertyNotes || {
           notes: '',
         },
         showPropertySelection: false,

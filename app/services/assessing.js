@@ -4,6 +4,7 @@ import { inject as service } from '@ember/service';
 export default class AssessingService extends Service {
   @service localApi;
   @service municipality;
+  @service('property-cache') propertyCache;
 
   async getProperties(filters = {}) {
     const municipalityId = this.municipality.currentMunicipality.id;
@@ -18,15 +19,88 @@ export default class AssessingService extends Service {
   }
 
   async getPropertyWithCard(propertyId, cardNumber = 1) {
-    return this.localApi.get(`/properties/${propertyId}?card=${cardNumber}`);
+    // Check cache first
+    const cached = this.propertyCache.get(propertyId, cardNumber);
+    if (cached) {
+      return cached;
+    }
+
+    // Fetch from API
+    const result = await this.localApi.get(`/properties/${propertyId}?card=${cardNumber}`);
+
+    // Cache the result
+    this.propertyCache.set(propertyId, result, cardNumber);
+
+    return result;
+  }
+
+  // Optimized method to fetch all property data in one call
+  async getPropertyFullData(propertyId, cardNumber = 1, assessmentYear = null) {
+    // Check cache first
+    const cached = this.propertyCache.get(propertyId, cardNumber, assessmentYear);
+    if (cached) {
+      return cached;
+    }
+
+    console.log('⚡ Loading property data (optimized):', propertyId);
+
+    const municipalityId = this.municipality.currentMunicipality?.id;
+    const currentYear = assessmentYear || new Date().getFullYear();
+
+    try {
+      // Make all API calls in parallel but catch individual failures
+      const [
+        propertyResponse,
+        assessmentResponse,
+        assessmentHistoryResponse,
+        listingHistoryResponse,
+      ] = await Promise.allSettled([
+        this.localApi.get(`/properties/${propertyId}?card=${cardNumber}`),
+        this.localApi.get(`/properties/${propertyId}/assessment/current?card=${cardNumber}${assessmentYear ? `&assessment_year=${assessmentYear}` : ''}`),
+        this.localApi.get(`/properties/${propertyId}/assessment-history`, {}, { showLoading: false }),
+        this.localApi.get(`/municipalities/${municipalityId}/properties/${propertyId}/listing-history`, {}, { showLoading: false }),
+      ]);
+
+      // Process results - use successful responses, provide defaults for failures
+      const result = {
+        property: propertyResponse.status === 'fulfilled' ?
+          (propertyResponse.value.property || propertyResponse.value) : null,
+        assessment: assessmentResponse.status === 'fulfilled' ?
+          (assessmentResponse.value.assessment || assessmentResponse.value) : null,
+        assessmentHistory: assessmentHistoryResponse.status === 'fulfilled' ?
+          (assessmentHistoryResponse.value?.assessments || []) : [],
+        listingHistory: listingHistoryResponse.status === 'fulfilled' ?
+          listingHistoryResponse.value.listingHistory || [] : [],
+        propertyNotes: listingHistoryResponse.status === 'fulfilled' ?
+          listingHistoryResponse.value.propertyNotes : null,
+        salesHistory: listingHistoryResponse.status === 'fulfilled' ?
+          listingHistoryResponse.value.salesHistory || [] : [],
+        currentYear
+      };
+
+      // Cache the combined result
+      this.propertyCache.set(propertyId, result, cardNumber, assessmentYear);
+
+      console.log('🚀 Loaded property data in single optimized call:', propertyId);
+      return result;
+
+    } catch (error) {
+      console.error('Failed to load property data:', error);
+      throw error;
+    }
   }
 
   async updateProperty(propertyId, data) {
     const municipalityId = this.municipality.currentMunicipality.id;
-    return this.localApi.patch(
+    const result = await this.localApi.patch(
       `/municipalities/${municipalityId}/properties/${propertyId}`,
       data,
     );
+
+    // Invalidate cache for this property
+    this.propertyCache.invalidate(propertyId);
+
+    return result;
   }
 
   async createProperty(data) {
