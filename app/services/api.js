@@ -1,12 +1,13 @@
 import Service from '@ember/service';
 import { inject as service } from '@ember/service';
+import config from 'avitar-suite/config/environment';
 
 export default class ApiService extends Service {
   @service session;
   @service loading;
 
   get baseURL() {
-    return 'http://localhost:3000/api';
+    return `${config.APP.API_HOST}/api`;
   }
 
   get headers() {
