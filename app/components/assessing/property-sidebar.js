@@ -10,6 +10,8 @@ export default class PropertySidebarComponent extends Component {
   @service assessing;
   @service('property-selection') propertySelection;
   @service('property-queue') propertyQueue;
+  @service('property-prefetch') propertyPrefetch;
+  @service('property-cache') propertyCache;
 
   @tracked isOpen = true;
   @tracked groupBy = 'pid'; // 'pid', 'street', 'lastname'
@@ -84,6 +86,10 @@ export default class PropertySidebarComponent extends Component {
   @action
   selectProperty(property) {
     this.selectedPropertyId = property.id;
+
+    // Start background prefetching immediately
+    this.startPropertyPrefetching(property);
+
     // Update the global property selection service
     this.propertySelection.setSelectedProperty(property);
 
@@ -347,4 +353,69 @@ export default class PropertySidebarComponent extends Component {
         return '';
     }
   };
+
+  /**
+   * Start intelligent prefetching when a property is selected
+   */
+  startPropertyPrefetching(property) {
+    console.log('🔄 Starting prefetching for property:', property.id);
+
+    // Prefetch adjacent properties in the list
+    this.propertyPrefetch.prefetchAdjacentProperties(
+      property.id,
+      this.properties,
+      1, // Default card
+      null // Current year
+    );
+
+    // Smart prefetch other cards for this property
+    this.propertyPrefetch.smartPrefetch(property.id);
+
+    // Prefetch frequently accessed properties if this property is popular
+    if (this.propertyCache.shouldPrefetch(property.id)) {
+      const frequentProperties = this.propertyCache.getFrequentlyAccessed(5);
+      this.propertyPrefetch.prefetchProperties(frequentProperties);
+    }
+  }
+
+  /**
+   * Setup intersection observer for viewport-based prefetching
+   */
+  setupViewportPrefetching() {
+    if (!window.IntersectionObserver) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const propertyElement = entry.target;
+          const propertyId = propertyElement.dataset.propertyId;
+
+          if (propertyId && !this.propertyCache.get(propertyId)) {
+            // Prefetch property that's becoming visible
+            this.propertyPrefetch.prefetchProperty(propertyId);
+          }
+        }
+      });
+    }, {
+      rootMargin: '100px', // Start prefetching 100px before element is visible
+      threshold: 0.1
+    });
+
+    // Observe property elements (would need to be called after render)
+    this.intersectionObserver = observer;
+  }
+
+  /**
+   * Cleanup prefetching when component is destroyed
+   */
+  willDestroy() {
+    super.willDestroy();
+
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
+
+    // Clear prefetch queue to avoid unnecessary requests
+    this.propertyPrefetch.clearPrefetchQueue();
+  }
 }

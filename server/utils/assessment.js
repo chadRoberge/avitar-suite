@@ -78,7 +78,7 @@ async function getPropertyAssessmentComponents(
       landAssessment?.calculated_totals?.totalAssessedValue || 0;
 
     const buildingValue = buildingAssessments.reduce((total, building) => {
-      const value = building.assessed_value || building.building_value || 0;
+      const value = building.building_value || building.assessed_value || 0;
       console.log(
         `Building assessment found: Card ${building.card_number}, Value: $${value.toLocaleString()}`,
       );

@@ -1,0 +1,87 @@
+{{!--
+  Loading Skeleton Component
+
+  Usage:
+  <Shared::LoadingSkeleton @type="property-header" />
+  <Shared::LoadingSkeleton @type="assessment-card" />
+  <Shared::LoadingSkeleton @type="history-list" />
+  <Shared::LoadingSkeleton @type="custom" @height="100px" @count={{3}} />
+--}}
+
+<div class="loading-skeleton loading-skeleton--{{@type}}" ...attributes>
+  {{#if (eq @type "property-header")}}
+    {{!-- Property Header Skeleton --}}
+    <div class="loading-skeleton__header">
+      <div class="loading-skeleton__line loading-skeleton__line--title"></div>
+      <div class="loading-skeleton__line loading-skeleton__line--subtitle"></div>
+      <div class="loading-skeleton__row">
+        <div class="loading-skeleton__line loading-skeleton__line--medium"></div>
+        <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+      </div>
+    </div>
+
+  {{else if (eq @type "assessment-card")}}
+    {{!-- Assessment Card Skeleton --}}
+    <div class="loading-skeleton__card">
+      <div class="loading-skeleton__card-header">
+        <div class="loading-skeleton__line loading-skeleton__line--medium"></div>
+      </div>
+      <div class="loading-skeleton__card-body">
+        {{#each (range 4) as |index|}}
+          <div class="loading-skeleton__row">
+            <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+            <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+
+  {{else if (eq @type "history-list")}}
+    {{!-- History List Skeleton --}}
+    <div class="loading-skeleton__list">
+      {{#each (range (@count or 5)) as |index|}}
+        <div class="loading-skeleton__list-item">
+          <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+          <div class="loading-skeleton__line loading-skeleton__line--medium"></div>
+          <div class="loading-skeleton__line loading-skeleton__line--tiny"></div>
+        </div>
+      {{/each}}
+    </div>
+
+  {{else if (eq @type "data-table")}}
+    {{!-- Data Table Skeleton --}}
+    <div class="loading-skeleton__table">
+      <div class="loading-skeleton__table-header">
+        {{#each (range 4) as |index|}}
+          <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+        {{/each}}
+      </div>
+      {{#each (range (@count or 3)) as |index|}}
+        <div class="loading-skeleton__table-row">
+          {{#each (range 4) as |colIndex|}}
+            <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+          {{/each}}
+        </div>
+      {{/each}}
+    </div>
+
+  {{else if (eq @type "sidebar-list")}}
+    {{!-- Sidebar Property List Skeleton --}}
+    <div class="loading-skeleton__sidebar">
+      {{#each (range (@count or 8)) as |index|}}
+        <div class="loading-skeleton__sidebar-item">
+          <div class="loading-skeleton__line loading-skeleton__line--medium"></div>
+          <div class="loading-skeleton__line loading-skeleton__line--small"></div>
+        </div>
+      {{/each}}
+    </div>
+
+  {{else}}
+    {{!-- Custom/Generic Skeleton --}}
+    <div class="loading-skeleton__custom" style="{{if @height (concat "height: " @height ";")}}">
+      {{#each (range (@count or 3)) as |index|}}
+        <div class="loading-skeleton__line loading-skeleton__line--{{or @size "medium"}}"></div>
+      {{/each}}
+    </div>
+  {{/if}}
+</div>

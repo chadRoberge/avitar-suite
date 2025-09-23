@@ -1,0 +1,242 @@
+/* Loading Skeleton Component Styles */
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.loading-skeleton {
+  width: 100%;
+}
+
+.loading-skeleton__line {
+  height: 1rem;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.loading-skeleton__line--tiny {
+  height: 0.75rem;
+  width: 30%;
+}
+
+.loading-skeleton__line--small {
+  height: 0.875rem;
+  width: 60%;
+}
+
+.loading-skeleton__line--medium {
+  height: 1rem;
+  width: 80%;
+}
+
+.loading-skeleton__line--large {
+  height: 1.25rem;
+  width: 95%;
+}
+
+.loading-skeleton__line--title {
+  height: 1.5rem;
+  width: 70%;
+  margin-bottom: 0.75rem;
+}
+
+.loading-skeleton__line--subtitle {
+  height: 1rem;
+  width: 50%;
+  margin-bottom: 1rem;
+}
+
+/* Property Header Skeleton */
+.loading-skeleton--property-header {
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+}
+
+.loading-skeleton__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading-skeleton__row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Assessment Card Skeleton */
+.loading-skeleton--assessment-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.loading-skeleton__card-header {
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.loading-skeleton__card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* History List Skeleton */
+.loading-skeleton--history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loading-skeleton__list-item {
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Data Table Skeleton */
+.loading-skeleton--data-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.loading-skeleton__table-header {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.loading-skeleton__table-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.loading-skeleton__table-row:last-child {
+  border-bottom: none;
+}
+
+/* Sidebar List Skeleton */
+.loading-skeleton--sidebar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading-skeleton__sidebar-item {
+  padding: 0.5rem;
+  border-radius: 4px;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Custom Skeleton */
+.loading-skeleton--custom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .loading-skeleton__line {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200px 100%;
+  }
+
+  .loading-skeleton--property-header,
+  .loading-skeleton--assessment-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .loading-skeleton__card-header {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  .loading-skeleton__list-item {
+    border-color: #374151;
+  }
+
+  .loading-skeleton__table-header {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  .loading-skeleton__table-row {
+    border-color: #374151;
+  }
+
+  .loading-skeleton__sidebar-item {
+    background: #111827;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .loading-skeleton__table-header,
+  .loading-skeleton__table-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .loading-skeleton__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .loading-skeleton {
+    display: none;
+  }
+}
+
+/* Accessibility */
+.loading-skeleton {
+  /* Announce to screen readers that content is loading */
+  aria-label: "Content is loading";
+  role: "status";
+  aria-live: "polite";
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton__line {
+    animation: none;
+    background: #e5e7eb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .loading-skeleton__line {
+      background: #374151;
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{{!--
+  Progressive Loading Indicator
+
+  Shows the current loading state and progress through data tiers
+
+  Usage:
+  <Shared::ProgressiveLoader
+    @loadingState={{@model.progressiveLoader.loadingState}}
+    @compact={{false}}
+    @showDetails={{true}}
+  />
+--}}
+
+{{#let (@loadingState or (hash)) as |state|}}
+  <div class="progressive-loader {{if @compact "progressive-loader--compact"}}" ...attributes>
+    {{#if @showDetails}}
+      <div class="progressive-loader__header">
+        <h4 class="progressive-loader__title">Loading Property Data</h4>
+        <div class="progressive-loader__elapsed">
+          {{#if state.startTime}}
+            {{this.getElapsedTime state.startTime}}s
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+
+    <div class="progressive-loader__tiers">
+      {{!-- Tier 1: Critical Data --}}
+      <div class="progressive-loader__tier {{this.getTierClass state.tier1}}">
+        <div class="progressive-loader__tier-icon">
+          {{#if (eq state.tier1 "complete")}}
+            <i class="fas fa-check"></i>
+          {{else if (eq state.tier1 "loading")}}
+            <div class="progressive-loader__spinner"></div>
+          {{else if (eq state.tier1 "error")}}
+            <i class="fas fa-exclamation-triangle"></i>
+          {{else}}
+            <div class="progressive-loader__pending"></div>
+          {{/if}}
+        </div>
+        <div class="progressive-loader__tier-label">
+          {{#if @compact}}
+            Basic
+          {{else}}
+            Basic Property Info
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Tier 2: Important Data --}}
+      <div class="progressive-loader__tier {{this.getTierClass state.tier2}}">
+        <div class="progressive-loader__tier-icon">
+          {{#if (eq state.tier2 "complete")}}
+            <i class="fas fa-check"></i>
+          {{else if (eq state.tier2 "loading")}}
+            <div class="progressive-loader__spinner"></div>
+          {{else if (eq state.tier2 "error")}}
+            <i class="fas fa-exclamation-triangle"></i>
+          {{else}}
+            <div class="progressive-loader__pending"></div>
+          {{/if}}
+        </div>
+        <div class="progressive-loader__tier-label">
+          {{#if @compact}}
+            Assessment
+          {{else}}
+            Current Assessment
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Tier 3: Supporting Data --}}
+      <div class="progressive-loader__tier {{this.getTierClass state.tier3}}">
+        <div class="progressive-loader__tier-icon">
+          {{#if (eq state.tier3 "complete")}}
+            <i class="fas fa-check"></i>
+          {{else if (eq state.tier3 "loading")}}
+            <div class="progressive-loader__spinner"></div>
+          {{else if (eq state.tier3 "error")}}
+            <i class="fas fa-exclamation-triangle"></i>
+          {{else}}
+            <div class="progressive-loader__pending"></div>
+          {{/if}}
+        </div>
+        <div class="progressive-loader__tier-label">
+          {{#if @compact}}
+            History
+          {{else}}
+            History & Sales
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Tier 4: Optional Data --}}
+      <div class="progressive-loader__tier {{this.getTierClass state.tier4}}">
+        <div class="progressive-loader__tier-icon">
+          {{#if (eq state.tier4 "complete")}}
+            <i class="fas fa-check"></i>
+          {{else if (eq state.tier4 "loading")}}
+            <div class="progressive-loader__spinner"></div>
+          {{else if (eq state.tier4 "error")}}
+            <i class="fas fa-exclamation-triangle"></i>
+          {{else}}
+            <div class="progressive-loader__pending"></div>
+          {{/if}}
+        </div>
+        <div class="progressive-loader__tier-label">
+          {{#if @compact}}
+            Details
+          {{else}}
+            Sketches & Features
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{#if @showDetails}}
+      <div class="progressive-loader__progress">
+        <div class="progressive-loader__progress-bar">
+          <div
+            class="progressive-loader__progress-fill"
+            style="width: {{this.getProgressPercentage state}}%"
+          ></div>
+        </div>
+        <div class="progressive-loader__progress-text">
+          {{this.getCompletedTiers state}} of 4 sections loaded
+        </div>
+      </div>
+    {{/if}}
+  </div>
+{{/let}}

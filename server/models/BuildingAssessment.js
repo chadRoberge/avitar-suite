@@ -736,28 +736,7 @@ buildingAssessmentSchema.statics.getBuildingTypeStatistics = async function (
   }
 };
 
-// Trigger total assessment update after save/remove
-buildingAssessmentSchema.post('save', async function (doc) {
-  try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
-
-    await updatePropertyTotalAssessment(
-      doc.property_id,
-      doc.municipality_id,
-      doc.effective_year,
-      null, // userId not available in hook
-    );
-    console.log(
-      `Updated total assessment for property ${doc.property_id} after building assessment change`,
-    );
-  } catch (error) {
-    console.error(
-      'Error updating total assessment after building assessment save:',
-      error,
-    );
-  }
-});
-
+// Trigger total assessment update after remove
 buildingAssessmentSchema.post('remove', async function (doc) {
   try {
     const { updatePropertyTotalAssessment } = require('../utils/assessment');

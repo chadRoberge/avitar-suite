@@ -61,22 +61,42 @@ export default class AssessingService extends Service {
         this.localApi.get(`/municipalities/${municipalityId}/properties/${propertyId}/listing-history`, {}, { showLoading: false }),
       ]);
 
+      // Log any failed requests for debugging
+      if (propertyResponse.status === 'rejected') {
+        console.error('Property response failed:', propertyResponse.reason);
+      }
+      if (assessmentResponse.status === 'rejected') {
+        console.warn('Assessment response failed (may be normal):', assessmentResponse.reason);
+      }
+      if (assessmentHistoryResponse.status === 'rejected') {
+        console.warn('Assessment history response failed:', assessmentHistoryResponse.reason);
+      }
+      if (listingHistoryResponse.status === 'rejected') {
+        console.warn('Listing history response failed:', listingHistoryResponse.reason);
+      }
+
       // Process results - use successful responses, provide defaults for failures
       const result = {
         property: propertyResponse.status === 'fulfilled' ?
-          (propertyResponse.value.property || propertyResponse.value) : null,
+          (propertyResponse.value?.property || propertyResponse.value) : null,
         assessment: assessmentResponse.status === 'fulfilled' ?
-          (assessmentResponse.value.assessment || assessmentResponse.value) : null,
+          (assessmentResponse.value?.assessment || assessmentResponse.value) : null,
         assessmentHistory: assessmentHistoryResponse.status === 'fulfilled' ?
           (assessmentHistoryResponse.value?.assessments || []) : [],
         listingHistory: listingHistoryResponse.status === 'fulfilled' ?
-          listingHistoryResponse.value.listingHistory || [] : [],
+          (listingHistoryResponse.value?.listingHistory || []) : [],
         propertyNotes: listingHistoryResponse.status === 'fulfilled' ?
-          listingHistoryResponse.value.propertyNotes : null,
+          listingHistoryResponse.value?.propertyNotes : null,
         salesHistory: listingHistoryResponse.status === 'fulfilled' ?
-          listingHistoryResponse.value.salesHistory || [] : [],
+          (listingHistoryResponse.value?.salesHistory || []) : [],
         currentYear
       };
+
+      // Validate that we have at least property data
+      if (!result.property) {
+        console.error('No property data returned from API call for propertyId:', propertyId);
+        throw new Error(`Property ${propertyId} not found or data not available`);
+      }
 
       // Cache the combined result
       this.propertyCache.set(propertyId, result, cardNumber, assessmentYear);
@@ -260,10 +280,15 @@ export default class AssessingService extends Service {
   }
 
   async updateBuildingAssessment(propertyId, cardNumber = 1, data) {
-    return this.localApi.patch(
+    const result = await this.localApi.patch(
       `/properties/${propertyId}/assessment/building?card=${cardNumber}`,
       data,
     );
+
+    // Invalidate property cache for this property since building assessment affects total
+    this.propertyCache.invalidate(propertyId);
+
+    return result;
   }
 
   async getBuildingFeatureCodes(municipalityId = null) {

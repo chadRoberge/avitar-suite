@@ -426,20 +426,41 @@
   <div class="avitar-flex avitar-flex-row">
     <div class="avitar-flex-10 property-record-section" style="min-height: 5.25in;">
       <h5>SKETCH</h5>
-      <div class="property-record-sketch">
+      <div class="property-record-sketch" style="height: calc(5.25in - 30px); overflow: hidden;">
         {{#if this.hasSketchData}}
-        {{!-- Display actual sketch data when available --}}
+        {{!-- Display actual sketch canvas when available --}}
         {{#each @sketchData as |sketch|}}
-        <div class="property-record-sketch__item">
-          {{!-- Sketch content would go here --}}
-          <p>Sketch ID: {{sketch.id}} - {{sketch.description}}</p>
+        <div class="property-record-sketch__item" style="height: 100%; border: 1px solid #ddd; margin-bottom: 8px;">
+          {{#if sketch.shapes}}
+            <Assessing::SketchCanvas
+              @shapes={{sketch.shapes}}
+              @sketch={{sketch}}
+              @drawingMode={{null}}
+              @selectedShape={{null}}
+              @onShapeAdd={{null}}
+              @onShapeSelect={{null}}
+              @onFinishPolygon={{null}}
+              @onForceUpdate={{null}}
+              @isResponsive={{true}}
+            />
+          {{else}}
+            <div class="avitar-flex avitar-items-center avitar-justify-center avitar-h-full avitar-text-center avitar-text-muted">
+              <div>
+                <i class="fas fa-drafting-compass avitar-text-4xl avitar-mb-2"></i>
+                <div>{{sketch.name}}</div>
+                <small>No shapes in sketch</small>
+              </div>
+            </div>
+          {{/if}}
         </div>
         {{/each}}
         {{else}}
-        <div class="property-record-sketch__placeholder">
-          <i class="fas fa-drafting-compass"></i>
-          <p>Property sketch will be displayed here</p>
-          <small>Sketch data integration pending</small>
+        <div class="property-record-sketch__placeholder avitar-flex avitar-items-center avitar-justify-center avitar-h-full avitar-text-center avitar-text-muted">
+          <div>
+            <i class="fas fa-drafting-compass avitar-text-4xl avitar-mb-2"></i>
+            <div>No sketch available for Card {{@cardNumber}}</div>
+            <small>Create a sketch in the Sketch tab to display here</small>
+          </div>
         </div>
         {{/if}}
       </div>
