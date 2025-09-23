@@ -36,6 +36,7 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       const property = data.property;
       const assessment = data.assessment;
       const assessmentHistory = data.assessmentHistory;
+      const currentYear = data.currentYear;
 
       // Find the last assessment that was different from current assessment
       const currentTotalValue =
