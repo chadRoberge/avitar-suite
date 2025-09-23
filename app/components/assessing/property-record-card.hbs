@@ -6,7 +6,7 @@
         <h5 class="avitar-skinny">Parcel ID: {{@property.pid_formatted}}</h5>
       </div>
       <div class="avitar-flex-2">
-        <h5 class="avitar-skinny">{{this.cardTitle}} of {{@property.cards.total_cards}}</h5>
+        <h5 class="avitar-skinny">{{this.cardTitle}} of {{@property.cards.total_cards}} - Page 1</h5>
       </div>
       <div class="avitar-flex-2">
         <h4 class="avitar-skinny">
@@ -25,7 +25,6 @@
       </div>
     </div>
   </div>
-  {{#if (eq @cardNumber 1)}}
   {{!-- Page 1 Content --}}
   {{!-- Top content (natural height) --}}
   <div class="property-record-content-top">
@@ -380,8 +379,38 @@
       </div>
     </div>
   </div>
-  {{else}}
-  {{!-- Page 2+ Content --}}
+
+  {{!-- Page Break --}}
+  <div style="page-break-before: always;"></div>
+
+  {{!-- Page 2 Content --}}
+  {{!-- Page 2 Header --}}
+  <div class="property-record-card__header">
+    <div class="avitar-flex avitar-flex-row avitar-flex-20">
+      <div class="avitar-flex-2">
+        <h5 class="avitar-skinny">Parcel ID: {{@property.pid_formatted}}</h5>
+      </div>
+      <div class="avitar-flex-2">
+        <h5 class="avitar-skinny">{{this.cardTitle}} of {{@property.cards.total_cards}} - Page 2</h5>
+      </div>
+      <div class="avitar-flex-2">
+        <h4 class="avitar-skinny">
+          <uppercase>{{@property.location.address}}</uppercase>
+        </h4>
+      </div>
+      <div class="avitar-flex-2">
+        <h4 class="avitar-skinny">
+          <uppercase>{{@municipalityName.name}}</uppercase>
+        </h4>
+      </div>
+      <div class="avitar-flex-2 avitar-items-end">
+        <div class="">
+          <h5 class="avitar-skinny avitar-flex avitar-justify-end">Printed: {{date-format 'now'}}</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {{!-- Property Features Section --}}
   <div class="avitar-flex avitar-flex-row">
     <div class="avitar-flex-4">
@@ -490,5 +519,4 @@
       </div>
     </div>
   </div>
-  {{/if}}
 </div>
