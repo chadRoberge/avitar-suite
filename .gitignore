@@ -7,6 +7,8 @@
 
 # misc
 /.env*
+/.claude*
+/.github*
 /server/.env
 /.pnp*
 /.eslintcache
