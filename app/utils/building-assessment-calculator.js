@@ -12,12 +12,12 @@
 class BuildingAssessmentCalculator {
   constructor(referenceData = {}) {
     this.buildingFeatureCodes = referenceData.buildingFeatureCodes || [];
-    this.buildingLadders = referenceData.buildingLadders || [];
+    this.buildingCodes = referenceData.buildingCodes || [];
     this.calculationConfig = referenceData.calculationConfig || {};
 
     // Caching for batch processing efficiency
     this.featureCache = new Map();
-    this.ladderCache = new Map();
+    this.codeCache = new Map();
   }
 
   /**
@@ -221,15 +221,21 @@ class BuildingAssessmentCalculator {
   }
 
   /**
-   * Get base rate from building ladder based on total points
+   * Get base rate from building code based on base_type
    */
   calculateBaseRate(buildingData, calculations, config) {
-    const totalPoints = calculations.totalFeaturePoints;
-    const buildingClass = buildingData.building_class || 'RESIDENTIAL';
+    const baseType = buildingData.base_type;
 
-    // Find the appropriate ladder tier
-    const ladder = this.getBuildingLadder(buildingClass, totalPoints);
-    calculations.baseRate = ladder ? ladder.rate : config.defaultBaseRate || 0;
+    // Find the building code that matches the base_type
+    const buildingCode = this.getBuildingCodeByType(baseType);
+
+    if (buildingCode) {
+      calculations.baseRate = buildingCode.rate;
+      calculations.baseDepreciationRate = buildingCode.depreciation / 100; // Convert percentage to decimal
+    } else {
+      calculations.baseRate = config.defaultBaseRate || 0;
+      calculations.baseDepreciationRate = config.defaultDepreciationRate || 0;
+    }
 
     return calculations;
   }
@@ -343,29 +349,22 @@ class BuildingAssessmentCalculator {
   }
 
   /**
-   * Helper method to get building ladder rate
+   * Helper method to get building code by base type
    */
-  getBuildingLadder(buildingClass, totalPoints) {
-    const cacheKey = `${buildingClass}:${totalPoints}`;
-    if (this.ladderCache.has(cacheKey)) {
-      return this.ladderCache.get(cacheKey);
+  getBuildingCodeByType(baseType) {
+    if (!baseType) return null;
+
+    const cacheKey = baseType;
+    if (this.codeCache.has(cacheKey)) {
+      return this.codeCache.get(cacheKey);
     }
 
-    const ladders = this.buildingLadders
-      .filter((l) => l.buildingClass === buildingClass && l.isActive)
-      .sort((a, b) => a.minPoints - b.minPoints);
+    const buildingCode = this.buildingCodes.find(
+      (code) => code.code === baseType && code.isActive
+    );
 
-    // Find the ladder tier that matches the points
-    let selectedLadder = null;
-    for (const ladder of ladders) {
-      if (totalPoints >= ladder.minPoints && totalPoints <= ladder.maxPoints) {
-        selectedLadder = ladder;
-        break;
-      }
-    }
-
-    this.ladderCache.set(cacheKey, selectedLadder);
-    return selectedLadder;
+    this.codeCache.set(cacheKey, buildingCode);
+    return buildingCode;
   }
 
   /**
@@ -445,7 +444,7 @@ class BuildingAssessmentCalculator {
 
     // Clear caches when reference data changes
     this.featureCache.clear();
-    this.ladderCache.clear();
+    this.codeCache.clear();
   }
 }
 

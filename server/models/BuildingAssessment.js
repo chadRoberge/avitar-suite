@@ -402,14 +402,14 @@ buildingAssessmentSchema.statics.calculateBuildingValue = async function (
 
   // Load reference data for shared calculator
   const BuildingFeatureCode = require('./BuildingFeatureCode');
-  const BuildingLadder = require('./BuildingLadder');
+  const BuildingCode = require('./BuildingCode');
 
-  const [buildingFeatureCodes, buildingLadders] = await Promise.all([
+  const [buildingFeatureCodes, buildingCodes] = await Promise.all([
     BuildingFeatureCode.find({
       municipalityId: buildingAssessment.municipality_id,
       isActive: true,
     }),
-    BuildingLadder.find({
+    BuildingCode.find({
       municipalityId: buildingAssessment.municipality_id,
       isActive: true,
     }),
@@ -419,7 +419,7 @@ buildingAssessmentSchema.statics.calculateBuildingValue = async function (
   const BuildingAssessmentCalculator = require('../../app/utils/building-assessment-calculator');
   const calculator = new BuildingAssessmentCalculator({
     buildingFeatureCodes,
-    buildingLadders,
+    buildingCodes,
     calculationConfig: config,
   });
 
