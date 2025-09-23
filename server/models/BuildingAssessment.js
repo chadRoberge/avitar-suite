@@ -363,8 +363,15 @@ buildingAssessmentSchema.statics.updateForPropertyCard = async function (
   }
 
   // Calculate and update building value automatically
-  await buildingAssessment.calculateAndUpdateValue();
-  await buildingAssessment.save();
+  try {
+    await buildingAssessment.calculateAndUpdateValue();
+    await buildingAssessment.save();
+    console.log('Building value calculated successfully for property:', propertyId);
+  } catch (calcError) {
+    console.warn('Building value calculation failed, saving without calculation:', calcError.message);
+    // Save the building assessment without calculation if calculation fails
+    await buildingAssessment.save();
+  }
 
   return buildingAssessment;
 };
@@ -423,12 +430,13 @@ buildingAssessmentSchema.statics.calculateBuildingValue = async function (
 buildingAssessmentSchema.methods.calculateAndUpdateValue = async function (
   calculationConfig = null,
 ) {
-  const calculations = await this.constructor.calculateBuildingValue(
-    this,
-    calculationConfig,
-  );
+  try {
+    const calculations = await this.constructor.calculateBuildingValue(
+      this,
+      calculationConfig,
+    );
 
-  if (!calculations.error) {
+    if (!calculations.error) {
     this.building_value = calculations.buildingValue;
     this.replacement_cost_new = calculations.replacementCostNew; // Store the replacement cost new
     this.assessed_value = calculations.buildingValue; // Assessed value equals calculated value initially
@@ -473,9 +481,16 @@ buildingAssessmentSchema.methods.calculateAndUpdateValue = async function (
 
     // Store calculation breakdown for transparency
     this.calculation_details = calculations;
-  }
+    } else {
+      console.warn('Building value calculation returned error:', calculations.error);
+      throw new Error(calculations.error);
+    }
 
-  return calculations;
+    return calculations;
+  } catch (error) {
+    console.error('Error in calculateAndUpdateValue:', error.message);
+    throw error;
+  }
 };
 
 // Static method for mass recalculation of building assessments

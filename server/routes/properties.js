@@ -1186,6 +1186,14 @@ router.patch(
       }
 
       // Update building assessment using the model's static method
+      console.log('Updating building assessment for property:', {
+        propertyId: propertyObjectId,
+        municipalityId,
+        cardNumber,
+        userId: req.user._id,
+        dataKeys: Object.keys(buildingAssessmentData)
+      });
+
       const buildingAssessment = await BuildingAssessment.updateForPropertyCard(
         propertyObjectId,
         municipalityId,
