@@ -153,14 +153,16 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, async () => {
-  console.log(`🚀 Avitar Municipal API Server running on port ${PORT}`);
-  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
-  console.log(
-    `🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:4202'}`,
-  );
-});
+// Start server (only in non-serverless environments)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`🚀 Avitar Municipal API Server running on port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
+    console.log(
+      `🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:4202'}`,
+    );
+  });
+}
 
 module.exports = app;
