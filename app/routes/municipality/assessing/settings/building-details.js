@@ -183,7 +183,8 @@ export default class BuildingDetailsRoute extends Route {
 
       // Initialize economies of scale from config if available
       if (config.economies_of_scale) {
-        controller.economiesOfScale = {
+        // Store the actual saved database values for graph generation
+        controller.savedEconomiesOfScale = {
           residential: {
             median_size:
               config.economies_of_scale.residential?.median_size || 1800,
@@ -195,6 +196,10 @@ export default class BuildingDetailsRoute extends Route {
               config.economies_of_scale.residential?.largest_size || 15000,
             largest_factor:
               config.economies_of_scale.residential?.largest_factor || 0.75,
+            curve_type:
+              config.economies_of_scale.residential?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.residential?.curve_steepness || 1.0,
           },
           commercial: {
             median_size:
@@ -207,6 +212,10 @@ export default class BuildingDetailsRoute extends Route {
               config.economies_of_scale.commercial?.largest_size || 50000,
             largest_factor:
               config.economies_of_scale.commercial?.largest_factor || 0.8,
+            curve_type:
+              config.economies_of_scale.commercial?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.commercial?.curve_steepness || 1.0,
           },
           industrial: {
             median_size:
@@ -219,6 +228,10 @@ export default class BuildingDetailsRoute extends Route {
               config.economies_of_scale.industrial?.largest_size || 100000,
             largest_factor:
               config.economies_of_scale.industrial?.largest_factor || 0.85,
+            curve_type:
+              config.economies_of_scale.industrial?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.industrial?.curve_steepness || 1.0,
           },
           manufactured: {
             median_size:
@@ -231,6 +244,78 @@ export default class BuildingDetailsRoute extends Route {
               config.economies_of_scale.manufactured?.largest_size || 3000,
             largest_factor:
               config.economies_of_scale.manufactured?.largest_factor || 0.7,
+            curve_type:
+              config.economies_of_scale.manufactured?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.manufactured?.curve_steepness || 1.0,
+          },
+        };
+
+        // Store form values (these can be edited before saving)
+        controller.economiesOfScale = {
+          residential: {
+            median_size:
+              config.economies_of_scale.residential?.median_size || 1800,
+            smallest_size:
+              config.economies_of_scale.residential?.smallest_size || 100,
+            smallest_factor:
+              config.economies_of_scale.residential?.smallest_factor || 3.0,
+            largest_size:
+              config.economies_of_scale.residential?.largest_size || 15000,
+            largest_factor:
+              config.economies_of_scale.residential?.largest_factor || 0.75,
+            curve_type:
+              config.economies_of_scale.residential?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.residential?.curve_steepness || 1.0,
+          },
+          commercial: {
+            median_size:
+              config.economies_of_scale.commercial?.median_size || 5000,
+            smallest_size:
+              config.economies_of_scale.commercial?.smallest_size || 500,
+            smallest_factor:
+              config.economies_of_scale.commercial?.smallest_factor || 2.5,
+            largest_size:
+              config.economies_of_scale.commercial?.largest_size || 50000,
+            largest_factor:
+              config.economies_of_scale.commercial?.largest_factor || 0.8,
+            curve_type:
+              config.economies_of_scale.commercial?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.commercial?.curve_steepness || 1.0,
+          },
+          industrial: {
+            median_size:
+              config.economies_of_scale.industrial?.median_size || 10000,
+            smallest_size:
+              config.economies_of_scale.industrial?.smallest_size || 1000,
+            smallest_factor:
+              config.economies_of_scale.industrial?.smallest_factor || 2.0,
+            largest_size:
+              config.economies_of_scale.industrial?.largest_size || 100000,
+            largest_factor:
+              config.economies_of_scale.industrial?.largest_factor || 0.85,
+            curve_type:
+              config.economies_of_scale.industrial?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.industrial?.curve_steepness || 1.0,
+          },
+          manufactured: {
+            median_size:
+              config.economies_of_scale.manufactured?.median_size || 1200,
+            smallest_size:
+              config.economies_of_scale.manufactured?.smallest_size || 50,
+            smallest_factor:
+              config.economies_of_scale.manufactured?.smallest_factor || 4.0,
+            largest_size:
+              config.economies_of_scale.manufactured?.largest_size || 3000,
+            largest_factor:
+              config.economies_of_scale.manufactured?.largest_factor || 0.7,
+            curve_type:
+              config.economies_of_scale.manufactured?.curve_type || 'linear',
+            curve_steepness:
+              config.economies_of_scale.manufactured?.curve_steepness || 1.0,
           },
         };
       }

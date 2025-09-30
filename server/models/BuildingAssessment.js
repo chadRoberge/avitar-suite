@@ -366,9 +366,15 @@ buildingAssessmentSchema.statics.updateForPropertyCard = async function (
   try {
     await buildingAssessment.calculateAndUpdateValue();
     await buildingAssessment.save();
-    console.log('Building value calculated successfully for property:', propertyId);
+    console.log(
+      'Building value calculated successfully for property:',
+      propertyId,
+    );
   } catch (calcError) {
-    console.warn('Building value calculation failed, saving without calculation:', calcError.message);
+    console.warn(
+      'Building value calculation failed, saving without calculation:',
+      calcError.message,
+    );
     // Save the building assessment without calculation if calculation fails
     await buildingAssessment.save();
   }
@@ -416,7 +422,7 @@ buildingAssessmentSchema.statics.calculateBuildingValue = async function (
   ]);
 
   // Use shared calculator
-  const BuildingAssessmentCalculator = require('../../app/utils/building-assessment-calculator');
+  const BuildingAssessmentCalculator = require('../utils/building-assessment-calculator');
   const calculator = new BuildingAssessmentCalculator({
     buildingFeatureCodes,
     buildingCodes,
@@ -438,52 +444,57 @@ buildingAssessmentSchema.methods.calculateAndUpdateValue = async function (
     );
 
     if (!calculations.error) {
-    this.building_value = calculations.buildingValue;
-    this.replacement_cost_new = calculations.replacementCostNew; // Store the replacement cost new
-    this.assessed_value = calculations.buildingValue; // Assessed value equals calculated value initially
-    this.base_rate = calculations.baseRate; // Store the actual base rate used
-    this.age = calculations.buildingAge; // Store the calculated age
-    this.last_calculated = new Date();
+      this.building_value =
+        Math.round((calculations.buildingValue || 0) / 100) * 100;
+      this.replacement_cost_new = calculations.replacementCostNew; // Store the replacement cost new
+      this.assessed_value =
+        Math.round((calculations.buildingValue || 0) / 100) * 100; // Assessed value equals calculated value initially
+      this.base_rate = calculations.baseRate; // Store the actual base rate used
+      this.age = calculations.buildingAge; // Store the calculated age
+      this.last_calculated = new Date();
 
-    // Update normal depreciation percentage if it was calculated (not manually entered)
-    if (!this.depreciation) {
-      this.depreciation = {
-        normal: { description: '', percentage: 0 },
-        physical: { notes: '', percentage: 0 },
-        functional: { notes: '', percentage: 0 },
-        economic: { notes: '', percentage: 0 },
-        temporary: { notes: '', percentage: 0 },
-      };
-    }
-
-    // Only update the normal depreciation percentage if it was calculated, preserve user-entered values
-    if (
-      this.depreciation?.normal?.percentage === null ||
-      this.depreciation?.normal?.percentage === undefined
-    ) {
-      if (!this.depreciation.normal) {
-        this.depreciation.normal = { description: '', percentage: 0 };
+      // Update normal depreciation percentage if it was calculated (not manually entered)
+      if (!this.depreciation) {
+        this.depreciation = {
+          normal: { description: '', percentage: 0 },
+          physical: { notes: '', percentage: 0 },
+          functional: { notes: '', percentage: 0 },
+          economic: { notes: '', percentage: 0 },
+          temporary: { notes: '', percentage: 0 },
+        };
       }
-      // Store as percentage (calculations.normalDepreciation is already decimal, so multiply by 100)
-      this.depreciation.normal.percentage =
-        calculations.normalDepreciation * 100;
-    } else if (
-      calculations.buildingAge > 0 &&
-      calculations.baseDepreciationRate > 0
-    ) {
-      // Always update if we have valid age and base rate, even if user had previous value
-      // This ensures the depreciation stays current with building age and condition
-      if (!this.depreciation.normal) {
-        this.depreciation.normal = { description: '', percentage: 0 };
-      }
-      this.depreciation.normal.percentage =
-        calculations.normalDepreciation * 100;
-    }
 
-    // Store calculation breakdown for transparency
-    this.calculation_details = calculations;
+      // Only update the normal depreciation percentage if it was calculated, preserve user-entered values
+      if (
+        this.depreciation?.normal?.percentage === null ||
+        this.depreciation?.normal?.percentage === undefined
+      ) {
+        if (!this.depreciation.normal) {
+          this.depreciation.normal = { description: '', percentage: 0 };
+        }
+        // Store as percentage (calculations.normalDepreciation is already decimal, so multiply by 100)
+        this.depreciation.normal.percentage =
+          calculations.normalDepreciation * 100;
+      } else if (
+        calculations.buildingAge > 0 &&
+        calculations.baseDepreciationRate > 0
+      ) {
+        // Always update if we have valid age and base rate, even if user had previous value
+        // This ensures the depreciation stays current with building age and condition
+        if (!this.depreciation.normal) {
+          this.depreciation.normal = { description: '', percentage: 0 };
+        }
+        this.depreciation.normal.percentage =
+          calculations.normalDepreciation * 100;
+      }
+
+      // Store calculation breakdown for transparency
+      this.calculation_details = calculations;
     } else {
-      console.warn('Building value calculation returned error:', calculations.error);
+      console.warn(
+        'Building value calculation returned error:',
+        calculations.error,
+      );
       throw new Error(calculations.error);
     }
 

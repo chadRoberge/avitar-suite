@@ -2,6 +2,7 @@ import Controller from '@ember/controller';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
+import BuildingAssessmentCalculator from 'avitar-suite/utils/building-assessment-calculator';
 
 export default class BuildingDetailsController extends Controller {
   @service api;
@@ -100,6 +101,8 @@ export default class BuildingDetailsController extends Controller {
       smallest_factor: 3.0,
       largest_size: 15000,
       largest_factor: 0.75,
+      curve_type: 'linear',
+      curve_steepness: 1.0,
     },
     commercial: {
       median_size: 5000,
@@ -107,6 +110,8 @@ export default class BuildingDetailsController extends Controller {
       smallest_factor: 2.5,
       largest_size: 50000,
       largest_factor: 0.8,
+      curve_type: 'linear',
+      curve_steepness: 1.0,
     },
     industrial: {
       median_size: 10000,
@@ -114,6 +119,8 @@ export default class BuildingDetailsController extends Controller {
       smallest_factor: 2.0,
       largest_size: 100000,
       largest_factor: 0.85,
+      curve_type: 'linear',
+      curve_steepness: 1.0,
     },
     manufactured: {
       median_size: 1200,
@@ -121,6 +128,8 @@ export default class BuildingDetailsController extends Controller {
       smallest_factor: 4.0,
       largest_size: 3000,
       largest_factor: 0.7,
+      curve_type: 'linear',
+      curve_steepness: 1.0,
     },
   };
   @tracked isSavingEconomies = false;
@@ -203,6 +212,66 @@ export default class BuildingDetailsController extends Controller {
     return this.reactiveFeatureCodes.filter(
       (code) => code.featureType === 'frame',
     );
+  }
+
+  // Economy of scale graph data
+  get residentialScaleData() {
+    return this.generateScaleData('residential');
+  }
+
+  get commercialScaleData() {
+    return this.generateScaleData('commercial');
+  }
+
+  get industrialScaleData() {
+    return this.generateScaleData('industrial');
+  }
+
+  get manufacturedScaleData() {
+    return this.generateScaleData('manufactured');
+  }
+
+  /**
+   * Generate curve data points for economy of scale graphs
+   */
+  generateScaleData(buildingType) {
+    // Use saved database values for graph generation, not form values
+    const config = this.savedEconomiesOfScale?.[buildingType] || this.economiesOfScale[buildingType];
+    if (!config) return [];
+
+    const calculator = new BuildingAssessmentCalculator();
+    const data = [];
+    const step = Math.max(
+      (config.largest_size - config.smallest_size) / 100,
+      1,
+    );
+
+    // Generate data points from smallest to largest size
+    for (
+      let size = config.smallest_size;
+      size <= config.largest_size;
+      size += step
+    ) {
+      const factor = calculator.calculateEconomyOfScaleFactor(size, config);
+      data.push({
+        size: Math.round(size),
+        factor: Math.round(factor * 1000) / 1000, // Round to 3 decimal places
+      });
+    }
+
+    // Ensure we have the exact endpoint
+    if (data[data.length - 1].size !== config.largest_size) {
+      const factor = calculator.calculateEconomyOfScaleFactor(
+        config.largest_size,
+        config,
+      );
+      data.push({
+        size: config.largest_size,
+        factor: Math.round(factor * 1000) / 1000,
+      });
+    }
+
+    return data;
   }
 
   // Building code actions
@@ -1092,7 +1161,10 @@ export default class BuildingDetailsController extends Controller {
   // Economies of scale actions
   @action
   updateEconomiesOfScale(buildingType, field, event) {
-    const value = parseFloat(event.target.value) || 0;
+    // Handle string values (like curve_type) vs numeric values
+    const rawValue = event.target.value;
+    const value = field === 'curve_type' ? rawValue : parseFloat(rawValue) || 0;
+
     this.economiesOfScale = {
       ...this.economiesOfScale,
       [buildingType]: {
@@ -1111,6 +1183,8 @@ export default class BuildingDetailsController extends Controller {
         smallest_factor: 3.0,
         largest_size: 15000,
         largest_factor: 0.75,
+        curve_type: 'linear',
+        curve_steepness: 1.0,
       },
       commercial: {
         median_size: 5000,
@@ -1118,6 +1192,8 @@ export default class BuildingDetailsController extends Controller {
         smallest_factor: 2.5,
         largest_size: 50000,
         largest_factor: 0.8,
+        curve_type: 'linear',
+        curve_steepness: 1.0,
       },
       industrial: {
         median_size: 10000,
@@ -1125,6 +1201,8 @@ export default class BuildingDetailsController extends Controller {
         smallest_factor: 2.0,
         largest_size: 100000,
         largest_factor: 0.85,
+        curve_type: 'linear',
+        curve_steepness: 1.0,
       },
       manufactured: {
         median_size: 1200,
@@ -1132,6 +1210,8 @@ export default class BuildingDetailsController extends Controller {
         smallest_factor: 4.0,
         largest_size: 3000,
         largest_factor: 0.7,
+        curve_type: 'linear',
+        curve_steepness: 1.0,
       },
     };
     this.economiesSaveStatus = null;
@@ -1149,6 +1229,9 @@ export default class BuildingDetailsController extends Controller {
           economiesOfScale: this.economiesOfScale,
         },
       );
+
+      // Update the saved values to match the newly saved form values
+      this.savedEconomiesOfScale = JSON.parse(JSON.stringify(this.economiesOfScale));
 
       this.economiesSaveStatus = {
         success: true,

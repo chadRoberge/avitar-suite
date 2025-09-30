@@ -31,6 +31,9 @@ const {
   roundToNearestHundred,
 } = require('../utils/assessment');
 const BillingPeriodValidator = require('../utils/billingPeriodValidator');
+const {
+  addCardNumbersToFeatures,
+} = require('../migrations/add-card-numbers-to-features');
 
 const router = express.Router();
 
@@ -1191,7 +1194,7 @@ router.patch(
         municipalityId,
         cardNumber,
         userId: req.user._id,
-        dataKeys: Object.keys(buildingAssessmentData)
+        dataKeys: Object.keys(buildingAssessmentData),
       });
 
       const buildingAssessment = await BuildingAssessment.updateForPropertyCard(
@@ -1258,10 +1261,12 @@ router.post(
       const calculations =
         calculationService.calculateBuildingAssessment(buildingAssessment);
 
-      // Update the building assessment with calculated values
-      buildingAssessment.building_value = calculations.buildingValue;
+      // Update the building assessment with calculated values (rounded to nearest hundred)
+      buildingAssessment.building_value =
+        Math.round((calculations.buildingValue || 0) / 100) * 100;
       buildingAssessment.replacement_cost_new = calculations.replacementCostNew;
-      buildingAssessment.assessed_value = calculations.buildingValue;
+      buildingAssessment.assessed_value =
+        Math.round((calculations.buildingValue || 0) / 100) * 100;
       buildingAssessment.base_rate = calculations.baseRate;
       buildingAssessment.age = calculations.buildingAge;
       buildingAssessment.calculation_details = calculations;
@@ -1560,11 +1565,32 @@ router.get(
 router.get('/properties/:id/features', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const { card } = req.query; // Get card number from query parameter
     const mongoose = require('mongoose');
 
-    const features = await PropertyFeature.find({
-      property_id: new mongoose.Types.ObjectId(id),
-    }).populate('feature_code_id');
+    // Build query filter
+    const filter = { property_id: new mongoose.Types.ObjectId(id) };
+
+    // Add card number filter if provided
+    if (card) {
+      const cardNum = parseInt(card);
+      if (cardNum && cardNum > 0) {
+        // Include features with the specified card_number OR features without card_number (legacy features)
+        // Legacy features without card_number are treated as card 1
+        if (cardNum === 1) {
+          filter.$or = [
+            { card_number: 1 },
+            { card_number: { $exists: false } },
+            { card_number: null },
+          ];
+        } else {
+          filter.card_number = cardNum;
+        }
+      }
+    }
+
+    const features =
+      await PropertyFeature.find(filter).populate('feature_code_id');
 
     // Add calculated fields to each feature
     const featuresWithCalculations = features.map((feature) => {
@@ -1614,6 +1640,7 @@ router.post('/properties/:id/features', authenticateToken, async (req, res) => {
       condition,
       measurement_type,
       notes,
+      card_number,
     } = req.body;
 
     const mongoose = require('mongoose');
@@ -1624,16 +1651,40 @@ router.post('/properties/:id/features', authenticateToken, async (req, res) => {
       !description ||
       rate === undefined ||
       !measurement_type ||
-      !condition
+      !condition ||
+      !card_number
     ) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields',
+        message: 'Missing required fields (including card_number)',
+      });
+    }
+
+    // Validate card_number is a positive integer
+    const cardNum = parseInt(card_number);
+    if (!cardNum || cardNum < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'card_number must be a positive integer',
+      });
+    }
+
+    // Check current feature count for this card (11 features per card limit)
+    const currentFeatureCount = await PropertyFeature.countDocuments({
+      property_id: new mongoose.Types.ObjectId(id),
+      card_number: cardNum,
+    });
+
+    if (currentFeatureCount >= 11) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum of 11 features allowed per card. Card ${cardNum} already has ${currentFeatureCount} features.`,
       });
     }
 
     const newFeature = new PropertyFeature({
       property_id: new mongoose.Types.ObjectId(id),
+      card_number: cardNum,
       feature_code_id: new mongoose.Types.ObjectId(feature_code_id),
       description,
       length: parseFloat(length) || 0,
@@ -1969,10 +2020,19 @@ router.get('/properties/:id/sketches', authenticateToken, async (req, res) => {
     const propertyObjectId = new mongoose.Types.ObjectId(id);
     const cardNumber = parseInt(card);
 
+    console.log('Sketch query:', {
+      property_id: propertyObjectId,
+      card_number: cardNumber,
+    });
+
     const sketches = await PropertySketch.find({
       property_id: propertyObjectId,
       card_number: cardNumber,
     }).sort({ created_at: -1 });
+
+    console.log(
+      `Found ${sketches.length} sketches for property ${id}, card ${cardNumber}`,
+    );
 
     res.json({
       success: true,
@@ -2480,6 +2540,12 @@ router.patch(
       const { economiesOfScale } = req.body;
       const currentYear = new Date().getFullYear();
 
+      console.log('🏗️ Economies of Scale Update Request:', {
+        municipalityId,
+        economiesOfScale,
+        currentYear,
+      });
+
       // Check if user has admin access to this municipality
       const hasAdminAccess =
         ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
@@ -2513,33 +2579,93 @@ router.patch(
           median_size:
             economiesOfScale.residential?.median_size ||
             config.economies_of_scale.residential.median_size,
-          fixed_site_costs:
-            economiesOfScale.residential?.fixed_site_costs ||
-            config.economies_of_scale.residential.fixed_site_costs,
+          smallest_size:
+            economiesOfScale.residential?.smallest_size ||
+            config.economies_of_scale.residential.smallest_size,
+          smallest_factor:
+            economiesOfScale.residential?.smallest_factor ||
+            config.economies_of_scale.residential.smallest_factor,
+          largest_size:
+            economiesOfScale.residential?.largest_size ||
+            config.economies_of_scale.residential.largest_size,
+          largest_factor:
+            economiesOfScale.residential?.largest_factor ||
+            config.economies_of_scale.residential.largest_factor,
+          curve_type:
+            economiesOfScale.residential?.curve_type ||
+            config.economies_of_scale.residential.curve_type,
+          curve_steepness:
+            economiesOfScale.residential?.curve_steepness ||
+            config.economies_of_scale.residential.curve_steepness,
         },
         commercial: {
           median_size:
             economiesOfScale.commercial?.median_size ||
             config.economies_of_scale.commercial.median_size,
-          fixed_site_costs:
-            economiesOfScale.commercial?.fixed_site_costs ||
-            config.economies_of_scale.commercial.fixed_site_costs,
+          smallest_size:
+            economiesOfScale.commercial?.smallest_size ||
+            config.economies_of_scale.commercial.smallest_size,
+          smallest_factor:
+            economiesOfScale.commercial?.smallest_factor ||
+            config.economies_of_scale.commercial.smallest_factor,
+          largest_size:
+            economiesOfScale.commercial?.largest_size ||
+            config.economies_of_scale.commercial.largest_size,
+          largest_factor:
+            economiesOfScale.commercial?.largest_factor ||
+            config.economies_of_scale.commercial.largest_factor,
+          curve_type:
+            economiesOfScale.commercial?.curve_type ||
+            config.economies_of_scale.commercial.curve_type,
+          curve_steepness:
+            economiesOfScale.commercial?.curve_steepness ||
+            config.economies_of_scale.commercial.curve_steepness,
         },
         industrial: {
           median_size:
             economiesOfScale.industrial?.median_size ||
             config.economies_of_scale.industrial.median_size,
-          fixed_site_costs:
-            economiesOfScale.industrial?.fixed_site_costs ||
-            config.economies_of_scale.industrial.fixed_site_costs,
+          smallest_size:
+            economiesOfScale.industrial?.smallest_size ||
+            config.economies_of_scale.industrial.smallest_size,
+          smallest_factor:
+            economiesOfScale.industrial?.smallest_factor ||
+            config.economies_of_scale.industrial.smallest_factor,
+          largest_size:
+            economiesOfScale.industrial?.largest_size ||
+            config.economies_of_scale.industrial.largest_size,
+          largest_factor:
+            economiesOfScale.industrial?.largest_factor ||
+            config.economies_of_scale.industrial.largest_factor,
+          curve_type:
+            economiesOfScale.industrial?.curve_type ||
+            config.economies_of_scale.industrial.curve_type,
+          curve_steepness:
+            economiesOfScale.industrial?.curve_steepness ||
+            config.economies_of_scale.industrial.curve_steepness,
         },
         manufactured: {
           median_size:
             economiesOfScale.manufactured?.median_size ||
             config.economies_of_scale.manufactured.median_size,
-          fixed_site_costs:
-            economiesOfScale.manufactured?.fixed_site_costs ||
-            config.economies_of_scale.manufactured.fixed_site_costs,
+          smallest_size:
+            economiesOfScale.manufactured?.smallest_size ||
+            config.economies_of_scale.manufactured.smallest_size,
+          smallest_factor:
+            economiesOfScale.manufactured?.smallest_factor ||
+            config.economies_of_scale.manufactured.smallest_factor,
+          largest_size:
+            economiesOfScale.manufactured?.largest_size ||
+            config.economies_of_scale.manufactured.largest_size,
+          largest_factor:
+            economiesOfScale.manufactured?.largest_factor ||
+            config.economies_of_scale.manufactured.largest_factor,
+          curve_type:
+            economiesOfScale.manufactured?.curve_type ||
+            config.economies_of_scale.manufactured.curve_type,
+          curve_steepness:
+            economiesOfScale.manufactured?.curve_steepness ||
+            config.economies_of_scale.manufactured.curve_steepness,
         },
       };
 
@@ -2547,6 +2673,11 @@ router.patch(
       config.change_reason = 'economies_of_scale_update';
 
       await config.save();
+
+      console.log('🏗️ Economies of Scale Successfully Saved:', {
+        municipalityId,
+        saved_economies_of_scale: config.economies_of_scale,
+      });
 
       res.json({
         success: true,
@@ -3702,7 +3833,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message: `Cannot recalculate assessments for year ${year}: Final warrant has already been issued. Only the current year (${new Date().getFullYear()}) can be recalculated.`,
-          error: 'WARRANT_ISSUED'
+          error: 'WARRANT_ISSUED',
         });
       }
 
@@ -3747,6 +3878,32 @@ router.post(
       res.status(500).json({
         success: false,
         message: 'Mass recalculation failed',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   POST /api/properties/migrate-feature-card-numbers
+// @desc    Migrate existing features to have card_number (run once)
+// @access  Private
+router.post(
+  '/properties/migrate-feature-card-numbers',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      console.log('🔄 Running feature card number migration via API...');
+      await addCardNumbersToFeatures();
+
+      res.json({
+        success: true,
+        message: 'Feature card number migration completed successfully',
+      });
+    } catch (error) {
+      console.error('Migration API error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to run feature card number migration',
         error: error.message,
       });
     }

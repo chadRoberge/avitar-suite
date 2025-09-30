@@ -1,4 +1,4 @@
-const BuildingAssessmentCalculator = require('../../app/utils/building-assessment-calculator');
+const BuildingAssessmentCalculator = require('../utils/building-assessment-calculator');
 const BuildingAssessment = require('../models/BuildingAssessment');
 const BuildingFeatureCode = require('../models/BuildingFeatureCode');
 const BuildingCode = require('../models/BuildingCode');

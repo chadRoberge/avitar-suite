@@ -1,12 +1,6 @@
 /**
- * Shared Building Assessment Calculations
- *
- * This module contains all building assessment calculation logic that needs to be
- * consistent between frontend and backend. Used for:
- * - Real-time calculations in the UI
- * - Municipality-wide revaluations
- * - Batch processing and data migrations
- * - Validation and auditing
+ * Server-side Building Assessment Calculator
+ * Direct copy of the frontend calculator adapted for Node.js/CommonJS
  */
 
 class BuildingAssessmentCalculator {
@@ -1073,4 +1067,4 @@ class BuildingAssessmentCalculator {
   }
 }
 
-export default BuildingAssessmentCalculator;
+module.exports = BuildingAssessmentCalculator;

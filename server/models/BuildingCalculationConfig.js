@@ -48,7 +48,7 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
     // Miscellaneous item points
     miscellaneous_points: {
       air_conditioning: {
-        points_per_10_percent: { type: Number, default: 1 }, // 100% = 10 points, 80% = 8 points, etc.
+        total_points: { type: Number, default: 4 }, // Total points for 100% AC coverage, adjusted by percentage
       },
       generator: {
         default_points: { type: Number, default: 5 },
@@ -66,6 +66,12 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
         smallest_factor: { type: Number, default: 3.0 }, // Factor for smallest buildings
         largest_size: { type: Number, default: 15000 }, // Largest size threshold
         largest_factor: { type: Number, default: 0.75 }, // Factor for largest buildings
+        curve_type: {
+          type: String,
+          enum: ['linear', 'exponential', 'power'],
+          default: 'linear',
+        }, // Interpolation method
+        curve_steepness: { type: Number, default: 1.0, min: 0.1, max: 3.0 }, // Curve aggressiveness
       },
       commercial: {
         median_size: { type: Number, default: 5000 }, // Square feet
@@ -73,6 +79,12 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
         smallest_factor: { type: Number, default: 2.5 }, // Factor for smallest buildings
         largest_size: { type: Number, default: 50000 }, // Largest size threshold
         largest_factor: { type: Number, default: 0.8 }, // Factor for largest buildings
+        curve_type: {
+          type: String,
+          enum: ['linear', 'exponential', 'power'],
+          default: 'linear',
+        }, // Interpolation method
+        curve_steepness: { type: Number, default: 1.0, min: 0.1, max: 3.0 }, // Curve aggressiveness
       },
       industrial: {
         median_size: { type: Number, default: 10000 }, // Square feet
@@ -80,6 +92,12 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
         smallest_factor: { type: Number, default: 2.0 }, // Factor for smallest buildings
         largest_size: { type: Number, default: 100000 }, // Largest size threshold
         largest_factor: { type: Number, default: 0.85 }, // Factor for largest buildings
+        curve_type: {
+          type: String,
+          enum: ['linear', 'exponential', 'power'],
+          default: 'linear',
+        }, // Interpolation method
+        curve_steepness: { type: Number, default: 1.0, min: 0.1, max: 3.0 }, // Curve aggressiveness
       },
       manufactured: {
         median_size: { type: Number, default: 1200 }, // Square feet
@@ -87,6 +105,12 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
         smallest_factor: { type: Number, default: 4.0 }, // Factor for smallest buildings
         largest_size: { type: Number, default: 3000 }, // Largest size threshold
         largest_factor: { type: Number, default: 0.7 }, // Factor for largest buildings
+        curve_type: {
+          type: String,
+          enum: ['linear', 'exponential', 'power'],
+          default: 'linear',
+        }, // Interpolation method
+        curve_steepness: { type: Number, default: 1.0, min: 0.1, max: 3.0 }, // Curve aggressiveness
       },
     },
 

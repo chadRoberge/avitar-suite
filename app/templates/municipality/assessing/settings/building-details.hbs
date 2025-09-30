@@ -1078,6 +1078,60 @@
             />
           </div>
         </div>
+
+        {{!-- Curve Configuration Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Type
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Interpolation method between size thresholds
+              </span>
+            </label>
+            <select
+              class="avitar-input"
+              {{on "change" (fn this.updateEconomiesOfScale "residential" "curve_type")}}
+            >
+              <option value="linear" selected={{eq this.economiesOfScale.residential.curve_type "linear"}}>Linear</option>
+              <option value="exponential" selected={{eq this.economiesOfScale.residential.curve_type "exponential"}}>Exponential</option>
+              <option value="power" selected={{eq this.economiesOfScale.residential.curve_type "power"}}>Power Law</option>
+            </select>
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Steepness
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Aggressiveness of the curve (0.1 = gentle, 2.0 = steep)
+              </span>
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="3.0"
+              step="0.1"
+              class="avitar-range avitar-w-full"
+              value={{this.economiesOfScale.residential.curve_steepness}}
+              {{on "input" (fn this.updateEconomiesOfScale "residential" "curve_steepness")}}
+            />
+            <div class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+              Current: {{this.economiesOfScale.residential.curve_steepness}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Economy of Scale Graph --}}
+        <div class="avitar-mb-4">
+          <h5 class="avitar-text-sm avitar-font-semibold avitar-text-gray-700 avitar-mb-2">Scale Factor Preview</h5>
+          <LineGraph
+            @data={{this.residentialScaleData}}
+            @xField="size"
+            @yField="factor"
+            @xLabel="Building Size (sq ft)"
+            @yLabel="Scale Factor"
+            @lineColor="#10b981"
+            @title="Residential Economy of Scale"
+          />
+        </div>
       </div>
 
       {{!-- Commercial Buildings --}}
@@ -1190,6 +1244,60 @@
               placeholder="e.g., 0.80"
             />
           </div>
+        </div>
+
+        {{!-- Curve Configuration Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Type
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Interpolation method between size thresholds
+              </span>
+            </label>
+            <select
+              class="avitar-input"
+              {{on "change" (fn this.updateEconomiesOfScale "commercial" "curve_type")}}
+            >
+              <option value="linear" selected={{eq this.economiesOfScale.commercial.curve_type "linear"}}>Linear</option>
+              <option value="exponential" selected={{eq this.economiesOfScale.commercial.curve_type "exponential"}}>Exponential</option>
+              <option value="power" selected={{eq this.economiesOfScale.commercial.curve_type "power"}}>Power Law</option>
+            </select>
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Steepness
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Aggressiveness of the curve (0.1 = gentle, 2.0 = steep)
+              </span>
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="3.0"
+              step="0.1"
+              class="avitar-range avitar-w-full"
+              value={{this.economiesOfScale.commercial.curve_steepness}}
+              {{on "input" (fn this.updateEconomiesOfScale "commercial" "curve_steepness")}}
+            />
+            <div class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+              Current: {{this.economiesOfScale.commercial.curve_steepness}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Economy of Scale Graph --}}
+        <div class="avitar-mb-4">
+          <h5 class="avitar-text-sm avitar-font-semibold avitar-text-gray-700 avitar-mb-2">Scale Factor Preview</h5>
+          <LineGraph
+            @data={{this.commercialScaleData}}
+            @xField="size"
+            @yField="factor"
+            @xLabel="Building Size (sq ft)"
+            @yLabel="Scale Factor"
+            @lineColor="#3b82f6"
+            @title="Commercial Economy of Scale"
+          />
         </div>
       </div>
 
@@ -1304,6 +1412,60 @@
             />
           </div>
         </div>
+
+        {{!-- Curve Configuration Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Type
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Interpolation method between size thresholds
+              </span>
+            </label>
+            <select
+              class="avitar-input"
+              {{on "change" (fn this.updateEconomiesOfScale "industrial" "curve_type")}}
+            >
+              <option value="linear" selected={{eq this.economiesOfScale.industrial.curve_type "linear"}}>Linear</option>
+              <option value="exponential" selected={{eq this.economiesOfScale.industrial.curve_type "exponential"}}>Exponential</option>
+              <option value="power" selected={{eq this.economiesOfScale.industrial.curve_type "power"}}>Power Law</option>
+            </select>
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Steepness
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Aggressiveness of the curve (0.1 = gentle, 2.0 = steep)
+              </span>
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="3.0"
+              step="0.1"
+              class="avitar-range avitar-w-full"
+              value={{this.economiesOfScale.industrial.curve_steepness}}
+              {{on "input" (fn this.updateEconomiesOfScale "industrial" "curve_steepness")}}
+            />
+            <div class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+              Current: {{this.economiesOfScale.industrial.curve_steepness}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Economy of Scale Graph --}}
+        <div class="avitar-mb-4">
+          <h5 class="avitar-text-sm avitar-font-semibold avitar-text-gray-700 avitar-mb-2">Scale Factor Preview</h5>
+          <LineGraph
+            @data={{this.industrialScaleData}}
+            @xField="size"
+            @yField="factor"
+            @xLabel="Building Size (sq ft)"
+            @yLabel="Scale Factor"
+            @lineColor="#f59e0b"
+            @title="Industrial Economy of Scale"
+          />
+        </div>
       </div>
 
       {{!-- Manufactured Buildings --}}
@@ -1416,6 +1578,60 @@
               placeholder="e.g., 0.70"
             />
           </div>
+        </div>
+
+        {{!-- Curve Configuration Row --}}
+        <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Type
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Interpolation method between size thresholds
+              </span>
+            </label>
+            <select
+              class="avitar-input"
+              {{on "change" (fn this.updateEconomiesOfScale "manufactured" "curve_type")}}
+            >
+              <option value="linear" selected={{eq this.economiesOfScale.manufactured.curve_type "linear"}}>Linear</option>
+              <option value="exponential" selected={{eq this.economiesOfScale.manufactured.curve_type "exponential"}}>Exponential</option>
+              <option value="power" selected={{eq this.economiesOfScale.manufactured.curve_type "power"}}>Power Law</option>
+            </select>
+          </div>
+          <div class="avitar-form-group avitar-flex-1">
+            <label class="avitar-label">
+              Curve Steepness
+              <span class="avitar-text-xs avitar-text-gray-500 avitar-block">
+                Aggressiveness of the curve (0.1 = gentle, 2.0 = steep)
+              </span>
+            </label>
+            <input
+              type="range"
+              min="0.1"
+              max="3.0"
+              step="0.1"
+              class="avitar-range avitar-w-full"
+              value={{this.economiesOfScale.manufactured.curve_steepness}}
+              {{on "input" (fn this.updateEconomiesOfScale "manufactured" "curve_steepness")}}
+            />
+            <div class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+              Current: {{this.economiesOfScale.manufactured.curve_steepness}}
+            </div>
+          </div>
+        </div>
+
+        {{!-- Economy of Scale Graph --}}
+        <div class="avitar-mb-4">
+          <h5 class="avitar-text-sm avitar-font-semibold avitar-text-gray-700 avitar-mb-2">Scale Factor Preview</h5>
+          <LineGraph
+            @data={{this.manufacturedScaleData}}
+            @xField="size"
+            @yField="factor"
+            @xLabel="Building Size (sq ft)"
+            @yLabel="Scale Factor"
+            @lineColor="#8b5cf6"
+            @title="Manufactured Economy of Scale"
+          />
         </div>
       </div>
 
