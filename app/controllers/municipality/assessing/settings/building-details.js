@@ -236,7 +236,9 @@ export default class BuildingDetailsController extends Controller {
    */
   generateScaleData(buildingType) {
     // Use saved database values for graph generation, not form values
-    const config = this.savedEconomiesOfScale?.[buildingType] || this.economiesOfScale[buildingType];
+    const config =
+      this.savedEconomiesOfScale?.[buildingType] ||
+      this.economiesOfScale[buildingType];
     if (!config) return [];
 
     const calculator = new BuildingAssessmentCalculator();
@@ -1231,7 +1233,9 @@ export default class BuildingDetailsController extends Controller {
       );
 
       // Update the saved values to match the newly saved form values
-      this.savedEconomiesOfScale = JSON.parse(JSON.stringify(this.economiesOfScale));
+      this.savedEconomiesOfScale = JSON.parse(
+        JSON.stringify(this.economiesOfScale),
+      );
 
       this.economiesSaveStatus = {
         success: true,

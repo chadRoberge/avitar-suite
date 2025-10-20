@@ -1,7 +1,10 @@
 import Service from '@ember/service';
+import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 
 export default class LocalStorageService extends Service {
+  @service('property-cache') propertyCache;
+
   @tracked isOnline = navigator.onLine;
 
   constructor() {
@@ -52,7 +55,28 @@ export default class LocalStorageService extends Service {
           );
           return true;
         } catch (retryError) {
-          console.error('LocalStorage write failed after cleanup:', retryError);
+          console.error(
+            'LocalStorage write failed after cleanup, trying emergency cleanup:',
+            retryError,
+          );
+
+          // Try emergency cleanup if normal cleanup wasn't enough
+          if (retryError.name === 'QuotaExceededError') {
+            this.emergencyCleanup();
+            try {
+              localStorage.setItem(
+                this.getStorageKey(key),
+                JSON.stringify(storageData),
+              );
+              return true;
+            } catch (finalError) {
+              console.error(
+                'LocalStorage write failed after emergency cleanup:',
+                finalError,
+              );
+              return false;
+            }
+          }
           return false;
         }
       }
@@ -320,8 +344,8 @@ export default class LocalStorageService extends Service {
             localStorage.removeItem(key);
             deletedCount++;
           }
-          // Remove old items (older than 30 days) if storage is getting full
-          else if (now - data.timestamp > 30 * 24 * 60 * 60 * 1000) {
+          // Remove old items (older than 7 days for aggressive cleanup)
+          else if (now - data.timestamp > 7 * 24 * 60 * 60 * 1000) {
             localStorage.removeItem(key);
             deletedCount++;
           }
@@ -334,6 +358,67 @@ export default class LocalStorageService extends Service {
     });
 
     console.log(`LocalStorage cleanup: removed ${deletedCount} items`);
+  }
+
+  /**
+   * Emergency cleanup when quota is exceeded - removes old cached data aggressively
+   */
+  emergencyCleanup() {
+    console.log('🚨 Emergency localStorage cleanup - quota exceeded');
+
+    const keys = this.getAllKeys();
+    const now = Date.now();
+    let deletedCount = 0;
+
+    // Sort keys by age (oldest first) for aggressive removal
+    const keyAges = keys
+      .map((key) => {
+        try {
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const data = JSON.parse(stored);
+            return { key, timestamp: data.timestamp || 0 };
+          }
+        } catch (error) {
+          return { key, timestamp: 0 }; // Corrupted data, mark for removal
+        }
+        return { key, timestamp: now }; // Keep recent if no timestamp
+      })
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    // Remove oldest 50% of cached data
+    const toRemove = Math.ceil(keyAges.length * 0.5);
+
+    for (let i = 0; i < toRemove && i < keyAges.length; i++) {
+      try {
+        localStorage.removeItem(keyAges[i].key);
+        deletedCount++;
+      } catch (error) {
+        console.error('Error removing item during emergency cleanup:', error);
+      }
+    }
+
+    console.log(
+      `Emergency cleanup: removed ${deletedCount} items (${toRemove} targeted)`,
+    );
+
+    // Instead of clearing ALL property cache, just clear persistent storage
+    // Keep memory cache intact to avoid cache miss cycles
+    try {
+      // Only clear persistent property cache storage, keep memory cache
+      const allKeys = this.getAllKeys();
+      const propertyKeys = allKeys.filter((key) =>
+        key.includes('property-cache:'),
+      );
+      propertyKeys.forEach((key) => this.remove(key.replace('avitar:', '')));
+      console.log(
+        `🔄 Cleared ${propertyKeys.length} persistent property cache entries after emergency cleanup`,
+      );
+    } catch (error) {
+      console.warn('Could not clear persistent property cache:', error);
+    }
+
+    return deletedCount;
   }
 
   /**
@@ -381,6 +466,22 @@ export default class LocalStorageService extends Service {
       return itemValue !== queryValue.$ne;
     }
     return itemValue === queryValue;
+  }
+
+  /**
+   * Clear a specific collection and its indexes
+   * @param {string} collectionName - Collection name to clear
+   */
+  clearCollection(collectionName) {
+    // Remove the collection itself
+    const collectionKey = `collection:${collectionName}`;
+    this.remove(collectionKey);
+
+    // Remove the indexes for this collection
+    const indexKey = `indexes:${collectionName}`;
+    this.remove(indexKey);
+
+    console.log(`Cleared collection: ${collectionName}`);
   }
 
   /**

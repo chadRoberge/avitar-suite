@@ -1,6 +1,5 @@
 {{!-- Land Assessment Edit Modal --}}
-{{!-- Access modalData to trigger initialization --}}
-{{#if this.modalData.isOpen}}
+{{#if @isOpen}}
   <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.cancelEdit}}>
     <div class="avitar-modal" style="max-width: 90%; width: 90%;" {{on "click" this.stopPropagation}} role="dialog" aria-labelledby="land-edit-title" aria-modal="true">
       <div class="avitar-modal__header">
@@ -17,19 +16,25 @@
           <h3 class="avitar-card__title">Basic Information</h3>
         </div>
         <div class="avitar-card__body">
+          {{#if this.isLoading}}
+            <div class="avitar-text-center avitar-py-4">
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Loading dropdown options...
+            </div>
+          {{else}}
           {{!-- Row 1: Zone and Neighborhood --}}
           <div class="avitar-flex avitar-gap-4 avitar-mb-4">
             {{!-- Zone Dropdown --}}
             <div class="avitar-flex-1">
               <label for="zone-select" class="avitar-label">Zone</label>
-              <select 
+              <select
                 id="zone-select"
-                class="avitar-select" 
+                class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "zone")}}
               >
-                <option value="">Select Zone...</option>
+                <option value="" selected={{not this.landAssessment.zone}}>Select Zone...</option>
                 {{#each this.availableZones as |zone|}}
-                  <option value={{zone.id}} selected={{eq zone.id this.landAssessment.zone}}>{{zone.name}}-{{zone.description}}</option>
+                  <option value={{or zone._id zone.id}} selected={{eq this.landAssessment.zone (or zone._id zone.id)}}>{{zone.name}}-{{zone.description}}</option>
                 {{/each}}
               </select>
             </div>
@@ -37,14 +42,14 @@
             {{!-- Neighborhood Dropdown --}}
             <div class="avitar-flex-1">
               <label for="neighborhood-select" class="avitar-label">Neighborhood</label>
-              <select 
+              <select
                 id="neighborhood-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "neighborhood")}}
               >
-                <option value="">Select Neighborhood...</option>
+                <option value="" selected={{not this.landAssessment.neighborhood}}>Select Neighborhood...</option>
                 {{#each this.availableNeighborhoods as |neighborhood|}}
-                  <option value={{neighborhood._id}} selected={{eq neighborhood._id this.landAssessment.neighborhood}}>{{neighborhood.code}} - {{neighborhood.description}}</option>
+                  <option value={{neighborhood._id}} selected={{eq this.landAssessment.neighborhood neighborhood._id}}>{{neighborhood.code}} - {{neighborhood.description}}</option>
                 {{/each}}
               </select>
             </div>
@@ -55,14 +60,14 @@
             {{!-- Land Taxation Category Dropdown --}}
             <div class="avitar-flex-1">
               <label for="taxation-category-select" class="avitar-label">Taxation Category</label>
-              <select 
+              <select
                 id="taxation-category-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "taxation_category")}}
               >
-                <option value="">Select Taxation Category...</option>
+                <option value="" selected={{not this.landAssessment.taxation_category}}>Select Taxation Category...</option>
                 {{#each this.availableTaxationCategories as |category|}}
-                  <option value={{category._id}} selected={{eq category._id this.landAssessment.taxation_category}}>{{category.name}} ({{category.taxPercentage}}%)</option>
+                  <option value={{category._id}} selected={{eq this.landAssessment.taxation_category category._id}}>{{category.name}} ({{category.taxPercentage}}%)</option>
                 {{/each}}
               </select>
             </div>
@@ -73,14 +78,14 @@
             {{!-- Site Conditions Dropdown --}}
             <div class="avitar-flex-1">
               <label for="site-select" class="avitar-label">Site Conditions</label>
-              <select 
+              <select
                 id="site-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "site_conditions")}}
               >
-                <option value="">Select Site...</option>
+                <option value="" selected={{not this.landAssessment.site_conditions}}>Select Site...</option>
                 {{#each this.availableSites as |site|}}
-                  <option value={{site._id}} selected={{eq site._id this.landAssessment.site_conditions}}>{{site.displayText}}</option>
+                  <option value={{site._id}} selected={{eq this.landAssessment.site_conditions site._id}}>{{site.displayText}}</option>
                 {{/each}}
               </select>
             </div>
@@ -88,14 +93,14 @@
             {{!-- Driveway Type Dropdown --}}
             <div class="avitar-flex-1">
               <label for="driveway-select" class="avitar-label">Driveway Type</label>
-              <select 
+              <select
                 id="driveway-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "driveway_type")}}
               >
-                <option value="">Select Driveway...</option>
+                <option value="" selected={{not this.landAssessment.driveway_type}}>Select Driveway...</option>
                 {{#each this.availableDriveways as |driveway|}}
-                  <option value={{driveway._id}} selected={{eq driveway._id this.landAssessment.driveway_type}}>{{driveway.displayText}}</option>
+                  <option value={{driveway._id}} selected={{eq this.landAssessment.driveway_type driveway._id}}>{{driveway.displayText}}</option>
                 {{/each}}
               </select>
             </div>
@@ -103,18 +108,19 @@
             {{!-- Road Type Dropdown --}}
             <div class="avitar-flex-1">
               <label for="road-select" class="avitar-label">Road Type</label>
-              <select 
+              <select
                 id="road-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateLandAssessmentFromEvent "road_type")}}
               >
-                <option value="">Select Road...</option>
+                <option value="" selected={{not this.landAssessment.road_type}}>Select Road...</option>
                 {{#each this.availableRoads as |road|}}
-                  <option value={{road._id}} selected={{eq road._id this.landAssessment.road_type}}>{{road.displayText}}</option>
+                  <option value={{road._id}} selected={{eq this.landAssessment.road_type road._id}}>{{road.displayText}}</option>
                 {{/each}}
               </select>
             </div>
           </div>
+        {{/if}}
         </div>
       </div>
 
@@ -151,24 +157,24 @@
 
           {{!-- Land Use Entries --}}
           <div class="avitar-flex-table-body">
-            {{#each this.landUseEntries as |entry index|}}
+            {{#each this.landUseEntries key="id" as |entry index|}}
               <div class="avitar-flex-table-row">
                 {{!-- Land Use Type --}}
                 <div class="avitar-flex-table-cell avitar-flex-4">
-                  <select 
+                  <select
                     class="avitar-select avitar-select--sm"
                     {{on "change" (fn this.updateLandUseEntryFromEvent index "land_use_type")}}
                   >
-                    <option value="">Select Land Use...</option>
+                    <option value="" selected={{not entry.land_use_type}}>Select Land Use...</option>
                     {{!-- Regular Land Use Details --}}
                     {{#each this.availableLandUseDetails as |landUse|}}
-                      <option value={{landUse.code}} selected={{eq landUse.code entry.land_use_type}}>{{landUse.displayText}}</option>
+                      <option value={{landUse.code}} selected={{eq entry.land_use_type landUse.code}}>{{landUse.displayText}}</option>
                     {{/each}}
                     {{!-- Current Use Categories --}}
                     {{#if this.availableCurrentUseCategories.length}}
                       <optgroup label="Current Use Categories">
                         {{#each this.availableCurrentUseCategories as |currentUse|}}
-                          <option value={{currentUse.code}} selected={{eq currentUse.code entry.land_use_type}}>{{currentUse.displayText}} (Current Use)</option>
+                          <option value={{currentUse.code}} selected={{eq entry.land_use_type currentUse.code}}>{{currentUse.displayText}} (Current Use)</option>
                         {{/each}}
                       </optgroup>
                     {{/if}}
@@ -191,24 +197,25 @@
 
                 {{!-- Units (AC/FF) --}}
                 <div class="avitar-flex-table-cell avitar-flex-1">
-                  <select 
+                  <select
                     class="avitar-select avitar-select--sm"
-                    {{on "change" (fn this.updateLandUseEntryFromEvent index "size_unit")}}
+                    value={{entry.size_unit}}
+                    {{on "input" (fn this.updateLandUseEntryFromEvent index "size_unit")}}
                   >
-                    <option value="AC" selected={{eq entry.size_unit "AC"}}>AC</option>
-                    <option value="FF" selected={{eq entry.size_unit "FF"}}>FF</option>
+                    <option value="AC">AC</option>
+                    <option value="FF">FF</option>
                   </select>
                 </div>
 
                 {{!-- Topography --}}
                 <div class="avitar-flex-table-cell avitar-flex-2">
-                  <select 
+                  <select
                     class="avitar-select avitar-select--sm"
                     {{on "change" (fn this.updateLandUseEntryFromEvent index "topography")}}
                   >
-                    <option value="">Select Topography...</option>
+                    <option value="" selected={{not entry.topography}}>Select Topography...</option>
                     {{#each this.availableTopology as |topo|}}
-                      <option value={{topo.displayText}} selected={{eq topo.displayText entry.topography}}>{{topo.displayText}}</option>
+                      <option value={{topo.displayText}} selected={{eq entry.topography topo.displayText}}>{{topo.displayText}}</option>
                     {{/each}}
                   </select>
                 </div>
@@ -359,7 +366,7 @@
                 ${{number-format this.calculatedTotals.totalCurrentUseValue}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
-                ${{number-format this.totalAssessedValue}}
+                ${{number-format this.totalTaxableValue}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-4">
                 {{!-- Notes column - empty --}}

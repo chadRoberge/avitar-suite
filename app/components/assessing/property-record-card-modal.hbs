@@ -34,7 +34,7 @@
       {{else}}
       {{!-- Render all cards using the reusable component --}}
       {{#each this.cardData as |cardInfo|}}
-        <Assessing::PropertyRecordCard 
+        <Assessing::PropertyRecordCard
           @property={{this.selectedProperty}}
           @landAssessment={{cardInfo.landAssessment}}
           @buildingAssessment={{cardInfo.buildingAssessment}}
@@ -42,7 +42,9 @@
           @sketchData={{cardInfo.sketchData}}
           @cardNumber={{cardInfo.cardNumber}}
           @assessmentYear={{this.assessmentYear}}
+          @assessmentHistory={{cardInfo.assessmentHistory}}
           @municipalityName={{this.municipalityName}}
+          @sketchSubAreaFactors={{this.sketchSubAreaFactors}}
         />
       {{/each}}
       {{/if}}

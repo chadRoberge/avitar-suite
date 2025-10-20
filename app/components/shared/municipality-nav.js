@@ -70,6 +70,12 @@ export default class MunicipalityNavComponent extends Component {
     return this.propertySelection.selectedProperty;
   }
 
+  get currentQueryParams() {
+    // Get current query parameters to preserve them in navigation
+    const currentRoute = this.router.currentRoute;
+    return currentRoute ? currentRoute.queryParams : {};
+  }
+
   @action
   setActiveModule(moduleKey) {
     this.activeModuleKey =

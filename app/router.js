@@ -37,6 +37,9 @@ Router.map(function () {
       this.route('features', function () {
         this.route('property', { path: '/:property_id' });
       });
+      this.route('exemptions', function () {
+        this.route('property', { path: '/:property_id' });
+      });
       this.route('sketch', function () {
         this.route('property', { path: '/:property_id' });
       });

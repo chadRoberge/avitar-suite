@@ -4,6 +4,7 @@ import { inject as service } from '@ember/service';
 
 export default class PropertySelectionService extends Service {
   @service router;
+  @service assessing;
 
   @tracked selectedProperty = null;
 
@@ -74,5 +75,65 @@ export default class PropertySelectionService extends Service {
 
     // Property selected, go to property route for that section
     return `municipality.assessing.${section}.property`;
+  }
+
+  // Refresh the current assessment totals for the selected property
+  async refreshCurrentAssessmentTotals(
+    assessmentYear = null,
+    routeModel = null,
+  ) {
+    if (!this.selectedProperty) {
+      return;
+    }
+
+    try {
+      // Small delay to ensure backend has finished updating PropertyTreeNode.assessment_summary
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Fetch the property with network-first to get the latest assessment_summary with parcel totals
+      const propertyData = await this.assessing.getProperty(
+        this.selectedProperty.id,
+        { strategy: 'network-first' },
+      );
+
+      if (propertyData) {
+        const property = propertyData.property || propertyData;
+
+        // Use assessment_summary which contains parcel totals (sum of all cards)
+        const newAssessedValue =
+          property.assessment_summary?.total_value ||
+          property.assessed_value ||
+          this.selectedProperty.assessed_value;
+
+        // Update the selected property with fresh assessment totals
+        // Force reactivity by creating a new object reference
+        this.selectedProperty = {
+          ...this.selectedProperty,
+          assessed_value: newAssessedValue,
+          assessment_summary: property.assessment_summary,
+        };
+
+        // Also update the route model's property if provided
+        if (routeModel && routeModel.property) {
+          routeModel.property.assessed_value = newAssessedValue;
+          routeModel.property.assessment_summary = property.assessment_summary;
+
+          if (assessmentYear) {
+            routeModel.property.tax_year = assessmentYear;
+          }
+        }
+
+        if (assessmentYear) {
+          this.selectedProperty = {
+            ...this.selectedProperty,
+            tax_year: assessmentYear,
+          };
+        }
+
+        console.log('Updated property assessment total (parcel):', newAssessedValue);
+      }
+    } catch (error) {
+      console.warn('Could not refresh assessment totals:', error);
+    }
   }
 }

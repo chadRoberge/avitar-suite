@@ -8,6 +8,8 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
   @service notifications;
   @service municipality;
   @service('current-user') currentUser;
+  @service('property-cache') propertyCache;
+  @service localApi;
 
   // Tracked properties for each section
   @tracked listingEntries = [];
@@ -168,16 +170,23 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
     try {
       const municipalityId = this.municipality.currentMunicipality?.id;
       const propertyId = this.model.property.id;
+      const cardNumber = this.model.property.current_card || 1;
 
       if (!municipalityId || !propertyId) {
         throw new Error('Municipality or property not found');
       }
 
+      // Include card_number in the request data
+      const entryDataWithCard = {
+        ...entryData,
+        card_number: cardNumber,
+      };
+
       if (entryData._id) {
         // Update existing entry
         await this.api.put(
           `/municipalities/${municipalityId}/properties/${propertyId}/listing-history/${entryData._id}`,
-          entryData,
+          entryDataWithCard,
           { loadingMessage: 'Saving listing history entry...' },
         );
 
@@ -200,7 +209,7 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
         // Create new entry
         const response = await this.api.post(
           `/municipalities/${municipalityId}/properties/${propertyId}/listing-history`,
-          entryData,
+          entryDataWithCard,
           { loadingMessage: 'Adding listing history entry...' },
         );
 
@@ -210,6 +219,33 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
 
         this.notifications.success('Listing history entry added successfully');
       }
+
+      // After successful save, update cache with fresh data
+      try {
+        const freshProperty = await this.api.get(`/properties/${propertyId}`);
+
+        if (freshProperty && freshProperty.property) {
+          // Update local storage cache
+          const cacheKey = `_properties_${propertyId}`;
+          this.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+          // Also update in-memory property cache
+          this.propertyCache.set(propertyId, freshProperty);
+
+          console.log('✅ Updated cache with fresh property data after listing history save');
+        }
+      } catch (error) {
+        console.warn('Could not update cache after listing history save:', error);
+        // Fall back to invalidation if update fails
+        this.propertyCache.invalidate(propertyId, cardNumber);
+      }
+
+      // Clear the listing-history API cache
+      const listingHistoryCacheKey = `_municipalities_${municipalityId}_properties_${propertyId}_listing-history_card_${cardNumber}`;
+      const actualCacheKey = `item_${listingHistoryCacheKey}`;
+      this.localApi.localStorage.remove(actualCacheKey);
+
+      console.log('✅ Updated property cache after listing history save');
 
       // Close modal on success
       this.closeListingHistoryModal();
@@ -235,16 +271,50 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
     try {
       const municipalityId = this.municipality.currentMunicipality?.id;
       const propertyId = this.model.property.id;
+      const cardNumber = this.model.property.current_card || 1;
 
       if (!municipalityId || !propertyId) {
         throw new Error('Municipality or property not found');
       }
 
+      // Include card_number in the request body
+      const notesDataWithCard = {
+        ...notesData,
+        card_number: cardNumber,
+      };
+
       await this.api.put(
         `/municipalities/${municipalityId}/properties/${propertyId}/notes`,
-        notesData,
+        notesDataWithCard,
         { loadingMessage: 'Saving property notes...' },
       );
+
+      // After successful save, update cache with fresh data
+      try {
+        const freshProperty = await this.api.get(`/properties/${propertyId}`);
+
+        if (freshProperty && freshProperty.property) {
+          // Update local storage cache
+          const cacheKey = `_properties_${propertyId}`;
+          this.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+          // Also update in-memory property cache
+          this.propertyCache.set(propertyId, freshProperty);
+
+          console.log('✅ Updated cache with fresh property data after property notes save');
+        }
+      } catch (error) {
+        console.warn('Could not update cache after property notes save:', error);
+        // Fall back to invalidation if update fails
+        this.propertyCache.invalidate(propertyId, cardNumber);
+      }
+
+      // Clear the listing-history API cache (which includes notes)
+      const listingHistoryCacheKey = `_municipalities_${municipalityId}_properties_${propertyId}_listing-history_card_${cardNumber}`;
+      const actualCacheKey = `item_${listingHistoryCacheKey}`;
+      this.localApi.localStorage.remove(actualCacheKey);
+
+      console.log('✅ Updated property cache after property notes save');
 
       this.notifications.success('Property notes saved successfully');
 
@@ -342,9 +412,10 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
     try {
       const municipalityId = this.municipality.currentMunicipality?.id;
       const propertyId = this.model.property.id;
+      const cardNumber = this.model.property.current_card || 1;
 
       await this.api.delete(
-        `/municipalities/${municipalityId}/properties/${propertyId}/listing-history/${entryId}`,
+        `/municipalities/${municipalityId}/properties/${propertyId}/listing-history/${entryId}?card=${cardNumber}`,
         { loadingMessage: 'Deleting listing history entry...' },
       );
 
@@ -352,6 +423,33 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
       this.listingEntries = this.listingEntries.filter(
         (entry) => entry._id !== entryId,
       );
+
+      // After successful delete, update cache with fresh data
+      try {
+        const freshProperty = await this.api.get(`/properties/${propertyId}`);
+
+        if (freshProperty && freshProperty.property) {
+          // Update local storage cache
+          const cacheKey = `_properties_${propertyId}`;
+          this.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+          // Also update in-memory property cache
+          this.propertyCache.set(propertyId, freshProperty);
+
+          console.log('✅ Updated cache with fresh property data after listing history deletion');
+        }
+      } catch (error) {
+        console.warn('Could not update cache after listing history delete:', error);
+        // Fall back to invalidation if update fails
+        this.propertyCache.invalidate(propertyId, cardNumber);
+      }
+
+      // Clear the listing-history API cache
+      const listingHistoryCacheKey = `_municipalities_${municipalityId}_properties_${propertyId}_listing-history_card_${cardNumber}`;
+      const actualCacheKey = `item_${listingHistoryCacheKey}`;
+      this.localApi.localStorage.remove(actualCacheKey);
+
+      console.log('✅ Updated property cache after listing history deletion');
 
       this.notifications.success('Listing history entry deleted successfully');
 

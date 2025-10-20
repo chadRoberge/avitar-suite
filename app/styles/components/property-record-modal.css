@@ -102,7 +102,7 @@ uppercase {
   width: 100%;
   max-width: 11in;
   margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -414,7 +414,7 @@ uppercase {
   .property-record-card-page--1,
   .property-record-card-page--2 {
     margin: 20px auto; /* Center on screen */
-    box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Paper effect */
+    box-shadow: 0 0 10px rgb(0 0 0 / 10%); /* Paper effect */
   }
 }
 

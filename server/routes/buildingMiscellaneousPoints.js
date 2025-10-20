@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const BuildingMiscellaneousPoints = require('../models/BuildingMiscellaneousPoints');
+const BuildingCalculationConfig = require('../models/BuildingCalculationConfig');
 const { body, param, validationResult } = require('express-validator');
 
 // GET /api/municipalities/:municipalityId/building-miscellaneous-points
@@ -16,11 +16,25 @@ router.get(
 
       const { municipalityId } = req.params;
 
-      // Get or create miscellaneous points for the municipality
-      const points =
-        await BuildingMiscellaneousPoints.getOrCreateForMunicipality(
-          municipalityId,
-        );
+      // Get or create building calculation config for the municipality
+      const config = await BuildingCalculationConfig.getOrCreateForMunicipality(
+        municipalityId,
+        new Date().getFullYear(),
+      );
+
+      // Extract miscellaneous points for backward compatibility
+      const points = {
+        _id: config._id,
+        municipalityId: config.municipality_id,
+        airConditioningPoints:
+          config.miscellaneous_points?.air_conditioning?.total_points || 4,
+        extraKitchenPoints:
+          config.miscellaneous_points?.extra_kitchen?.points_per_kitchen || 1,
+        generatorPoints:
+          config.miscellaneous_points?.generator?.default_points || 5,
+        createdAt: config.created_at,
+        updatedAt: config.updated_at,
+      };
 
       res.json(points);
     } catch (error) {
@@ -70,32 +84,47 @@ router.put(
       const { airConditioningPoints, extraKitchenPoints, generatorPoints } =
         req.body;
 
-      // Find existing record or create new one
-      let points = await BuildingMiscellaneousPoints.findOne({
+      // Get or create building calculation config
+      const config = await BuildingCalculationConfig.getOrCreateForMunicipality(
         municipalityId,
+        new Date().getFullYear(),
+      );
+
+      // Update miscellaneous points in the comprehensive config
+      config.miscellaneous_points = {
+        ...config.miscellaneous_points,
+        air_conditioning: {
+          total_points: parseInt(airConditioningPoints, 10),
+        },
+        extra_kitchen: {
+          points_per_kitchen: parseInt(extraKitchenPoints, 10),
+        },
+        generator: {
+          default_points: parseInt(generatorPoints, 10),
+        },
+      };
+
+      config.updated_at = new Date();
+      config.last_changed = new Date();
+      config.change_reason = 'policy_change';
+
+      await config.save();
+      console.log('Updated building calculation config miscellaneous points:', {
+        airConditioningPoints: parseInt(airConditioningPoints, 10),
+        extraKitchenPoints: parseInt(extraKitchenPoints, 10),
+        generatorPoints: parseInt(generatorPoints, 10),
       });
 
-      if (points) {
-        // Update existing record
-        points.airConditioningPoints = parseInt(airConditioningPoints, 10);
-        points.extraKitchenPoints = parseInt(extraKitchenPoints, 10);
-        points.generatorPoints = parseInt(generatorPoints, 10);
-        points.updatedAt = new Date();
-
-        await points.save();
-        console.log('Updated existing miscellaneous points:', points);
-      } else {
-        // Create new record
-        points = new BuildingMiscellaneousPoints({
-          municipalityId,
-          airConditioningPoints: parseInt(airConditioningPoints, 10),
-          extraKitchenPoints: parseInt(extraKitchenPoints, 10),
-          generatorPoints: parseInt(generatorPoints, 10),
-        });
-
-        await points.save();
-        console.log('Created new miscellaneous points:', points);
-      }
+      // Return data in expected format for backward compatibility
+      const points = {
+        _id: config._id,
+        municipalityId: config.municipality_id,
+        airConditioningPoints: parseInt(airConditioningPoints, 10),
+        extraKitchenPoints: parseInt(extraKitchenPoints, 10),
+        generatorPoints: parseInt(generatorPoints, 10),
+        createdAt: config.created_at,
+        updatedAt: config.updated_at,
+      };
 
       res.json({ buildingMiscellaneousPoints: points });
     } catch (error) {

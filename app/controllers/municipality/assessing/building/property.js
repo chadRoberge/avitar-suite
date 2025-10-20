@@ -6,6 +6,7 @@ import { action } from '@ember/object';
 export default class MunicipalityAssessingBuildingPropertyController extends Controller {
   @service currentUser;
   @service assessing;
+  @service('property-selection') propertySelection;
 
   @tracked showBuildingEditModal = false;
   @tracked showDepreciationEditModal = false;
@@ -60,6 +61,12 @@ export default class MunicipalityAssessingBuildingPropertyController extends Con
       if (this.buildingRoute) {
         this.buildingRoute.refresh();
       }
+
+      // Also refresh the assessment totals in the property header
+      await this.propertySelection.refreshCurrentAssessmentTotals(
+        null,
+        this.model,
+      );
     } catch (error) {
       console.error('Failed to refresh building property:', error);
     }

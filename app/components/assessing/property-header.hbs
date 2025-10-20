@@ -2,43 +2,37 @@
 <div class="avitar-card avitar-mb-6">
   <div class="avitar-card__body">
     {{!-- Card Navigation Row --}}
-    {{#if (gt @property.cards.total_cards 1)}}
+    {{#if this.shouldShowCardNavigation}}
       <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4 avitar-p-3 avitar-bg-gray-50 avitar-rounded">
         <div class="avitar-flex avitar-items-center avitar-gap-3">
           <span class="avitar-text-sm avitar-font-medium avitar-text-gray-700">
-            Card {{@property.current_card}} of {{@property.cards.total_cards}}
+            Card {{this.property.current_card}} of {{this.totalCardsDisplay}}
           </span>
-          {{#if @property.cards.card_descriptions}}
-            {{#each @property.cards.card_descriptions as |cardDesc|}}
-              {{#if (eq cardDesc.card_number @property.current_card)}}
-                {{#if cardDesc.description}}
-                  <span class="avitar-text-sm avitar-text-muted">- {{cardDesc.description}}</span>
-                {{/if}}
-              {{/if}}
-            {{/each}}
+          {{#if this.cardNavigation.currentCardDescription}}
+            <span class="avitar-text-sm avitar-text-muted">- {{this.cardNavigation.currentCardDescription}}</span>
           {{/if}}
         </div>
         <div class="avitar-flex avitar-gap-2">
-          <button 
-            type="button" 
-            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless (gt @property.current_card 1) 'avitar-btn--disabled'}}"
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless this.cardNavigation.canNavigateToPrevious 'avitar-btn--disabled'}}"
             {{on "click" this.previousCard}}
-            disabled={{unless (gt @property.current_card 1) "disabled"}}
+            disabled={{unless this.cardNavigation.canNavigateToPrevious "disabled"}}
           >
             <i class="fas fa-chevron-left avitar-mr-1"></i>
             Previous
           </button>
-          <button 
-            type="button" 
-            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless (lt @property.current_card @property.cards.total_cards) 'avitar-btn--disabled'}}"
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--sm avitar-btn--outline avitar-btn--secondary {{unless this.cardNavigation.canNavigateToNext 'avitar-btn--disabled'}}"
             {{on "click" this.nextCard}}
-            disabled={{unless (lt @property.current_card @property.cards.total_cards) "disabled"}}
+            disabled={{unless this.cardNavigation.canNavigateToNext "disabled"}}
           >
             Next
             <i class="fas fa-chevron-right avitar-ml-1"></i>
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--primary"
             {{on "click" this.addCard}}
             title="Add New Card"
@@ -70,7 +64,7 @@
             <span class="avitar-text-sm avitar-text-muted avitar-font-bold">PID:</span>
           </div>
           <div class="avitar-ml-3 avitar-flex-1">
-            <span class="avitar-text-sm avitar-text-muted">{{@property.pid_formatted}}</span>
+            <span class="avitar-text-sm avitar-text-muted">{{this.property.pid_formatted}}</span>
           </div>
         </div>
         <div class="avitar-flex avitar-items-center avitar-skinny">
@@ -118,7 +112,7 @@
       {{!-- Property Type and Acreage --}}
       <div class="avitar-text-right">
         <div class="avitar-text-lg avitar-font-medium avitar-text-gray-900 avitar-mb-1">
-          {{or @property.property_type @property.property_class "Unknown Type"}}
+          {{or this.property.property_type this.property.property_class "Unknown Type"}}
         </div>
         <div class="avitar-text-sm avitar-text-muted">
           {{#if this.acreage}}
@@ -140,30 +134,47 @@
           </div>
           <div class="avitar-ml-3 avitar-flex-1">
             <div class="avitar-text-base avitar-font-medium avitar-text-gray-900 avitar-skinny">
-              {{@property.location.address}}
+              {{this.property.location.address}}
             </div>
           </div>
         </div>
         <div class="avitar-text-sm avitar-text-muted">
-          {{#if @property.location.neighborhood}}
-            {{@property.location.neighborhood}}
-            {{#if @property.location.zone}}, {{@property.location.zone}}{{/if}}
-          {{else if @property.location.zone}}
-            Zone {{@property.location.zone}}
+          {{#if this.property.location.neighborhood}}
+            {{this.property.location.neighborhood}}
+            {{#if this.property.location.zone}}, {{this.property.location.zone}}{{/if}}
+          {{else if this.property.location.zone}}
+            Zone {{this.property.location.zone}}
           {{else}}
-            PID: {{@property.pid_formatted}}
+            PID: {{this.property.pid_formatted}}
           {{/if}}
         </div>
       </div>
       
-      {{!-- Total Property Assessment --}}
+      {{!-- Assessment Values --}}
       <div class="avitar-text-right">
-        <div class="avitar-text-2xl avitar-font-bold avitar-text-primary avitar-mb-1">
-          ${{number-format @property.assessed_value}}
-        </div>
-        <div class="avitar-text-sm avitar-text-muted">
-          {{@property.tax_year}} Total Assessment
-        </div>
+        {{#if (and this.property.cards this.property.cards.total_cards (gt this.property.cards.total_cards 1))}}
+          {{!-- Multi-card property: show both parcel total and current card --}}
+          <div class="avitar-text-lg avitar-font-bold avitar-text-primary avitar-mb-1">
+            ${{number-format this.property.assessed_value}}
+          </div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-2">
+            {{this.property.tax_year}} Parcel Total
+          </div>
+          <div class="avitar-text-base avitar-font-medium avitar-text-gray-700">
+            ${{number-format (or this.property.current_card_assessment 0)}}
+          </div>
+          <div class="avitar-text-xs avitar-text-muted">
+            Card {{this.property.current_card}} Assessment
+          </div>
+        {{else}}
+          {{!-- Single card property: show total assessment --}}
+          <div class="avitar-text-2xl avitar-font-bold avitar-text-primary avitar-mb-1">
+            ${{number-format this.property.assessed_value}}
+          </div>
+          <div class="avitar-text-sm avitar-text-muted">
+            {{this.property.tax_year}} Total Assessment
+          </div>
+        {{/if}}
       </div>
     </div>
   </div>
@@ -173,7 +184,7 @@
 {{#if this.showOwnerModal}}
   <Assessing::OwnerManagementModal
     @isOpen={{this.showOwnerModal}}
-    @property={{@property}}
+    @property={{this.property}}
     @onClose={{this.closeOwnerModal}}
     @onOwnerUpdate={{this.handleOwnerUpdate}}
   />

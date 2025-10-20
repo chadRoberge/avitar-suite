@@ -33,6 +33,18 @@ export default class MunicipalityAssessingBuildingPropertyRoute extends Route {
         cardNumber,
       );
 
+      // Get current total assessment to update property header
+      let currentAssessment = null;
+      try {
+        currentAssessment = await this.assessing.getCurrentAssessmentForYear(
+          property_id,
+          cardNumber,
+          assessmentYear,
+        );
+      } catch (error) {
+        console.warn('Could not load current assessment totals:', error);
+      }
+
       // Try to load building assessment data, but don't fail if it doesn't exist
       let buildingAssessmentResponse = null;
       try {
@@ -58,8 +70,117 @@ export default class MunicipalityAssessingBuildingPropertyRoute extends Route {
 
       // Create a clean copy of the property with the current card
       const property = propertyResponse.property || propertyResponse;
+      console.log('🃏 Building route - Original property cards data:', property.cards);
+
       const cleanProperty = JSON.parse(JSON.stringify(property));
       cleanProperty.current_card = parseInt(cardNumber);
+
+      // Ensure cards information is preserved for navigation
+      if (property.cards) {
+        cleanProperty.cards = property.cards;
+        console.log('🃏 Building route - Preserved cards data:', cleanProperty.cards);
+      } else {
+        console.warn('🃏 Building route - No cards data found in property, checking service...');
+
+        // Try to get cards data from property selection service as fallback
+        const serviceProperty = this.propertySelection.selectedProperty;
+        if (serviceProperty?.cards) {
+          cleanProperty.cards = serviceProperty.cards;
+          console.log('🃏 Building route - Using cards data from service:', cleanProperty.cards);
+        } else {
+          console.warn('🃏 Building route - No cards data available anywhere!');
+        }
+      }
+
+      // Update property with current assessment total for header display
+      if (currentAssessment) {
+        // Fix: Use the same property path as the general route
+        const assessment = currentAssessment.assessment || currentAssessment;
+
+        console.log('🔍 Building route - Card assessment data:', {
+          propertyId: property_id,
+          cardNumber,
+          assessment,
+          hasBuilding: !!assessment?.building,
+          hasLand: !!assessment?.land,
+          hasFeatures: !!assessment?.other_improvements,
+        });
+
+        // Extract individual component values ONLY from the card-specific assessment
+        // Do NOT fall back to property-level values to avoid showing wrong card's data
+        // Use nullish coalescing (??) for .value checks to handle 0 as a valid value
+        const buildingValue =
+          assessment?.building?.value ??
+          (typeof assessment?.building === 'number' ? assessment.building : null) ??
+          assessment?.calculated_totals?.buildingValue ??
+          assessment?.buildingValue ??
+          0;
+
+        const landValue =
+          assessment?.land?.value ??
+          (typeof assessment?.land === 'number' ? assessment.land : null) ??
+          assessment?.calculated_totals?.landTaxableValue ??
+          assessment?.landValue ??
+          0;
+
+        const featuresValue =
+          assessment?.other_improvements?.value ??
+          (typeof assessment?.features === 'number' ? assessment.features : null) ??
+          assessment?.calculated_totals?.featuresValue ??
+          assessment?.featuresValue ??
+          assessment?.otherValue ??
+          0;
+
+        // Calculate CARD-SPECIFIC total from components
+        const cardTotalFromComponents = buildingValue + landValue + featuresValue;
+        const cardProvidedTotal =
+          assessment?.total_value ||
+          assessment?.total ||
+          assessment?.calculated_totals?.totalTaxableValue ||
+          assessment?.totalTaxableValue ||
+          assessment?.total_assessed_value ||
+          0;
+
+        // Card-specific assessment total
+        const currentCardAssessment =
+          cardProvidedTotal > cardTotalFromComponents
+            ? cardProvidedTotal
+            : cardTotalFromComponents;
+
+        // PARCEL total (sum of all cards) - use assessment_summary if available
+        const parcelTotalValue =
+          property.assessment_summary?.total_value ||
+          property.assessed_value ||
+          currentCardAssessment;
+
+        console.log('🔍 Building route - Calculated values:', {
+          cardNumber,
+          buildingValue,
+          landValue,
+          featuresValue,
+          cardTotalFromComponents,
+          cardProvidedTotal,
+          currentCardAssessment,
+          parcelTotalValue,
+        });
+
+        cleanProperty.current_card_assessment = currentCardAssessment;
+        cleanProperty.assessed_value = parcelTotalValue;
+        cleanProperty.tax_year = assessmentYear || new Date().getFullYear();
+      } else {
+        console.warn('⚠️ Building route - No assessment data found for card', cardNumber);
+        // Set card assessment to 0 if no data
+        cleanProperty.current_card_assessment = 0;
+        // Still use parcel total from assessment_summary
+        cleanProperty.assessed_value = property.assessment_summary?.total_value || property.assessed_value || 0;
+      }
+
+      // Final preservation check: ensure cards data is not lost
+      const currentProperty = this.propertySelection.selectedProperty;
+      if (currentProperty && currentProperty.id === cleanProperty.id && currentProperty.cards && !cleanProperty.cards) {
+        console.log('🃏 Building route final preservation - adding cards data for property', cleanProperty.id);
+        cleanProperty.cards = currentProperty.cards;
+      }
 
       // Update property selection service so other routes work correctly
       this.propertySelection.setSelectedProperty(cleanProperty);

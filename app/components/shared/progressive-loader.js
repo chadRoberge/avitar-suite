@@ -29,7 +29,9 @@ export default class ProgressiveLoaderComponent extends Component {
     if (!state) return 0;
 
     const tiers = ['tier1', 'tier2', 'tier3', 'tier4'];
-    const completedTiers = tiers.filter(tier => state[tier] === 'complete').length;
+    const completedTiers = tiers.filter(
+      (tier) => state[tier] === 'complete',
+    ).length;
     return Math.round((completedTiers / tiers.length) * 100);
   }
 
@@ -40,7 +42,7 @@ export default class ProgressiveLoaderComponent extends Component {
     if (!state) return 0;
 
     const tiers = ['tier1', 'tier2', 'tier3', 'tier4'];
-    return tiers.filter(tier => state[tier] === 'complete').length;
+    return tiers.filter((tier) => state[tier] === 'complete').length;
   }
 
   /**

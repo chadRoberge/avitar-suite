@@ -1,0 +1,191 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if @waterfront "Edit Waterfront" "Add Waterfront"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+          {{!-- Water Body Selection --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="water-body">
+              Water Body <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="water-body"
+              class="avitar-select"
+              value={{this.formData.water_body_id}}
+              {{on "change" this.updateWaterBody}}
+              required
+            >
+              <option value="">Select Water Body</option>
+              {{#each @waterBodies as |waterBody|}}
+                <option value={{waterBody.id}}>{{waterBody.name}}</option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{!-- Base Waterfront Value (from water body) --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="base-waterfront-value">
+              Base Waterfront Value
+            </label>
+            <input
+              id="base-waterfront-value"
+              type="text"
+              class="avitar-input"
+              value="${{number-format this.waterBodyBaseValue}}"
+              readonly
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Based on selected water body
+            </div>
+          </div>
+
+          {{!-- Frontage --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="frontage">
+              Frontage (feet) <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              id="frontage"
+              type="number"
+              class="avitar-input"
+              value={{this.formData.frontage}}
+              {{on "input" this.updateFrontage}}
+              min="0"
+              step="0.1"
+              required
+            />
+          </div>
+
+          {{!-- Access --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="access">
+              Access <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="access"
+              class="avitar-select"
+              value={{this.formData.access}}
+              {{on "change" this.updateAccess}}
+              required
+            >
+              <option value="">Select Access</option>
+              <option value="direct">Direct</option>
+              <option value="easement">Easement</option>
+              <option value="right_of_way">Right of Way</option>
+              <option value="restricted">Restricted</option>
+              <option value="none">No Access</option>
+            </select>
+          </div>
+
+          {{!-- Topography --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="topography">
+              Topography <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="topography"
+              class="avitar-select"
+              value={{this.formData.topography}}
+              {{on "change" this.updateTopography}}
+              required
+            >
+              <option value="">Select Topography</option>
+              <option value="level">Level</option>
+              <option value="sloping">Sloping</option>
+              <option value="steep">Steep</option>
+              <option value="rocky">Rocky</option>
+              <option value="sandy">Sandy</option>
+              <option value="marshy">Marshy</option>
+            </select>
+          </div>
+
+          {{!-- Location --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="location">
+              Location <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="location"
+              class="avitar-select"
+              value={{this.formData.location}}
+              {{on "change" this.updateLocation}}
+              required
+            >
+              <option value="">Select Location</option>
+              <option value="prime">Prime</option>
+              <option value="good">Good</option>
+              <option value="average">Average</option>
+              <option value="poor">Poor</option>
+              <option value="cove">Cove</option>
+              <option value="point">Point</option>
+              <option value="island">Island</option>
+            </select>
+          </div>
+
+          {{!-- Calculated Value (read-only) --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="calculated-waterfront-value">
+              Calculated Value
+            </label>
+            <input
+              id="calculated-waterfront-value"
+              type="text"
+              class="avitar-input"
+              value="${{number-format this.calculatedValue}}"
+              readonly
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Automatically calculated based on waterfront attributes
+            </div>
+          </div>
+        </div>
+
+        {{!-- Waterfront Calculation Details --}}
+        {{#if this.selectedWaterBody}}
+          <div class="avitar-mt-6 avitar-p-4 avitar-bg-blue-50 avitar-rounded">
+            <h6 class="avitar-mb-3">Waterfront Calculation Details</h6>
+            <div class="avitar-grid avitar-grid-cols-4 avitar-gap-4 avitar-text-sm">
+              <div>
+                <span class="avitar-text-muted">Base Value:</span>
+                <div class="avitar-font-semibold">${{number-format this.waterBodyBaseValue}}</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Frontage:</span>
+                <div class="avitar-font-semibold">{{this.formData.frontage}} ft</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Access Factor:</span>
+                <div class="avitar-font-semibold">{{this.accessFactor}}x</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Total Factor:</span>
+                <div class="avitar-font-semibold">{{number-format this.totalFactor 2}}x</div>
+              </div>
+            </div>
+            <div class="avitar-mt-3 avitar-text-sm avitar-text-muted">
+              Calculation: Base Value × Frontage × Access Factor × Topography Factor × Location Factor =
+              ${{number-format this.waterBodyBaseValue}} × {{this.formData.frontage}} × {{this.totalFactor}} =
+              <span class="avitar-font-semibold avitar-text-success">${{number-format this.calculatedValue}}</span>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="avitar-modal__footer">
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+            Cancel
+          </button>
+          <button type="submit" class="avitar-btn avitar-btn--primary" disabled={{not this.isValid}}>
+            {{if @waterfront "Update Waterfront" "Add Waterfront"}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

@@ -8,6 +8,13 @@ const propertyFeatureSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  card_number: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1,
+    index: true,
+  },
   feature_code_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'FeatureCode',
@@ -69,7 +76,8 @@ const propertyFeatureSchema = new mongoose.Schema({
   },
 });
 
-// Compound index for property features
+// Compound index for property features including card number
+propertyFeatureSchema.index({ property_id: 1, card_number: 1 });
 propertyFeatureSchema.index({ property_id: 1, feature_code_id: 1 });
 
 // Update the updated_at field on save
@@ -78,52 +86,76 @@ propertyFeatureSchema.pre('save', function (next) {
   next();
 });
 
-// Trigger total assessment update after save/remove
+// Trigger parcel assessment update after save
 propertyFeatureSchema.post('save', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
     const PropertyTreeNode = require('./PropertyTreeNode');
 
     // Get property to find municipality_id
     const property = await PropertyTreeNode.findById(doc.property_id);
     if (property && property.municipality_id) {
-      await updatePropertyTotalAssessment(
+      console.log(
+        `[Card ${doc.card_number}] Feature saved, triggering parcel recalculation for property ${doc.property_id}...`,
+      );
+
+      const result = await updateParcelAssessment(
         doc.property_id,
         property.municipality_id,
         new Date().getFullYear(),
-        null, // userId not available in hook
+        { trigger: 'feature_update', userId: null },
       );
+
       console.log(
-        `Updated total assessment for property ${doc.property_id} after feature change`,
+        `[Card ${doc.card_number}] ✓ Parcel assessment updated after feature change:`,
+        `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()},`,
+        `Improvements: $${result.parcelTotals.total_improvements_value.toLocaleString()}`,
       );
     }
   } catch (error) {
-    console.error('Error updating total assessment after feature save:', error);
+    console.error(
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after feature save:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        error: error.message,
+      },
+    );
   }
 });
 
 propertyFeatureSchema.post('remove', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
     const PropertyTreeNode = require('./PropertyTreeNode');
 
     // Get property to find municipality_id
     const property = await PropertyTreeNode.findById(doc.property_id);
     if (property && property.municipality_id) {
-      await updatePropertyTotalAssessment(
+      console.log(
+        `[Card ${doc.card_number}] Feature removed, recalculating parcel for property ${doc.property_id}...`,
+      );
+
+      const result = await updateParcelAssessment(
         doc.property_id,
         property.municipality_id,
         new Date().getFullYear(),
-        null, // userId not available in hook
+        { trigger: 'feature_update', userId: null },
       );
+
       console.log(
-        `Updated total assessment for property ${doc.property_id} after feature removal`,
+        `[Card ${doc.card_number}] ✓ Parcel assessment updated after feature removal:`,
+        `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()}`,
       );
     }
   } catch (error) {
     console.error(
-      'Error updating total assessment after feature removal:',
-      error,
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after feature removal:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        error: error.message,
+      },
     );
   }
 });

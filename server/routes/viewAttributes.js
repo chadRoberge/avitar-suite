@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ViewAttribute = require('../models/ViewAttribute');
+const PropertyView = require('../models/PropertyView');
 
 // Get all view attributes for a municipality
 router.get(
@@ -211,6 +212,24 @@ router.put(
       if (factor !== undefined) viewAttribute.factor = factor;
 
       await viewAttribute.save();
+
+      // Update all property views that reference this attribute
+      try {
+        console.log('Updating property views for attribute:', attributeId);
+        const updatedViewsCount = await PropertyView.updateViewsForAttribute(
+          attributeId,
+          viewAttribute,
+        );
+        console.log(
+          `Updated ${updatedViewsCount} property views after attribute update`,
+        );
+      } catch (error) {
+        console.error(
+          'Error updating property views after attribute update:',
+          error,
+        );
+        // Don't fail the main operation, but log the error
+      }
 
       res.json({
         success: true,

@@ -30,18 +30,19 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       console.log('🚀 Starting progressive property loading:', property_id);
 
       // Start progressive loading
-      const progressiveLoader = this.propertyDataLoader.loadPropertyProgressively(
-        property_id,
-        cardNumber,
-        assessmentYear ? parseInt(assessmentYear, 10) : null,
-        {
-          onTierComplete: (tier, data) => {
-            console.log(`✅ ${tier} loaded, updating UI...`);
-            // Trigger UI update for this tier
-            this.controller?.updateTierData?.(tier, data);
-          }
-        }
-      );
+      const progressiveLoader =
+        this.propertyDataLoader.loadPropertyProgressively(
+          property_id,
+          cardNumber,
+          assessmentYear ? parseInt(assessmentYear, 10) : null,
+          {
+            onTierComplete: (tier, data) => {
+              console.log(`✅ ${tier} loaded, updating UI...`);
+              // Trigger UI update for this tier
+              this.controller?.updateTierData?.(tier, data);
+            },
+          },
+        );
 
       // Wait only for Tier 1 (critical data) to return initial model
       const tier1Data = await progressiveLoader.tier1;
@@ -63,13 +64,15 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       try {
         const tier2Data = await Promise.race([
           progressiveLoader.tier2,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Tier 2 timeout')), 1000))
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Tier 2 timeout')), 1000),
+          ),
         ]);
         assessment = tier2Data.assessment;
       } catch (error) {
         console.log('Tier 2 loading delayed, will update UI when ready');
         // Continue loading in background
-        progressiveLoader.tier2.then(tier2Data => {
+        progressiveLoader.tier2.then((tier2Data) => {
           assessment = tier2Data.assessment;
           this.controller?.updateTierData?.('tier2', tier2Data);
         });
@@ -78,7 +81,12 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       // Return initial model with Tier 1 data and placeholders
       // Historical data will be loaded in background and update UI when ready
       const initialModel = {
-        property: this.enhancePropertyData(property, assessment, currentYear, cardNumber),
+        property: this.enhancePropertyData(
+          property,
+          assessment,
+          currentYear,
+          cardNumber,
+        ),
         assessment: assessment ? this.enhanceAssessmentData(assessment) : null,
         lastChangedAssessment: null, // Will be populated when Tier 3 loads
         assessmentHistory: [], // Will be populated when Tier 3 loads
@@ -91,11 +99,15 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
         isLoadingTier2: !assessment,
         isLoadingTier3: true,
         isLoadingTier4: true,
-        loadingStartTime: Date.now()
+        loadingStartTime: Date.now(),
       };
 
       // Continue loading remaining tiers in background
-      this.loadRemainingTiersInBackground(progressiveLoader, currentYear, initialModel);
+      this.loadRemainingTiersInBackground(
+        progressiveLoader,
+        currentYear,
+        initialModel,
+      );
 
       return initialModel;
     } catch (error) {
@@ -105,7 +117,7 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
         propertyId: property_id,
         cardNumber,
         assessmentYear,
-        municipalityId
+        municipalityId,
       });
       this.router.transitionTo('municipality.assessing.properties');
     }
@@ -129,44 +141,83 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
    * Enhance property data with assessment values
    */
   enhancePropertyData(property, assessment, currentYear, cardNumber) {
+    // Extract individual component values ONLY from the card-specific assessment
+    // Do NOT fall back to property-level values to avoid showing wrong card's data
+    // Use nullish coalescing (??) for .value checks to handle 0 as a valid value
+    const buildingValue =
+      assessment?.building?.value ??
+      (typeof assessment?.building === 'number' ? assessment.building : null) ??
+      assessment?.calculated_totals?.buildingValue ??
+      assessment?.buildingValue ??
+      0;
+
+    const landValue =
+      assessment?.land?.value ??
+      (typeof assessment?.land === 'number' ? assessment.land : null) ??
+      assessment?.calculated_totals?.landTaxableValue ??
+      assessment?.landValue ??
+      0;
+
+    const featuresValue =
+      assessment?.other_improvements?.value ??
+      (typeof assessment?.features === 'number' ? assessment.features : null) ??
+      assessment?.calculated_totals?.featuresValue ??
+      assessment?.featuresValue ??
+      assessment?.otherValue ??
+      0;
+
+    // Calculate CARD-SPECIFIC total from components
+    const cardTotalFromComponents = buildingValue + landValue + featuresValue;
+    const cardProvidedTotal =
+      assessment?.total_value ||
+      assessment?.total ||
+      assessment?.calculated_totals?.totalTaxableValue ||
+      assessment?.totalTaxableValue ||
+      0;
+
+    // Card-specific assessment total
+    const currentCardAssessment =
+      cardProvidedTotal > cardTotalFromComponents ? cardProvidedTotal : cardTotalFromComponents;
+
+    // PARCEL total (sum of all cards) - use assessment_summary if available
+    // This is the correct parcel total that includes all cards
+    const parcelTotalValue =
+      property?.assessment_summary?.total_value ||
+      property?.assessed_value ||
+      currentCardAssessment; // Fallback to card total if no parcel data
+
+    console.log('🔍 Enhanced property data:', {
+      propertyId: property?.id,
+      cardNumber,
+      cardTotalFromComponents,
+      currentCardAssessment,
+      parcelTotalValue,
+      hasAssessmentSummary: !!property?.assessment_summary,
+      assessmentSummaryTotal: property?.assessment_summary?.total_value,
+    });
+
     const enhanced = {
       ...(property || {}),
       current_card: parseInt(cardNumber),
       taxYear: currentYear,
       tax_year: currentYear,
-      // Use computed values from assessment if available, otherwise fallback to property values
-      buildingValue:
-        assessment?.building?.value ||
-        assessment?.building ||
-        assessment?.buildingValue ||
-        property?.buildingValue ||
-        0,
-      landValue:
-        assessment?.land?.value ||
-        assessment?.land ||
-        assessment?.landValue ||
-        property?.landValue ||
-        0,
-      otherValue:
-        assessment?.other_improvements?.value ||
-        assessment?.features ||
-        assessment?.featuresValue ||
-        assessment?.otherValue ||
-        property?.otherValue ||
-        0,
-      totalValue:
-        assessment?.total_value ||
-        assessment?.total ||
-        assessment?.totalAssessedValue ||
-        property?.totalValue ||
-        0,
-      assessed_value:
-        assessment?.total_value ||
-        assessment?.total ||
-        assessment?.totalAssessedValue ||
-        property?.totalValue ||
-        0,
+      // Card-specific values (for breakdown display)
+      buildingValue,
+      landValue,
+      otherValue: featuresValue,
+      // Card-specific total
+      current_card_assessment: currentCardAssessment,
+      // Parcel total (sum of all cards)
+      totalValue: parcelTotalValue,
+      assessed_value: parcelTotalValue,
     };
+
+    // Preserve cards data from currently selected property if not present in new data
+    const currentProperty = this.propertySelection.selectedProperty;
+    if (currentProperty && currentProperty.id === property.id && currentProperty.cards && !enhanced.cards) {
+      console.log('🃏 Route preserving cards data for property', property.id);
+      enhanced.cards = currentProperty.cards;
+    }
 
     // Update property selection service so other routes work correctly
     this.propertySelection.setSelectedProperty(enhanced);
@@ -248,7 +299,8 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
         model.assessment.previousTotalValue =
           lastChangedAssessment?.total_value ||
           lastChangedAssessment?.total ||
-          lastChangedAssessment?.totalAssessedValue ||
+          lastChangedAssessment?.calculated_totals?.totalTaxableValue ||
+          lastChangedAssessment?.totalTaxableValue ||
           0;
       }
 
@@ -259,12 +311,11 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
         salesHistory: tier3Data.salesHistory || [],
         listingHistory: tier3Data.listingHistory || [],
         propertyNotes: tier3Data.propertyNotes || { notes: '' },
-        isLoadingTier3: false
+        isLoadingTier3: false,
       });
 
       // Notify controller that Tier 3 is ready
       this.controller?.updateTierData?.('tier3', tier3Data);
-
     } catch (error) {
       console.warn('Tier 3 background loading failed:', error);
       model.isLoadingTier3 = false;
@@ -278,12 +329,11 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
       Object.assign(model, {
         sketches: tier4Data.sketches || [],
         features: tier4Data.features || [],
-        isLoadingTier4: false
+        isLoadingTier4: false,
       });
 
       // Notify controller that Tier 4 is ready
       this.controller?.updateTierData?.('tier4', tier4Data);
-
     } catch (error) {
       console.warn('Tier 4 background loading failed:', error);
       model.isLoadingTier4 = false;

@@ -185,15 +185,22 @@ export default class SyncManagerService extends Service {
    */
   async pullServerUpdates() {
     try {
-      // Only sync collections that have municipality-level endpoints
+      // DISABLED: Bulk property sync is no longer needed with HybridAPI local-first strategy
+      // The HybridAPI handles individual requests from IndexedDB first, then network fallback
+      // This prevents unnecessary bulk downloads of all 1000 properties every 30 seconds
+
       const collectionsToSync = [
-        'properties', // Only properties has a municipality-level endpoint
+        // 'properties', // DISABLED - HybridAPI handles property requests locally
         // sketches, assessments, features are property-specific, not municipality-wide
       ];
 
       for (const collectionName of collectionsToSync) {
         await this.pullCollectionFromServer(collectionName);
       }
+
+      console.log(
+        'Background sync: No bulk collections to sync (using HybridAPI local-first)',
+      );
     } catch (error) {
       console.error('Failed to pull server updates:', error);
       throw error;

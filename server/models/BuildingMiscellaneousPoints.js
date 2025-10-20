@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+// DEPRECATED: This model has been replaced by BuildingCalculationConfig.miscellaneous_points
+// All functionality has been consolidated into the BuildingCalculationConfig model for consistency
+// This file can be removed once all references are cleaned up
+
 const buildingMiscellaneousPointsSchema = new mongoose.Schema(
   {
     municipalityId: {

@@ -1,8 +1,133 @@
 const express = require('express');
 const router = express.Router();
 const ExemptionsCreditsSettings = require('../models/ExemptionsCreditsSettings');
+const ExemptionType = require('../models/ExemptionType');
 const { authenticateToken } = require('../middleware/auth');
 const { requireModuleAccess } = require('../middleware/moduleAuth');
+
+// Helper function to update exemption type configurations
+async function updateExemptionTypesConfig(municipalityId, updates, userId) {
+  // Define mapping from frontend field names to exemption type names
+  const fieldMapping = {
+    elderly6574DisplayName: { name: 'elderly_65_74', field: 'display_name' },
+    elderly6574Description: { name: 'elderly_65_74', field: 'description' },
+    elderly7579DisplayName: { name: 'elderly_75_79', field: 'display_name' },
+    elderly7579Description: { name: 'elderly_75_79', field: 'description' },
+    elderly80plusDisplayName: {
+      name: 'elderly_80_plus',
+      field: 'display_name',
+    },
+    elderly80plusDescription: { name: 'elderly_80_plus', field: 'description' },
+    blindDisplayName: { name: 'blind_exemption', field: 'display_name' },
+    blindDescription: { name: 'blind_exemption', field: 'description' },
+    physicalHandicapDisplayName: {
+      name: 'disabled_exemption',
+      field: 'display_name',
+    },
+    physicalHandicapDescription: {
+      name: 'disabled_exemption',
+      field: 'description',
+    },
+    veteranDisplayName: { name: 'veteran_standard', field: 'display_name' },
+    veteranDescription: { name: 'veteran_standard', field: 'description' },
+    allVeteranDisplayName: { name: 'veteran_all', field: 'display_name' },
+    allVeteranDescription: { name: 'veteran_all', field: 'description' },
+    disabledVeteranDisplayName: {
+      name: 'veteran_disabled',
+      field: 'display_name',
+    },
+    disabledVeteranDescription: {
+      name: 'veteran_disabled',
+      field: 'description',
+    },
+    survivingSpouseDisplayName: {
+      name: 'veteran_surviving_spouse',
+      field: 'display_name',
+    },
+    survivingSpouseDescription: {
+      name: 'veteran_surviving_spouse',
+      field: 'description',
+    },
+  };
+
+  // Process each update
+  const updatePromises = [];
+
+  for (const [fieldName, value] of Object.entries(updates)) {
+    if (value !== undefined && fieldMapping[fieldName]) {
+      const { name, field } = fieldMapping[fieldName];
+
+      // Find or create exemption type
+      const updatePromise = ExemptionType.findOneAndUpdate(
+        {
+          municipality_id: municipalityId,
+          name: name,
+        },
+        {
+          $set: {
+            [field]: value,
+            updated_by: userId,
+            updated_at: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+
+      updatePromises.push(updatePromise);
+    }
+  }
+
+  await Promise.all(updatePromises);
+}
+
+// Helper function to update elderly exemption income/asset requirements
+async function updateElderlyExemptionRequirements(
+  municipalityId,
+  elderlyLimits,
+  userId,
+) {
+  const elderlyExemptionTypes = [
+    'elderly_65_74',
+    'elderly_75_79',
+    'elderly_80_plus',
+  ];
+
+  const updatePromises = elderlyExemptionTypes.map((exemptionTypeName) => {
+    return ExemptionType.findOneAndUpdate(
+      {
+        municipality_id: municipalityId,
+        name: exemptionTypeName,
+      },
+      {
+        $set: {
+          'income_requirements.has_income_limit': true,
+          'income_requirements.single_income_limit':
+            elderlyLimits.singleIncomeLimit || 0,
+          'income_requirements.married_income_limit':
+            elderlyLimits.marriedIncomeLimit || 0,
+          'asset_requirements.has_asset_limit': true,
+          'asset_requirements.single_asset_limit':
+            elderlyLimits.singleAssetLimit || 0,
+          'asset_requirements.married_asset_limit':
+            elderlyLimits.marriedAssetLimit || 0,
+          updated_by: userId,
+          updated_at: new Date(),
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      },
+    );
+  });
+
+  await Promise.all(updatePromises);
+}
 
 // GET /api/municipalities/:municipalityId/exemptions-credits-settings - Get exemptions and credits settings
 router.get(
@@ -76,6 +201,13 @@ router.put(
         marriedIncomeLimit,
         singleAssetLimit,
         marriedAssetLimit,
+        // New exemption type configuration fields
+        elderly6574DisplayName,
+        elderly6574Description,
+        elderly7579DisplayName,
+        elderly7579Description,
+        elderly80plusDisplayName,
+        elderly80plusDescription,
       } = req.body;
 
       // Validation - all values must be non-negative numbers if provided
@@ -132,6 +264,39 @@ router.put(
       settings.updatedBy = req.user.id;
       await settings.save();
 
+      // Also update exemption type configurations if provided
+      const exemptionTypeUpdates = {};
+      if (elderly6574DisplayName !== undefined)
+        exemptionTypeUpdates.elderly6574DisplayName = elderly6574DisplayName;
+      if (elderly6574Description !== undefined)
+        exemptionTypeUpdates.elderly6574Description = elderly6574Description;
+      if (elderly7579DisplayName !== undefined)
+        exemptionTypeUpdates.elderly7579DisplayName = elderly7579DisplayName;
+      if (elderly7579Description !== undefined)
+        exemptionTypeUpdates.elderly7579Description = elderly7579Description;
+      if (elderly80plusDisplayName !== undefined)
+        exemptionTypeUpdates.elderly80plusDisplayName =
+          elderly80plusDisplayName;
+      if (elderly80plusDescription !== undefined)
+        exemptionTypeUpdates.elderly80plusDescription =
+          elderly80plusDescription;
+
+      if (Object.keys(exemptionTypeUpdates).length > 0) {
+        // Call the internal function to update exemption types
+        await updateExemptionTypesConfig(
+          municipalityId,
+          exemptionTypeUpdates,
+          req.user.id,
+        );
+      }
+
+      // Also update income/asset requirements for elderly exemption types
+      await updateElderlyExemptionRequirements(
+        municipalityId,
+        settings.elderlyLimits,
+        req.user.id,
+      );
+
       res.json({
         success: true,
         message: 'Elderly exemption settings updated successfully',
@@ -155,7 +320,15 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const { blindExemption, physicalHandicapExemption } = req.body;
+      const {
+        blindExemption,
+        physicalHandicapExemption,
+        // New exemption type configuration fields
+        blindDisplayName,
+        blindDescription,
+        physicalHandicapDisplayName,
+        physicalHandicapDescription,
+      } = req.body;
 
       // Validation
       const numericFields = { blindExemption, physicalHandicapExemption };
@@ -193,6 +366,27 @@ router.put(
       settings.updatedBy = req.user.id;
       await settings.save();
 
+      // Also update exemption type configurations if provided
+      const exemptionTypeUpdates = {};
+      if (blindDisplayName !== undefined)
+        exemptionTypeUpdates.blindDisplayName = blindDisplayName;
+      if (blindDescription !== undefined)
+        exemptionTypeUpdates.blindDescription = blindDescription;
+      if (physicalHandicapDisplayName !== undefined)
+        exemptionTypeUpdates.physicalHandicapDisplayName =
+          physicalHandicapDisplayName;
+      if (physicalHandicapDescription !== undefined)
+        exemptionTypeUpdates.physicalHandicapDescription =
+          physicalHandicapDescription;
+
+      if (Object.keys(exemptionTypeUpdates).length > 0) {
+        await updateExemptionTypesConfig(
+          municipalityId,
+          exemptionTypeUpdates,
+          req.user.id,
+        );
+      }
+
       res.json({
         success: true,
         message: 'Disability exemption settings updated successfully',
@@ -220,6 +414,15 @@ router.put(
         allVeteranCredit,
         disabledVeteranCredit,
         survivingSpouseCredit,
+        // New exemption type configuration fields
+        veteranDisplayName,
+        veteranDescription,
+        allVeteranDisplayName,
+        allVeteranDescription,
+        disabledVeteranDisplayName,
+        disabledVeteranDescription,
+        survivingSpouseDisplayName,
+        survivingSpouseDescription,
       } = req.body;
 
       // Validation
@@ -268,6 +471,37 @@ router.put(
 
       settings.updatedBy = req.user.id;
       await settings.save();
+
+      // Also update exemption type configurations if provided
+      const exemptionTypeUpdates = {};
+      if (veteranDisplayName !== undefined)
+        exemptionTypeUpdates.veteranDisplayName = veteranDisplayName;
+      if (veteranDescription !== undefined)
+        exemptionTypeUpdates.veteranDescription = veteranDescription;
+      if (allVeteranDisplayName !== undefined)
+        exemptionTypeUpdates.allVeteranDisplayName = allVeteranDisplayName;
+      if (allVeteranDescription !== undefined)
+        exemptionTypeUpdates.allVeteranDescription = allVeteranDescription;
+      if (disabledVeteranDisplayName !== undefined)
+        exemptionTypeUpdates.disabledVeteranDisplayName =
+          disabledVeteranDisplayName;
+      if (disabledVeteranDescription !== undefined)
+        exemptionTypeUpdates.disabledVeteranDescription =
+          disabledVeteranDescription;
+      if (survivingSpouseDisplayName !== undefined)
+        exemptionTypeUpdates.survivingSpouseDisplayName =
+          survivingSpouseDisplayName;
+      if (survivingSpouseDescription !== undefined)
+        exemptionTypeUpdates.survivingSpouseDescription =
+          survivingSpouseDescription;
+
+      if (Object.keys(exemptionTypeUpdates).length > 0) {
+        await updateExemptionTypesConfig(
+          municipalityId,
+          exemptionTypeUpdates,
+          req.user.id,
+        );
+      }
 
       res.json({
         success: true,
@@ -361,6 +595,137 @@ router.put(
       });
     } catch (error) {
       console.error('Error updating institutional settings:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// GET /api/municipalities/:municipalityId/exemption-types-config - Get exemption type configurations
+router.get(
+  '/municipalities/:municipalityId/exemption-types-config',
+  authenticateToken,
+  requireModuleAccess('assessing'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      // Get all exemption types for this municipality
+      const exemptionTypes = await ExemptionType.find({
+        municipality_id: municipalityId,
+        is_active: true,
+      });
+
+      // Transform the data to match the expected format
+      const exemptionTypesConfig = {};
+
+      exemptionTypes.forEach((exemptionType) => {
+        // Map to the field names expected by the frontend
+        switch (exemptionType.name) {
+          case 'elderly_65_74':
+            exemptionTypesConfig.elderly6574DisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.elderly6574Description =
+              exemptionType.description;
+            // Include income/asset requirements for elderly exemptions
+            if (exemptionType.income_requirements) {
+              exemptionTypesConfig.elderly6574IncomeRequirements =
+                exemptionType.income_requirements;
+            }
+            if (exemptionType.asset_requirements) {
+              exemptionTypesConfig.elderly6574AssetRequirements =
+                exemptionType.asset_requirements;
+            }
+            break;
+          case 'elderly_75_79':
+            exemptionTypesConfig.elderly7579DisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.elderly7579Description =
+              exemptionType.description;
+            if (exemptionType.income_requirements) {
+              exemptionTypesConfig.elderly7579IncomeRequirements =
+                exemptionType.income_requirements;
+            }
+            if (exemptionType.asset_requirements) {
+              exemptionTypesConfig.elderly7579AssetRequirements =
+                exemptionType.asset_requirements;
+            }
+            break;
+          case 'elderly_80_plus':
+            exemptionTypesConfig.elderly80plusDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.elderly80plusDescription =
+              exemptionType.description;
+            if (exemptionType.income_requirements) {
+              exemptionTypesConfig.elderly80plusIncomeRequirements =
+                exemptionType.income_requirements;
+            }
+            if (exemptionType.asset_requirements) {
+              exemptionTypesConfig.elderly80plusAssetRequirements =
+                exemptionType.asset_requirements;
+            }
+            break;
+          case 'blind_exemption':
+            exemptionTypesConfig.blindDisplayName = exemptionType.display_name;
+            exemptionTypesConfig.blindDescription = exemptionType.description;
+            break;
+          case 'disabled_exemption':
+            exemptionTypesConfig.physicalHandicapDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.physicalHandicapDescription =
+              exemptionType.description;
+            break;
+          case 'veteran_standard':
+            exemptionTypesConfig.veteranDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.veteranDescription = exemptionType.description;
+            break;
+          case 'veteran_all':
+            exemptionTypesConfig.allVeteranDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.allVeteranDescription =
+              exemptionType.description;
+            break;
+          case 'veteran_disabled':
+            exemptionTypesConfig.disabledVeteranDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.disabledVeteranDescription =
+              exemptionType.description;
+            break;
+          case 'veteran_surviving_spouse':
+            exemptionTypesConfig.survivingSpouseDisplayName =
+              exemptionType.display_name;
+            exemptionTypesConfig.survivingSpouseDescription =
+              exemptionType.description;
+            break;
+        }
+      });
+
+      res.json({ exemptionTypes: exemptionTypesConfig });
+    } catch (error) {
+      console.error('Error fetching exemption types config:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// PUT /api/municipalities/:municipalityId/exemption-types-config - Update exemption type configurations
+router.put(
+  '/municipalities/:municipalityId/exemption-types-config',
+  authenticateToken,
+  requireModuleAccess('assessing'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const updates = req.body;
+
+      await updateExemptionTypesConfig(municipalityId, updates, req.user.id);
+
+      res.json({
+        success: true,
+        message: 'Exemption type configurations updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating exemption types config:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

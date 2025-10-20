@@ -4,7 +4,7 @@ import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
 
 export default class ViewController extends Controller {
-  @service api;
+  @service assessing;
 
   @tracked attributeUpdateCounter = 0;
 
@@ -112,27 +112,32 @@ export default class ViewController extends Controller {
       );
 
       let savedAttribute;
-      if (this.editingViewAttribute?.id) {
-        // Update existing attribute
+      if (this.editingViewAttribute?.id || this.editingViewAttribute?._id) {
+        // Update existing attribute using assessing service
         console.log('Controller: Updating existing attribute');
-        const response = await this.api.put(
-          `/municipalities/${municipalityId}/view-attributes/${this.editingViewAttribute.id}`,
+        const attributeId =
+          this.editingViewAttribute.id || this.editingViewAttribute._id;
+        const response = await this.assessing.updateViewAttribute(
+          attributeId,
           attributeData,
+          municipalityId,
         );
         savedAttribute = response.viewAttribute;
 
         const attributeIndex = this.model.viewAttributes.findIndex(
-          (attr) => attr.id === this.editingViewAttribute.id,
+          (attr) =>
+            (attr.id || attr._id) ===
+            (this.editingViewAttribute.id || this.editingViewAttribute._id),
         );
         if (attributeIndex !== -1) {
           this.model.viewAttributes[attributeIndex] = savedAttribute;
         }
       } else {
-        // Create new attribute
+        // Create new attribute using assessing service
         console.log('Controller: Creating new attribute');
-        const response = await this.api.post(
-          `/municipalities/${municipalityId}/view-attributes`,
+        const response = await this.assessing.createViewAttribute(
           attributeData,
+          municipalityId,
         );
         savedAttribute = response.viewAttribute;
         this.model.viewAttributes.push(savedAttribute);
@@ -155,13 +160,12 @@ export default class ViewController extends Controller {
     if (confirm(`Are you sure you want to delete "${attribute.name}"?`)) {
       try {
         const municipalityId = this.model.municipality.id;
-        await this.api.delete(
-          `/municipalities/${municipalityId}/view-attributes/${attribute.id}`,
-        );
+        const attributeId = attribute.id || attribute._id;
+        await this.assessing.deleteViewAttribute(attributeId, municipalityId);
 
         // Remove from local model
         const attributeIndex = this.model.viewAttributes.findIndex(
-          (attr) => attr.id === attribute.id,
+          (attr) => (attr.id || attr._id) === attributeId,
         );
         if (attributeIndex !== -1) {
           this.model.viewAttributes.splice(attributeIndex, 1);
@@ -181,10 +185,8 @@ export default class ViewController extends Controller {
   async createDefaults() {
     try {
       const municipalityId = this.model.municipality.id;
-      const response = await this.api.post(
-        `/municipalities/${municipalityId}/view-attributes/defaults`,
-        {},
-      );
+      const response =
+        await this.assessing.createDefaultViewAttributes(municipalityId);
       const defaultAttributes = response.viewAttributes;
 
       // Update local model with defaults

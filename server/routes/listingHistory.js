@@ -14,10 +14,12 @@ router.get(
   async (req, res) => {
     try {
       const { municipalityId, propertyId } = req.params;
+      const cardNumber = parseInt(req.query.card) || 1;
 
       const listingHistory = await ListingHistory.find({
         municipalityId,
         propertyId,
+        card_number: cardNumber,
       })
         .sort({ visitDate: -1 })
         .populate('createdBy', 'firstName lastName')
@@ -26,6 +28,7 @@ router.get(
       const propertyNotes = await PropertyNotes.findOne({
         municipalityId,
         propertyId,
+        card_number: cardNumber,
       }).populate('createdBy updatedBy', 'firstName lastName');
 
       const salesHistory = await SalesHistory.find({
@@ -58,7 +61,8 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId, propertyId } = req.params;
-      const { visitDate, visitorCode, reasonCode, notes } = req.body;
+      const { visitDate, visitorCode, reasonCode, notes, card_number } = req.body;
+      const cardNumber = card_number || parseInt(req.query.card) || 1;
 
       // Validation
       if (!visitDate || !visitorCode || !reasonCode) {
@@ -76,6 +80,7 @@ router.post(
       const listingEntry = new ListingHistory({
         propertyId,
         municipalityId,
+        card_number: cardNumber,
         visitDate: new Date(visitDate),
         visitorCode: visitorCode.toUpperCase(),
         reasonCode: reasonCode.toUpperCase(),
@@ -106,12 +111,14 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, propertyId, entryId } = req.params;
-      const { visitDate, visitorCode, reasonCode, notes } = req.body;
+      const { visitDate, visitorCode, reasonCode, notes, card_number } = req.body;
+      const cardNumber = card_number || parseInt(req.query.card) || 1;
 
       const listingEntry = await ListingHistory.findOne({
         _id: entryId,
         propertyId,
         municipalityId,
+        card_number: cardNumber,
       });
 
       if (!listingEntry) {
@@ -165,11 +172,13 @@ router.delete(
   async (req, res) => {
     try {
       const { municipalityId, propertyId, entryId } = req.params;
+      const cardNumber = parseInt(req.query.card) || 1;
 
       const result = await ListingHistory.findOneAndDelete({
         _id: entryId,
         propertyId,
         municipalityId,
+        card_number: cardNumber,
       });
 
       if (!result) {
@@ -197,17 +206,20 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, propertyId } = req.params;
-      const { notes } = req.body;
+      const { notes, card_number } = req.body;
+      const cardNumber = card_number || parseInt(req.query.card) || 1;
 
       let propertyNotes = await PropertyNotes.findOne({
         propertyId,
         municipalityId,
+        card_number: cardNumber,
       });
 
       if (!propertyNotes) {
         propertyNotes = new PropertyNotes({
           propertyId,
           municipalityId,
+          card_number: cardNumber,
           createdBy: req.user.id,
         });
       }

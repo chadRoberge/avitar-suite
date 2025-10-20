@@ -82,23 +82,11 @@ export default class SketchCanvasComponent extends Component {
       JSON.stringify(shapes) !== JSON.stringify(this._previousShapes);
 
     if (isNewSketch || shapesChanged) {
-      console.log('🎨 POLLING: Change detected!', {
-        isNewSketch,
-        shapesChanged,
-        currentSketchId,
-        previousSketchId: this._previousSketchId,
-        shapesCount: shapes.length,
-      });
-
       // Store current values for next comparison
       this._previousShapes = shapes;
       this._previousSketchId = currentSketchId;
 
       if (isNewSketch) {
-        console.log(
-          '🎨 POLLING: NEW SKETCH DETECTED - Complete canvas refresh',
-        );
-        // Complete canvas refresh for new sketch (property change)
         this.clearAndReinitializeCanvas();
         this.updateShapesWithD3(shapes);
         // Apply bounding box for the new sketch
@@ -106,7 +94,6 @@ export default class SketchCanvasComponent extends Component {
           this.applySavedBoundingBoxIfAvailable();
         }, 50);
       } else {
-        console.log('🎨 POLLING: SHAPES CHANGED - Normal update');
         // Normal shape update for same sketch
         this.updateShapesWithD3(shapes);
       }
@@ -143,39 +130,17 @@ export default class SketchCanvasComponent extends Component {
     const shapes = this.args.shapes || [];
     const currentSketchId = this.args.sketch?._id || this.args.sketch?.id;
 
-    // Debug logging
-    console.log('🎨 Canvas shapesToRender called:', {
-      shapesCount: shapes.length,
-      currentSketchId,
-      previousSketchId: this._previousSketchId,
-      hasSvg: !!this.svg,
-      args: this.args,
-    });
-
     // Detect if this is a completely different sketch (property change)
     const isNewSketch = currentSketchId !== this._previousSketchId;
     const shapesChanged =
       JSON.stringify(shapes) !== JSON.stringify(this._previousShapes);
 
-    console.log('🎨 Change detection:', {
-      isNewSketch,
-      shapesChanged,
-      currentSketchId,
-      previousSketchId: this._previousSketchId,
-    });
-
     if (this.svg && (isNewSketch || shapesChanged)) {
-      console.log('🎨 Triggering canvas update:', {
-        isNewSketch,
-        shapesChanged,
-      });
-
       // Store current values for next comparison
       this._previousShapes = shapes;
       this._previousSketchId = currentSketchId;
 
       if (isNewSketch) {
-        console.log('🎨 NEW SKETCH DETECTED - Complete canvas refresh');
         // Complete canvas refresh for new sketch (property change)
         setTimeout(() => {
           this.clearAndReinitializeCanvas();
@@ -186,12 +151,10 @@ export default class SketchCanvasComponent extends Component {
           }, 50);
         }, 0);
       } else {
-        console.log('🎨 SHAPES CHANGED - Normal update');
         // Normal shape update for same sketch
         setTimeout(() => this.updateShapesWithD3(shapes), 0);
       }
     } else {
-      console.log('🎨 No changes detected or no SVG');
     }
 
     return shapes;
@@ -303,6 +266,17 @@ export default class SketchCanvasComponent extends Component {
     // Add zoom and pan functionality (only for non-responsive canvases)
     if (!this.args.isResponsive) {
       this.setupZoomAndPan();
+    } else {
+      // For responsive canvases, still create a content group for shapes
+      this.contentGroup = this.svg
+        .append('g')
+        .attr('class', 'responsive-content');
+      // Move existing grid to the content group for consistency
+      const existingGrid = this.svg.select('.coordinate-grid');
+      if (!existingGrid.empty()) {
+        existingGrid.remove();
+        this.addCoordinateGridToGroup(this.contentGroup);
+      }
     }
   }
 
@@ -615,7 +589,9 @@ export default class SketchCanvasComponent extends Component {
 
   @action
   updateShapesWithD3(shapes) {
-    if (!this.svg || !this.contentGroup) return;
+    if (!this.svg || !this.contentGroup) {
+      return;
+    }
 
     // D3 data join using shape IDs as keys - prefer _id (MongoDB), fallback to id, then index
     const shapeGroups = this.contentGroup
@@ -988,7 +964,7 @@ export default class SketchCanvasComponent extends Component {
     group
       .append('text')
       .attr('x', coords.x + coords.width / 2)
-      .attr('y', coords.y + 20 * offsetScale)
+      .attr('y', coords.y + 10 * offsetScale)
       .attr('text-anchor', 'middle')
       .attr('font-size', `${fontSize}px`)
       .attr('font-weight', 'bold')
@@ -1001,7 +977,7 @@ export default class SketchCanvasComponent extends Component {
     // Height dimension (inside, rotated 90 degrees, near left edge)
     group
       .append('text')
-      .attr('x', coords.x + 15 * offsetScale)
+      .attr('x', coords.x + 7.5 * offsetScale)
       .attr('y', coords.y + coords.height / 2)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
@@ -1013,7 +989,7 @@ export default class SketchCanvasComponent extends Component {
       .attr('paint-order', 'stroke')
       .attr(
         'transform',
-        `rotate(-90, ${coords.x + 15 * offsetScale}, ${coords.y + coords.height / 2})`,
+        `rotate(-90, ${coords.x + 7.5 * offsetScale}, ${coords.y + coords.height / 2})`,
       )
       .text(`${heightInFeet}'`);
   }
@@ -1036,7 +1012,7 @@ export default class SketchCanvasComponent extends Component {
     group
       .append('text')
       .attr('x', coords.cx)
-      .attr('y', coords.cy - 5 * offsetScale)
+      .attr('y', coords.cy - 2.5 * offsetScale)
       .attr('text-anchor', 'middle')
       .attr('font-size', `${fontSize}px`)
       .attr('font-weight', 'bold')
@@ -1050,7 +1026,7 @@ export default class SketchCanvasComponent extends Component {
     group
       .append('text')
       .attr('x', coords.cx)
-      .attr('y', coords.cy + 10 * offsetScale)
+      .attr('y', coords.cy + 5 * offsetScale)
       .attr('text-anchor', 'middle')
       .attr('font-size', `${fontSize * 0.8}px`)
       .attr('font-weight', 'bold')
@@ -1116,7 +1092,7 @@ export default class SketchCanvasComponent extends Component {
       const inwardY = dotProduct >= 0 ? perpY : -perpY;
 
       // Offset the text inward by a small amount
-      const offset = 12 * offsetScale;
+      const offset = 6 * offsetScale;
       const textX = midX + inwardX * offset;
       const textY = midY + inwardY * offset;
 
@@ -1175,7 +1151,7 @@ export default class SketchCanvasComponent extends Component {
       group
         .append('text')
         .attr('x', labelX)
-        .attr('y', labelY - 5 * offsetScale)
+        .attr('y', labelY - 2.5 * offsetScale)
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
         .attr('font-size', `${areaFontSize}px`)
@@ -1205,7 +1181,7 @@ export default class SketchCanvasComponent extends Component {
       group
         .append('text')
         .attr('x', labelX)
-        .attr('y', labelY + 8 * offsetScale)
+        .attr('y', labelY + 10 * offsetScale)
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
         .attr('font-size', `${descFontSize}px`)
@@ -2099,13 +2075,6 @@ export default class SketchCanvasComponent extends Component {
   @action
   applySavedBoundingBoxIfAvailable() {
     const isViewOnlyMode = !this.args.width;
-    console.log('applySavedBoundingBoxIfAvailable called:', {
-      isViewOnlyMode: isViewOnlyMode,
-      shapesCount: this.shapesToRender?.length,
-      hasBoundingBox: !!this.args.sketch?.bounding_box,
-      boundingBox: this.args.sketch?.bounding_box,
-      hasWidth: !!this.args.width,
-    });
 
     if (this.shapesToRender?.length > 0) {
       // Detect responsive mode by checking if no width is provided (edit modal provides width)
@@ -2114,19 +2083,14 @@ export default class SketchCanvasComponent extends Component {
       if (isViewOnlyMode) {
         // For view-only canvas: use saved bounding box if available, otherwise auto-fit
         if (this.args.sketch?.bounding_box) {
-          console.log('View-only mode: Using saved bounding box');
           this.applyBoundingBoxToResponsiveCanvas(
             this.args.sketch.bounding_box,
           );
         } else {
-          console.log(
-            'View-only mode: No saved bounding box, auto-fitting shapes',
-          );
           this.fitShapesToResponsiveCanvas();
         }
       } else {
         // For edit mode: always auto-fit shapes to make them all visible
-        console.log('Edit mode: auto-fitting shapes');
         this.centerAndFitShapes();
       }
     }
@@ -2164,8 +2128,9 @@ export default class SketchCanvasComponent extends Component {
       maxX = -Infinity,
       maxY = -Infinity;
 
-    this.shapesToRender.forEach((shape) => {
+    this.shapesToRender.forEach((shape, index) => {
       const coords = shape.coordinates;
+
       if (coords) {
         switch (shape.type) {
           case 'rectangle':
@@ -2190,7 +2155,41 @@ export default class SketchCanvasComponent extends Component {
               });
             }
             break;
+          case 'line':
+            // Handle line shapes
+            if (
+              coords.x1 !== undefined &&
+              coords.y1 !== undefined &&
+              coords.x2 !== undefined &&
+              coords.y2 !== undefined
+            ) {
+              minX = Math.min(minX, coords.x1, coords.x2);
+              maxX = Math.max(maxX, coords.x1, coords.x2);
+              minY = Math.min(minY, coords.y1, coords.y2);
+              maxY = Math.max(maxY, coords.y1, coords.y2);
+            }
+            break;
+          default:
+            console.warn(
+              `🎯 Unknown shape type: ${shape.type}, coords:`,
+              coords,
+            );
+            // Try to handle unknown shapes by looking for common coordinate patterns
+            if (coords.x !== undefined && coords.y !== undefined) {
+              minX = Math.min(minX, coords.x);
+              maxX = Math.max(maxX, coords.x);
+              minY = Math.min(minY, coords.y);
+              maxY = Math.max(maxY, coords.y);
+
+              if (coords.width && coords.height) {
+                maxX = Math.max(maxX, coords.x + coords.width);
+                maxY = Math.max(maxY, coords.y + coords.height);
+              }
+            }
+            break;
         }
+      } else {
+        console.warn(`🎯 Shape ${index + 1} has no coordinates:`, shape);
       }
     });
 

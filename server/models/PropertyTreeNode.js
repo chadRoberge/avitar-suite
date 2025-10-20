@@ -94,7 +94,20 @@ const propertyTreeSchema = new mongoose.Schema(
     // Essential property info
     property_class: { type: String, index: true }, // R, C, I, U, etc.
     property_type: String, // SFR, Condo, Commercial, etc.
+
+    // DEPRECATED: Use assessment_summary instead (kept for backward compatibility)
     assessed_value: Number, // Current year total assessed value (denormalized)
+
+    // NEW: Comprehensive assessment summary (updated by ParcelAssessment)
+    assessment_summary: {
+      total_value: { type: Number, default: 0 },
+      land_value: { type: Number, default: 0 },
+      building_value: { type: Number, default: 0 },
+      improvements_value: { type: Number, default: 0 },
+      last_updated: { type: Date },
+      assessment_year: { type: Number },
+    },
+
     tax_status: {
       type: String,
       enum: ['taxable', 'exempt', 'abated'],
@@ -121,9 +134,9 @@ const propertyTreeSchema = new mongoose.Schema(
     // Property notes
     notes: String,
 
-    // Multi-card support
+    // Multi-card support (NO LIMIT - supports unlimited cards per parcel)
     cards: {
-      total_cards: { type: Number, default: 1, min: 1, max: 10 },
+      total_cards: { type: Number, default: 1, min: 1 }, // Removed max limit
       active_card: { type: Number, default: 1 },
       card_descriptions: [
         {
@@ -241,16 +254,12 @@ propertyTreeSchema.methods.getPIDSegments = async function (pidFormat) {
   };
 };
 
-// Method to add a new card
+// Method to add a new card (NO LIMIT - supports unlimited cards)
 propertyTreeSchema.methods.addCard = function (
   description = '',
   userId = null,
 ) {
   const newCardNumber = this.cards.total_cards + 1;
-
-  if (newCardNumber > 10) {
-    throw new Error('Maximum of 10 cards allowed per parcel');
-  }
 
   this.cards.total_cards = newCardNumber;
   this.cards.card_descriptions.push({

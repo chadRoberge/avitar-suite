@@ -53,6 +53,7 @@ router.post(
         minimumAcreage,
         minimumFrontage,
         excessLandCostPerAcre,
+        baseViewValue,
       } = req.body;
 
       const zone = new Zone({
@@ -61,6 +62,7 @@ router.post(
         minimumAcreage,
         minimumFrontage,
         excessLandCostPerAcre: excessLandCostPerAcre || 0,
+        baseViewValue: baseViewValue || 0,
         municipalityId,
       });
 
@@ -114,6 +116,7 @@ router.put(
         minimumAcreage,
         minimumFrontage,
         excessLandCostPerAcre,
+        baseViewValue,
       } = req.body;
 
       const zone = await Zone.findOneAndUpdate(
@@ -124,6 +127,7 @@ router.put(
           minimumAcreage,
           minimumFrontage,
           excessLandCostPerAcre: excessLandCostPerAcre || 0,
+          baseViewValue: baseViewValue || 0,
         },
         { new: true, runValidators: true },
       );

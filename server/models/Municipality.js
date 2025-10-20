@@ -331,6 +331,17 @@ const municipalitySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Available reports by module
+    available_reports: {
+      type: Map,
+      of: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'AssessingReport',
+        },
+      ],
+      default: new Map(),
+    },
   },
   {
     timestamps: true,

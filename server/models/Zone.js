@@ -29,6 +29,12 @@ const zoneSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Excess land cost must be positive'],
     },
+    // View assessment base value
+    baseViewValue: {
+      type: Number,
+      default: 0,
+      min: [0, 'Base view value must be positive'],
+    },
     municipalityId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Municipality',

@@ -5,6 +5,7 @@
 
 /* Import component styles */
 @import url("./components/property-record-modal.css");
+@import url("./components/exemption-edit-modal.css");
 
 /* ===============================================
    DESIGN TOKENS & CSS CUSTOM PROPERTIES
@@ -60,8 +61,8 @@
   --font-family-mono:
     "SF Mono", monaco, "Cascadia Code", "Roboto Mono", consolas, "Courier New",
     monospace;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.775rem;
   --font-size-base: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
@@ -2065,36 +2066,47 @@ body {
 .border-black {
   --border-color: var(--color-black);
 }
+
 .border-white {
   --border-color: var(--color-white);
 }
+
 .border-gray {
   --border-color: var(--color-gray-500);
 }
+
 .border-gray-100 {
   --border-color: var(--color-gray-100);
 }
+
 .border-gray-200 {
   --border-color: var(--color-gray-200);
 }
+
 .border-gray-300 {
   --border-color: var(--color-gray-300);
 }
+
 .border-gray-400 {
   --border-color: var(--color-gray-400);
 }
+
 .border-gray-500 {
   --border-color: var(--color-gray-500);
 }
+
 .border-gray-600 {
   --border-color: var(--color-gray-600);
 }
+
 .border-gray-700 {
   --border-color: var(--color-gray-700);
 }
+
 .border-gray-800 {
   --border-color: var(--color-gray-800);
 }
+
 .border-gray-900 {
   --border-color: var(--color-gray-900);
 }
@@ -2103,27 +2115,35 @@ body {
 .border-green {
   --border-color: var(--avitar-green);
 }
+
 .border-green-light {
   --border-color: var(--avitar-green-light);
 }
+
 .border-green-dark {
   --border-color: var(--avitar-green-dark);
 }
+
 .border-blue {
   --border-color: var(--avitar-blue);
 }
+
 .border-blue-light {
   --border-color: var(--avitar-blue-light);
 }
+
 .border-blue-dark {
   --border-color: var(--avitar-blue-dark);
 }
+
 .border-yellow {
   --border-color: var(--avitar-yellow);
 }
+
 .border-yellow-light {
   --border-color: var(--avitar-yellow-light);
 }
+
 .border-yellow-dark {
   --border-color: var(--avitar-yellow-dark);
 }
@@ -2132,12 +2152,15 @@ body {
 .border-success {
   --border-color: var(--color-success);
 }
+
 .border-warning {
   --border-color: var(--color-warning);
 }
+
 .border-danger {
   --border-color: var(--color-danger);
 }
+
 .border-info {
   --border-color: var(--color-info);
 }

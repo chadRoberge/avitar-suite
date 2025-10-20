@@ -45,6 +45,12 @@ const propertySketchSchema = new mongoose.Schema(
       index: true,
     },
     card_number: { type: Number, required: true, min: 1, default: 1 },
+    assessment_year: {
+      type: Number,
+      required: true,
+      default: () => new Date().getFullYear(),
+      index: true,
+    },
     name: { type: String, required: true, maxlength: 100 },
     description: { type: String, maxlength: 500 },
 
@@ -97,7 +103,11 @@ const propertySketchSchema = new mongoose.Schema(
 );
 
 // Compound indexes for common queries
-propertySketchSchema.index({ property_id: 1, card_number: 1 });
+propertySketchSchema.index({
+  property_id: 1,
+  card_number: 1,
+  assessment_year: 1,
+});
 propertySketchSchema.index({ description_codes: 1, total_area: 1 });
 propertySketchSchema.index({ 'area_range.min': 1, 'area_range.max': 1 });
 propertySketchSchema.index({ building_type: 1, description_codes: 1 });
@@ -147,58 +157,85 @@ propertySketchSchema.pre('save', function (next) {
     this.area_range.max = maxArea;
   }
 
+  // Calculate sketch totals automatically
+  this.calculateTotals();
+
   // Update timestamps
   this.updated_at = new Date();
 
   next();
 });
 
-// Trigger total assessment update after save/remove (sketches affect building assessment)
+// Trigger parcel assessment update after save (sketches affect building assessment)
 propertySketchSchema.post('save', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
     const PropertyTreeNode = require('./PropertyTreeNode');
 
     // Get property to find municipality_id
     const property = await PropertyTreeNode.findById(doc.property_id);
-    if (property) {
-      await updatePropertyTotalAssessment(
+    if (property && property.municipality_id) {
+      console.log(
+        `[Card ${doc.card_number}] Sketch saved, triggering parcel recalculation for property ${doc.property_id}...`,
+      );
+
+      const result = await updateParcelAssessment(
         doc.property_id,
         property.municipality_id,
         doc.assessment_year || new Date().getFullYear(),
-        null, // userId not available in hook
+        { trigger: 'sketch_update', userId: null },
       );
+
       console.log(
-        `Updated total assessment for property ${doc.property_id} after sketch change`,
+        `[Card ${doc.card_number}] ✓ Parcel assessment updated after sketch change:`,
+        `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()},`,
+        `Building: $${result.parcelTotals.total_building_value.toLocaleString()}`,
       );
     }
   } catch (error) {
-    console.error('Error updating total assessment after sketch save:', error);
+    console.error(
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after sketch save:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        error: error.message,
+      },
+    );
   }
 });
 
 propertySketchSchema.post('remove', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
     const PropertyTreeNode = require('./PropertyTreeNode');
 
     // Get property to find municipality_id
     const property = await PropertyTreeNode.findById(doc.property_id);
-    if (property) {
-      await updatePropertyTotalAssessment(
+    if (property && property.municipality_id) {
+      console.log(
+        `[Card ${doc.card_number}] Sketch removed, recalculating parcel for property ${doc.property_id}...`,
+      );
+
+      const result = await updateParcelAssessment(
         doc.property_id,
         property.municipality_id,
         doc.assessment_year || new Date().getFullYear(),
-        null, // userId not available in hook
+        { trigger: 'sketch_update', userId: null },
       );
+
       console.log(
-        `Updated total assessment for property ${doc.property_id} after sketch removal`,
+        `[Card ${doc.card_number}] ✓ Parcel assessment updated after sketch removal:`,
+        `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()}`,
       );
     }
   } catch (error) {
     console.error(
-      'Error updating total assessment after sketch removal:',
-      error,
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after sketch removal:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        error: error.message,
+      },
     );
   }
 });
@@ -239,6 +276,19 @@ propertySketchSchema.methods.calculateTotals = function () {
     (sum, shape) => sum + (shape.effective_area || 0),
     0,
   );
+
+  console.log('🧮 Server calculated sketch totals:', {
+    sketchId: this._id,
+    shapesCount: this.shapes.length,
+    total_area: this.total_area,
+    total_effective_area: this.total_effective_area,
+    shapes: this.shapes.map((s) => ({
+      area: s.area,
+      effective_area: s.effective_area,
+      descriptions: s.descriptions?.length || 0,
+    })),
+  });
+
   return {
     total_area: this.total_area,
     total_effective_area: this.total_effective_area,

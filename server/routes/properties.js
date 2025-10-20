@@ -8,6 +8,7 @@ const BuildingCalculationConfig = require('../models/BuildingCalculationConfig')
 const BuildingAssessmentCalculationService = require('../services/buildingAssessmentCalculationService');
 const LandAssessmentCalculationService = require('../services/landAssessmentCalculationService');
 const SalesHistory = require('../models/SalesHistory');
+const PropertyView = require('../models/PropertyView');
 const Municipality = require('../models/Municipality');
 const PropertySketch = require('../models/PropertySketch');
 const Zone = require('../models/Zone');
@@ -17,6 +18,8 @@ const PropertyFeature = require('../models/PropertyFeature');
 const FeatureCode = require('../models/FeatureCode');
 const Owner = require('../models/Owner');
 const PropertyOwner = require('../models/PropertyOwner');
+const PropertyExemption = require('../models/PropertyExemption');
+const ExemptionType = require('../models/ExemptionType');
 const {
   formatPid,
   getMapFromPid,
@@ -26,6 +29,7 @@ const {
   massRecalculateAssessments,
   massRevaluation,
   updatePropertyTotalAssessment,
+  updateParcelAssessment,
   getPropertyAssessmentComponents,
   calculateTotalAssessedValue,
   roundToNearestHundred,
@@ -191,9 +195,13 @@ router.get(
         }
 
         // Get property tree nodes
+        console.log('Query:', JSON.stringify(query));
         const properties = await PropertyTreeNode.find(query)
           .sort({ pid: 1 })
           .lean();
+        console.log(
+          `Found ${properties.length} properties for municipality ${municipalityId}`,
+        );
 
         // For each property, get current assessment and owner info
         const propertiesWithAssessments = await Promise.all(
@@ -225,6 +233,8 @@ router.get(
               property_id: property._id.toString(), // For frontend compatibility
               pid_raw: property.pid_raw,
               pid_formatted: pid_formatted,
+              mapNumber: mapNumber, // For PID tree grouping
+              lotSubDisplay: lotSubDisplay, // For PID tree display
               account_number: property.account_number,
               location: {
                 street_number: property.location?.street_number,
@@ -235,25 +245,7 @@ router.get(
               },
               // New owner structure
               owners: ownerInfo,
-              property_class: property.property_class,
-              property_type: property.property_type,
-              tax_status: property.tax_status,
-              assessed_value:
-                assessment?.total_value || property.assessed_value || 0,
-              tax_year: assessmentYear,
-              assigned_to: property.assigned_to,
-              module_flags: property.module_flags,
-              last_updated: property.last_updated,
-              // Legacy fields for backward compatibility
-              pid: pid_formatted,
-              mapNumber: mapNumber,
-              lotSubDisplay: lotSubDisplay,
-              streetNumber: property.location?.street_number,
-              streetName: property.location?.street,
-              streetAddress: property.location?.address,
-              neighborhood: property.location?.neighborhood,
-              zone: property.location?.zone,
-              // Legacy owner fields (fallback to new structure)
+              // Legacy owner field (for backward compatibility)
               owner: {
                 primary_name:
                   ownerInfo.primary?.primary_name ||
@@ -262,24 +254,23 @@ router.get(
                   ? `${ownerInfo.primary.mailing_street}, ${ownerInfo.primary.mailing_city}, ${ownerInfo.primary.mailing_state} ${ownerInfo.primary.mailing_zipcode}`.trim()
                   : property.owner?.mailing_address,
               },
-              ownerName:
-                ownerInfo.primary?.primary_name || property.owner?.primary_name,
-              ownerMailingAddress: ownerInfo.primary
-                ? `${ownerInfo.primary.mailing_street}, ${ownerInfo.primary.mailing_city}, ${ownerInfo.primary.mailing_state} ${ownerInfo.primary.mailing_zipcode}`.trim()
-                : property.owner?.mailing_address,
-              propertyClass: property.property_class,
-              propertyType: property.property_type,
-              taxStatus: property.tax_status,
-              totalValue:
+              property_class: property.property_class,
+              property_type: property.property_type,
+              tax_status: property.tax_status,
+              assessed_value:
                 assessment?.total_value || property.assessed_value || 0,
-              landValue: assessment?.land?.value || 0,
-              buildingValue: assessment?.building?.value || 0,
-              otherValue: assessment?.other_improvements?.value || 0,
-              taxYear: assessmentYear,
+              assessment_summary: property.assessment_summary,
+              tax_year: assessmentYear,
+              assigned_to: property.assigned_to,
+              module_flags: property.module_flags,
+              last_updated: property.last_updated,
             };
           }),
         );
 
+        console.log(
+          `Processed ${propertiesWithAssessments.length} properties with assessments`,
+        );
         res.json({
           success: true,
           properties: propertiesWithAssessments,
@@ -295,6 +286,150 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve properties',
+      });
+    }
+  },
+);
+
+// @route   GET /api/properties/:id/assessment-history
+// @desc    Get property assessment history with parcel and card-level totals
+// @access  Private
+router.get(
+  '/properties/:id/assessment-history',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { card } = req.query; // Optional: filter by specific card
+      const mongoose = require('mongoose');
+      const ParcelAssessment = require('../models/ParcelAssessment');
+
+      const propertyObjectId = new mongoose.Types.ObjectId(id);
+
+      // Get ParcelAssessment records which have both parcel totals and card breakdowns
+      const parcelAssessments = await ParcelAssessment.find({
+        property_id: propertyObjectId,
+      })
+        .sort({ effective_year: -1 })
+        .lean();
+
+      // Transform data to include both parcel totals and card-specific data
+      const assessmentHistory = parcelAssessments.map((parcel) => {
+        const result = {
+          year: parcel.effective_year,
+          // Parcel-level totals (sum of all cards)
+          parcel_totals: {
+            total_value: parcel.parcel_totals.total_assessed_value,
+            land_value: parcel.parcel_totals.total_land_value,
+            building_value: parcel.parcel_totals.total_building_value,
+            improvements_value: parcel.parcel_totals.total_improvements_value,
+          },
+          // All cards' individual values
+          cards: parcel.card_assessments.map((cardAssessment) => ({
+            card_number: cardAssessment.card_number,
+            land_value: cardAssessment.land_value,
+            building_value: cardAssessment.building_value,
+            improvements_value: cardAssessment.improvements_value,
+            card_total: cardAssessment.card_total,
+          })),
+          total_cards: parcel.total_cards_count || parcel.card_assessments.length,
+          last_calculated: parcel.last_calculated,
+        };
+
+        // If a specific card is requested, include that card's data at the top level
+        if (card) {
+          const requestedCard = parcel.card_assessments.find(
+            (c) => c.card_number === parseInt(card),
+          );
+          if (requestedCard) {
+            result.current_card = {
+              card_number: requestedCard.card_number,
+              land_value: requestedCard.land_value,
+              building_value: requestedCard.building_value,
+              improvements_value: requestedCard.improvements_value,
+              card_total: requestedCard.card_total,
+            };
+          }
+        }
+
+        return result;
+      });
+
+      res.json({
+        success: true,
+        assessment_history: assessmentHistory,
+      });
+    } catch (error) {
+      console.error('Get assessment history error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve assessment history',
+      });
+    }
+  },
+);
+
+// @route   POST /api/properties/:id/recalculate-assessment
+// @desc    Manually trigger parcel assessment recalculation
+// @access  Private
+router.post(
+  '/properties/:id/recalculate-assessment',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const mongoose = require('mongoose');
+      const { updateParcelAssessment } = require('../utils/assessment');
+      const PropertyTreeNode = require('../models/PropertyTreeNode');
+
+      const propertyObjectId = new mongoose.Types.ObjectId(id);
+
+      // Get property to get municipality ID
+      const property = await PropertyTreeNode.findById(propertyObjectId);
+      if (!property) {
+        return res.status(404).json({
+          success: false,
+          message: 'Property not found',
+        });
+      }
+
+      console.log(`\n🔄 Manual recalculation triggered for property ${id}`);
+
+      // Trigger parcel assessment recalculation
+      const result = await updateParcelAssessment(
+        id,
+        property.municipality_id,
+        new Date().getFullYear(),
+        {
+          trigger: 'manual_recalculation',
+          userId: req.user?.id || null,
+        },
+      );
+
+      res.json({
+        success: true,
+        message: 'Assessment recalculated successfully',
+        data: {
+          property_id: id,
+          parcel_total: result.parcelTotals.total_assessed_value,
+          card_count: result.cardAssessments.length,
+          cards: result.cardAssessments.map((card) => ({
+            card_number: card.card_number,
+            land_value: card.land_value,
+            building_value: card.building_value,
+            improvements_value: card.improvements_value,
+            card_total: card.card_total,
+          })),
+          change_amount: result.changeAmount,
+          change_percentage: result.changePercentage,
+        },
+      });
+    } catch (error) {
+      console.error('Recalculate assessment error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to recalculate assessment',
+        error: error.message,
       });
     }
   },
@@ -438,6 +573,7 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
         property_type: property.property_type,
         tax_status: property.tax_status,
         assessed_value: assessment?.total_value || property.assessed_value || 0,
+        assessment_summary: property.assessment_summary,
         tax_year: assessmentYear,
         assigned_to: property.assigned_to,
         module_flags: property.module_flags,
@@ -452,35 +588,17 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
         current_card: cardNumber,
         // Assessment data
         assessment: assessment,
-        assessmentHistory: assessmentHistory,
-        salesHistory: salesHistory,
-        // Legacy fields for backward compatibility
-        pid: pid_formatted,
-        mapNumber: mapNumber,
-        lotSubDisplay: lotSubDisplay,
-        accountNumber: property.account_number,
-        streetNumber: property.location?.street_number,
-        streetName: property.location?.street,
-        streetAddress: property.location?.address,
-        neighborhood: property.location?.neighborhood,
-        zone: property.location?.zone,
-        ownerName:
-          ownerInfo.primary?.primary_name || property.owner?.primary_name,
-        ownerMailingAddress: ownerInfo.primary
-          ? `${ownerInfo.primary.mailing_street}, ${ownerInfo.primary.mailing_city}, ${ownerInfo.primary.mailing_state} ${ownerInfo.primary.mailing_zipcode}`.trim()
-          : property.owner?.mailing_address,
-        propertyClass: property.property_class,
-        propertyType: property.property_type,
-        taxStatus: property.tax_status,
-        totalValue: assessment?.total_value || property.assessed_value || 0,
-        landValue: assessment?.land?.value || 0,
-        buildingValue: assessment?.building?.value || 0,
-        otherValue: assessment?.other_improvements?.value || 0,
-        taxYear: assessmentYear,
-        assignedTo: property.assigned_to,
-        moduleFlags: property.module_flags,
-        lastUpdated: property.last_updated,
+        assessment_history: assessmentHistory,
+        sales_history: salesHistory,
       };
+
+      // Debug: Log cards information before sending response
+      console.log(`[API] Property ${id} cards data:`, {
+        propertyCards: property.cards,
+        responseCards: propertyWithAssessment.cards,
+        currentCard: cardNumber,
+        totalCards: propertyWithAssessment.cards?.total_cards || 'undefined',
+      });
 
       res.json({
         success: true,
@@ -498,41 +616,6 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
     });
   }
 });
-
-// @route   GET /api/properties/:id/assessment-history
-// @desc    Get property assessment history
-// @access  Private
-router.get(
-  '/properties/:id/assessment-history',
-  authenticateToken,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const mongoose = require('mongoose');
-
-      // Get all assessment records for this property, sorted by year
-      const propertyObjectId = new mongoose.Types.ObjectId(id);
-      const assessments = await PropertyAssessment.find({
-        property_id: propertyObjectId,
-      })
-        .sort({ effective_year: -1 })
-        .populate('created_by', 'first_name last_name')
-        .populate('reviewed_by', 'first_name last_name')
-        .lean();
-
-      res.json({
-        success: true,
-        assessments: assessments,
-      });
-    } catch (error) {
-      console.error('Get assessment history error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve assessment history',
-      });
-    }
-  },
-);
 
 // @route   POST /api/properties/:id/assessment
 // @desc    Create new assessment record (only stores what changed)
@@ -608,13 +691,41 @@ router.get(
     try {
       const { id } = req.params;
       const { card, assessment_year } = req.query;
+
+      // Validate property ID
+      if (!id || id === 'undefined' || id === 'null') {
+        console.error(
+          '[API] Get current assessment error: Invalid property ID:',
+          id,
+        );
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid property ID provided',
+          details: `Property ID: ${id}`,
+        });
+      }
+
       const mongoose = require('mongoose');
       const currentYear = assessment_year
         ? parseInt(assessment_year, 10)
         : new Date().getFullYear();
       const cardNumber = card ? parseInt(card) : 1;
 
-      const propertyObjectId = new mongoose.Types.ObjectId(id);
+      let propertyObjectId;
+      try {
+        propertyObjectId = new mongoose.Types.ObjectId(id);
+      } catch (objectIdError) {
+        console.error(
+          '[API] Get current assessment error: Invalid ObjectId format:',
+          id,
+          objectIdError.message,
+        );
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid property ID format',
+          details: `Property ID: ${id}`,
+        });
+      }
 
       // Get existing assessment
       let assessment = await PropertyAssessment.getAssessmentForYear(
@@ -628,6 +739,7 @@ router.get(
         const components = await getPropertyAssessmentComponents(
           propertyObjectId,
           currentYear,
+          cardNumber, // Pass card number for card-specific calculations
         );
         const totalAssessedValue = calculateTotalAssessedValue(components);
 
@@ -649,6 +761,7 @@ router.get(
           land: {
             value: roundedLandValue,
             last_changed: currentYear,
+            calculated_totals: components.landComponents || {}, // Include detailed land breakdown
           },
           building: {
             value: roundedBuildingValue,
@@ -657,6 +770,7 @@ router.get(
           other_improvements: {
             value: roundedFeaturesValue,
             last_changed: currentYear,
+            calculated_totals: components.featureCalculations || {}, // Include feature calculated totals
           },
           assessment_method: assessment?.assessment_method || 'market',
           assessor_notes: assessment?.assessor_notes || '',
@@ -719,12 +833,13 @@ router.get(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { assessment_year } = req.query;
+      const { assessment_year, card } = req.query;
       const mongoose = require('mongoose');
       const LandAssessment = require('../models/LandAssessment');
       const currentYear = assessment_year
         ? parseInt(assessment_year, 10)
         : new Date().getFullYear();
+      const cardNumber = card ? parseInt(card, 10) : 1;
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
 
@@ -804,6 +919,69 @@ router.get(
         .sort({ effective_year: -1 })
         .limit(5);
 
+      // Get property views data filtered by card number
+      const viewsQuery = {
+        propertyId: propertyObjectId,
+      };
+
+      // Filter by card number - card 1 includes views without card_number (legacy)
+      if (cardNumber === 1) {
+        viewsQuery.$or = [
+          { card_number: 1 },
+          { card_number: { $exists: false } },
+          { card_number: null },
+        ];
+      } else {
+        viewsQuery.card_number = cardNumber;
+      }
+
+      const views = await PropertyView.find(viewsQuery);
+
+      // Get view attributes and zones for the modal (if land assessment exists, we have municipality_id)
+      let viewAttributes = [];
+      let zones = [];
+      if (landAssessment && landAssessment.municipality_id) {
+        const ViewAttribute = require('../models/ViewAttribute');
+        const Zone = require('../models/Zone');
+
+        // Load view attributes and zones in parallel
+        [viewAttributes, zones] = await Promise.all([
+          ViewAttribute.findByMunicipality(landAssessment.municipality_id),
+          Zone.find({
+            municipalityId: landAssessment.municipality_id,
+            isActive: true,
+          }).sort({ name: 1 }),
+        ]);
+
+        console.log(
+          'Land assessment - loaded viewAttributes:',
+          viewAttributes?.length,
+        );
+        console.log('Land assessment - loaded zones:', zones?.length);
+        if (zones?.length > 0) {
+          console.log('Land assessment - first zone:', zones[0]);
+        } else {
+          // Debug: Check if any zones exist for this municipality (regardless of isActive)
+          const allZones = await Zone.find({
+            municipalityId: landAssessment.municipality_id,
+          });
+          console.log(
+            'Land assessment - all zones for municipality (including inactive):',
+            allZones?.length,
+          );
+          if (allZones?.length > 0) {
+            console.log('Land assessment - first zone (any):', allZones[0]);
+          }
+
+          // Debug: Check if any zones exist at all
+          const anyZones = await Zone.find({});
+          console.log(
+            'Land assessment - total zones in database:',
+            anyZones?.length,
+          );
+        }
+      }
+
       let assessmentData = {};
 
       if (landAssessment) {
@@ -842,6 +1020,60 @@ router.get(
           assessmentData.road_type_name = assessmentData.road_type.displayText;
           assessmentData.road_type = assessmentData.road_type._id;
         }
+
+        // Add view_details section to match land_use_details structure
+        assessmentData.view_details = views.map((view) => ({
+          id: view.id || view._id,
+          subjectId: view.subjectId,
+          subjectName: view.subjectName,
+          subjectDisplayText: view.subjectDisplayText,
+          subjectFactor: view.subjectFactor,
+          widthId: view.widthId,
+          widthName: view.widthName,
+          widthDisplayText: view.widthDisplayText,
+          widthFactor: view.widthFactor,
+          distanceId: view.distanceId,
+          distanceName: view.distanceName,
+          distanceDisplayText: view.distanceDisplayText,
+          distanceFactor: view.distanceFactor,
+          depthId: view.depthId,
+          depthName: view.depthName,
+          depthDisplayText: view.depthDisplayText,
+          depthFactor: view.depthFactor,
+          conditionFactor: view.conditionFactor,
+          conditionNotes: view.conditionNotes,
+          baseValue: view.baseValue,
+          calculatedValue: view.calculatedValue,
+          created_at: view.created_at,
+          updated_at: view.updated_at,
+        }));
+      } else {
+        // Even if no land assessment exists, include view_details if views exist
+        assessmentData.view_details = views.map((view) => ({
+          id: view.id || view._id,
+          subjectId: view.subjectId,
+          subjectName: view.subjectName,
+          subjectDisplayText: view.subjectDisplayText,
+          subjectFactor: view.subjectFactor,
+          widthId: view.widthId,
+          widthName: view.widthName,
+          widthDisplayText: view.widthDisplayText,
+          widthFactor: view.widthFactor,
+          distanceId: view.distanceId,
+          distanceName: view.distanceName,
+          distanceDisplayText: view.distanceDisplayText,
+          distanceFactor: view.distanceFactor,
+          depthId: view.depthId,
+          depthName: view.depthName,
+          depthDisplayText: view.depthDisplayText,
+          depthFactor: view.depthFactor,
+          conditionFactor: view.conditionFactor,
+          conditionNotes: view.conditionNotes,
+          baseValue: view.baseValue,
+          calculatedValue: view.calculatedValue,
+          created_at: view.created_at,
+          updated_at: view.updated_at,
+        }));
       }
 
       console.log('Final assessmentData being sent:', {
@@ -856,6 +1088,9 @@ router.get(
         success: true,
         assessment: assessmentData,
         history: landHistory,
+        views: views,
+        viewAttributes: viewAttributes,
+        zones: zones,
         comparables: [], // Would be populated with comparable land sales
       });
     } catch (error) {
@@ -1567,6 +1802,9 @@ router.get('/properties/:id/features', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { card } = req.query; // Get card number from query parameter
     const mongoose = require('mongoose');
+    const {
+      calculateFeatureTotals,
+    } = require('../utils/feature-assessment-calculator');
 
     // Build query filter
     const filter = { property_id: new mongoose.Types.ObjectId(id) };
@@ -1575,6 +1813,7 @@ router.get('/properties/:id/features', authenticateToken, async (req, res) => {
     if (card) {
       const cardNum = parseInt(card);
       if (cardNum && cardNum > 0) {
+        console.log(`🔍 Features endpoint: Filtering by card ${cardNum}`);
         // Include features with the specified card_number OR features without card_number (legacy features)
         // Legacy features without card_number are treated as card 1
         if (cardNum === 1) {
@@ -1589,8 +1828,12 @@ router.get('/properties/:id/features', authenticateToken, async (req, res) => {
       }
     }
 
+    console.log(`🔍 Features query filter:`, JSON.stringify(filter));
+
     const features =
       await PropertyFeature.find(filter).populate('feature_code_id');
+
+    console.log(`🔍 Features endpoint: Found ${features.length} features for property ${id}, card ${card || 1}`);
 
     // Add calculated fields to each feature
     const featuresWithCalculations = features.map((feature) => {
@@ -1603,9 +1846,22 @@ router.get('/properties/:id/features', authenticateToken, async (req, res) => {
       };
     });
 
+    // Calculate feature totals using utility function
+    const calculatedTotals = calculateFeatureTotals(featuresWithCalculations);
+
+    // Create assessment structure similar to land assessment
+    const assessment = {
+      calculated_totals: calculatedTotals,
+      features: featuresWithCalculations,
+      card_number: card ? parseInt(card) : 1,
+      property_id: id,
+    };
+
     res.json({
       success: true,
       features: featuresWithCalculations || [],
+      assessment: assessment,
+      calculated_totals: calculatedTotals, // Include at root level for consistency with land assessment
       categories: [
         { name: 'Exterior Features', type: 'exterior' },
         { name: 'Interior Features', type: 'interior' },
@@ -1643,6 +1899,8 @@ router.post('/properties/:id/features', authenticateToken, async (req, res) => {
       card_number,
     } = req.body;
 
+    console.log(`🎯 Creating feature for property ${id}, card ${card_number}`);
+
     const mongoose = require('mongoose');
 
     // Validate required fields
@@ -1654,6 +1912,7 @@ router.post('/properties/:id/features', authenticateToken, async (req, res) => {
       !condition ||
       !card_number
     ) {
+      console.error('❌ Missing required fields:', { feature_code_id, description, rate, measurement_type, condition, card_number });
       return res.status(400).json({
         success: false,
         message: 'Missing required fields (including card_number)',
@@ -1699,6 +1958,8 @@ router.post('/properties/:id/features', authenticateToken, async (req, res) => {
 
     const savedFeature = await newFeature.save();
     await savedFeature.populate('feature_code_id');
+
+    console.log(`✅ Feature created successfully with card_number: ${savedFeature.card_number}`);
 
     res.status(201).json({
       success: true,
@@ -2098,6 +2359,15 @@ router.put(
   '/properties/:id/sketches/:sketchId',
   authenticateToken,
   async (req, res) => {
+    console.log(
+      `[PUT SKETCH] ========== REQUEST RECEIVED ==========`,
+    );
+    console.log(
+      `[PUT SKETCH] Property ID: ${req.params.id}, Sketch ID: ${req.params.sketchId}, Card: ${req.query.card}`,
+    );
+    console.log(`[PUT SKETCH] Request body keys:`, Object.keys(req.body));
+    console.log(`[PUT SKETCH] User:`, req.user?.id || 'No user');
+
     try {
       const { id, sketchId } = req.params;
       const mongoose = require('mongoose');
@@ -2381,6 +2651,14 @@ async function updateBuildingAssessmentFromSketches(
   propertyId,
   cardNumber = 1,
 ) {
+  console.log(
+    `[SKETCH UPDATE] ==================== START ====================`,
+  );
+  console.log(
+    `[SKETCH UPDATE] Function called with propertyId: ${propertyId}, cardNumber: ${cardNumber}`,
+  );
+  console.log(`[SKETCH UPDATE] Stack trace:`, new Error().stack);
+
   try {
     const mongoose = require('mongoose');
     const propertyObjectId = new mongoose.Types.ObjectId(propertyId);
@@ -2860,18 +3138,21 @@ router.post(
         });
       }
 
-      const result = await updatePropertyTotalAssessment(
+      const result = await updateParcelAssessment(
         propertyId,
         municipalityId || property.municipality_id,
         assessmentYear,
-        req.user.user_id,
+        { trigger: 'manual_recalc', userId: req.user.user_id },
       );
 
       res.json({
         success: true,
-        message: 'Total assessment recalculated successfully',
-        totalAssessedValue: result.totalAssessedValue,
-        components: result.components,
+        message: 'Parcel assessment recalculated successfully for all cards',
+        parcelTotals: result.parcelTotals,
+        cardAssessments: result.cardAssessments,
+        totalCards: result.cardAssessments.length,
+        changeAmount: result.changeAmount,
+        changePercentage: result.changePercentage,
       });
     } catch (error) {
       console.error('Total assessment recalculation error:', error);
@@ -3904,6 +4185,429 @@ router.post(
       res.status(500).json({
         success: false,
         message: 'Failed to run feature card number migration',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// === EXEMPTIONS ENDPOINTS ===
+
+// @route   GET /api/municipalities/:municipalityId/properties/:id/exemptions
+// @desc    Get property exemptions for a specific property
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/properties/:id/exemptions',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id: propertyId } = req.params;
+      const { card, assessment_year } = req.query;
+      const mongoose = require('mongoose');
+
+      // Build query filter
+      const filter = { property_id: new mongoose.Types.ObjectId(propertyId) };
+
+      // Add card number filter if provided
+      if (card) {
+        filter.card_number = parseInt(card);
+      }
+
+      // Get current exemptions
+      const exemptions = await PropertyExemption.findByProperty(
+        propertyId,
+        card ? parseInt(card) : null,
+        true,
+      );
+
+      // Get exemption history (last 10 entries)
+      const history = await PropertyExemption.find(filter)
+        .populate('exemption_type_id')
+        .populate('created_by', 'name email')
+        .populate('approved_by', 'name email')
+        .sort({ updated_at: -1 })
+        .limit(10);
+
+      res.json({
+        success: true,
+        exemptions: exemptions,
+        history: history,
+      });
+    } catch (error) {
+      console.error('Error fetching property exemptions:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch property exemptions',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   POST /api/municipalities/:municipalityId/properties/:id/exemptions
+// @desc    Add a new exemption to a property
+// @access  Private
+router.post(
+  '/municipalities/:municipalityId/properties/:id/exemptions',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id: propertyId, municipalityId } = req.params;
+      const {
+        exemption_type_id,
+        card_number = 1,
+        exemption_value = 0,
+        credit_value = 0,
+        start_year,
+        end_year,
+        qualification_notes,
+        documentation_provided = false,
+      } = req.body;
+
+      // Validate required fields
+      if (!exemption_type_id || !start_year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Exemption type and start year are required',
+        });
+      }
+
+      // Check if exemption type exists and belongs to municipality
+      const exemptionType = await ExemptionType.findOne({
+        _id: exemption_type_id,
+        municipality_id: municipalityId,
+        is_active: true,
+      });
+
+      if (!exemptionType) {
+        return res.status(404).json({
+          success: false,
+          message:
+            'Exemption type not found or not available for this municipality',
+        });
+      }
+
+      // Check if multiple exemptions of this type are allowed
+      if (!exemptionType.is_multiple_allowed) {
+        const existingExemption = await PropertyExemption.findOne({
+          property_id: propertyId,
+          exemption_type_id: exemption_type_id,
+          card_number: card_number,
+          is_active: true,
+          $or: [{ end_year: null }, { end_year: { $gte: start_year } }],
+        });
+
+        if (existingExemption) {
+          return res.status(409).json({
+            success: false,
+            message:
+              'This exemption type already exists for this property and time period',
+          });
+        }
+      }
+
+      // Ensure only appropriate value is saved based on exemption type
+      let finalExemptionValue = 0;
+      let finalCreditValue = 0;
+
+      if (exemptionType.exemption_type === 'exemption') {
+        finalExemptionValue = parseFloat(exemption_value) || 0;
+      } else if (exemptionType.exemption_type === 'credit') {
+        finalCreditValue = parseFloat(credit_value) || 0;
+      }
+
+      // Create new exemption
+      const newExemption = new PropertyExemption({
+        property_id: propertyId,
+        municipality_id: municipalityId,
+        exemption_type_id: exemption_type_id,
+        card_number: parseInt(card_number),
+        exemption_value: finalExemptionValue,
+        credit_value: finalCreditValue,
+        start_year: parseInt(start_year),
+        end_year: end_year ? parseInt(end_year) : null,
+        qualification_notes: qualification_notes || '',
+        documentation_provided: Boolean(documentation_provided),
+        created_by: req.user.id,
+        is_active: true,
+      });
+
+      await newExemption.save();
+
+      // Populate exemption type for response
+      await newExemption.populate('exemption_type_id');
+
+      res.status(201).json({
+        success: true,
+        exemption: newExemption,
+        message: 'Exemption added successfully',
+      });
+    } catch (error) {
+      console.error('Error adding property exemption:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to add exemption',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   PUT /api/municipalities/:municipalityId/properties/:id/exemptions/:exemptionId
+// @desc    Update a property exemption
+// @access  Private
+router.put(
+  '/municipalities/:municipalityId/properties/:id/exemptions/:exemptionId',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id: propertyId, municipalityId, exemptionId } = req.params;
+      const {
+        exemption_type_id,
+        exemption_value,
+        credit_value,
+        start_year,
+        end_year,
+        qualification_notes,
+        documentation_provided,
+        is_active,
+      } = req.body;
+
+      // Find the exemption
+      const exemption = await PropertyExemption.findOne({
+        _id: exemptionId,
+        property_id: propertyId,
+        municipality_id: municipalityId,
+      });
+
+      if (!exemption) {
+        return res.status(404).json({
+          success: false,
+          message: 'Exemption not found',
+        });
+      }
+
+      // Get the exemption type to determine what values should be saved
+      const exemptionType = await ExemptionType.findById(
+        exemption.exemption_type_id,
+      );
+
+      // Update fields
+      if (exemption_type_id !== undefined)
+        exemption.exemption_type_id = exemption_type_id;
+
+      // Ensure only appropriate value is saved based on exemption type
+      if (exemptionType.exemption_type === 'exemption') {
+        if (exemption_value !== undefined)
+          exemption.exemption_value = parseFloat(exemption_value) || 0;
+        exemption.credit_value = 0; // Always zero out credit for exemptions
+      } else if (exemptionType.exemption_type === 'credit') {
+        if (credit_value !== undefined)
+          exemption.credit_value = parseFloat(credit_value) || 0;
+        exemption.exemption_value = 0; // Always zero out exemption for credits
+      }
+
+      if (start_year !== undefined) exemption.start_year = parseInt(start_year);
+      if (end_year !== undefined)
+        exemption.end_year = end_year ? parseInt(end_year) : null;
+      if (qualification_notes !== undefined)
+        exemption.qualification_notes = qualification_notes;
+      if (documentation_provided !== undefined)
+        exemption.documentation_provided = Boolean(documentation_provided);
+      if (is_active !== undefined) exemption.is_active = Boolean(is_active);
+
+      await exemption.save();
+
+      // Populate exemption type for response
+      await exemption.populate('exemption_type_id');
+
+      res.json({
+        success: true,
+        exemption: exemption,
+        message: 'Exemption updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating property exemption:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update exemption',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   DELETE /api/municipalities/:municipalityId/properties/:id/exemptions/:exemptionId
+// @desc    Delete a property exemption
+// @access  Private
+router.delete(
+  '/municipalities/:municipalityId/properties/:id/exemptions/:exemptionId',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id: propertyId, municipalityId, exemptionId } = req.params;
+
+      // Find and delete the exemption
+      const exemption = await PropertyExemption.findOneAndDelete({
+        _id: exemptionId,
+        property_id: propertyId,
+        municipality_id: municipalityId,
+      });
+
+      if (!exemption) {
+        return res.status(404).json({
+          success: false,
+          message: 'Exemption not found',
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Exemption deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting property exemption:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete exemption',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/exemptions
+// @desc    Get available exemption types for a municipality
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/exemptions',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      const exemptionTypes = await ExemptionType.findByMunicipality(
+        municipalityId,
+        true,
+      );
+
+      res.json({
+        success: true,
+        exemptions: exemptionTypes,
+      });
+    } catch (error) {
+      console.error('Error fetching exemption types:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch exemption types',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/exemptions/available
+// @desc    Get available exemption types for selection in modal
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/exemptions/available',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      const exemptionTypes = await ExemptionType.findAvailableForSelection(
+        municipalityId,
+        true,
+      );
+
+      // Group by exemption_type for easier display
+      const grouped = exemptionTypes.reduce((acc, exemption) => {
+        if (!acc[exemption.exemption_type]) {
+          acc[exemption.exemption_type] = [];
+        }
+        acc[exemption.exemption_type].push(exemption);
+        return acc;
+      }, {});
+
+      res.json({
+        success: true,
+        exemptionTypes: exemptionTypes,
+        grouped: grouped,
+      });
+    } catch (error) {
+      console.error('Error fetching available exemption types:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch available exemption types',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/exemption-amounts
+// @desc    Get exemption amounts for a municipality from settings
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/exemption-amounts',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      // Import ExemptionsCreditsSettings model
+      const ExemptionsCreditsSettings = require('../models/ExemptionsCreditsSettings');
+
+      // Get exemption amounts from municipality settings
+      const settings = await ExemptionsCreditsSettings.findOne({
+        municipalityId: municipalityId,
+      });
+
+      // Default amounts if no settings exist
+      const defaultAmounts = {
+        elderly_base: 15000,
+        elderly_senior_bonus: 5000,
+        disabled_base: 20000,
+        veteran_standard: 10000,
+        veteran_all: 15000,
+        veteran_disabled: 25000,
+      };
+
+      let amounts = defaultAmounts;
+
+      if (settings) {
+        amounts = {
+          // Elderly exemptions
+          elderly_base: settings.elderlyExemptions?.elderly6574 || 15000,
+          elderly_75_79: settings.elderlyExemptions?.elderly7579 || 18000,
+          elderly_senior_bonus:
+            settings.elderlyExemptions?.elderly80plus || 20000,
+
+          // Disability exemptions
+          disabled_base:
+            settings.disabilityExemptions?.physicalHandicapExemption || 20000,
+          blind_base: settings.disabilityExemptions?.blindExemption || 25000,
+
+          // Veteran credits
+          veteran_standard: settings.veteranCredits?.veteranCredit || 10000,
+          veteran_all: settings.veteranCredits?.allVeteranCredit || 15000,
+          veteran_disabled:
+            settings.veteranCredits?.disabledVeteranCredit || 25000,
+          veteran_surviving_spouse:
+            settings.veteranCredits?.survivingSpouseCredit || 12000,
+        };
+      }
+
+      res.json({
+        success: true,
+        amounts: amounts,
+      });
+    } catch (error) {
+      console.error('Error fetching exemption amounts:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch exemption amounts',
         error: error.message,
       });
     }

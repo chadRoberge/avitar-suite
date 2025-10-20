@@ -11,6 +11,13 @@ const listingHistorySchema = new mongoose.Schema(
       ref: 'Municipality',
       required: true,
     },
+    card_number: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+      index: true,
+    },
 
     // Visit information
     visitDate: {
@@ -57,8 +64,8 @@ const listingHistorySchema = new mongoose.Schema(
   },
 );
 
-// Indexes for efficient queries
-listingHistorySchema.index({ propertyId: 1, visitDate: -1 });
+// Indexes for efficient queries - include card_number
+listingHistorySchema.index({ propertyId: 1, card_number: 1, visitDate: -1 });
 listingHistorySchema.index({ municipalityId: 1 });
 
 module.exports = mongoose.model('ListingHistory', listingHistorySchema);

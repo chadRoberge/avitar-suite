@@ -30,7 +30,11 @@ export default class PropertyPrefetchService extends Service {
 
     try {
       // Fetch data in background (don't show loading indicators)
-      await this.assessing.getPropertyFullData(propertyId, cardNumber, assessmentYear);
+      await this.assessing.getPropertyFullData(
+        propertyId,
+        cardNumber,
+        assessmentYear,
+      );
       console.log('✅ Prefetched property data:', propertyId);
     } catch (error) {
       console.warn('⚠️ Failed to prefetch property:', propertyId, error);
@@ -41,7 +45,7 @@ export default class PropertyPrefetchService extends Service {
 
   // Prefetch multiple properties (useful for property lists)
   async prefetchProperties(properties, cardNumber = 1, assessmentYear = null) {
-    const prefetchPromises = properties.map(property => {
+    const prefetchPromises = properties.map((property) => {
       const propertyId = property.id || property._id || property;
       return this.prefetchProperty(propertyId, cardNumber, assessmentYear);
     });
@@ -51,11 +55,16 @@ export default class PropertyPrefetchService extends Service {
   }
 
   // Prefetch adjacent properties (next/previous in a list)
-  async prefetchAdjacentProperties(currentPropertyId, propertyList, cardNumber = 1, assessmentYear = null) {
+  async prefetchAdjacentProperties(
+    currentPropertyId,
+    propertyList,
+    cardNumber = 1,
+    assessmentYear = null,
+  ) {
     if (!propertyList || propertyList.length < 2) return;
 
-    const currentIndex = propertyList.findIndex(p =>
-      (p.id || p._id) === currentPropertyId
+    const currentIndex = propertyList.findIndex(
+      (p) => (p.id || p._id) === currentPropertyId,
     );
 
     if (currentIndex === -1) return;
@@ -79,9 +88,11 @@ export default class PropertyPrefetchService extends Service {
   // Smart prefetch based on user behavior patterns
   async smartPrefetch(propertyId, cardNumber = 1, assessmentYear = null) {
     // Prefetch other cards for the same property
-    const cardsToPreload = [1, 2, 3, 4, 5].filter(card => card !== cardNumber);
+    const cardsToPreload = [1, 2, 3, 4, 5].filter(
+      (card) => card !== cardNumber,
+    );
 
-    cardsToPreload.forEach(card => {
+    cardsToPreload.forEach((card) => {
       this.prefetchProperty(propertyId, card, assessmentYear);
     });
   }

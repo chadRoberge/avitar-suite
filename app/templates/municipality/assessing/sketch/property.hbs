@@ -26,10 +26,10 @@
           </div>
           {{#if (can "update" "assessing")}}
             <div class="avitar-flex avitar-gap-2">
-              <button 
+              <button
                 type="button"
                 class="avitar-btn avitar-btn--primary avitar-btn--sm"
-                {{on "click" (fn this.editSketch this.currentSketch)}}
+                {{on "click" this.editCurrentSketch}}
               >
                 <i class="fas fa-edit avitar-mr-2"></i>
                 Edit Sketch

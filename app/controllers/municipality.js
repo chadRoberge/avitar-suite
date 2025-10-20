@@ -13,7 +13,8 @@ export default class MunicipalityController extends Controller {
       this.router.currentRouteName?.startsWith('municipality.settings') ||
       this.router.currentRouteName?.startsWith(
         'municipality.assessing.settings',
-      )
+      ) ||
+      this.router.currentRouteName?.startsWith('municipality.assessing.reports')
     );
   }
 }

@@ -4,7 +4,6 @@ const FeatureCode = require('../models/FeatureCode');
 // Connect to MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/avitar_development', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
 });
 
 const municipalityId = '68b1ee91e6f6ded2c46824f9'; // Test Township

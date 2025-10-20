@@ -1,0 +1,280 @@
+{{!-- Exemptions Assessment Property Detail View --}}
+<div class="avitar-content">
+  {{!-- Property Header with owner, type, location, and total assessment --}}
+  <Assessing::PropertyHeader @property={{@model.property}} @onPropertyUpdate={{this.refreshExemptionsProperty}} />
+
+  {{!-- Exemptions and Credits --}}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h3 class="avitar-card__title">Property Exemptions & Credits</h3>
+      <div class="avitar-card__subtitle">Tax exemptions and assessment credits applied to this property</div>
+      {{#if (can "update" "assessing")}}
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary avitar-btn--sm"
+          {{on "click" this.addExemptionModal}}
+        >
+          {{{lnr-icon "plus"}}}
+          Add Exemption
+        </button>
+      {{/if}}
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if this.exemptions.length}}
+        <div class="avitar-card__content">
+          {{!-- Table Headers --}}
+          <div class="avitar-flex avitar-flex-row avitar-bg-gray-50 avitar-p-3 avitar-border-b avitar-font-semibold">
+            <div class="avitar-flex-4 avitar-text-sm">Exemption Type</div>
+            <div class="avitar-flex-2 avitar-text-sm">Exemption Value</div>
+            <div class="avitar-flex-2 avitar-text-sm">Credit Value</div>
+            <div class="avitar-flex-2 avitar-text-sm">Start Year</div>
+            <div class="avitar-flex-2 avitar-text-sm">End Year</div>
+            <div class="avitar-flex-1 avitar-text-sm">Active</div>
+            <div class="avitar-flex-4 avitar-text-sm">Notes</div>
+            <div class="avitar-flex-2 avitar-text-sm avitar-text-center">Actions</div>
+          </div>
+
+          {{!-- Table Rows --}}
+          {{#each this.exemptions as |exemption|}}
+            <div class="avitar-flex avitar-flex-row avitar-p-3 avitar-border-b avitar-items-center {{if exemption.isEditing 'avitar-bg-blue-25 avitar-border-l-primary'}}">
+              {{#if exemption.isEditing}}
+                {{!-- Edit Mode --}}
+                <div class="avitar-flex-4">
+                  <select
+                    class="avitar-select avitar-select--sm"
+                    {{on "change" (fn this.selectExemptionType exemption)}}
+                  >
+                    <option value="">Select Exemption Type...</option>
+                    {{#each this.availableExemptions as |type|}}
+                      <option
+                        value={{or type._id type.id}}
+                        selected={{eq exemption.exemptionTypeId (or type._id type.id)}}
+                      >
+                        {{type.name}} - {{type.description}}
+                      </option>
+                    {{/each}}
+                  </select>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <input
+                    type="number"
+                    class="avitar-input avitar-input--sm"
+                    value={{exemption.exemption_value}}
+                    {{on "blur" (fn this.updateExemptionField exemption "exemption_value")}}
+                    placeholder="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <input
+                    type="number"
+                    class="avitar-input avitar-input--sm"
+                    value={{exemption.credit_value}}
+                    {{on "blur" (fn this.updateExemptionField exemption "credit_value")}}
+                    placeholder="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <input
+                    type="number"
+                    class="avitar-input avitar-input--sm"
+                    value={{exemption.start_year}}
+                    {{on "blur" (fn this.updateExemptionField exemption "start_year")}}
+                    placeholder="{{format-date 'YYYY'}}"
+                    min="1900"
+                    max="2100"
+                  />
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <input
+                    type="number"
+                    class="avitar-input avitar-input--sm"
+                    value={{exemption.end_year}}
+                    {{on "blur" (fn this.updateExemptionField exemption "end_year")}}
+                    placeholder="Optional"
+                    min="1900"
+                    max="2100"
+                  />
+                </div>
+                <div class="avitar-flex-1 avitar-ml-2 avitar-flex avitar-justify-center">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox"
+                    checked={{exemption.is_active}}
+                    {{on "change" (fn this.updateExemptionField exemption "is_active")}}
+                  />
+                </div>
+                <div class="avitar-flex-4 avitar-ml-2">
+                  <input
+                    type="text"
+                    class="avitar-input avitar-input--sm"
+                    value={{exemption.qualification_notes}}
+                    {{on "blur" (fn this.updateExemptionField exemption "qualification_notes")}}
+                    placeholder="Qualification notes..."
+                  />
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2 avitar-flex avitar-justify-center">
+                  <div class="avitar-button-group">
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--success avitar-btn--xs"
+                      {{on "click" (fn this.saveExemption exemption)}}
+                      title="Save"
+                    >
+                      {{{lnr-icon "checkmark"}}}
+                    </button>
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--secondary avitar-btn--xs"
+                      {{on "click" (fn this.cancelEdit exemption)}}
+                      title="Cancel"
+                    >
+                      {{{lnr-icon "cross"}}}
+                    </button>
+                    {{#unless exemption.isNew}}
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--danger avitar-btn--xs"
+                        {{on "click" (fn this.deleteExemption exemption)}}
+                        title="Delete"
+                      >
+                        {{{lnr-icon "trash"}}}
+                      </button>
+                    {{/unless}}
+                  </div>
+                </div>
+              {{else}}
+                {{!-- Display Mode --}}
+                <div class="avitar-flex-4">
+                  <div class="avitar-text-sm avitar-font-medium">
+                    {{exemption.selectedExemptionType.name}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted">
+                    {{exemption.selectedExemptionType.description}}
+                  </div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-medium {{if exemption.exemption_value 'avitar-text-success'}}">
+                    {{#if exemption.exemption_value}}
+                      ${{number-format exemption.exemption_value}}
+                    {{else}}
+                      --
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-font-medium {{if exemption.credit_value 'avitar-text-info'}}">
+                    {{#if exemption.credit_value}}
+                      ${{number-format exemption.credit_value}}
+                    {{else}}
+                      --
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm">{{exemption.start_year}}</div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2">
+                  <div class="avitar-text-sm">
+                    {{#if exemption.end_year}}
+                      {{exemption.end_year}}
+                    {{else}}
+                      <span class="avitar-text-muted">Ongoing</span>
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="avitar-flex-1 avitar-ml-2 avitar-flex avitar-justify-center">
+                  <span class="avitar-badge avitar-badge--{{if exemption.is_active 'success' 'secondary'}}">
+                    {{#if exemption.is_active}}Active{{else}}Inactive{{/if}}
+                  </span>
+                </div>
+                <div class="avitar-flex-4 avitar-ml-2">
+                  <div class="avitar-text-sm avitar-text-muted">{{exemption.qualification_notes}}</div>
+                </div>
+                <div class="avitar-flex-2 avitar-ml-2 avitar-flex avitar-justify-center">
+                  {{#if (can "update" "assessing")}}
+                    <div class="avitar-button-group">
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--primary avitar-btn--xs"
+                        {{on "click" (fn this.editExemption exemption)}}
+                        title="Edit with Calculator"
+                      >
+                        {{{lnr-icon "pencil"}}}
+                      </button>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--danger avitar-btn--xs"
+                        {{on "click" (fn this.deleteExemption exemption)}}
+                        title="Delete Exemption"
+                      >
+                        {{{lnr-icon "trash"}}}
+                      </button>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            </div>
+          {{/each}}
+
+          {{!-- Totals Row --}}
+          <div class="avitar-bg-gray-50 avitar-p-4 avitar-border-t-2">
+            <div class="avitar-flex avitar-justify-between avitar-items-center">
+              <div class="avitar-flex avitar-gap-8">
+                <div>
+                  <div class="avitar-text-base avitar-font-semibold">
+                    Total Exemption Value:
+                  </div>
+                  <div class="avitar-text-xl avitar-font-bold avitar-text-success">
+                    ${{number-format this.totalExemptionValue}}
+                  </div>
+                </div>
+                <div>
+                  <div class="avitar-text-base avitar-font-semibold">
+                    Total Credit Value:
+                  </div>
+                  <div class="avitar-text-xl avitar-font-bold avitar-text-info">
+                    ${{number-format this.totalCreditValue}}
+                  </div>
+                </div>
+              </div>
+              <div class="avitar-text-right">
+                <div class="avitar-text-sm avitar-text-muted">
+                  Combined Tax Relief
+                </div>
+                <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+                  ${{number-format (add this.totalExemptionValue this.totalCreditValue)}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          {{{lnr-icon "license" size="4x" class="avitar-mb-3"}}}
+          <div>No exemptions or credits recorded</div>
+          <div class="avitar-text-sm avitar-mt-2">Tax exemptions and assessment credits will appear here</div>
+          {{#if (can "update" "assessing")}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-mt-4"
+              {{on "click" this.addExemptionModal}}
+            >
+              {{{lnr-icon "plus"}}}
+              Add First Exemption
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Exemption Edit Modal --}}
+  <Assessing::ExemptionEditModal
+    @isOpen={{this.isEditModalOpen}}
+    @exemption={{this.currentEditingExemption}}
+    @onSave={{this.saveExemptionFromModal}}
+    @onClose={{this.closeEditModal}}
+  />
+</div>

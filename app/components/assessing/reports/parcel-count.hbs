@@ -1,0 +1,283 @@
+{{!-- Parcel Count Report Component --}}
+<div class="report-preview">
+  <div class="avitar-card avitar-card--outline">
+    <div class="avitar-card__header">
+      <h5 class="avitar-card__title">Parcel Count Report</h5>
+      <div class="avitar-card__subtitle">Comprehensive property statistics and assessed values</div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{#if @parameters.assessment_year}}
+        <div class="parcel-count-header avitar-mb-6">
+          <h6 class="avitar-mb-2">Assessment Year: {{@parameters.assessment_year}}</h6>
+          {{#if @parameters.dra_certification_year}}
+            <p class="avitar-text-sm avitar-text-muted">
+              DRA Certification Year: {{@parameters.dra_certification_year}}
+            </p>
+          {{/if}}
+        </div>
+
+        <div class="parcel-statistics">
+          {{!-- Residential Properties --}}
+          <div class="stats-section avitar-mb-6">
+            <h6 class="stats-section-title avitar-mb-4">Residential Properties</h6>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div class="stat-card">
+                <div class="stat-label">Residential Land Only (Excluding Current Use)</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">2,847 parcels</span>
+                  <span class="stat-value">$45,230,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Residential Land Only With Current Use</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">892 parcels</span>
+                  <span class="stat-value">$12,450,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card stat-card--featured">
+                <div class="stat-label">Residential Land and Building (Excluding Current Use)</div>
+                <div class="stat-median">Median Home Value: $285,000</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">8,234 parcels</span>
+                  <span class="stat-value">$892,340,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Residential Land and Building With Current Use</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">1,567 parcels</span>
+                  <span class="stat-value">$134,230,000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Manufactured Housing --}}
+          <div class="stats-section avitar-mb-6">
+            <h6 class="stats-section-title avitar-mb-4">Manufactured Housing</h6>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div class="stat-card">
+                <div class="stat-label">Manufactured Housing on Own Land</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">234 parcels</span>
+                  <span class="stat-value">$8,940,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Manufactured Housing on Land of Another (No Land Value)</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">89 parcels</span>
+                  <span class="stat-value">$1,670,000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Multi-Family and Commercial --}}
+          <div class="stats-section avitar-mb-6">
+            <h6 class="stats-section-title avitar-mb-4">Multi-Family and Commercial</h6>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div class="stat-card">
+                <div class="stat-label">Duplex and Multifamily</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">456 parcels</span>
+                  <span class="stat-value">$67,890,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Commercial/Industrial Land Only (Excluding Current Use)</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">167 parcels</span>
+                  <span class="stat-value">$23,450,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Commercial/Industrial with Current Use</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">89 parcels</span>
+                  <span class="stat-value">$12,670,000</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Utility Properties</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">23 parcels</span>
+                  <span class="stat-value">$45,670,000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{!-- Totals and Special Features --}}
+          <div class="stats-section avitar-mb-6">
+            <h6 class="stats-section-title avitar-mb-4">Totals and Property Features</h6>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div class="stat-card stat-card--total">
+                <div class="stat-label">Total Taxable</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">13,456 parcels</span>
+                  <span class="stat-value">$1,245,560,000</span>
+                </div>
+              </div>
+
+              {{#if @parameters.include_exempt_properties}}
+                <div class="stat-card stat-card--exempt">
+                  <div class="stat-label">Total Exempt/Non-Taxable</div>
+                  <div class="stat-values">
+                    <span class="stat-parcels">567 parcels</span>
+                    <span class="stat-value">$78,920,000</span>
+                  </div>
+                </div>
+              {{/if}}
+
+              <div class="stat-card stat-card--grand-total">
+                <div class="stat-label">Total Number of Parcels</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">14,023 parcels</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Total Number of Cards</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">14,567 cards</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Properties with Views</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">2,134 properties</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Properties with Water Frontage</div>
+                <div class="stat-values">
+                  <span class="stat-parcels">456 properties</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-footer avitar-text-center avitar-mt-6">
+          <p class="avitar-text-sm avitar-text-muted">
+            This preview shows sample data. The actual report will contain current assessment data for {{@parameters.assessment_year}}.
+          </p>
+        </div>
+
+      {{else}}
+        <div class="avitar-text-center avitar-py-8">
+          <p class="avitar-text-muted">Please select an assessment year to preview this report.</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+<style>
+.stats-section-title {
+  font-weight: 600;
+  color: var(--avitar-green-dark);
+  border-bottom: 2px solid var(--avitar-green-pale);
+  padding-bottom: 0.5rem;
+}
+
+.stat-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  transition: all var(--transition-fast);
+}
+
+.stat-card:hover {
+  border-color: var(--avitar-green);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card--featured {
+  border-color: var(--avitar-green);
+  background: var(--avitar-green-pale);
+}
+
+.stat-card--total {
+  border-color: var(--avitar-green-dark);
+  background: var(--avitar-green-pale);
+  font-weight: 600;
+}
+
+.stat-card--exempt {
+  border-color: var(--color-orange-400);
+  background: var(--color-orange-50);
+}
+
+.stat-card--grand-total {
+  border-color: var(--avitar-green-dark);
+  background: var(--avitar-green-dark);
+  color: white;
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-gray-700);
+  margin-bottom: 0.5rem;
+}
+
+.stat-card--grand-total .stat-label {
+  color: white;
+}
+
+.stat-median {
+  font-size: var(--font-size-xs);
+  color: var(--avitar-green-dark);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.stat-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-parcels {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  font-weight: 500;
+}
+
+.stat-card--grand-total .stat-parcels {
+  color: white;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--avitar-green-dark);
+}
+
+.stat-card--exempt .stat-value {
+  color: var(--color-orange-600);
+}
+
+.stat-card--grand-total .stat-value {
+  color: white;
+}
+</style>

@@ -14,6 +14,102 @@
     @onReset={{this.resetElderlySettings}}
     as |card|
   >
+    {{!-- Exemption Type Configuration --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Exemption Type Configuration</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-3 avitar-gap-6 avitar-mb-6">
+        {{!-- Ages 65-74 Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Ages 65-74 Exemption</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-65-74-display-name">Display Name</label>
+              <input
+                type="text"
+                id="elderly-65-74-display-name"
+                class="avitar-form-input"
+                placeholder="Elderly Exemption (65-74)"
+                value={{this.elderlyExemptions.elderly6574DisplayName}}
+                {{on "input" (fn this.updateElderlySettings "elderly6574DisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-65-74-description">Description</label>
+              <textarea
+                id="elderly-65-74-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Property tax exemption for elderly residents aged 65-74"
+                {{on "input" (fn this.updateElderlySettings "elderly6574Description")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.elderlyExemptions.elderly6574Description}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Ages 75-79 Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Ages 75-79 Exemption</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-75-79-display-name">Display Name</label>
+              <input
+                type="text"
+                id="elderly-75-79-display-name"
+                class="avitar-form-input"
+                placeholder="Elderly Exemption (75-79)"
+                value={{this.elderlyExemptions.elderly7579DisplayName}}
+                {{on "input" (fn this.updateElderlySettings "elderly7579DisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-75-79-description">Description</label>
+              <textarea
+                id="elderly-75-79-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Property tax exemption for elderly residents aged 75-79"
+                {{on "input" (fn this.updateElderlySettings "elderly7579Description")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.elderlyExemptions.elderly7579Description}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Ages 80+ Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Ages 80+ Exemption</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-80-plus-display-name">Display Name</label>
+              <input
+                type="text"
+                id="elderly-80-plus-display-name"
+                class="avitar-form-input"
+                placeholder="Elderly Exemption (80+)"
+                value={{this.elderlyExemptions.elderly80plusDisplayName}}
+                {{on "input" (fn this.updateElderlySettings "elderly80plusDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="elderly-80-plus-description">Description</label>
+              <textarea
+                id="elderly-80-plus-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Property tax exemption for elderly residents aged 80 and above"
+                {{on "input" (fn this.updateElderlySettings "elderly80plusDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.elderlyExemptions.elderly80plusDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {{!-- Exemption Amounts --}}
     <div class="avitar-mb-6">
       <h4 class="avitar-font-semibold avitar-mb-4">Exemption Amounts</h4>
@@ -174,7 +270,76 @@
     @onReset={{this.resetDisabilitySettings}}
     as |card|
   >
-    <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+    {{!-- Exemption Type Configuration --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Exemption Type Configuration</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6 avitar-mb-6">
+        {{!-- Blind Exemption Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Blind Exemption</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="blind-display-name">Display Name</label>
+              <input
+                type="text"
+                id="blind-display-name"
+                class="avitar-form-input"
+                placeholder="Blind Exemption"
+                value={{this.disabilityExemptions.blindDisplayName}}
+                {{on "input" (fn this.updateDisabilitySettings "blindDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="blind-description">Description</label>
+              <textarea
+                id="blind-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Property tax exemption for legally blind residents"
+                {{on "input" (fn this.updateDisabilitySettings "blindDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.disabilityExemptions.blindDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Physical Handicap Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Physical Handicap Exemption</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="physical-handicap-display-name">Display Name</label>
+              <input
+                type="text"
+                id="physical-handicap-display-name"
+                class="avitar-form-input"
+                placeholder="Physical Handicap Exemption"
+                value={{this.disabilityExemptions.physicalHandicapDisplayName}}
+                {{on "input" (fn this.updateDisabilitySettings "physicalHandicapDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="physical-handicap-description">Description</label>
+              <textarea
+                id="physical-handicap-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Property tax exemption for residents with physical disabilities"
+                {{on "input" (fn this.updateDisabilitySettings "physicalHandicapDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.disabilityExemptions.physicalHandicapDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Exemption Amounts --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Exemption Amounts</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
       <div class="avitar-form-group">
         <label class="avitar-form-label" for="blind-exemption">Blind Exemption Amount</label>
         <div class="avitar-form-input-wrapper">
@@ -210,6 +375,7 @@
           />
         </div>
       </div>
+      </div>
     </div>
   </Shared::SaveableCard>
 
@@ -222,7 +388,136 @@
     @onReset={{this.resetVeteranSettings}}
     as |card|
   >
-    <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
+    {{!-- Credit Type Configuration --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Credit Type Configuration</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6 avitar-mb-6">
+        {{!-- Standard Veteran Credit Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Standard Veteran Credit</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="veteran-display-name">Display Name</label>
+              <input
+                type="text"
+                id="veteran-display-name"
+                class="avitar-form-input"
+                placeholder="Standard Veteran Credit"
+                value={{this.veteranCredits.veteranDisplayName}}
+                {{on "input" (fn this.updateVeteranSettings "veteranDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="veteran-description">Description</label>
+              <textarea
+                id="veteran-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Tax credit for qualified veterans"
+                {{on "input" (fn this.updateVeteranSettings "veteranDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.veteranCredits.veteranDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- All Veteran Credit Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">All Veteran Credit</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="all-veteran-display-name">Display Name</label>
+              <input
+                type="text"
+                id="all-veteran-display-name"
+                class="avitar-form-input"
+                placeholder="All Veteran Credit"
+                value={{this.veteranCredits.allVeteranDisplayName}}
+                {{on "input" (fn this.updateVeteranSettings "allVeteranDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="all-veteran-description">Description</label>
+              <textarea
+                id="all-veteran-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Enhanced tax credit for veterans who served in multiple conflicts"
+                {{on "input" (fn this.updateVeteranSettings "allVeteranDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.veteranCredits.allVeteranDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Disabled Veteran Credit Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Disabled Veteran Credit</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="disabled-veteran-display-name">Display Name</label>
+              <input
+                type="text"
+                id="disabled-veteran-display-name"
+                class="avitar-form-input"
+                placeholder="Disabled Veteran Credit"
+                value={{this.veteranCredits.disabledVeteranDisplayName}}
+                {{on "input" (fn this.updateVeteranSettings "disabledVeteranDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="disabled-veteran-description">Description</label>
+              <textarea
+                id="disabled-veteran-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Tax credit for veterans with service-connected disabilities"
+                {{on "input" (fn this.updateVeteranSettings "disabledVeteranDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.veteranCredits.disabledVeteranDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+
+        {{!-- Surviving Spouse Credit Configuration --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h5 class="avitar-font-medium avitar-mb-3">Surviving Spouse Credit</h5>
+          <div class="avitar-space-y-3">
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="surviving-spouse-display-name">Display Name</label>
+              <input
+                type="text"
+                id="surviving-spouse-display-name"
+                class="avitar-form-input"
+                placeholder="Surviving Spouse Credit"
+                value={{this.veteranCredits.survivingSpouseDisplayName}}
+                {{on "input" (fn this.updateVeteranSettings "survivingSpouseDisplayName")}}
+                {{on "input" card.checkForChanges}}
+              />
+            </div>
+            <div class="avitar-form-group">
+              <label class="avitar-form-label" for="surviving-spouse-description">Description</label>
+              <textarea
+                id="surviving-spouse-description"
+                class="avitar-form-input"
+                rows="2"
+                placeholder="Tax credit for unmarried surviving spouses of qualified veterans"
+                {{on "input" (fn this.updateVeteranSettings "survivingSpouseDescription")}}
+                {{on "input" card.checkForChanges}}
+              >{{this.veteranCredits.survivingSpouseDescription}}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{!-- Credit Amounts --}}
+    <div class="avitar-mb-6">
+      <h4 class="avitar-font-semibold avitar-mb-4">Credit Amounts</h4>
+      <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-6">
       <div class="avitar-form-group">
         <label class="avitar-form-label" for="veteran-credit">Veteran Credit</label>
         <div class="avitar-form-input-wrapper">
@@ -293,6 +588,7 @@
             {{on "input" card.checkForChanges}}
           />
         </div>
+      </div>
       </div>
     </div>
   </Shared::SaveableCard>

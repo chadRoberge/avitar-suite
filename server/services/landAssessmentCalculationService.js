@@ -67,7 +67,9 @@ class LandAssessmentCalculationService {
       const landLaddersByZone = {};
       landLadders.forEach((ladder, index) => {
         const zoneId = ladder.zoneId.toString(); // Convert ObjectId to string
-        console.log(`Processing ladder ${index + 1}: zoneId=${zoneId}, acreage=${ladder.acreage}, value=${ladder.value}`);
+        console.log(
+          `Processing ladder ${index + 1}: zoneId=${zoneId}, acreage=${ladder.acreage}, value=${ladder.value}`,
+        );
 
         if (!landLaddersByZone[zoneId]) {
           landLaddersByZone[zoneId] = [];
@@ -78,23 +80,37 @@ class LandAssessmentCalculationService {
           id: ladder._id.toString(),
           acreage: ladder.acreage,
           value: ladder.value,
-          order: ladder.order
+          order: ladder.order,
         });
-        console.log(`  - Added tier: ${ladder.acreage}AC @ $${ladder.value} to zone ${zoneId}`);
+        console.log(
+          `  - Added tier: ${ladder.acreage}AC @ $${ladder.value} to zone ${zoneId}`,
+        );
       });
 
       // Sort tiers within each zone by order/acreage for proper interpolation
-      Object.keys(landLaddersByZone).forEach(zoneId => {
-        landLaddersByZone[zoneId].sort((a, b) => a.order - b.order || a.acreage - b.acreage);
-        console.log(`Final zone ${zoneId} has ${landLaddersByZone[zoneId].length} tiers:`,
-          landLaddersByZone[zoneId].map(t => `${t.acreage}AC@$${t.value}`));
+      Object.keys(landLaddersByZone).forEach((zoneId) => {
+        landLaddersByZone[zoneId].sort(
+          (a, b) => a.order - b.order || a.acreage - b.acreage,
+        );
+        console.log(
+          `Final zone ${zoneId} has ${landLaddersByZone[zoneId].length} tiers:`,
+          landLaddersByZone[zoneId].map((t) => `${t.acreage}AC@$${t.value}`),
+        );
       });
 
       // Log zone and ladder mapping for debugging
-      console.log(`Calculator initialized with ${zones.length} zones, ${landLadders.length} ladders, ${currentUseCategories.length} current use categories`);
-      console.log(`Zone IDs with land ladders:`, Object.keys(landLaddersByZone));
+      console.log(
+        `Calculator initialized with ${zones.length} zones, ${landLadders.length} ladders, ${currentUseCategories.length} current use categories`,
+      );
+      console.log(
+        `Zone IDs with land ladders:`,
+        Object.keys(landLaddersByZone),
+      );
       if (zones.length > 0) {
-        console.log(`Zone IDs from zones:`, zones.map(z => z._id.toString()));
+        console.log(
+          `Zone IDs from zones:`,
+          zones.map((z) => z._id.toString()),
+        );
       }
 
       // Prepare reference data for calculator
@@ -130,7 +146,7 @@ class LandAssessmentCalculationService {
    * @param {Object} landAssessment - LandAssessment document
    * @returns {Object} Calculated assessment values
    */
-  calculateLandAssessment(landAssessment) {
+  async calculateLandAssessment(landAssessment) {
     if (!this.calculator) {
       throw new Error(
         'Calculator not initialized. Call initialize(municipalityId) first.',
@@ -152,13 +168,34 @@ class LandAssessmentCalculationService {
 
     // Log zone ID for debugging missing ladder issues
     if (assessmentData.zone) {
-      const hasLadder = this.referenceData.landLadders && this.referenceData.landLadders[assessmentData.zone];
+      const hasLadder =
+        this.referenceData.landLadders &&
+        this.referenceData.landLadders[assessmentData.zone];
       if (!hasLadder) {
-        console.warn(`Assessment for property ${landAssessment.property_id} uses zone ${assessmentData.zone} but no land ladder found. Available zones:`, Object.keys(this.referenceData.landLadders || {}));
+        console.warn(
+          `Assessment for property ${landAssessment.property_id} uses zone ${assessmentData.zone} but no land ladder found. Available zones:`,
+          Object.keys(this.referenceData.landLadders || {}),
+        );
       }
     }
 
-    return this.calculator.calculatePropertyAssessment(assessmentData);
+    // Fetch property views to include in calculation
+    let views = [];
+    try {
+      const PropertyView = require('../models/PropertyView');
+      views = await PropertyView.findByProperty(landAssessment.property_id);
+      console.log(
+        `Found ${views.length} views for property ${landAssessment.property_id}`,
+      );
+    } catch (error) {
+      console.warn(
+        'Failed to fetch property views for calculation:',
+        error.message,
+      );
+      views = [];
+    }
+
+    return this.calculator.calculatePropertyAssessment(assessmentData, views);
   }
 
   /**
@@ -183,7 +220,11 @@ class LandAssessmentCalculationService {
 
     try {
       // First, ensure all properties have assessments for the target year
-      await this.ensureAssessmentsForYear(municipalityId, effectiveYear, options.userId);
+      await this.ensureAssessmentsForYear(
+        municipalityId,
+        effectiveYear,
+        options.userId,
+      );
 
       // Build query to only process assessments for the specified year
       const query = {
@@ -226,10 +267,14 @@ class LandAssessmentCalculationService {
               });
             }
 
-            const calculationResult = this.calculateLandAssessment(landAssessment);
+            const calculationResult =
+              await this.calculateLandAssessment(landAssessment);
 
             // If forceClearValues option is set, update individual land line calculated values
-            if (options.forceClearValues && calculationResult.land_use_details) {
+            if (
+              options.forceClearValues &&
+              calculationResult.land_use_details
+            ) {
               // Update each land line with recalculated values
               for (let i = 0; i < landAssessment.land_use_details.length; i++) {
                 const calculatedLine = calculationResult.land_use_details[i];
@@ -239,7 +284,8 @@ class LandAssessmentCalculationService {
                     baseRate: calculatedLine.baseRate || 0,
                     baseValue: calculatedLine.baseValue || 0,
                     neighborhoodFactor: calculatedLine.neighborhoodFactor || 0,
-                    economyOfScaleFactor: calculatedLine.economyOfScaleFactor || 0,
+                    economyOfScaleFactor:
+                      calculatedLine.economyOfScaleFactor || 0,
                     siteFactor: calculatedLine.siteFactor || 0,
                     drivewayFactor: calculatedLine.drivewayFactor || 0,
                     roadFactor: calculatedLine.roadFactor || 0,
@@ -248,14 +294,15 @@ class LandAssessmentCalculationService {
                     marketValue: calculatedLine.marketValue || 0,
                     currentUseValue: calculatedLine.currentUseValue || 0,
                     currentUseCredit: calculatedLine.currentUseCredit || 0,
-                    assessedValue: calculatedLine.assessedValue || 0
+                    assessedValue: calculatedLine.assessedValue || 0,
                   });
                 }
               }
             }
 
             // Update land assessment with new calculated values
-            landAssessment.calculated_totals = calculationResult.calculated_totals || calculationResult;
+            landAssessment.calculated_totals =
+              calculationResult.calculated_totals;
             landAssessment.last_calculated = new Date();
 
             if (options.save !== false) {
@@ -265,7 +312,7 @@ class LandAssessmentCalculationService {
             return {
               success: true,
               propertyId: landAssessment.property_id,
-              totals: calculationResult.calculated_totals || calculationResult,
+              totals: calculationResult.calculated_totals,
             };
           } catch (error) {
             console.error(
@@ -334,6 +381,73 @@ class LandAssessmentCalculationService {
   }
 
   /**
+   * Recalculate land assessment for a single property
+   * @param {String} propertyId - Property ID to recalculate
+   * @param {Object} options - Calculation options
+   * @returns {Object} Recalculation result
+   */
+  async recalculatePropertyAssessment(propertyId, options = {}) {
+    try {
+      console.log(
+        `🔄 Recalculating land assessment for property: ${propertyId}`,
+      );
+
+      // Find the land assessment for this property
+      const landAssessment = await LandAssessment.findOne({
+        property_id: propertyId,
+        effective_year: options.effectiveYear || new Date().getFullYear(),
+      });
+
+      if (!landAssessment) {
+        console.warn(`No land assessment found for property ${propertyId}`);
+        return {
+          success: false,
+          message: `No land assessment found for property ${propertyId}`,
+        };
+      }
+
+      // Initialize calculator with the municipality data
+      await this.initialize(landAssessment.municipality_id);
+
+      // Calculate new totals
+      const calculatedTotals =
+        await this.calculateLandAssessment(landAssessment);
+
+      // Update the land assessment with new calculated values
+      landAssessment.calculated_totals = calculatedTotals.calculated_totals;
+      landAssessment.last_calculated = new Date();
+
+      if (options.save !== false) {
+        await landAssessment.save();
+      }
+
+      console.log(
+        `✅ Land assessment recalculated successfully for property: ${propertyId}`,
+        {
+          totals: calculatedTotals,
+        },
+      );
+
+      return {
+        success: true,
+        propertyId,
+        totals: calculatedTotals,
+        recalculatedAt: new Date(),
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to recalculate land assessment for property ${propertyId}:`,
+        error,
+      );
+      return {
+        success: false,
+        propertyId,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Recalculate properties affected by reference data changes
    * @param {String} municipalityId - Municipality ID
    * @param {String} changeType - Type of change (zone, ladder, category, etc.)
@@ -359,6 +473,43 @@ class LandAssessmentCalculationService {
       case 'taxation_category':
         query['taxation_category'] = changeId;
         break;
+      case 'view_attribute':
+        // For view attribute changes, we need to find properties that have views using this attribute
+        const PropertyView = require('../models/PropertyView');
+
+        const attributeObjectId = mongoose.Types.ObjectId.isValid(changeId)
+          ? new mongoose.Types.ObjectId(changeId)
+          : changeId;
+
+        // Find all property views that reference this attribute
+        const affectedViews = await PropertyView.find({
+          $or: [
+            { subjectId: attributeObjectId },
+            { widthId: attributeObjectId },
+            { distanceId: attributeObjectId },
+            { depthId: attributeObjectId },
+          ],
+          isActive: true,
+        });
+
+        // Get unique property IDs
+        const affectedPropertyIds = [
+          ...new Set(affectedViews.map((view) => view.propertyId)),
+        ];
+
+        if (affectedPropertyIds.length > 0) {
+          query['property_id'] = { $in: affectedPropertyIds };
+        } else {
+          // No properties affected, return early
+          return {
+            success: true,
+            affected: 0,
+            recalculated: 0,
+            errors: 0,
+            message: 'No properties use this view attribute',
+          };
+        }
+        break;
       default:
         // For global changes (like ladder updates), recalculate all
         break;
@@ -379,9 +530,10 @@ class LandAssessmentCalculationService {
 
     for (const landAssessment of affectedLandAssessments) {
       try {
-        const calculatedTotals = this.calculateLandAssessment(landAssessment);
+        const calculatedTotals =
+          await this.calculateLandAssessment(landAssessment);
 
-        landAssessment.calculated_totals = calculatedTotals;
+        landAssessment.calculated_totals = calculatedTotals.calculated_totals;
         landAssessment.last_calculated = new Date();
         await landAssessment.save();
 
@@ -424,7 +576,8 @@ class LandAssessmentCalculationService {
 
     for (const landAssessment of landAssessments) {
       const storedTotals = landAssessment.calculated_totals || {};
-      const recalculatedTotals = this.calculateLandAssessment(landAssessment);
+      const recalculatedTotals =
+        await this.calculateLandAssessment(landAssessment);
 
       const discrepancies = {};
       Object.keys(recalculatedTotals).forEach((key) => {
@@ -547,7 +700,8 @@ class LandAssessmentCalculationService {
           }
 
           // Recalculate with the adjusted land use details
-          const calculationResult = this.calculateLandAssessment(assessment);
+          const calculationResult =
+            await this.calculateLandAssessment(assessment);
 
           // Update both the individual land line calculated values and the totals
           if (calculationResult.land_use_details) {
@@ -560,7 +714,8 @@ class LandAssessmentCalculationService {
                   baseRate: calculatedLine.baseRate || 0,
                   baseValue: calculatedLine.baseValue || 0,
                   neighborhoodFactor: calculatedLine.neighborhoodFactor || 0,
-                  economyOfScaleFactor: calculatedLine.economyOfScaleFactor || 0,
+                  economyOfScaleFactor:
+                    calculatedLine.economyOfScaleFactor || 0,
                   siteFactor: calculatedLine.siteFactor || 0,
                   drivewayFactor: calculatedLine.drivewayFactor || 0,
                   roadFactor: calculatedLine.roadFactor || 0,
@@ -569,13 +724,13 @@ class LandAssessmentCalculationService {
                   marketValue: calculatedLine.marketValue || 0,
                   currentUseValue: calculatedLine.currentUseValue || 0,
                   currentUseCredit: calculatedLine.currentUseCredit || 0,
-                  assessedValue: calculatedLine.assessedValue || 0
+                  assessedValue: calculatedLine.assessedValue || 0,
                 });
               }
             }
           }
 
-          assessment.calculated_totals = calculationResult.calculated_totals || calculationResult;
+          assessment.calculated_totals = calculationResult.calculated_totals;
           assessment.last_calculated = new Date();
 
           // Mark for audit trail
@@ -756,32 +911,48 @@ class LandAssessmentCalculationService {
    * @param {String} userId - User ID for audit trail
    */
   async ensureAssessmentsForYear(municipalityId, targetYear, userId) {
-    console.log(`Ensuring all properties have land assessments for year ${targetYear}`);
+    console.log(
+      `Ensuring all properties have land assessments for year ${targetYear}`,
+    );
 
     // Find all unique property IDs that have land assessments in any year
     const allPropertyIds = await LandAssessment.distinct('property_id', {
       municipality_id: municipalityId,
     });
 
-    console.log(`Found ${allPropertyIds.length} properties with land assessments in municipality`);
+    console.log(
+      `Found ${allPropertyIds.length} properties with land assessments in municipality`,
+    );
 
     // Find properties that already have assessments for the target year
-    const existingTargetYearPropertyIds = await LandAssessment.distinct('property_id', {
-      municipality_id: municipalityId,
-      effective_year: targetYear,
-    });
+    const existingTargetYearPropertyIds = await LandAssessment.distinct(
+      'property_id',
+      {
+        municipality_id: municipalityId,
+        effective_year: targetYear,
+      },
+    );
 
-    console.log(`${existingTargetYearPropertyIds.length} properties already have ${targetYear} assessments`);
+    console.log(
+      `${existingTargetYearPropertyIds.length} properties already have ${targetYear} assessments`,
+    );
 
     // Find properties missing target year assessments
     const missingPropertyIds = allPropertyIds.filter(
-      (propertyId) => !existingTargetYearPropertyIds.some(existingId => existingId.toString() === propertyId.toString())
+      (propertyId) =>
+        !existingTargetYearPropertyIds.some(
+          (existingId) => existingId.toString() === propertyId.toString(),
+        ),
     );
 
-    console.log(`${missingPropertyIds.length} properties need ${targetYear} assessments created`);
+    console.log(
+      `${missingPropertyIds.length} properties need ${targetYear} assessments created`,
+    );
 
     if (missingPropertyIds.length === 0) {
-      console.log('All properties already have assessments for the target year');
+      console.log(
+        'All properties already have assessments for the target year',
+      );
       return;
     }
 
@@ -800,7 +971,7 @@ class LandAssessmentCalculationService {
 
         if (mostRecentAssessment) {
           console.log(
-            `Creating ${targetYear} assessment for property ${propertyId} from ${mostRecentAssessment.effective_year}`
+            `Creating ${targetYear} assessment for property ${propertyId} from ${mostRecentAssessment.effective_year}`,
           );
 
           await LandAssessment.copyToNewYear(
@@ -811,27 +982,27 @@ class LandAssessmentCalculationService {
             {
               change_reason: 'mass_recalculation_year_creation',
               notes: `Auto-created for ${targetYear} mass recalculation from ${mostRecentAssessment.effective_year} assessment`,
-            }
+            },
           );
 
           createdCount++;
         } else {
           console.warn(
-            `No previous land assessment found for property ${propertyId} to copy from`
+            `No previous land assessment found for property ${propertyId} to copy from`,
           );
           errorCount++;
         }
       } catch (error) {
         console.error(
           `Error creating ${targetYear} assessment for property ${propertyId}:`,
-          error.message
+          error.message,
         );
         errorCount++;
       }
     }
 
     console.log(
-      `Assessment creation completed: ${createdCount} created, ${errorCount} errors`
+      `Assessment creation completed: ${createdCount} created, ${errorCount} errors`,
     );
   }
 

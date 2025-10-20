@@ -1,0 +1,351 @@
+{{!-- Assessing Reports Page --}}
+<div class="avitar-layout avitar-layout--with-sidebar">
+  {{!-- Reports Sidebar --}}
+  <div class="avitar-layout__sidebar">
+    <nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar" style="top: 120px">
+      <div class="avitar-sidebar__header">
+        <h2 class="avitar-sidebar__title">
+          <i class="fas fa-chart-bar avitar-mr-2"></i>
+          Reports
+        </h2>
+        <div class="avitar-sidebar__subtitle">Generate assessment reports</div>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--ghost avitar-btn--xs avitar-mt-2"
+          {{on "click" this.refreshReports}}
+          title="Refresh Reports"
+        >
+          <i class="fas fa-sync-alt avitar-mr-1"></i>
+          Refresh
+        </button>
+      </div>
+
+      <div class="avitar-sidebar__nav">
+        {{#if this.reports.length}}
+          {{#each-in this.reportsByCategory as |categoryName categoryReports|}}
+            <div class="avitar-sidebar__section">
+              {{!-- Category Header --}}
+              <div class="avitar-sidebar__section-title">
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-w-full avitar-justify-between"
+                  {{on "click" (fn this.toggleCategory categoryName)}}
+                >
+                  <span class="avitar-flex avitar-items-center">
+                    <i class="fas {{if (includes this.expandedCategories categoryName) 'fa-folder-open' 'fa-folder'}} avitar-mr-2"></i>
+                    {{#if (eq categoryName "property")}}Property Reports
+                    {{else if (eq categoryName "exemption")}}Exemption Reports
+                    {{else if (eq categoryName "assessment")}}Assessment Reports
+                    {{else if (eq categoryName "tax")}}Tax Reports
+                    {{else if (eq categoryName "owner")}}Owner Reports
+                    {{else if (eq categoryName "analysis")}}Analysis Reports
+                    {{else if (eq categoryName "compliance")}}Compliance Reports
+                    {{else}}Other Reports
+                    {{/if}}
+                  </span>
+                  <span class="avitar-flex avitar-items-center avitar-gap-2">
+                    <span class="avitar-badge avitar-badge--xs">{{categoryReports.length}}</span>
+                    <i class="fas {{if (includes this.expandedCategories categoryName) 'fa-chevron-down' 'fa-chevron-right'}}"></i>
+                  </span>
+                </button>
+              </div>
+
+              {{!-- Category Reports (Collapsible Content) --}}
+              {{#if (includes this.expandedCategories categoryName)}}
+                <ul class="avitar-sidebar__nav-list">
+                  {{#each categoryReports as |report|}}
+                    <li class="avitar-sidebar__nav-item avitar-sidebar__nav-item--child">
+                      <button
+                        type="button"
+                        class="avitar-sidebar__nav-link avitar-sidebar__nav-link--child {{if (eq this.selectedReport report) 'avitar-sidebar__nav-link--active'}}"
+                        {{on "click" (fn this.selectReport report)}}
+                      >
+                        <i class="fas fa-file-alt avitar-sidebar__nav-icon"></i>
+                        <div class="avitar-flex-1">
+                          <div class="avitar-font-medium">{{report.display_name}}</div>
+                          {{#if report.description}}
+                            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">{{report.description}}</div>
+                          {{/if}}
+                          <div class="avitar-flex avitar-gap-1 avitar-mt-2">
+                            {{#each report.output_formats as |format|}}
+                              <span class="avitar-badge avitar-badge--xs avitar-badge--outline"><uppercase>{{format}}</uppercase></span>
+                            {{/each}}
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{/if}}
+            </div>
+          {{/each-in}}
+        {{else}}
+          <div class="avitar-sidebar__empty">
+            <div class="avitar-empty-state avitar-empty-state--sm">
+              <i class="fas fa-file-chart-line avitar-empty-state__icon"></i>
+              <h4 class="avitar-empty-state__title">No Reports Available</h4>
+              <p class="avitar-empty-state__description">No assessing reports are configured for this municipality.</p>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    </nav>
+  </div>
+
+  {{!-- Main Content --}}
+  <div class="avitar-layout__main" style="margin-left: 280px;">
+    <div class="avitar-content">
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <h2 class="avitar-card__title">Assessing Reports</h2>
+      <div class="avitar-card__subtitle">Generate and download assessment-related reports</div>
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+        {{on "click" this.refreshReports}}
+        title="Refresh Reports"
+      >
+        <i class="fas fa-sync-alt"></i>
+        Refresh
+      </button>
+    </div>
+
+    <div class="avitar-card__body">
+          {{#if this.hasSelectedReport}}
+            <div class="report-details">
+              {{!-- Report Header --}}
+              <div class="report-header avitar-mb-6">
+                <div>
+                  <h3 class="report-title">{{this.selectedReport.display_name}}</h3>
+                  {{#if this.selectedReport.description}}
+                    <p class="report-description avitar-text-muted">{{this.selectedReport.description}}</p>
+                  {{/if}}
+                </div>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--ghost"
+                  {{on "click" this.clearSelection}}
+                  title="Close Report"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              {{!-- Report Parameters --}}
+              {{#if this.selectedReport.parameters.length}}
+                <div class="report-parameters avitar-mb-6">
+                  <h4 class="avitar-mb-3">Report Parameters</h4>
+
+                  <div class="parameters-grid">
+                    {{#each this.selectedReport.parameters as |param|}}
+                      <div class="parameter-field">
+                        <label class="avitar-label" for="param-{{param.name}}">
+                          {{param.display_name}}
+                          {{#if param.required}}
+                            <span class="required-indicator">*</span>
+                          {{/if}}
+                        </label>
+
+                        {{#if (eq param.type "select")}}
+                          <select
+                            id="param-{{param.name}}"
+                            class="avitar-select"
+                            {{on "change" (fn this.updateParameter param.name)}}
+                          >
+                            <option value="">Select {{param.display_name}}</option>
+                            {{#each param.options as |paramOption|}}
+                              <option
+                                value={{paramOption.value}}
+                                selected={{eq (get this.reportParameters param.name) paramOption.value}}
+                              >
+                                {{paramOption.label}}
+                              </option>
+                            {{/each}}
+                          </select>
+                        {{else if (eq param.type "date")}}
+                          <input
+                            type="date"
+                            id="param-{{param.name}}"
+                            class="avitar-input"
+                            value={{get this.reportParameters param.name}}
+                            {{on "input" (fn this.updateParameter param.name)}}
+                          />
+                        {{else if (eq param.type "year")}}
+                          <input
+                            type="number"
+                            id="param-{{param.name}}"
+                            class="avitar-input"
+                            min="1900"
+                            max="2100"
+                            value={{get this.reportParameters param.name}}
+                            {{on "input" (fn this.updateParameter param.name)}}
+                            placeholder="YYYY"
+                          />
+                        {{else if (eq param.type "number")}}
+                          <input
+                            type="number"
+                            id="param-{{param.name}}"
+                            class="avitar-input"
+                            value={{get this.reportParameters param.name}}
+                            {{on "input" (fn this.updateParameter param.name)}}
+                            min={{param.validation.min}}
+                            max={{param.validation.max}}
+                          />
+                        {{else if (eq param.type "boolean")}}
+                          <label class="avitar-checkbox-wrapper">
+                            <input
+                              type="checkbox"
+                              id="param-{{param.name}}"
+                              class="avitar-checkbox"
+                              checked={{get this.reportParameters param.name}}
+                              {{on "change" (fn this.updateParameter param.name)}}
+                            />
+                            <span class="avitar-checkbox__label">Enable {{param.display_name}}</span>
+                          </label>
+                        {{else}}
+                          <input
+                            type="text"
+                            id="param-{{param.name}}"
+                            class="avitar-input"
+                            value={{get this.reportParameters param.name}}
+                            {{on "input" (fn this.updateParameter param.name)}}
+                            placeholder={{param.display_name}}
+                          />
+                        {{/if}}
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Dynamic Report Component --}}
+              {{#if this.selectedReportComponentName}}
+                <div class="report-component avitar-mb-6">
+                  <h4 class="avitar-mb-3">Report Preview</h4>
+                  {{component this.selectedReportComponentName
+                    report=this.selectedReport
+                    parameters=this.reportParameters}}
+                </div>
+              {{/if}}
+
+              {{!-- Generation Actions --}}
+              <div class="report-actions avitar-mb-6">
+                <h4 class="avitar-mb-3">Generate Report</h4>
+
+                <div class="action-buttons">
+                  {{#each this.selectedReport.output_formats as |format|}}
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--primary avitar-mr-2 avitar-mb-2"
+                      {{on "click" (fn this.downloadReport format)}}
+                      disabled={{or this.isGenerating (not this.canGenerateReport)}}
+                    >
+                      {{#if this.isGenerating}}
+                        <i class="fas fa-spinner fa-spin avitar-mr-1"></i>
+                        Generating...
+                      {{else}}
+                        <i class="fas fa-download avitar-mr-1"></i>
+                        Download <uppercase>{{format}}</uppercase>
+                      {{/if}}
+                    </button>
+                  {{/each}}
+
+                  {{#if (includes this.selectedReport.output_formats "html")}}
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--secondary avitar-mr-2 avitar-mb-2"
+                      {{on "click" this.previewReport}}
+                      disabled={{or this.isGenerating (not this.canGenerateReport)}}
+                    >
+                      <i class="fas fa-eye avitar-mr-1"></i>
+                      Preview
+                    </button>
+                  {{/if}}
+                </div>
+
+                {{#unless this.canGenerateReport}}
+                  <p class="avitar-text-warning avitar-text-sm">
+                    <i class="fas fa-exclamation-triangle avitar-mr-1"></i>
+                    Please complete all required parameters to generate the report.
+                  </p>
+                {{/unless}}
+              </div>
+
+              {{!-- Report Output Status --}}
+              {{#if this.reportOutput}}
+                <div class="report-output avitar-mb-6">
+                  <h4 class="avitar-mb-3">Report Status</h4>
+
+                  <div class="output-info avitar-p-4 avitar-bg-blue-50 avitar-border-l-blue-500">
+                    <div class="avitar-flex avitar-items-center avitar-mb-2">
+                      <i class="fas fa-info-circle avitar-text-blue-500 avitar-mr-2"></i>
+                      <span class="avitar-font-medium">Report Generation Started</span>
+                    </div>
+
+                    <div class="output-details avitar-text-sm avitar-space-y-1">
+                      <div><strong>Execution ID:</strong> {{this.reportOutput.executionId}}</div>
+                      <div><strong>Format:</strong> <uppercase>{{this.reportOutput.outputFormat}}</uppercase></div>
+                      <div><strong>Estimated Completion:</strong> {{date-format this.reportOutput.estimatedCompletion}}</div>
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Report Information --}}
+              <div class="report-info">
+                <h4 class="avitar-mb-3">Report Information</h4>
+
+                <div class="info-grid">
+                  <div class="info-item">
+                    <label>Category</label>
+                    <span>{{capitalize this.selectedReport.category}}</span>
+                  </div>
+
+                  <div class="info-item">
+                    <label>Available Formats</label>
+                    <div class="format-list">
+                      {{#each this.selectedReport.output_formats as |format|}}
+                        <span class="format-badge"><uppercase>{{format}}</uppercase></span>
+                      {{/each}}
+                    </div>
+                  </div>
+
+                  {{#if this.selectedReport.execution_settings}}
+                    <div class="info-item">
+                      <label>Execution Settings</label>
+                      <div class="avitar-text-sm avitar-text-muted">
+                        Timeout: {{this.selectedReport.execution_settings.timeout_minutes}} minutes<br>
+                        Max Records: {{number-format this.selectedReport.execution_settings.max_records}}
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{#if this.selectedReport.usage_stats.total_runs}}
+                    <div class="info-item">
+                      <label>Usage Statistics</label>
+                      <div class="avitar-text-sm avitar-text-muted">
+                        Total Runs: {{this.selectedReport.usage_stats.total_runs}}<br>
+                        {{#if this.selectedReport.usage_stats.last_run_date}}
+                          Last Run: {{date-format this.selectedReport.usage_stats.last_run_date}}
+                        {{/if}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+          {{else}}
+            {{!-- No Report Selected State --}}
+            <div class="no-selection avitar-text-center avitar-py-16">
+              <i class="fas fa-chart-bar avitar-text-6xl avitar-text-gray-300 avitar-mb-4"></i>
+              <h3 class="avitar-text-xl avitar-font-medium avitar-mb-2">Select a Report</h3>
+              <p class="avitar-text-muted">
+                Choose a report from the sidebar to configure parameters and generate output.
+              </p>
+            </div>
+          {{/if}}
+    </div>
+  </div>
+    </div>
+  </div>
+</div>

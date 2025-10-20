@@ -11,6 +11,13 @@ const propertyNotesSchema = new mongoose.Schema(
       ref: 'Municipality',
       required: true,
     },
+    card_number: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+      index: true,
+    },
 
     // Property notes
     notes: {
@@ -35,9 +42,9 @@ const propertyNotesSchema = new mongoose.Schema(
   },
 );
 
-// Indexes for efficient queries
+// Indexes for efficient queries - unique per property, municipality, AND card
 propertyNotesSchema.index(
-  { propertyId: 1, municipalityId: 1 },
+  { propertyId: 1, municipalityId: 1, card_number: 1 },
   { unique: true },
 );
 

@@ -2,7 +2,6 @@ import Route from '@ember/routing/route';
 import { inject as service } from '@ember/service';
 
 export default class MunicipalityAssessingSettingsViewRoute extends Route {
-  @service api;
   @service assessing;
 
   async model() {
@@ -10,13 +9,13 @@ export default class MunicipalityAssessingSettingsViewRoute extends Route {
     const municipalityId = parentModel.municipality.id;
 
     try {
-      // Fetch view attributes for this municipality
-      const viewAttributesResponse = await this.api.get(
-        `/municipalities/${municipalityId}/view-attributes`,
+      // Fetch view attributes for this municipality using assessing service
+      const viewAttributes =
+        await this.assessing.getViewAttributes(municipalityId);
+      console.log(
+        'Loaded view attributes from assessing service:',
+        viewAttributes,
       );
-
-      const viewAttributes = viewAttributesResponse.viewAttributes || [];
-      console.log('Loaded view attributes from API:', viewAttributes);
 
       return {
         ...parentModel,

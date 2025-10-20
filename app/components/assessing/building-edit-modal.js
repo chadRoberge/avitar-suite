@@ -4,10 +4,8 @@ import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
 
 export default class BuildingEditModalComponent extends Component {
-  @service api;
-  @service router;
-  @service municipality;
   @service assessing;
+  @service municipality;
 
   @tracked isLoading = false;
   @tracked isSaving = false;
@@ -81,103 +79,7 @@ export default class BuildingEditModalComponent extends Component {
     try {
       this.isLoading = true;
 
-      // Get municipality ID from property with fallbacks
-      let municipalityId =
-        this.args.property?.municipality_id ||
-        this.args.property?.municipalityId ||
-        this.args.property?.municipality?.id ||
-        this.args.property?.municipality?._id;
-
-      // If still no municipality ID, try to get it from municipality service
-      if (!municipalityId) {
-        try {
-          // Try to get municipality from the municipality service
-          const currentMunicipality = this.municipality.current;
-          if (currentMunicipality) {
-            municipalityId = currentMunicipality.id || currentMunicipality._id;
-            console.log(
-              'Using municipality ID from municipality service:',
-              municipalityId,
-            );
-          } else {
-            console.log('No current municipality in service');
-          }
-
-          // If still not found, try controller context
-          if (!municipalityId) {
-            const municipalityController =
-              this.router.currentRoute?.context || null;
-            if (municipalityController) {
-              municipalityId =
-                municipalityController.municipality?.id ||
-                municipalityController.municipality?._id ||
-                municipalityController.id ||
-                municipalityController._id;
-              console.log(
-                'Using municipality ID from controller context:',
-                municipalityId,
-              );
-            }
-          }
-
-          // If still not found, try to get the municipality from route params using slug
-          if (!municipalityId) {
-            const router = this.router;
-            const currentRoute = router.currentRoute;
-            let municipalitySlug = currentRoute?.params?.municipality_slug;
-
-            // If not in params, try to extract from URL path
-            if (!municipalitySlug) {
-              const url = window.location.pathname;
-              const match = url.match(/\/m\/([^\/]+)/);
-              municipalitySlug = match ? match[1] : null;
-              console.log(
-                'Extracted municipality slug from URL:',
-                municipalitySlug,
-              );
-            } else {
-              console.log(
-                'Found municipality slug from route params:',
-                municipalitySlug,
-              );
-            }
-
-            // If we have a slug, try to resolve it to municipality ID
-            if (municipalitySlug) {
-              try {
-                // Use the municipality service to load the municipality by slug
-                const municipality =
-                  await this.municipality.loadMunicipality(municipalitySlug);
-                if (municipality) {
-                  municipalityId = municipality.id || municipality._id;
-                  console.log(
-                    'Resolved municipality slug to ID:',
-                    municipalityId,
-                  );
-                }
-              } catch (error) {
-                console.warn('Error resolving municipality slug:', error);
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('Could not get municipality ID from route:', error);
-        }
-      }
-
-      console.log('Loading feature codes for municipality:', municipalityId);
-      console.log(
-        'Property object keys:',
-        Object.keys(this.args.property || {}),
-      );
-      console.log('Property object:', this.args.property);
-
-      if (!municipalityId) {
-        console.warn('No municipality ID available for loading feature codes');
-        return;
-      }
-
-      // Load feature codes for all types
+      // Load feature codes for all types using the assessing service
       const featureTypes = [
         'interior_wall',
         'exterior_wall',
@@ -193,11 +95,12 @@ export default class BuildingEditModalComponent extends Component {
 
       const codePromises = featureTypes.map(async (type) => {
         try {
-          const codes = await this.api.get(
-            `/municipalities/${municipalityId}/building-feature-codes`,
-            { featureType: type },
+          // Use direct API service to bypass HybridAPI caching issues with query parameters
+          const response = await this.assessing.api.get(
+            `/municipalities/${this.municipality.currentMunicipality.id}/building-feature-codes?featureType=${type}`,
           );
-          return { type, codes };
+          console.log(`Loaded ${type} codes:`, response);
+          return { type, codes: response };
         } catch (error) {
           console.warn(`Error loading ${type} codes:`, error);
           return { type, codes: [] };
@@ -217,6 +120,9 @@ export default class BuildingEditModalComponent extends Component {
       console.log('Feature codes count by type:');
       Object.keys(this.featureCodes).forEach((type) => {
         console.log(`- ${type}:`, this.featureCodes[type]?.length || 0);
+        if (this.featureCodes[type]?.length > 0) {
+          console.log(`  Sample ${type} code:`, this.featureCodes[type][0]);
+        }
       });
     } catch (error) {
       console.error('Error loading building feature codes:', error);
@@ -227,57 +133,11 @@ export default class BuildingEditModalComponent extends Component {
 
   async loadBuildingCodes() {
     try {
-      // Get municipality ID from property with fallbacks
-      let municipalityId =
-        this.args.property?.municipality_id ||
-        this.args.property?.municipalityId ||
-        this.args.property?.municipality?.id ||
-        this.args.property?.municipality?._id;
-
-      // If still no municipality ID, try to get it from municipality service
-      if (!municipalityId) {
-        try {
-          // Try to get municipality from the municipality service
-          const currentMunicipality = this.municipality.current;
-          if (currentMunicipality) {
-            municipalityId = currentMunicipality.id || currentMunicipality._id;
-          } else {
-            // Try to resolve from URL slug
-            const url = window.location.pathname;
-            const match = url.match(/\/m\/([^\/]+)/);
-            const municipalitySlug = match ? match[1] : null;
-
-            if (municipalitySlug) {
-              try {
-                const municipality =
-                  await this.municipality.loadMunicipality(municipalitySlug);
-                if (municipality) {
-                  municipalityId = municipality.id || municipality._id;
-                }
-              } catch (error) {
-                console.warn(
-                  'Error resolving municipality slug for building codes:',
-                  error,
-                );
-              }
-            }
-          }
-        } catch (error) {
-          console.warn('Could not get municipality ID from service:', error);
-        }
-      }
-
-      if (!municipalityId) {
-        console.warn('No municipality ID available for loading building codes');
-        return;
-      }
-
-      // Load building codes
-      const buildingCodesResponse = await this.api.get(
-        `/municipalities/${municipalityId}/building-codes`,
+      // Use direct API to get building codes (base types) from the correct endpoint
+      const response = await this.assessing.api.get(
+        `/municipalities/${this.municipality.currentMunicipality.id}/building-codes`,
       );
-
-      this.buildingCodes = buildingCodesResponse?.buildingCodes || [];
+      this.buildingCodes = response.buildingCodes || [];
       console.log('Loaded building codes:', this.buildingCodes);
     } catch (error) {
       console.error('Error loading building codes:', error);
@@ -352,31 +212,15 @@ export default class BuildingEditModalComponent extends Component {
         generator: this.buildingData.generator?.toUpperCase() || '',
       };
 
-      // Make API call to update building assessment
-      const response = await this.api.patch(
-        `/properties/${propertyId}/assessment/building`,
-        apiData,
-        {
-          loadingMessage: 'Saving building assessment...',
-        },
-      );
+      // Get current card number to ensure we're updating the correct card
+      const cardNumber = this.args.property?.current_card || 1;
 
-      // Clear cached data for this property to ensure fresh data on refresh
-      if (this.assessing.localApi && this.assessing.localApi.clearCache) {
-        const cardNumber = this.args.property?.current_card || 1;
-        const cacheKeys = [
-          `_properties_${propertyId}_card_${cardNumber}`,
-          `_properties_${propertyId}_assessment_building_card_${cardNumber}`,
-          `_properties_${propertyId}_assessment_building`,
-        ];
-        cacheKeys.forEach((key) => {
-          try {
-            this.assessing.localApi.clearCache(key);
-          } catch (e) {
-            console.warn('Failed to clear cache key:', key, e);
-          }
-        });
-      }
+      // Use assessing service to update building assessment
+      const response = await this.assessing.updateBuildingAssessment(
+        propertyId,
+        cardNumber,
+        apiData,
+      );
 
       // Update the buildingAssessment args to show the latest calculation data
       if (response.assessment) {

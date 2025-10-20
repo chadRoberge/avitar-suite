@@ -95,8 +95,8 @@
     <div class="property-record-features-section" style="border-right: 1px black solid;">
       <div class="avitar-flex avitar-flex-row">
         <div class="avitar-flex-5 property-record-features-section property-record-section">
-          <div class="avitar-text-center">
-            <h5>EXTRA FEATURES VALUATION</h5>
+          <div class="avitar-text-center avitar-px-2">
+            <h5 class="avitar-m-0">EXTRA FEATURES VALUATION</h5>
           </div>
           <div class="avitar-pl-1 avitar-pr-1">
             {{#if this.hasFeatures}}
@@ -159,6 +159,44 @@
                 </div>
               </div>
               {{/each}}
+              <div class="avitar-flex avitar-flex-row property-record-table-row">
+                {{!-- Feature Type --}}
+                <div class="avitar-flex-8">
+                  
+                </div>
+                {{!-- Units --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+                  
+                </div>
+                {{!-- Length x Width --}}
+                <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                  
+                </div>
+                {{!-- Size Adj --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+                  
+                </div>
+                {{!-- Rate --}}
+                <div class="avitar-flex-3 avitar-flex avitar-justify-end">
+          
+                </div>
+                {{!-- Condition --}}
+                <div class="avitar-flex-3 avitar-text-right">
+                  <div class="avitar-pr-1">
+                    
+                  </div>
+                </div>
+                {{!-- Tax Value --}}
+                <div class="avitar-flex-4 avitar-flex avitar-justify-end avitar-border-t border-black">
+                  ${{number-format this.currentYearValues.features}}
+                </div>
+                {{!-- Notes --}}
+                <div class="avitar-flex-8">
+                  <div class="avitar-pl-1">
+                    
+                  </div>
+                </div>
+              </div>
             </div>
             {{else}}
             <div class="avitar-text-center avitar-text-muted avitar-py-8">
@@ -169,14 +207,40 @@
           </div>
         </div>
         <div class="avitar-flex-2">
-          <div class="property-record-section" style="min-height: 1.25in;">
+          <div class="property-record-section" style="min-height: 1in;">
             <div class="avitar-text-center">
               <h5>MUNICIPAL SOFTWARE BY AVITAR</h5>
             </div>
           </div>
-          <div class="property-record-section" style="min-height: 1.25in;">
+          <div class="property-record-section" style="min-height: 1.5in;">
             <div class="avitar-text-center">
-              <h5>PARCEL TOTAL TAXABLE VALUE</h5>
+              <h5>CARD {{@cardNumber}} TAXABLE VALUE</h5>
+            </div>
+            <div class="avitar-pl-1 avitar-pr-1 avitar-pt-2">
+              {{!-- Header row --}}
+              <div class="avitar-flex avitar-flex-row avitar-text-xs avitar-font-semibold avitar-border-b avitar-pb-1 avitar-mb-1">
+                <div class="avitar-flex-1">Year</div>
+                <div class="avitar-flex-2 avitar-text-right">Building</div>
+                <div class="avitar-flex-2 avitar-text-right">Features</div>
+                <div class="avitar-flex-2 avitar-text-right">Land</div>
+              </div>
+              {{!-- Data rows --}}
+              {{#each this.assessedValuesHistory as |yearData|}}
+              <div class="avitar-flex avitar-flex-row avitar-text-xs {{if yearData.isCurrent 'avitar-font-semibold'}}">
+                <div class="avitar-flex-1">{{yearData.year}}</div>
+                <div class="avitar-flex-2 avitar-text-right">${{number-format yearData.building 0}}</div>
+                <div class="avitar-flex-2 avitar-text-right">${{number-format yearData.features 0}}</div>
+                <div class="avitar-flex-2 avitar-text-right">${{number-format yearData.land 0}}</div>
+              </div>
+              <div class="avitar-flex avitar-flex-row avitar-text-xs {{if yearData.isCurrent 'avitar-font-semibold'}}">
+                <div class="avitar-flex-3 avitar-text-right avitar-pr-2">Card Total:</div>
+                <div class="avitar-flex-2 avitar-text-right avitar-border-t">${{number-format yearData.cardTotal 0}}</div>
+              </div>
+              <div class="avitar-flex avitar-flex-row avitar-text-xs {{if yearData.isCurrent 'avitar-font-semibold'}} avitar-mb-1 avitar-bg-blue-50">
+                <div class="avitar-flex-3 avitar-text-right avitar-pr-2 avitar-font-bold">Parcel Total (All Cards):</div>
+                <div class="avitar-flex-2 avitar-text-right avitar-font-bold">${{number-format yearData.parcelTotal 0}}</div>
+              </div>
+              {{/each}}
             </div>
           </div>
         </div>
@@ -214,6 +278,7 @@
           </div>
         </div>
         {{!-- Flexbox Table Header --}}
+        {{#if this.hasBaseLandValue}}
         <div class="avitar-flex-row avitar-flex property-record-table-header avitar-border-b">
           <div class="avitar-text-left avitar-flex-8">Land Type</div>
           <div class="avitar-text-right avitar-flex-4">Units</div>
@@ -233,108 +298,205 @@
             <div class="avitar-pl-1">Notes</div>
           </div>
         </div>
+        {{else}}
+          <div class="avitar-flex-1">
+              <em>This card is part of a {{@landAssessment.assessment.calculated_totals.totalAcreage}} acre parcel.  Card 1 will have the land information and value.</em>
+            </div>
+        {{/if}}
         {{!-- Land Use Details --}}
         <div class="avitar-flex-table-body">
-          {{#each @landAssessment.assessment.land_use_details as |detail index|}}
-          <div class="avitar-flex avitar-flex-row property-record-table-row">
-            {{!-- Land Use Type --}}
-            <div class="avitar-flex-8">
-              {{detail.land_use_type}}
+          {{#if this.hasBaseLandValue}}
+            {{#each @landAssessment.assessment.land_use_details as |detail index|}}
+            <div class="avitar-flex avitar-flex-row property-record-table-row">
+              {{!-- Land Use Type --}}
+              <div class="avitar-flex-8">
+                {{detail.land_use_type}}
+              </div>
+              {{!-- Size with Units --}}
+              <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                {{detail.size}} {{detail.size_unit}}
+              </div>
+              {{!-- Base Rate --}}
+              <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                {{#if detail.is_excess_acreage}}
+                {{number-format detail.baseRate 0}}
+                {{else}}
+                {{number-format detail.baseValue 0}}
+                {{/if}}
+              </div>
+              {{!-- NC --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="avitar-pr-1">
+                  {{#if detail.is_excess_acreage}}
+                  X
+                  {{else}}
+                  {{@landAssessment.assessment.neighborhood_code}}
+                  {{/if}}
+                </div>
+              </div>
+              {{!-- Adjustment --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="">
+                  {{#if detail.is_excess_acreage}}
+                  {{subtract 100 detail.economyOfScaleFactor}}
+                  {{else}}
+                  {{multiply detail.neighborhoodFactor 100}}
+                  {{/if}}
+                </div>
+              </div>
+              {{!-- Site --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="avitar-pr-1">
+                  {{#if (eq index 0)}}
+                  {{multiply 100 detail.siteFactor}}
+                  {{/if}}
+                </div>
+              </div>
+              {{!-- Driveway --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="avitar-pr-1">
+                  {{#if (eq index 0)}}
+                  {{multiply 100 detail.drivewayFactor}}
+                  {{/if}}
+                </div>
+              </div>
+              {{!-- Road --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="avitar-pr-1">
+                  {{#if (eq index 0)}}
+                  {{multiply 100 detail.roadFactor}}
+                  {{/if}}
+                </div>
+              </div>
+              {{!-- Topography --}}
+              <div class="avitar-flex-4 avitar-text-right">
+                <div class="">
+                  <uppercase>{{detail.topography}}-{{multiply 100 detail.topographyFactor}}</uppercase>
+                </div>
+              </div>
+              {{!-- Condition --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                <div class="avitar-pr-1">
+                  {{detail.condition}}
+                </div>
+              </div>
+              {{!-- Market Value --}}
+              <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                ${{number-format detail.marketValue}}
+              </div>
+              {{!-- SPI --}}
+              <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+                {{detail.spi}}
+              </div>
+              {{!-- Recreational --}}
+              <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+              </div>
+              {{!-- Tax Value --}}
+              <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+                ${{number-format detail.assessedValue}}
+              </div>
+              {{!-- Notes --}}
+              <div class="avitar-flex-12">
+                <div class="avitar-pl-1">
+                  {{detail.notes}}
+                </div>
+              </div>
             </div>
-            {{!-- Size with Units --}}
-            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
-              {{detail.size}} {{detail.size_unit}}
+            {{/each}}
+          {{else}}
+          {{!-- Show message when card has no base land value --}}
+          {{#if (or this.hasViewValue this.hasWaterfrontValue)}}
+          <div class="avitar-flex avitar-flex-row property-record-table-row avitar-text-center avitar-text-muted avitar-py-2">
+            <div class="avitar-flex-1">
+              <em>This card is a part of a multi-card parcel and has no base land (acreage) value. Only view/waterfront values are allocated to this card.</em>
             </div>
+          </div>
+          {{/if}}
+          {{/if}}
+          {{#if this.hasViewValue}}
+          {{#each @landAssessment.assessment.view_details as |detail index|}}
+            <div class="avitar-flex avitar-flex-row property-record-table-row">
+            {{!-- View --}}
+            <div class="avitar-flex-12">
+              <uppercase>View  {{detail.subjectDisplayText}}/{{detail.widthDisplayText}}/{{detail.depthDisplayText}}/{{detail.distanceDisplayText}}</uppercase>
+            </div>
+            {{!-- Intentionally Blank --}}
+            {{!-- <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              
+            </div> --}}
             {{!-- Base Rate --}}
             <div class="avitar-flex-4 avitar-flex avitar-justify-end">
-              {{#if detail.is_excess_acreage}}
-              {{number-format detail.baseRate 0}}
-              {{else}}
               {{number-format detail.baseValue 0}}
-              {{/if}}
             </div>
-            {{!-- NC --}}
+            {{!-- Subject --}}
             <div class="avitar-flex-2 avitar-text-right">
               <div class="avitar-pr-1">
-                {{#if detail.is_excess_acreage}}
                 X
-                {{else}}
-                {{@landAssessment.assessment.neighborhood_code}}
-                {{/if}}
               </div>
             </div>
-            {{!-- Adjustment --}}
-            <div class="avitar-flex-2 avitar-text-right">
+            {{!-- Subject --}}
+            <div class="avitar-flex-3 avitar-text-right">
               <div class="">
-                {{#if detail.is_excess_acreage}}
-                {{subtract 100 detail.economyOfScaleFactor}}
-                {{else}}
-                {{multiply detail.neighborhoodFactor 100}}
-                {{/if}}
+                {{multiply 100 detail.subjectFactor}}
               </div>
             </div>
-            {{!-- Site --}}
-            <div class="avitar-flex-2 avitar-text-right">
+            {{!-- Width --}}
+            <div class="avitar-flex-3 avitar-text-right">
               <div class="avitar-pr-1">
-                {{#if (eq index 0)}}
-                {{multiply 100 detail.siteFactor}}
-                {{/if}}
+                {{multiply 100 detail.widthFactor}}
               </div>
             </div>
-            {{!-- Driveway --}}
-            <div class="avitar-flex-2 avitar-text-right">
+            {{!-- Depth --}}
+            <div class="avitar-flex-3 avitar-text-right">
               <div class="avitar-pr-1">
-                {{#if (eq index 0)}}
-                {{multiply 100 detail.drivewayFactor}}
-                {{/if}}
+                {{multiply 100 detail.depthFactor}}
               </div>
             </div>
-            {{!-- Road --}}
-            <div class="avitar-flex-2 avitar-text-right">
+            {{!-- Distance --}}
+            <div class="avitar-flex-3 avitar-text-right">
               <div class="avitar-pr-1">
-                {{#if (eq index 0)}}
-                {{multiply 100 detail.roadFactor}}
-                {{/if}}
+                {{multiply 100 detail.distanceFactor}}
               </div>
             </div>
-            {{!-- Topography --}}
-            <div class="avitar-flex-4 avitar-text-right">
+            {{!-- Intentially Blank --}}
+            <div class="avitar-text-right">
               <div class="">
-                <uppercase>{{detail.topography}}-{{multiply 100 detail.topographyFactor}}</uppercase>
+                
               </div>
             </div>
             {{!-- Condition --}}
             <div class="avitar-flex-2 avitar-text-right">
               <div class="avitar-pr-1">
-                {{detail.condition}}
+                {{detail.conditionFactor}}
               </div>
             </div>
             {{!-- Market Value --}}
             <div class="avitar-flex-4 avitar-flex avitar-justify-end">
-              ${{number-format detail.marketValue}}
+              ${{number-format detail.calculatedValue}}
             </div>
-            {{!-- SPI --}}
+            {{!-- Intentially Left Blank --}}
             <div class="avitar-flex-2 avitar-flex avitar-justify-end">
-              {{detail.spi}}
+              
             </div>
-            {{!-- Recreational --}}
+            {{!-- Intentially Left Blank --}}
             <div class="avitar-flex-2 avitar-flex avitar-justify-end">
             </div>
             {{!-- Tax Value --}}
             <div class="avitar-flex-4 avitar-flex avitar-justify-end">
-              ${{number-format detail.assessedValue}}
+              ${{number-format detail.calculatedValue}}
             </div>
             {{!-- Notes --}}
             <div class="avitar-flex-12">
               <div class="avitar-pl-1">
-                {{detail.notes}}
+                {{detail.conditionNotes}}
               </div>
             </div>
           </div>
           {{/each}}
+          {{/if}}
         </div>
         {{!-- Calculated Totals Section - Aligned with columns --}}
-        {{#if @landAssessment.assessment.calculated_totals}}
+        {{#if (and @landAssessment.assessment.calculated_totals this.hasBaseLandValue)}}
         <div class="avitar-border-t avitar-bg-gray-50">
           <div class="avitar-flex avitar-flex-row property-record-table-row">
             <div class="avitar-flex-8 avitar-text-right avitar-text-muted">
@@ -357,12 +519,12 @@
             </div>
             <div class="avitar-flex-2"></div>
             <div class="avitar-flex-4 avitar-border-t border-black avitar-font-semibold avitar-text-secondary avitar-flex avitar-justify-end">
-              ${{number-format @landAssessment.assessment.calculated_totals.totalMarketValue}}
+              ${{number-format @landAssessment.assessment.market_value}}
             </div>
             <div class="avitar-flex-2"></div>
             <div class="avitar-flex-2"></div>
             <div class="avitar-flex-4 avitar-border-t border-black avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
-              ${{number-format @landAssessment.assessment.calculated_totals.totalAssessedValue}}
+              ${{number-format (if this.currentYearValues this.currentYearValues.land @landAssessment.assessment.taxable_value)}}
             </div>
             <div class="avitar-flex-12">
               {{!-- Notes column - empty --}}
@@ -379,10 +541,8 @@
       </div>
     </div>
   </div>
-
   {{!-- Page Break --}}
   <div style="page-break-before: always;"></div>
-
   {{!-- Page 2 Content --}}
   {{!-- Page 2 Header --}}
   <div class="property-record-card__header">
@@ -410,7 +570,6 @@
       </div>
     </div>
   </div>
-
   {{!-- Property Features Section --}}
   <div class="avitar-flex avitar-flex-row">
     <div class="avitar-flex-4">
@@ -448,6 +607,174 @@
         <div class="avitar-text-center">
           <h5>BUILDING DETAILS</h5>
         </div>
+        {{#if this.hasBuildingData}}
+        {{!-- Building Details Breakdown Table --}}
+        <div class="avitar-pl-1 avitar-pr-1">
+          {{!-- Model Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Model:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-medium">
+              {{@buildingAssessment.assessment.story_height}} {{@buildingAssessment.assessment.building_model}}
+            </div>
+          </div>
+          {{!-- Roof Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Roof:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.roof_style}} {{@buildingAssessment.assessment.roof_cover}}
+            </div>
+          </div>
+          {{!-- Exterior Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Ext:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.exterior_wall_1}} /
+              {{@buildingAssessment.assessment.exterior_wall_2}}
+            </div>
+          </div>
+          {{!-- Interior Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Int:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.interior_wall_1}} /
+              {{@buildingAssessment.assessment.interior_wall_2}}
+            </div>
+          </div>
+          {{!-- Floor Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Floor:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.flooring_1}} /
+              {{@buildingAssessment.assessment.flooring_2}}
+            </div>
+          </div>
+          {{!-- Heating Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Heat:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.heating_fuel}} /
+              {{@buildingAssessment.assessment.heating_type}}
+            </div>
+          </div>
+          {{!-- Bedrooms & Bathrooms Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Bedrms:
+            </div>
+            <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.bedrooms}}<br>
+            </div>
+            <div class="avitar-flex-3">
+              <div class="avitar-flex avitar-flex-row">
+                <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
+                  Full Baths:
+                </div>
+                <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+                  {{@buildingAssessment.assessment.full_baths}}<br>
+                </div>
+              </div>
+              <div class="avitar-flex avitar-flex-row">
+                <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
+                  Half Baths:
+                </div>
+                <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+                  {{@buildingAssessment.assessment.half_baths}}<br>
+                </div>
+              </div>
+            </div>
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Fixtures:
+            </div>
+            <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{or @buildingAssessment.assessment.bath_fixtures 0}}<br>
+            </div>
+          </div>
+          {{!-- Extra Kitchen & Solar Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex avitar-flex-1 avitar-flex-row">
+              <div class="avitar-flex-1"></div>
+              <div class="avitar-flex avitar-flex-5 avitar-flex-row">
+                <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+                  Extra Kitchen:
+                </div>
+                <div class="avitar-flex-2 avitar-pl-1 avitar-font-bold avitar-text-success">
+                  {{or @buildingAssessment.assessment.extra_kitchen 0}}
+                </div>
+              </div>
+              <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+                Solar:
+              </div>
+              <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+                {{or @buildingAssessment.assessment.solar_coverage "No"}}
+              </div>
+            </div>
+          </div>
+          {{!-- AC & Generator/Battery Storage --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex avitar-flex-1 avitar-flex-row">
+              <div class="avitar-flex-4 avitar-text-right avitar-font-bold avitar-text-success">
+                A/C:
+              </div>
+              <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
+                {{or @buildingAssessment.assessment.air_conditioning "No"}}
+              </div>
+              <div class="avitar-flex avitar-flex-9 avitar-flex-row">
+                <div class="avitar-flex-7 avitar-text-right avitar-font-bold avitar-text-success">
+                  Generator:
+                </div>
+                <div class="avitar-flex-2 avitar-pl-1 avitar-font-bold avitar-text-success">
+                  {{or @buildingAssessment.assessment.generator "No"}}
+                </div>
+              </div>
+              <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+                Battery:
+              </div>
+              <div class="avitar-flex-3 avitar-pl-1 avitar-font-bold avitar-text-success">
+                {{or @buildingAssessment.assessment.battery_coverage "No"}}
+              </div>
+            </div>
+          </div>
+          {{!-- Quality Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Quality:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.quality_grade}}
+            </div>
+          </div>
+          {{!-- Commercial Wall Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Comm Wall:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.frame}}
+            </div>
+          </div>
+          {{!-- Size Adj & Base Rate Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+              Size Adj:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.calculation_details.sizeAdjustmentFactor}}
+            </div>
+          </div>
+        </div>
+        {{/if}}
       </div>
     </div>
   </div>
@@ -461,25 +788,15 @@
         {{#each @sketchData as |sketch|}}
         <div class="property-record-sketch__item" style="height: 100%; border: 1px solid #ddd; margin-bottom: 8px;">
           {{#if sketch.shapes}}
-            <Assessing::SketchCanvas
-              @shapes={{sketch.shapes}}
-              @sketch={{sketch}}
-              @drawingMode={{null}}
-              @selectedShape={{null}}
-              @onShapeAdd={{null}}
-              @onShapeSelect={{null}}
-              @onFinishPolygon={{null}}
-              @onForceUpdate={{null}}
-              @isResponsive={{true}}
-            />
+          <Assessing::SketchCanvas @shapes={{sketch.shapes}} @sketch={{sketch}} @drawingMode={{null}} @selectedShape={{null}} @onShapeAdd={{null}} @onShapeSelect={{null}} @onFinishPolygon={{null}} @onForceUpdate={{null}} @isResponsive={{true}} />
           {{else}}
-            <div class="avitar-flex avitar-items-center avitar-justify-center avitar-h-full avitar-text-center avitar-text-muted">
-              <div>
-                <i class="fas fa-drafting-compass avitar-text-4xl avitar-mb-2"></i>
-                <div>{{sketch.name}}</div>
-                <small>No shapes in sketch</small>
-              </div>
+          <div class="avitar-flex avitar-items-center avitar-justify-center avitar-h-full avitar-text-center avitar-text-muted">
+            <div>
+              <i class="fas fa-drafting-compass avitar-text-4xl avitar-mb-2"></i>
+              <div>{{sketch.name}}</div>
+              <small>No shapes in sketch</small>
             </div>
+          </div>
           {{/if}}
         </div>
         {{/each}}
@@ -499,21 +816,184 @@
         <div class="avitar-text-center">
           <h5>BUILDING SUB AREA DETAILS</h5>
         </div>
-        {{#if this.hasBuildingData}}
-        {{!-- Display building assessment data --}}
-        <div class="property-record-grid">
-          {{!-- Building data content would go here --}}
+        <div class="avitar-pl-1 avitar-pr-1">
+          {{#if this.hasSketchData}}
+          {{!-- Flexbox Table Header --}}
+          <div class="avitar-flex-row avitar-flex property-record-table-header avitar-border-b">
+            <div class="avitar-text-left avitar-flex-1">ID</div>
+            <div class="avitar-text-left avitar-flex-5">Description</div>
+            <div class="avitar-text-right avitar-flex-2">Area</div>
+            <div class="avitar-text-right avitar-flex-1">Adj.</div>
+            <div class="avitar-text-right avitar-flex-2">Effect.</div>
+          </div>
+          {{!-- Building Sub Area Details --}}
+          <div class="avitar-flex-table-body">
+            {{#each this.buildingSubAreas as |subArea|}}
+            <div class="avitar-flex avitar-flex-row property-record-table-row">
+              {{!-- Area Code --}}
+              <div class="avitar-flex-1">
+                {{subArea.code}}
+              </div>
+              {{!-- Description --}}
+              <div class="avitar-flex-6 avitar-pl-1">
+                {{subArea.description}}
+              </div>
+              {{!-- Area --}}
+              <div class="avitar-flex-2 avitar-text-right avitar-pr-1">
+                {{number-format subArea.area 0}}
+              </div>
+              {{!-- Adjustment Factor --}}
+              <div class="avitar-flex-1 avitar-text-right">
+                {{number-format subArea.adjustment 2}}
+              </div>
+              {{!-- Effective Area --}}
+              <div class="avitar-flex-2 avitar-text-right">
+                {{number-format subArea.effectiveArea 0}}
+              </div>
+            </div>
+            {{/each}}
+          </div>
+          {{!-- Totals Section --}}
+          <div class="avitar-border-t avitar-bg-gray-50">
+            <div class="avitar-flex avitar-flex-row property-record-table-row">
+              <div class="avitar-flex-6 avitar-text-left avitar-font-semibold">
+                GLA: {{number-format this.sketchTotals.totalGLA 0}}
+              </div>
+              <div class="avitar-flex-2 avitar-text-right avitar-font-semibold">
+                {{number-format this.sketchTotals.totalArea 0}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-right avitar-font-semibold">
+              </div>
+              <div class="avitar-flex-2 avitar-text-right avitar-font-semibold">
+                {{number-format this.sketchTotals.totalEffectiveArea 0}}
+              </div>
+            </div>
+          </div>
+          {{else}}
+          <div class="avitar-text-center avitar-text-muted avitar-py-4">
+            <div class="avitar-text-xs">No building sub-area details available</div>
+            <div class="avitar-text-xs avitar-mt-1">Create sketches with area descriptions to display here</div>
+          </div>
+          {{/if}}
         </div>
-        {{/if}}
       </div>
       <div class="avitar-flex-1 property-record-section" style="min-height: 2.25in;">
         <div class="avitar-text-center">
           <h5>BASE YEAR BUILDING VALUATION</h5>
         </div>
         {{#if this.hasBuildingData}}
-        {{!-- Display building valuation data --}}
-        <div class="property-record-grid">
-          {{!-- Building valuation content would go here --}}
+        {{!-- Base Year Building Value Depreciation Breakdown Table --}}
+        <div class="avitar-pl-1 avitar-pr-1">
+          {{!-- Market Cost New Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
+              Market Cost New:
+            </div>
+            <div class="avitar-flex-2 avitar-font-bold avitar-text-success">
+            </div>
+            <div class="avitar-flex-1 avitar-text-right avitar-font-medium">
+              ${{number-format @buildingAssessment.assessment.replacement_cost_new}}
+            </div>
+          </div>
+          {{!-- Year Built Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
+              Year Built:
+            </div>
+            <div class="avitar-flex-2 avitar-font-bold avitar-text-success">
+            </div>
+            <div class="avitar-flex-1 avitar-text-right avitar-font-medium">
+              {{@buildingAssessment.assessment.year_built}}
+            </div>
+          </div>
+          {{!-- Condition For Age Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              Condition for Age:
+            </div>
+            <div class="avitar-flex-2">
+              {{@buildingAssessment.depreciation.normal.description}}
+            </div>
+            <div class="avitar-flex-1 avitar-text-center avitar-text-warning avitar-font-medium avitar-text-right">
+              {{number-format @buildingAssessment.depreciation.normal.percentage 2}}%
+            </div>
+          </div>
+          {{!-- Physical Depreciation Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              Physical:
+            </div>
+            <div class="avitar-flex-2 ">
+              {{@buildingAssessment.depreciation.physical.notes}}
+            </div>
+            <div class="avitar-flex-1  avitar-text-warning avitar-font-medium avitar-text-right">
+              {{number-format @buildingAssessment.depreciation.physical.percentage 1}}%
+            </div>
+          </div>
+          {{!-- Functional Depreciation Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              Functional:
+            </div>
+            <div class="avitar-flex-2 ">
+              {{@buildingAssessment.depreciation.functional.notes}}
+            </div>
+            <div class="avitar-flex-1  avitar-text-warning avitar-font-medium avitar-text-right">
+              {{number-format @buildingAssessment.depreciation.functional.percentage 1}}%
+            </div>
+          </div>
+          {{!-- Economic Depreciation Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              Economic:
+            </div>
+            <div class="avitar-flex-2 ">
+              {{@buildingAssessment.depreciation.economic.notes}}
+            </div>
+            <div class="avitar-flex-1  avitar-text-warning avitar-font-medium avitar-text-right">
+              {{number-format @buildingAssessment.depreciation.economic.percentage 1}}%
+            </div>
+          </div>
+          {{!-- Temporary Depreciation Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
+              Temporary:
+            </div>
+            <div class="avitar-flex-2">
+              {{@buildingAssessment.depreciation.temporary.notes}}
+            </div>
+            <div class="avitar-flex-1 avitar-text-warning avitar-font-medium avitar-text-right">
+              {{number-format @buildingAssessment.depreciation.temporary.percentage 1}}%
+            </div>
+          </div>
+          {{!-- Total Depreciation Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-2 avitar-border-b avitar-border-gray-400 avitar-bg-gray-50 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-font-bold">
+              Total Depreciation:
+            </div>
+            <div class="avitar-flex-2">
+            </div>
+            <div class="avitar-flex-1 avitar-font-bold avitar-text-danger avitar-text-right">
+              {{number-format (add
+              @buildingAssessment.depreciation.normal.percentage
+              @buildingAssessment.depreciation.physical.percentage
+              @buildingAssessment.depreciation.functional.percentage
+              @buildingAssessment.depreciation.economic.percentage
+              @buildingAssessment.depreciation.temporary.percentage
+              ) 2}}%
+            </div>
+          </div>
+          {{!-- Final Building Value Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-2 avitar-bg-green-50 avitar-text-xs">
+            <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
+              Building Value:
+            </div>
+            <div class="avitar-flex-2">
+            </div>
+            <div class="avitar-flex- avitar-text-right avitar-font-bold avitar-text-success avitar-text-right">
+              ${{number-format (if this.currentYearValues this.currentYearValues.building @buildingAssessment.assessment.assessed_value)}}
+            </div>
+          </div>
         </div>
         {{/if}}
       </div>

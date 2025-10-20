@@ -91,7 +91,22 @@ export default class PropertySidebarComponent extends Component {
     this.startPropertyPrefetching(property);
 
     // Update the global property selection service
-    this.propertySelection.setSelectedProperty(property);
+    // Preserve cards data if re-selecting the same property
+    const currentProperty = this.propertySelection.selectedProperty;
+    const isSameProperty = currentProperty && currentProperty.id === property.id;
+
+    let propertyToSet = property;
+    if (isSameProperty && currentProperty.cards && !property.cards) {
+      // Preserve cards data and current_card when re-selecting same property
+      console.log('🃏 Preserving cards data for property', property.id);
+      propertyToSet = {
+        ...property,
+        cards: currentProperty.cards,
+        current_card: currentProperty.current_card,
+      };
+    }
+
+    this.propertySelection.setSelectedProperty(propertyToSet);
 
     // Get the current route name
     const currentRouteName = this.router.currentRouteName;
@@ -117,18 +132,21 @@ export default class PropertySidebarComponent extends Component {
               this.router.transitionTo(
                 `municipality.assessing.${currentView}.property`,
                 property.id,
+                { queryParams: this.router.currentRoute.queryParams },
               );
             } else if (routeParts[2] === 'properties') {
               // If in properties list view, go to general assessment view for the property
               this.router.transitionTo(
                 'municipality.assessing.general.property',
                 property.id,
+                { queryParams: this.router.currentRoute.queryParams },
               );
             } else {
               // Default to general assessment view for the property
               this.router.transitionTo(
                 'municipality.assessing.general.property',
                 property.id,
+                { queryParams: this.router.currentRoute.queryParams },
               );
             }
           } else if (moduleName === 'building-permits') {
@@ -217,6 +235,8 @@ export default class PropertySidebarComponent extends Component {
       // Use assessing service which implements local-first caching
       const response = await this.assessing.getProperties();
 
+      console.log('🏘️ Raw properties response:', response);
+
       // Handle different response formats (cached vs server)
       if (response?.properties) {
         // Server format: { success: true, properties: [...] }
@@ -227,6 +247,9 @@ export default class PropertySidebarComponent extends Component {
       } else {
         this.properties = [];
       }
+
+      console.log(`🏘️ Loaded ${this.properties.length} properties`);
+      console.log('🏘️ First property sample:', this.properties[0]);
 
       // Reset query mode when loading fresh properties
       this.isQueryMode = false;
@@ -242,18 +265,33 @@ export default class PropertySidebarComponent extends Component {
   }
 
   groupProperties() {
+    console.log(`🗂️ Starting groupProperties with ${this.properties.length} properties`);
+    console.log(`🗂️ Group by: ${this.groupBy}`);
+
     const grouped = {};
 
     switch (this.groupBy) {
       case 'pid':
-        this.properties.forEach((property) => {
+        this.properties.forEach((property, index) => {
           const map = property.mapNumber || 'Unknown';
+          if (index < 3) {
+            console.log(`🗂️ Property ${index}:`, {
+              id: property.id,
+              mapNumber: property.mapNumber,
+              lotSubDisplay: property.lotSubDisplay,
+              pid_formatted: property.pid_formatted,
+              pid_raw: property.pid_raw
+            });
+          }
           if (!grouped[map]) grouped[map] = [];
           grouped[map].push(property);
         });
 
+        console.log(`🗂️ Grouped into ${Object.keys(grouped).length} maps:`, Object.keys(grouped));
+
         // Sort each map group by lot-sub display (server already formatted)
         Object.keys(grouped).forEach((map) => {
+          console.log(`🗂️ Map ${map} has ${grouped[map].length} properties`);
           grouped[map].sort((a, b) => {
             // Use the lotSubDisplay from server or fallback to string comparison
             const displayA = a.lotSubDisplay || a.pid_formatted || '';
@@ -304,7 +342,54 @@ export default class PropertySidebarComponent extends Component {
         break;
     }
 
-    this.groupedProperties = grouped;
+    // Sort the grouped object keys alphabetically for consistent display order
+    const sortedGrouped = {};
+    const sortedKeys = Object.keys(grouped).sort((a, b) => {
+      // Handle special cases for street sorting
+      if (this.groupBy === 'street') {
+        // Always put 'Unknown/Vacant' at the end
+        if (a === 'Unknown/Vacant') return 1;
+        if (b === 'Unknown/Vacant') return -1;
+        // Sort street names alphabetically
+        return a.localeCompare(b, undefined, { numeric: true });
+      }
+
+      // Handle special cases for lastname sorting
+      if (this.groupBy === 'lastname') {
+        // Always put 'Unknown' at the end
+        if (a === 'Unknown') return 1;
+        if (b === 'Unknown') return -1;
+        // Sort letter initials alphabetically
+        return a.localeCompare(b);
+      }
+
+      // For PID grouping, sort map numbers numerically
+      if (this.groupBy === 'pid') {
+        // Always put 'Unknown' at the end
+        if (a === 'Unknown') return 1;
+        if (b === 'Unknown') return -1;
+        // Sort map numbers numerically
+        return a.localeCompare(b, undefined, { numeric: true });
+      }
+
+      // Default alphabetical sort
+      return a.localeCompare(b, undefined, { numeric: true });
+    });
+
+    // Rebuild grouped object with sorted keys
+    sortedKeys.forEach((key) => {
+      sortedGrouped[key] = grouped[key];
+    });
+
+    this.groupedProperties = sortedGrouped;
+
+    console.log(`🗂️ Final grouped properties:`, {
+      totalGroups: Object.keys(this.groupedProperties).length,
+      groups: Object.keys(this.groupedProperties).map(key => ({
+        key,
+        count: this.groupedProperties[key].length
+      }))
+    });
   }
 
   extractLastName(ownerName) {
@@ -365,7 +450,7 @@ export default class PropertySidebarComponent extends Component {
       property.id,
       this.properties,
       1, // Default card
-      null // Current year
+      null, // Current year
     );
 
     // Smart prefetch other cards for this property
@@ -384,22 +469,25 @@ export default class PropertySidebarComponent extends Component {
   setupViewportPrefetching() {
     if (!window.IntersectionObserver) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const propertyElement = entry.target;
-          const propertyId = propertyElement.dataset.propertyId;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const propertyElement = entry.target;
+            const propertyId = propertyElement.dataset.propertyId;
 
-          if (propertyId && !this.propertyCache.get(propertyId)) {
-            // Prefetch property that's becoming visible
-            this.propertyPrefetch.prefetchProperty(propertyId);
+            if (propertyId && !this.propertyCache.get(propertyId)) {
+              // Prefetch property that's becoming visible
+              this.propertyPrefetch.prefetchProperty(propertyId);
+            }
           }
-        }
-      });
-    }, {
-      rootMargin: '100px', // Start prefetching 100px before element is visible
-      threshold: 0.1
-    });
+        });
+      },
+      {
+        rootMargin: '100px', // Start prefetching 100px before element is visible
+        threshold: 0.1,
+      },
+    );
 
     // Observe property elements (would need to be called after render)
     this.intersectionObserver = observer;

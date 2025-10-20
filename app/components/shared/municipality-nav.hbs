@@ -92,9 +92,10 @@
               {{!-- Render component directly instead of link --}}
               {{component child.component property=this.selectedProperty selectedYear=this.assessmentYear onYearChange=this.onAssessmentYearChange onAddToQueue=this.addSelectedToQueue onOpenPrint=this.openPrintModal}}
             {{else if child.models}}
-              <LinkTo 
-                @route={{child.route}} 
+              <LinkTo
+                @route={{child.route}}
                 @models={{child.models}}
+                @query={{this.currentQueryParams}}
                 class="avitar-topbar__nav-link"
                 @activeClass="avitar-topbar__nav-link--active"
               >
@@ -107,8 +108,9 @@
                 {{/if}}
               </LinkTo>
             {{else}}
-              <LinkTo 
-                @route={{child.route}} 
+              <LinkTo
+                @route={{child.route}}
+                @query={{this.currentQueryParams}}
                 class="avitar-topbar__nav-link"
                 @activeClass="avitar-topbar__nav-link--active"
               >

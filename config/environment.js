@@ -46,7 +46,82 @@ module.exports = function (environment) {
 
   if (environment === 'production') {
     // Production API configuration
-    ENV.APP.API_HOST = process.env.API_HOST || 'https://avitar-suite.vercel.app';
+    ENV.APP.API_HOST =
+      process.env.API_HOST || 'https://avitar-suite.vercel.app';
+
+    // Production Performance Optimizations
+    ENV.APP.PRODUCTION_CONFIG = {
+      // Performance budgets (in milliseconds)
+      performanceBudgets: {
+        lcp: 2500, // Largest Contentful Paint
+        fid: 100, // First Input Delay
+        cls: 0.1, // Cumulative Layout Shift
+        ttfb: 600, // Time to First Byte
+      },
+
+      // Compression settings
+      compression: {
+        enabled: true,
+        level: 5, // Balanced compression
+        threshold: 1024, // 1KB minimum
+        algorithms: ['lz-string', 'gzip'],
+      },
+
+      // Cache configuration
+      cache: {
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxEntries: 1000,
+        enablePrefetch: true,
+        enableServiceWorker: true,
+      },
+
+      // Memory management
+      memory: {
+        maxUsage: 150 * 1024 * 1024, // 150MB
+        cleanupInterval: 15 * 60 * 1000, // 15 minutes
+        aggressiveCleanup: true,
+      },
+
+      // Data preloading
+      preloading: {
+        enabled: true,
+        maxConcurrent: 3,
+        prefetchProbability: 0.7,
+        predictivePreloading: true,
+      },
+
+      // Monitoring and analytics
+      monitoring: {
+        enabled: true,
+        sampleRate: 0.1, // 10% sampling
+        enableWebVitals: true,
+        enableCustomMetrics: true,
+        enableErrorTracking: true,
+      },
+
+      // Security settings
+      security: {
+        enableCSP: true,
+        enableSRI: true,
+        enableHSTS: true,
+        enableSecureHeaders: true,
+      },
+
+      // Build optimizations
+      build: {
+        enableMinification: true,
+        enableTreeShaking: true,
+        enableCodeSplitting: true,
+        enableAssetOptimization: true,
+      },
+    };
+
+    // Disable debug features in production
+    ENV.APP.LOG_ACTIVE_GENERATION = false;
+    ENV.APP.LOG_VIEW_LOOKUPS = false;
+    ENV.APP.LOG_RESOLVER = false;
+    ENV.APP.LOG_TRANSITIONS = false;
+    ENV.APP.LOG_TRANSITIONS_INTERNAL = false;
   }
 
   return ENV;

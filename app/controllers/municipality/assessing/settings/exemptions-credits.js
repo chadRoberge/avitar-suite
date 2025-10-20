@@ -28,39 +28,110 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsController ex
       elderly7579: model.exemptions.elderly7579,
       elderly80plus: model.exemptions.elderly80plus,
       ...model.limits,
+      // Display names and descriptions
+      elderly6574DisplayName:
+        model.exemptionTypes?.elderly6574DisplayName ||
+        'Elderly Exemption (65-74)',
+      elderly6574Description:
+        model.exemptionTypes?.elderly6574Description ||
+        'Property tax exemption for elderly residents aged 65-74',
+      elderly7579DisplayName:
+        model.exemptionTypes?.elderly7579DisplayName ||
+        'Elderly Exemption (75-79)',
+      elderly7579Description:
+        model.exemptionTypes?.elderly7579Description ||
+        'Property tax exemption for elderly residents aged 75-79',
+      elderly80plusDisplayName:
+        model.exemptionTypes?.elderly80plusDisplayName ||
+        'Elderly Exemption (80+)',
+      elderly80plusDescription:
+        model.exemptionTypes?.elderly80plusDescription ||
+        'Property tax exemption for elderly residents aged 80 and above',
     };
     this.disabilityExemptions = {
       blindExemption: model.exemptions.blindExemption,
       physicalHandicapExemption: model.exemptions.physicalHandicapExemption,
+      // Display names and descriptions
+      blindDisplayName:
+        model.exemptionTypes?.blindDisplayName || 'Blind Exemption',
+      blindDescription:
+        model.exemptionTypes?.blindDescription ||
+        'Property tax exemption for legally blind residents',
+      physicalHandicapDisplayName:
+        model.exemptionTypes?.physicalHandicapDisplayName ||
+        'Physical Handicap Exemption',
+      physicalHandicapDescription:
+        model.exemptionTypes?.physicalHandicapDescription ||
+        'Property tax exemption for residents with physical disabilities',
     };
-    this.veteranCredits = { ...model.credits };
+    this.veteranCredits = {
+      ...model.credits,
+      // Display names and descriptions
+      veteranDisplayName:
+        model.exemptionTypes?.veteranDisplayName || 'Standard Veteran Credit',
+      veteranDescription:
+        model.exemptionTypes?.veteranDescription ||
+        'Tax credit for qualified veterans',
+      allVeteranDisplayName:
+        model.exemptionTypes?.allVeteranDisplayName || 'All Veteran Credit',
+      allVeteranDescription:
+        model.exemptionTypes?.allVeteranDescription ||
+        'Enhanced tax credit for veterans who served in multiple conflicts',
+      disabledVeteranDisplayName:
+        model.exemptionTypes?.disabledVeteranDisplayName ||
+        'Disabled Veteran Credit',
+      disabledVeteranDescription:
+        model.exemptionTypes?.disabledVeteranDescription ||
+        'Tax credit for veterans with service-connected disabilities',
+      survivingSpouseDisplayName:
+        model.exemptionTypes?.survivingSpouseDisplayName ||
+        'Surviving Spouse Credit',
+      survivingSpouseDescription:
+        model.exemptionTypes?.survivingSpouseDescription ||
+        'Tax credit for unmarried surviving spouses of qualified veterans',
+    };
     this.institutionalExemptions = { ...model.institutionalExemptions };
   }
 
   @action
   updateElderlySettings(field, event) {
     const value = event.target.value;
+    // Determine if field should be treated as number or string
+    const isNumericField =
+      field.includes('elderly') &&
+      !field.includes('DisplayName') &&
+      !field.includes('Description');
     this.elderlyExemptions = {
       ...this.elderlyExemptions,
-      [field]: Number(value) || 0,
+      [field]: isNumericField ? Number(value) || 0 : value,
     };
   }
 
   @action
   updateDisabilitySettings(field, event) {
     const value = event.target.value;
+    // Determine if field should be treated as number or string
+    const isNumericField =
+      field.includes('Exemption') &&
+      !field.includes('DisplayName') &&
+      !field.includes('Description');
     this.disabilityExemptions = {
       ...this.disabilityExemptions,
-      [field]: Number(value) || 0,
+      [field]: isNumericField ? Number(value) || 0 : value,
     };
   }
 
   @action
   updateVeteranSettings(field, event) {
     const value = event.target.value;
+    // Determine if field should be treated as number or string
+    const isNumericField =
+      field.includes('Credit') &&
+      !field.includes('DisplayName') &&
+      !field.includes('Description');
     this.veteranCredits = {
       ...this.veteranCredits,
-      [field]: Number(value) || 0,
+      [field]: isNumericField ? Number(value) || 0 : value,
     };
   }
 
@@ -72,8 +143,9 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsController ex
         throw new Error('No municipality selected');
       }
 
+      // Use the new ExemptionType-based API
       await this.api.put(
-        `/municipalities/${municipalityId}/exemptions-credits-settings/elderly`,
+        `/municipalities/${municipalityId}/exemption-types/settings`,
         data,
         {
           loadingMessage: 'Saving elderly exemption settings...',
@@ -104,8 +176,9 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsController ex
         throw new Error('No municipality selected');
       }
 
+      // Use the new ExemptionType-based API
       await this.api.put(
-        `/municipalities/${municipalityId}/exemptions-credits-settings/disability`,
+        `/municipalities/${municipalityId}/exemption-types/settings`,
         data,
         {
           loadingMessage: 'Saving disability exemption settings...',
@@ -136,8 +209,9 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsController ex
         throw new Error('No municipality selected');
       }
 
+      // Use the new ExemptionType-based API
       await this.api.put(
-        `/municipalities/${municipalityId}/exemptions-credits-settings/veteran`,
+        `/municipalities/${municipalityId}/exemption-types/settings`,
         data,
         {
           loadingMessage: 'Saving veteran credit settings...',
@@ -223,8 +297,9 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsController ex
         throw new Error('No municipality selected');
       }
 
+      // Use the new institutional exemption types API
       await this.api.put(
-        `/municipalities/${municipalityId}/exemptions-credits-settings/institutional`,
+        `/municipalities/${municipalityId}/exemption-types/institutional`,
         data,
         {
           loadingMessage: 'Saving institutional exemption settings...',

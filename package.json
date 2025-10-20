@@ -88,6 +88,7 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "d3": "^7.9.0",
+    "dexie": "^4.2.0",
     "dotenv": "^17.2.1",
     "ember-simple-auth": "^8.0.0",
     "ember-truth-helpers": "^4.0.3",
@@ -95,7 +96,9 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "lz-string": "^1.5.0",
     "mongoose": "^8.18.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "node-fetch": "^2.7.0"
   }
 }

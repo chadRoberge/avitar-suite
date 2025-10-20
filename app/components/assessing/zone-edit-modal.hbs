@@ -91,6 +91,26 @@
           </div>
         </div>
 
+        <div class="avitar-form-group">
+          <label class="avitar-label" for="base-view-value">Base View Value</label>
+          <div class="avitar-input-group">
+            <span class="avitar-input-group__addon">$</span>
+            <input
+              id="base-view-value"
+              type="number"
+              step="0.01"
+              min="0"
+              class="avitar-input"
+              value={{this.baseViewValue}}
+              {{on "input" this.updateBaseViewValue}}
+              placeholder="10000"
+            />
+          </div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+            Base value used for view assessments in this zone
+          </div>
+        </div>
+
         <div class="avitar-modal__footer">
           <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
             Cancel

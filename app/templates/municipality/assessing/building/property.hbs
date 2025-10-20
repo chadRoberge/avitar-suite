@@ -247,139 +247,36 @@
         </div>
         <div class="avitar-card__body">
           {{!-- Year Built --}}
-          <div class="avitar-flex avitar-items-center avitar-mb-3">
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-4">
             <div class="avitar-flex-3 avitar-text-right">
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Year Built:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
               <span class="avitar-text-sm">{{@model.buildingAssessment.year_built}}</span>
             </div>
-            <div class="avitar-flex-3 avitar-text-right">
-            </div>
-          </div>
-
-          {{!-- Normal Depreciation --}}
-          <div class="avitar-mb-3">
-            <div class="avitar-flex avitar-items-start avitar-skinny">
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Normal:</span>
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-sm avitar-mb-1">
-                  {{@model.buildingAssessment.depreciation.normal.description}}
-                </div>                
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">                
-                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
-                  {{number-format @model.buildingAssessment.depreciation.normal.percentage 2}}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {{!-- Physical Depreciation --}}
-          <div class="avitar-mb-3">
-            <div class="avitar-flex avitar-items-start avitar-skinny">
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Physical:</span>
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-sm avitar-mb-1">
-                  {{@model.buildingAssessment.depreciation.physical.notes}}
-                </div>                
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">                
-                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
-                  {{number-format @model.buildingAssessment.depreciation.physical.percentage 2}}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {{!-- Functional Depreciation --}}
-          <div class="avitar-mb-3">
-            <div class="avitar-flex avitar-items-start avitar-skinny">
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Functional:</span>
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-sm avitar-mb-1">
-                  {{@model.buildingAssessment.depreciation.functional.notes}}
-                </div>                
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">                
-                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
-                  {{number-format @model.buildingAssessment.depreciation.functional.percentage 2}}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {{!-- Economic Depreciation --}}
-          <div class="avitar-mb-3">
-            <div class="avitar-flex avitar-items-start avitar-skinny">
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Economic:</span>
-              </div>
-             <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-sm avitar-mb-1">
-                  {{@model.buildingAssessment.depreciation.economic.notes}}
-                </div>                
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">                
-                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
-                  {{number-format @model.buildingAssessment.depreciation.economic.percentage 2}}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {{!-- Temporary Depreciation --}}
-          <div class="avitar-mb-4">
-            <div class="avitar-flex avitar-items-start avitar-skinny">
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Temporary:</span>
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-sm avitar-mb-1">
-                  {{@model.buildingAssessment.depreciation.temporary.notes}}
-                </div>                
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">                
-                <div class="avitar-text-sm avitar-font-semibold avitar-text-right avitar-text-warning">
-                  {{number-format @model.buildingAssessment.depreciation.temporary.percentage 2}}%
-                </div>
-              </div>
-            </div>
           </div>
 
           {{!-- Total Depreciation --}}
-          <div class="avitar-border-t avitar-pt-3 avitar-mb-3">
-            <div class="avitar-flex avitar-items-center avitar-skinny">
-              <div class="avitar-flex-3 avitar-ml-3">                          
-              </div>
-              <div class="avitar-flex-3 avitar-text-right">
-                <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Total Depreciation:</span>
-              </div>
-              <div class="avitar-flex-3 avitar-ml-3">
-                <div class="avitar-text-lg avitar-font-bold avitar-text-right avitar-text-danger">
-                  {{number-format (add 
-                    @model.buildingAssessment.depreciation.normal.percentage
-                    @model.buildingAssessment.depreciation.physical.percentage  
-                    @model.buildingAssessment.depreciation.functional.percentage
-                    @model.buildingAssessment.depreciation.economic.percentage
-                    @model.buildingAssessment.depreciation.temporary.percentage
-                  ) 2}}%
-                </div>
-              </div>
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-4">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Total Depreciation:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm avitar-font-semibold avitar-text-warning">
+                {{number-format @model.depreciation.depreciation_percentage 2}}%
+              </span>
             </div>
           </div>
 
-          {{!-- Building Value (Centered) --}}
-          <div class="avitar-text-center avitar-border-t avitar-pt-4">
-            <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Building Value</div>
-            <div class="avitar-text-3xl avitar-font-bold avitar-text-success">
-              ${{number-format @model.buildingAssessment.building_value}}
+          {{!-- Building Value --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-4">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Building Value:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-lg avitar-font-bold avitar-text-success">
+                ${{number-format @model.buildingAssessment.building_value}}
+              </span>
             </div>
           </div>
         </div>

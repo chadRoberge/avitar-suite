@@ -86,14 +86,14 @@
                 <h5 class="avitar-text-sm avitar-font-semibold avitar-text-primary avitar-mb-2">{{@model.property.taxYear}} Totals</h5>
                 <div class="avitar-space-y-2">
                   <div>
-                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Card Total</div>
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Card {{@model.property.current_card}} Total</div>
                     <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
-                      ${{number-format (add @model.property.buildingValue @model.property.landValue (or @model.property.otherValue 0))}}
+                      ${{number-format (or @model.property.current_card_assessment (add @model.property.buildingValue @model.property.landValue (or @model.property.otherValue 0)))}}
                     </div>
                   </div>
                   <div>
-                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Parcel Total</div>
-                    <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Parcel Total (All Cards)</div>
+                    <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
                       ${{number-format @model.property.totalValue}}
                     </div>
                   </div>

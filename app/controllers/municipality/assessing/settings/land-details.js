@@ -674,11 +674,15 @@ export default class LandDetailsController extends Controller {
       // Refresh status after successful recalculation
       await this.refreshLandRecalculationStatus();
     } catch (error) {
-      console.error('Error during land mass recalculation with zone adjustments:', error);
+      console.error(
+        'Error during land mass recalculation with zone adjustments:',
+        error,
+      );
       this.landRecalculationResult = {
         success: false,
         message:
-          error.message || 'Mass recalculation with zone adjustments failed. Please try again.',
+          error.message ||
+          'Mass recalculation with zone adjustments failed. Please try again.',
       };
     } finally {
       this.isLandRecalculating = false;

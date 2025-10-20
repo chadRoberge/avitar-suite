@@ -1,0 +1,516 @@
+{{!-- Exemption Edit Modal --}}
+{{#if @isOpen}}
+  <div class="modal-overlay" {{on "click" this.cancel}}>
+    <div class="modal-content exemption-edit-modal" {{on "click" this.stopPropagation}}>
+      {{#if this.isLoading}}
+        <div class="modal-loading">
+          <div class="spinner"></div>
+          <p>Loading exemption data...</p>
+        </div>
+      {{else}}
+        <div class="modal-header">
+          <h3>
+            {{if @exemption "Edit" "Add"}} Exemption
+            {{#if this.selectedExemptionType}}
+              - {{this.selectedExemptionType.display_name}}
+            {{/if}}
+          </h3>
+          <button type="button" class="modal-close" {{on "click" this.cancel}}>
+            <i class="lnr lnr-cross"></i>
+          </button>
+        </div>
+
+        {{!-- Step Progress Indicator --}}
+        {{#unless @exemption}}
+          <div class="step-progress">
+            <div class="step {{if (eq this.currentStep 1) 'active' (if (gt this.currentStep 1) 'completed')}}">
+              <span class="step-number">1</span>
+              <span class="step-label">Select Type</span>
+            </div>
+            <div class="step {{if (eq this.currentStep 2) 'active' (if (gt this.currentStep 2) 'completed')}}">
+              <span class="step-number">2</span>
+              <span class="step-label">Enter Details</span>
+            </div>
+            <div class="step {{if (eq this.currentStep 3) 'active'}}">
+              <span class="step-number">3</span>
+              <span class="step-label">Upload Documents</span>
+            </div>
+          </div>
+        {{/unless}}
+
+        <div class="modal-body">
+          {{!-- Step 1: Exemption Type Selection --}}
+          {{#if (eq this.currentStep 1)}}
+            <div class="exemption-type-selection">
+              <h4>Select Exemption or Credit Type</h4>
+              <p class="step-description">
+                Choose the type of exemption or credit you would like to add to this property.
+              </p>
+
+              {{#each-in this.groupedExemptionTypes as |type exemptions|}}
+                <div class="exemption-category">
+                  <h5>{{if (eq type "exemption") "Tax Exemptions" "Tax Credits"}}</h5>
+                  <div class="exemption-grid">
+                    {{#each exemptions as |exemption|}}
+                      <div
+                        class="exemption-card"
+                        {{on "click" (fn this.selectExemptionType exemption)}}
+                      >
+                        <div class="exemption-card-header">
+                          <h6>{{exemption.display_name}}</h6>
+                          <span class="exemption-type-badge exemption-type-badge--{{exemption.category}}">
+                            {{capitalize exemption.category}}
+                          </span>
+                        </div>
+                        <p class="exemption-description">{{exemption.description}}</p>
+
+                        {{#if exemption.qualification_criteria}}
+                          <div class="exemption-criteria">
+                            <strong>Requirements:</strong> {{exemption.qualification_criteria}}
+                          </div>
+                        {{/if}}
+
+                        {{!-- Amount display based on calculation method --}}
+                        <div class="exemption-amount">
+                          {{#if (eq exemption.calculation_method "fixed_amount")}}
+                            {{#if exemption.default_exemption_value}}
+                              <span class="amount-label">Exemption:</span>
+                              <span class="amount-value">${{number-format exemption.default_exemption_value}}</span>
+                            {{/if}}
+                            {{#if exemption.default_credit_value}}
+                              <span class="amount-label">Credit:</span>
+                              <span class="amount-value">${{number-format exemption.default_credit_value}}</span>
+                            {{/if}}
+                          {{else if (eq exemption.calculation_method "percentage_of_assessment")}}
+                            <span class="amount-label">Percentage:</span>
+                            <span class="amount-value">{{exemption.default_percentage}}% of assessment</span>
+                          {{else if (eq exemption.calculation_method "user_entered_amount")}}
+                            <span class="amount-label">Amount:</span>
+                            <span class="amount-value">User enters amount</span>
+                            {{#if (and exemption.min_exemption_amount exemption.max_exemption_amount)}}
+                              <span class="amount-range">(${{number-format exemption.min_exemption_amount}} - ${{number-format exemption.max_exemption_amount}})</span>
+                            {{/if}}
+                          {{else if (eq exemption.calculation_method "user_entered_percentage")}}
+                            <span class="amount-label">Percentage:</span>
+                            <span class="amount-value">User enters percentage</span>
+                            {{#if (and exemption.min_percentage exemption.max_percentage)}}
+                              <span class="amount-range">({{exemption.min_percentage}}% - {{exemption.max_percentage}}%)</span>
+                            {{/if}}
+                          {{else}}
+                            {{!-- Fallback for legacy exemptions --}}
+                            {{#if exemption.default_exemption_value}}
+                              <span class="amount-label">Exemption:</span>
+                              <span class="amount-value">${{number-format exemption.default_exemption_value}}</span>
+                            {{/if}}
+                            {{#if exemption.default_credit_value}}
+                              <span class="amount-label">Credit:</span>
+                              <span class="amount-value">${{number-format exemption.default_credit_value}}</span>
+                            {{/if}}
+                          {{/if}}
+                        </div>
+
+                        {{#if exemption.requires_documentation}}
+                          <div class="documentation-required">
+                            <i class="lnr lnr-file-add"></i>
+                            Documentation Required
+                          </div>
+                        {{/if}}
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/each-in}}
+            </div>
+          {{/if}}
+
+          {{!-- Step 2: Enter Details --}}
+          {{#if (eq this.currentStep 2)}}
+            <form {{on "submit" this.handleSubmit}}>
+              {{!-- Age-based Requirements --}}
+              {{#if this.selectedExemptionType.age_requirements.min_age}}
+                <div class="form-section">
+                  <h4>Age Requirements</h4>
+                  <div class="form-group">
+                    <label for="owner-birth-date">Owner Birth Date</label>
+                    <input
+                      type="date"
+                      id="owner-birth-date"
+                      value={{this.ownerBirthDate}}
+                      {{on "input" this.updateBirthDate}}
+                      class="form-control"
+                      required
+                    />
+                    {{#if this.currentOwnerAge}}
+                      <small class="form-text">
+                        Current age: {{this.currentOwnerAge}} years
+                        {{#if this.selectedExemptionType.age_requirements.min_age}}
+                          (Minimum age: {{this.selectedExemptionType.age_requirements.min_age}})
+                        {{/if}}
+                      </small>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Veteran Exemptions Multi-Selection --}}
+              {{#if (eq this.selectedExemptionType.category "veteran")}}
+                <div class="form-section">
+                  <h4>Veteran Benefits</h4>
+                  <p class="form-description">Select all applicable veteran benefits:</p>
+
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      id="veteran-standard"
+                      checked={{includes this.selectedVeteranExemptions "veteran_standard"}}
+                      {{on "change" (fn this.toggleExemption "veteran_standard")}}
+                      class="form-check-input"
+                    />
+                    <label for="veteran-standard" class="form-check-label">
+                      Standard Veteran Credit
+                      <span class="exemption-amount">${{number-format this.veteranExemptionAmounts.veteran_standard}}</span>
+                    </label>
+                  </div>
+
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      id="veteran-all"
+                      checked={{includes this.selectedVeteranExemptions "veteran_all"}}
+                      {{on "change" (fn this.toggleExemption "veteran_all")}}
+                      class="form-check-input"
+                    />
+                    <label for="veteran-all" class="form-check-label">
+                      All Veteran Credit
+                      <span class="exemption-amount">${{number-format this.veteranExemptionAmounts.veteran_all}}</span>
+                    </label>
+                  </div>
+
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      id="veteran-disabled"
+                      checked={{includes this.selectedVeteranExemptions "veteran_disabled"}}
+                      {{on "change" (fn this.toggleExemption "veteran_disabled")}}
+                      class="form-check-input"
+                    />
+                    <label for="veteran-disabled" class="form-check-label">
+                      Disabled Veteran Credit
+                      <span class="exemption-amount">${{number-format this.veteranExemptionAmounts.veteran_disabled}}</span>
+                    </label>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Assessment Value Input (for percentage-based calculations) --}}
+              {{#if (or (eq this.selectedExemptionType.calculation_method "percentage_of_assessment") (eq this.selectedExemptionType.calculation_method "user_entered_percentage"))}}
+                <div class="form-section">
+                  <h4>Property Assessment</h4>
+                  <div class="form-group">
+                    <label for="assessment-value">Total Assessment Value</label>
+                    <input
+                      type="number"
+                      id="assessment-value"
+                      value={{this.exemptionData.assessment_value}}
+                      {{on "input" this.updateAssessmentValue}}
+                      class="form-control"
+                      step="0.01"
+                      min="0"
+                      placeholder="Enter total property assessment value"
+                      required
+                    />
+                    <small class="form-text">
+                      This value is used to calculate the exemption based on the percentage.
+                    </small>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- User Input Fields (for user-entered amounts/percentages) --}}
+              {{#if this.requiresUserInput}}
+                <div class="form-section">
+                  <h4>Exemption Amount</h4>
+                  <div class="form-group">
+                    <label for="user-input">{{this.inputLabel}}</label>
+                    <input
+                      type="number"
+                      id="user-input"
+                      value={{if (eq this.inputType "amount") this.exemptionData.user_entered_amount this.exemptionData.user_entered_percentage}}
+                      {{on "input" (fn this.updateUserInput (if (eq this.inputType "amount") "user_entered_amount" "user_entered_percentage"))}}
+                      class="form-control"
+                      step={{if (eq this.inputType "percentage") "0.01" "1"}}
+                      min={{this.inputMin}}
+                      max={{this.inputMax}}
+                      placeholder={{if (eq this.inputType "amount") "Enter exemption amount" "Enter percentage (0-100)"}}
+                      required
+                    />
+                    <small class="form-text">
+                      {{#if this.inputMin}}
+                        Minimum: {{if (eq this.inputType "amount") (format-currency this.inputMin) (concat this.inputMin "%")}}
+                      {{/if}}
+                      {{#if this.inputMax}}
+                        {{#if this.inputMin}} • {{/if}}
+                        Maximum: {{if (eq this.inputType "amount") (format-currency this.inputMax) (concat this.inputMax "%")}}
+                      {{/if}}
+                    </small>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Calculation Method Info --}}
+              {{#if this.selectedExemptionType.calculation_method}}
+                <div class="form-section">
+                  <div class="calculation-info">
+                    <h5>Calculation Method</h5>
+                    <div class="calculation-method-badge calculation-method-badge--{{this.selectedExemptionType.calculation_method}}">
+                      {{#if (eq this.selectedExemptionType.calculation_method "fixed_amount")}}
+                        Fixed Amount
+                      {{else if (eq this.selectedExemptionType.calculation_method "percentage_of_assessment")}}
+                        {{this.selectedExemptionType.default_percentage}}% of Assessment
+                      {{else if (eq this.selectedExemptionType.calculation_method "user_entered_amount")}}
+                        User-Entered Amount
+                      {{else if (eq this.selectedExemptionType.calculation_method "user_entered_percentage")}}
+                        User-Entered Percentage
+                      {{/if}}
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Calculated Total --}}
+              {{#if this.totalCalculatedExemption}}
+                <div class="form-section">
+                  <div class="exemption-total">
+                    <h4>Calculated Total: ${{number-format this.totalCalculatedExemption}}</h4>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{!-- Exemption Details --}}
+              <div class="form-section">
+                <h4>Exemption Details</h4>
+
+                <div class="form-row">
+                  {{#if (eq this.selectedExemptionType.exemption_type "exemption")}}
+                    <div class="form-group col-md-12">
+                      <label for="exemption-value">Exemption Value</label>
+                      <input
+                        type="number"
+                        id="exemption-value"
+                        value={{this.exemptionData.exemption_value}}
+                        {{on "input" (fn this.updateExemptionField "exemption_value")}}
+                        class="form-control"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  {{else}}
+                    <div class="form-group col-md-12">
+                      <label for="credit-value">Credit Value</label>
+                      <input
+                        type="number"
+                        id="credit-value"
+                        value={{this.exemptionData.credit_value}}
+                        {{on "input" (fn this.updateExemptionField "credit_value")}}
+                        class="form-control"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  {{/if}}
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label for="start-year">Start Year</label>
+                    <input
+                      type="number"
+                      id="start-year"
+                      value={{this.exemptionData.start_year}}
+                      {{on "input" (fn this.updateExemptionField "start_year")}}
+                      class="form-control"
+                      min="1900"
+                      max="2100"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group col-md-6">
+                    <label for="end-year">End Year (Optional)</label>
+                    <input
+                      type="number"
+                      id="end-year"
+                      value={{this.exemptionData.end_year}}
+                      {{on "input" (fn this.updateExemptionField "end_year")}}
+                      class="form-control"
+                      min="1900"
+                      max="2100"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="qualification-notes">Qualification Notes</label>
+                  <textarea
+                    id="qualification-notes"
+                    value={{this.exemptionData.qualification_notes}}
+                    {{on "input" (fn this.updateExemptionField "qualification_notes")}}
+                    class="form-control"
+                    rows="3"
+                    placeholder="Enter any relevant qualification notes..."
+                  ></textarea>
+                </div>
+
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    id="is-active"
+                    checked={{this.exemptionData.is_active}}
+                    {{on "change" (fn this.updateExemptionField "is_active")}}
+                    class="form-check-input"
+                  />
+                  <label for="is-active" class="form-check-label">
+                    Active Exemption
+                  </label>
+                </div>
+              </div>
+            </form>
+          {{/if}}
+
+          {{!-- Step 3: Upload Documents --}}
+          {{#if (eq this.currentStep 3)}}
+            <div class="document-upload-section">
+              <h4>Upload Supporting Documents</h4>
+
+              {{#if this.selectedExemptionType.required_documents}}
+                <div class="required-documents">
+                  <h5>Required Documents:</h5>
+                  <ul>
+                    {{#each this.selectedExemptionType.required_documents as |document|}}
+                      <li>{{document}}</li>
+                    {{/each}}
+                  </ul>
+                </div>
+              {{/if}}
+
+              <div class="file-upload-area">
+                <input
+                  type="file"
+                  id="document-upload"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  {{on "change" this.handleFileUpload}}
+                  class="file-input"
+                />
+                <label for="document-upload" class="file-upload-label">
+                  <i class="lnr lnr-cloud-upload"></i>
+                  <span>Click to upload files or drag and drop</span>
+                  <small>Supported formats: PDF, JPG, PNG, DOC, DOCX</small>
+                </label>
+              </div>
+
+              {{#if this.uploadedFiles.length}}
+                <div class="uploaded-files">
+                  <h5>Uploaded Files:</h5>
+                  {{#each this.uploadedFiles as |file index|}}
+                    <div class="uploaded-file">
+                      <div class="file-info">
+                        <i class="lnr lnr-file-add"></i>
+                        <span class="filename">{{file.original_name}}</span>
+                        <span class="file-size">({{file.file_size}} bytes)</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="remove-file-btn"
+                        {{on "click" (fn this.removeUploadedFile index)}}
+                      >
+                        <i class="lnr lnr-cross"></i>
+                      </button>
+                    </div>
+                  {{/each}}
+                </div>
+              {{/if}}
+
+              {{#if this.isUploadingFiles}}
+                <div class="upload-progress">
+                  <div class="spinner"></div>
+                  <span>Uploading files...</span>
+                </div>
+              {{/if}}
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="modal-footer">
+          {{#if (eq this.currentStep 1)}}
+            <button
+              type="button"
+              class="btn btn-secondary"
+              {{on "click" this.cancel}}
+            >
+              Cancel
+            </button>
+          {{else}}
+            <button
+              type="button"
+              class="btn btn-secondary"
+              {{on "click" this.previousStep}}
+              disabled={{eq this.currentStep 1}}
+            >
+              Back
+            </button>
+
+            {{#if (eq this.currentStep 2)}}
+              {{#if this.selectedExemptionType.requires_documentation}}
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  {{on "click" this.nextStep}}
+                >
+                  Next: Upload Documents
+                </button>
+              {{else}}
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  {{on "click" this.saveExemption}}
+                  disabled={{this.isSaving}}
+                >
+                  {{#if this.isSaving}}
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Saving...
+                  {{else}}
+                    {{if @exemption "Update" "Add"}} Exemption
+                  {{/if}}
+                </button>
+              {{/if}}
+            {{else if (eq this.currentStep 3)}}
+              <button
+                type="button"
+                class="btn btn-primary"
+                {{on "click" this.saveExemption}}
+                disabled={{this.isSaving}}
+              >
+                {{#if this.isSaving}}
+                  <span class="spinner-border spinner-border-sm me-2"></span>
+                  Saving...
+                {{else}}
+                  {{if @exemption "Update" "Add"}} Exemption
+                {{/if}}
+              </button>
+            {{/if}}
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              {{on "click" this.cancel}}
+              disabled={{this.isSaving}}
+            >
+              Cancel
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+{{/if}}

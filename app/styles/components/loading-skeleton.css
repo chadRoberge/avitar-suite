@@ -4,6 +4,7 @@
   0% {
     background-position: -200px 0;
   }
+
   100% {
     background-position: calc(200px + 100%) 0;
   }
@@ -199,7 +200,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .loading-skeleton__table-header,
   .loading-skeleton__table-row {
     grid-template-columns: repeat(2, 1fr);

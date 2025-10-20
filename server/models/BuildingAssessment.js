@@ -190,45 +190,40 @@ buildingAssessmentSchema.pre('save', function (next) {
   next();
 });
 
-// Trigger total assessment update after save/remove
+// Trigger parcel assessment update after save
 buildingAssessmentSchema.post('save', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
 
-    await updatePropertyTotalAssessment(
+    console.log(
+      `[Card ${doc.card_number}] Building assessment saved, triggering parcel recalculation for property ${doc.property_id}...`,
+    );
+    console.log(
+      `[Card ${doc.card_number}] Building value: $${doc.building_value?.toLocaleString() || 0}`,
+    );
+
+    const result = await updateParcelAssessment(
       doc.property_id,
       doc.municipality_id,
       doc.effective_year,
-      null, // userId not available in hook
+      { trigger: 'building_update', userId: null },
     );
+
     console.log(
-      `Updated total assessment for property ${doc.property_id} after building assessment change`,
+      `[Card ${doc.card_number}] ✓ Parcel assessment updated:`,
+      `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()},`,
+      `Change: ${result.changeAmount > 0 ? '+' : ''}$${result.changeAmount.toLocaleString()} (${result.changePercentage}%)`,
     );
   } catch (error) {
     console.error(
-      'Error updating total assessment after building assessment save:',
-      error,
-    );
-  }
-});
-
-buildingAssessmentSchema.post('remove', async function (doc) {
-  try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
-
-    await updatePropertyTotalAssessment(
-      doc.property_id,
-      doc.municipality_id,
-      doc.effective_year,
-      null, // userId not available in hook
-    );
-    console.log(
-      `Updated total assessment for property ${doc.property_id} after building assessment removal`,
-    );
-  } catch (error) {
-    console.error(
-      'Error updating total assessment after building assessment removal:',
-      error,
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after building save:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        buildingValue: doc.building_value,
+        error: error.message,
+        stack: error.stack,
+      },
     );
   }
 });
@@ -364,19 +359,44 @@ buildingAssessmentSchema.statics.updateForPropertyCard = async function (
 
   // Calculate and update building value automatically
   try {
-    await buildingAssessment.calculateAndUpdateValue();
+    console.log(
+      `[Card ${cardNumber}] Calculating building value for property ${propertyId}...`,
+    );
+    const calculations = await buildingAssessment.calculateAndUpdateValue();
     await buildingAssessment.save();
     console.log(
-      'Building value calculated successfully for property:',
-      propertyId,
+      `[Card ${cardNumber}] Building value calculated successfully for property ${propertyId}:`,
+      {
+        propertyId,
+        cardNumber,
+        buildingValue: buildingAssessment.building_value,
+        effectiveArea: buildingAssessment.effective_area,
+        baseType: buildingAssessment.base_type,
+        calculationSuccess: true,
+      },
     );
   } catch (calcError) {
-    console.warn(
-      'Building value calculation failed, saving without calculation:',
-      calcError.message,
+    console.error(
+      `[Card ${cardNumber}] Building value calculation FAILED for property ${propertyId}:`,
+      {
+        propertyId,
+        cardNumber,
+        error: calcError.message,
+        stack: calcError.stack,
+        buildingData: {
+          base_type: buildingAssessment.base_type,
+          effective_area: buildingAssessment.effective_area,
+          quality_grade: buildingAssessment.quality_grade,
+          year_built: buildingAssessment.year_built,
+        },
+      },
     );
     // Save the building assessment without calculation if calculation fails
+    // This ensures the data is saved but building_value will be 0
     await buildingAssessment.save();
+    console.warn(
+      `[Card ${cardNumber}] Saved building assessment WITHOUT calculated value - building_value will be 0`,
+    );
   }
 
   return buildingAssessment;
@@ -747,24 +767,34 @@ buildingAssessmentSchema.statics.getBuildingTypeStatistics = async function (
   }
 };
 
-// Trigger total assessment update after remove
+// Trigger parcel assessment update after remove
 buildingAssessmentSchema.post('remove', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
 
-    await updatePropertyTotalAssessment(
+    console.log(
+      `[Card ${doc.card_number}] Building assessment removed, recalculating parcel for property ${doc.property_id}...`,
+    );
+
+    const result = await updateParcelAssessment(
       doc.property_id,
       doc.municipality_id,
       doc.effective_year,
-      null, // userId not available in hook
+      { trigger: 'building_update', userId: null },
     );
+
     console.log(
-      `Updated total assessment for property ${doc.property_id} after building assessment removal`,
+      `[Card ${doc.card_number}] ✓ Parcel assessment updated after removal:`,
+      `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()}`,
     );
   } catch (error) {
     console.error(
-      'Error updating total assessment after building assessment removal:',
-      error,
+      `[Card ${doc.card_number}] ✗ Error updating parcel assessment after building removal:`,
+      {
+        propertyId: doc.property_id,
+        cardNumber: doc.card_number,
+        error: error.message,
+      },
     );
   }
 });

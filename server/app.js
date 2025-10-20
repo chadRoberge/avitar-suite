@@ -24,13 +24,21 @@ const landUseDetailRoutes = require('./routes/landUseDetails');
 const currentUseRoutes = require('./routes/currentUse');
 const acreageDiscountSettingsRoutes = require('./routes/acreageDiscountSettings');
 const viewAttributeRoutes = require('./routes/viewAttributes');
+const propertyViewRoutes = require('./routes/propertyViews');
 const waterBodyRoutes = require('./routes/waterBodies');
 const waterfrontAttributeRoutes = require('./routes/waterfrontAttributes');
 const exemptionsCreditsSettingsRoutes = require('./routes/exemptionsCreditsSettings');
+const exemptionTypesRoutes = require('./routes/exemptionTypes');
+const assessingReportsRoutes = require('./routes/assessingReports');
 const landTaxationCategoryRoutes = require('./routes/landTaxationCategories');
 const landAssessmentCalculationRoutes = require('./routes/landAssessmentCalculations');
 const listingHistoryRoutes = require('./routes/listingHistory');
 const ownerRoutes = require('./routes/owners');
+const {
+  router: changeStreamRoutes,
+  initializeChangeStreams,
+  shutdown: changeStreamShutdown,
+} = require('./routes/change-stream');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -79,6 +87,7 @@ app.use('/api', pidFormatRoutes);
 app.use('/api', zoneRoutes);
 app.use('/api', neighborhoodCodeRoutes);
 app.use('/api', viewAttributeRoutes); // Move before propertyAttributeRoutes to avoid route conflicts
+app.use('/api', propertyViewRoutes);
 app.use('/api', propertyAttributeRoutes);
 app.use('/api', buildingCodeRoutes);
 app.use('/api', buildingFeatureCodeRoutes);
@@ -89,10 +98,13 @@ app.use('/api', landUseDetailRoutes);
 app.use('/api', currentUseRoutes);
 app.use('/api', acreageDiscountSettingsRoutes);
 app.use('/api', exemptionsCreditsSettingsRoutes);
+app.use('/api', exemptionTypesRoutes);
+app.use('/api', assessingReportsRoutes);
 app.use('/api', landTaxationCategoryRoutes);
 app.use('/api', landAssessmentCalculationRoutes);
 app.use('/api', listingHistoryRoutes);
 app.use('/api', ownerRoutes);
+app.use('/api', changeStreamRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -162,7 +174,33 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     console.log(
       `🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:4202'}`,
     );
+
+    // Initialize change streams for real-time sync
+    try {
+      await initializeChangeStreams(process.env.MONGODB_URI, 'avitar-suite');
+      console.log('🔄 MongoDB Change Streams initialized');
+    } catch (error) {
+      console.error('❌ Failed to initialize change streams:', error);
+    }
   });
 }
+
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  console.log(`\n🔄 Received ${signal}. Starting graceful shutdown...`);
+
+  try {
+    await changeStreamShutdown();
+    console.log('✅ Change streams shut down successfully');
+  } catch (error) {
+    console.error('❌ Error during change stream shutdown:', error);
+  }
+
+  process.exit(0);
+};
+
+// Listen for shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 module.exports = app;

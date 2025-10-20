@@ -2,14 +2,19 @@ import Service from '@ember/service';
 import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
+import { applyPidFormattingBulk } from 'avitar-suite/utils/pid-formatter';
 
 export default class LocalApiService extends Service {
   @service api; // Original API service
   @service localStorage;
   @service syncManager;
   @service realtime;
+  @service hybridApi; // New IndexedDB-based service
+  @service storageMigration;
+  @service municipality;
 
   @tracked isOnline = navigator.onLine;
+  @tracked migrationComplete = false;
 
   constructor() {
     super(...arguments);
@@ -17,6 +22,28 @@ export default class LocalApiService extends Service {
     // Listen for online/offline events
     window.addEventListener('online', () => (this.isOnline = true));
     window.addEventListener('offline', () => (this.isOnline = false));
+
+    // Initialize migration on startup
+    this.initializeMigration();
+  }
+
+  async initializeMigration() {
+    try {
+      const migrationComplete =
+        await this.storageMigration.checkMigrationStatus();
+
+      if (!migrationComplete) {
+        console.log('🔄 Starting localStorage to IndexedDB migration');
+        await this.storageMigration.performMigration();
+      }
+
+      this.migrationComplete = true;
+      console.log('✅ Migration initialization complete');
+    } catch (error) {
+      console.error('Migration initialization failed:', error);
+      // Continue with localStorage as fallback
+      this.migrationComplete = false;
+    }
   }
 
   // === LOCAL-FIRST API METHODS ===
@@ -28,6 +55,11 @@ export default class LocalApiService extends Service {
    * 3. Cache result locally
    */
   async get(endpoint, options = {}) {
+    // Use hybrid API if migration is complete, otherwise fall back to localStorage
+    if (this.migrationComplete) {
+      return this.hybridApi.get(endpoint, options);
+    }
+
     const {
       useCache = true,
       maxAge = 5 * 60 * 1000, // 5 minutes default
@@ -69,8 +101,38 @@ export default class LocalApiService extends Service {
       if (useCache && !forceRefresh && collection) {
         const cached = this.localStorage.getCollection(collection, { maxAge });
         if (cached && cached.length > 0) {
-          console.log(`Cache HIT: ${collection} (${cached.length} items)`);
-          return this.formatCollectionResponse(cached, collection);
+          // Check for corrupted cache where API response object was cached as single item
+          // This happens when {success: true, properties: [...]} was cached instead of individual items
+          if (cached.length === 1 && cached[0].properties && Array.isArray(cached[0].properties)) {
+            console.warn(`🧹 Detected corrupted localStorage cache in ${collection} - clearing and refetching`);
+            // Clear the corrupted collection
+            this.localStorage.clearCollection(collection);
+            // Force network fetch
+            if (!this.isOnline) {
+              throw new Error(`Corrupted cache detected for ${endpoint} and device is offline`);
+            }
+            // Don't return here - fall through to network request below
+          } else {
+            // Check for incomplete property cache (missing required fields like mapNumber, lotSubDisplay)
+            // Instead of refetching, apply PID formatting on-the-fly
+            if (collection === 'properties' && endpoint.includes('/municipalities/')) {
+              const sampleProperty = cached[0];
+              if (!sampleProperty.mapNumber || !sampleProperty.lotSubDisplay) {
+                console.log(`🔧 Applying PID formatting to ${cached.length} cached properties (localStorage)`);
+                // Apply PID formatting to all cached properties
+                const municipality = this.municipality.currentMunicipality;
+                if (municipality && municipality.pid_format) {
+                  cached = applyPidFormattingBulk(cached, municipality);
+                  console.log(`✅ PID formatting applied successfully`);
+                } else {
+                  console.warn('⚠️ Municipality PID format not available - properties may not group correctly');
+                }
+              }
+            }
+
+            console.log(`Cache HIT: ${collection} (${cached.length} items)`);
+            return this.formatCollectionResponse(cached, collection);
+          }
         } else {
           console.log(`Cache MISS: ${collection}`);
         }
@@ -99,6 +161,28 @@ export default class LocalApiService extends Service {
         const response = await this.api.get(endpoint, options.params);
         console.log(`Server response for ${endpoint}:`, response);
 
+        // Handle API response format: {success: true, properties: [...], total: ...}
+        // Extract the actual data array if present
+        let dataToCache = response;
+        let dataToReturn = response;
+
+        if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // Check if this is a wrapped response with a data property
+          if (response.properties && Array.isArray(response.properties)) {
+            // Extract the properties array for caching
+            dataToCache = response.properties;
+            console.log(`🔍 Extracted ${dataToCache.length} items from response.properties for caching`);
+          } else if (response.features && Array.isArray(response.features)) {
+            // Extract features array
+            dataToCache = response.features;
+            console.log(`🔍 Extracted ${dataToCache.length} items from response.features for caching`);
+          } else if (response.sketches && Array.isArray(response.sketches)) {
+            // Extract sketches array
+            dataToCache = response.sketches;
+            console.log(`🔍 Extracted ${dataToCache.length} items from response.sketches for caching`);
+          }
+        }
+
         // Cache the response
         if (
           isIndividualProperty ||
@@ -109,13 +193,13 @@ export default class LocalApiService extends Service {
           // Cache individual items with endpoint-based key
           const cacheKey = endpoint.replace(/[^a-zA-Z0-9]/g, '_');
           console.log(`Caching individual item: ${cacheKey}`);
-          this.localStorage.set(`item_${cacheKey}`, response, {
+          this.localStorage.set(`item_${cacheKey}`, dataToReturn, {
             source: 'server',
             dirty: false,
           });
-        } else if (collection && Array.isArray(response)) {
-          console.log(`Caching array response for collection: ${collection}`);
-          this.localStorage.setCollection(collection, response, {
+        } else if (collection && Array.isArray(dataToCache)) {
+          console.log(`Caching array response for collection: ${collection} (${dataToCache.length} items)`);
+          this.localStorage.setCollection(collection, dataToCache, {
             source: 'server',
             dirty: false,
           });
@@ -125,13 +209,13 @@ export default class LocalApiService extends Service {
           console.log(
             `Caching item response for collection: ${itemCollection}`,
           );
-          this.localStorage.addToCollection(itemCollection, response, {
+          this.localStorage.addToCollection(itemCollection, dataToReturn, {
             source: 'server',
             dirty: false,
           });
         }
 
-        return response;
+        return dataToReturn;
       } catch (error) {
         console.error(`Network request failed for ${endpoint}:`, error);
 
@@ -194,6 +278,11 @@ export default class LocalApiService extends Service {
    * Create data with optimistic updates
    */
   async post(endpoint, data, options = {}) {
+    // Use hybrid API if migration is complete, otherwise fall back to localStorage
+    if (this.migrationComplete) {
+      return this.hybridApi.post(endpoint, data, options);
+    }
+
     const {
       optimistic = true,
       collection = this.getCollectionFromEndpoint(endpoint),
@@ -283,6 +372,11 @@ export default class LocalApiService extends Service {
    * Update data with optimistic updates (PUT)
    */
   async put(endpoint, data, options = {}) {
+    // Use hybrid API if migration is complete, otherwise fall back to localStorage
+    if (this.migrationComplete) {
+      return this.hybridApi.put(endpoint, data, options);
+    }
+
     const {
       optimistic = true,
       collection = this.getCollectionFromEndpoint(endpoint),
@@ -360,6 +454,11 @@ export default class LocalApiService extends Service {
    * Delete data with optimistic updates
    */
   async delete(endpoint, options = {}) {
+    // Use hybrid API if migration is complete, otherwise fall back to localStorage
+    if (this.migrationComplete) {
+      return this.hybridApi.delete(endpoint, options);
+    }
+
     const {
       optimistic = true,
       collection = this.getCollectionFromEndpoint(endpoint),
@@ -463,15 +562,32 @@ export default class LocalApiService extends Service {
    * @private
    */
   getCollectionFromEndpoint(endpoint) {
-    // Remove leading slash and split into parts
-    const parts = endpoint.replace(/^\//, '').split('/');
+    // Remove query parameters and leading slash, then split into parts
+    const cleanEndpoint = endpoint.split('?')[0];
+    const parts = cleanEndpoint.replace(/^\//, '').split('/');
 
     // Handle nested endpoints like /municipalities/{id}/properties
     if (parts.length >= 3 && parts[0] === 'municipalities') {
-      // For municipality-scoped endpoints, use the resource name
       const resourceName = parts[2];
-      if (['properties'].includes(resourceName)) {
-        return resourceName;
+
+      // Map municipality-scoped attribute endpoints to their own collections
+      // Each endpoint gets its own collection to prevent cache collisions
+      const municipalityResourceMap = {
+        'properties': 'properties',
+        'topology-attributes': 'topology_attributes',
+        'site-attributes': 'site_attributes',
+        'driveway-attributes': 'driveway_attributes',
+        'road-attributes': 'road_attributes',
+        'land-use-details': 'land_use_details',
+        'land-taxation-categories': 'land_taxation_categories',
+        'land-ladders': 'land_ladders',
+        'current-use': 'current_use_settings',
+        'acreage-discount-settings': 'acreage_discount_settings',
+        'sketch-sub-area-factors': 'sketch_sub_area_factors',
+      };
+
+      if (municipalityResourceMap[resourceName]) {
+        return municipalityResourceMap[resourceName];
       }
     }
 
@@ -484,6 +600,9 @@ export default class LocalApiService extends Service {
       // Handle assessment endpoints like /properties/{id}/assessment/current
       if (resourceName === 'assessment') {
         return 'assessments';
+      }
+      if (resourceName === 'exemptions') {
+        return 'exemptions';
       }
     }
 
@@ -498,6 +617,10 @@ export default class LocalApiService extends Service {
       features: 'features',
       municipalities: 'municipalities',
       appeals: 'appeals',
+      exemptions: 'exemptions',
+      'exemption-types': 'exemptionTypes',
+      views: 'views',
+      'view-attributes': 'viewAttributes',
     };
 
     return collectionMap[collection] || collection;

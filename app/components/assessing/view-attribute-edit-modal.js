@@ -6,44 +6,67 @@ import { inject as service } from '@ember/service';
 export default class ViewAttributeEditModalComponent extends Component {
   @service api;
 
-  @tracked name = '';
-  @tracked description = '';
-  @tracked displayText = '';
-  @tracked factor = 100;
+  @tracked userModifications = {};
   @tracked validationErrors = [];
   @tracked isSaving = false;
 
   constructor() {
     super(...arguments);
-    this.initializeFields();
+  }
+
+  get attributeData() {
+    // Reset user modifications when args.attribute changes (when switching between add/edit modes)
+    if (this._lastArgsAttribute !== this.args.attribute) {
+      this._lastArgsAttribute = this.args.attribute;
+      this.userModifications = {}; // Reset modifications when attribute changes
+    }
+
+    // Start with data from args.attribute or defaults
+    let baseData;
+    if (this.args.attribute) {
+      baseData = {
+        name: this.args.attribute.name || '',
+        description: this.args.attribute.description || '',
+        displayText: this.args.attribute.displayText || '',
+        factor: this.args.attribute.factor || 100,
+      };
+    } else {
+      // Empty data for new attribute
+      baseData = {
+        name: '',
+        description: '',
+        displayText: '',
+        factor: 100,
+      };
+    }
+
+    // Apply any user modifications on top of base data
+    return { ...baseData, ...this.userModifications };
+  }
+
+  get name() {
+    return this.attributeData.name;
+  }
+
+  get description() {
+    return this.attributeData.description;
+  }
+
+  get displayText() {
+    return this.attributeData.displayText;
+  }
+
+  get factor() {
+    return this.attributeData.factor;
   }
 
   get hasValidationErrors() {
     return this.validationErrors.length > 0;
   }
 
-  initializeFields() {
-    if (this.args.attribute) {
-      // Editing existing attribute
-      this.name = this.args.attribute.name || '';
-      this.description = this.args.attribute.description || '';
-      this.displayText = this.args.attribute.displayText || '';
-      this.factor = this.args.attribute.factor || 100;
-    } else {
-      // Creating new attribute - set defaults
-      this.name = '';
-      this.description = '';
-      this.displayText = '';
-      this.factor = 100;
-    }
-    this.validationErrors = [];
-  }
-
-  clearFields() {
-    this.name = '';
-    this.description = '';
-    this.displayText = '';
-    this.factor = 100;
+  @action
+  resetForm() {
+    this.userModifications = {};
     this.validationErrors = [];
   }
 
@@ -54,25 +77,37 @@ export default class ViewAttributeEditModalComponent extends Component {
 
   @action
   updateName(event) {
-    this.name = event.target.value;
+    this.userModifications = {
+      ...this.userModifications,
+      name: event.target.value,
+    };
     this.clearValidationErrors();
   }
 
   @action
   updateDescription(event) {
-    this.description = event.target.value;
+    this.userModifications = {
+      ...this.userModifications,
+      description: event.target.value,
+    };
     this.clearValidationErrors();
   }
 
   @action
   updateDisplayText(event) {
-    this.displayText = event.target.value;
+    this.userModifications = {
+      ...this.userModifications,
+      displayText: event.target.value,
+    };
     this.clearValidationErrors();
   }
 
   @action
   updateFactor(event) {
-    this.factor = event.target.value;
+    this.userModifications = {
+      ...this.userModifications,
+      factor: event.target.value,
+    };
     this.clearValidationErrors();
   }
 
@@ -133,7 +168,7 @@ export default class ViewAttributeEditModalComponent extends Component {
       await this.args.onSave(attributeData);
 
       // Clear fields after successful save
-      this.clearFields();
+      this.resetForm();
     } catch (error) {
       console.error('Error saving view attribute:', error);
       this.validationErrors = [

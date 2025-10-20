@@ -24,10 +24,33 @@ const propertyAssessmentSchema = new mongoose.Schema(
     // Land assessment (only stored when it changes)
     land: {
       value: Number,
-      acreage: Number,
-      frontage: Number,
-      depth: Number,
-      land_class: String, // Agricultural, Residential, Commercial, etc.
+      acreage: Number, // Only stored on card 1
+      frontage: Number, // Only stored on card 1
+      depth: Number, // Only stored on card 1
+      land_class: String, // Agricultural, Residential, Commercial, etc. - Only on card 1
+
+      // Card-specific land features (can be different for each card)
+      view_value: { type: Number, default: 0 }, // View premium/discount for this card
+      waterfront_value: { type: Number, default: 0 }, // Waterfront premium for this card
+      view_type: String, // Type of view (ocean, mountain, lake, etc.)
+      waterfront_type: String, // Type of waterfront (ocean, lake, river, etc.)
+      view_quality: {
+        type: String,
+        enum: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
+      },
+      waterfront_quality: {
+        type: String,
+        enum: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
+      },
+
+      // Card-specific land calculated totals
+      calculated_totals: {
+        baseCardLandValue: { type: Number, default: 0 }, // Base land value allocated to this card (card 1 only)
+        cardViewValue: { type: Number, default: 0 }, // View value for this specific card
+        cardWaterfrontValue: { type: Number, default: 0 }, // Waterfront value for this specific card
+        totalCardLandValue: { type: Number, default: 0 }, // Total land value for this card (base + view + waterfront)
+      },
+
       last_changed: { type: Number, index: true }, // Year this value was established
     },
 
@@ -42,11 +65,32 @@ const propertyAssessmentSchema = new mongoose.Schema(
       last_changed: { type: Number, index: true },
     },
 
-    // Other improvements (decks, pools, outbuildings)
+    // Other improvements (decks, pools, outbuildings) - Features
     other_improvements: {
       value: Number,
       description: String,
       last_changed: Number,
+      calculated_totals: {
+        totalFeaturesValue: { type: Number, default: 0 },
+        totalCalculatedValue: { type: Number, default: 0 },
+        featuresValue: { type: Number, default: 0 }, // Legacy field name for backward compatibility
+        featureCount: { type: Number, default: 0 },
+        featuresByCategory: { type: Map, of: mongoose.Schema.Types.Mixed },
+        featureDetails: [
+          {
+            id: mongoose.Schema.Types.ObjectId,
+            description: String,
+            units: Number,
+            length: Number,
+            width: Number,
+            rate: Number,
+            condition: String,
+            sizeAdjustment: Number,
+            calculatedValue: Number,
+            measurementType: String,
+          },
+        ],
+      },
     },
 
     // Total assessment (calculated)

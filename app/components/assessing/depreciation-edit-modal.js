@@ -4,8 +4,6 @@ import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
 
 export default class DepreciationEditModalComponent extends Component {
-  @service api;
-  @service router;
   @service assessing;
 
   @tracked isLoading = false;
@@ -323,45 +321,17 @@ export default class DepreciationEditModalComponent extends Component {
 
       console.log('API data being sent:', apiData);
 
-      // Make API call to update building assessment depreciation
-      const response = await this.api.patch(
-        `/properties/${propertyId}/assessment/building`,
+      // Get current card number to ensure we're updating the correct card
+      const cardNumber = this.args.property?.current_card || 1;
+
+      // Use assessing service to update building assessment
+      const response = await this.assessing.updateBuildingAssessment(
+        propertyId,
+        cardNumber,
         apiData,
-        {
-          loadingMessage: 'Saving depreciation data...',
-        },
       );
 
       console.log('Depreciation data saved successfully:', response);
-
-      // Clear cached data for this property to ensure fresh data on refresh
-      console.log('Checking cache clearing availability:', {
-        hasAssessing: !!this.assessing,
-        hasLocalApi: !!this.assessing.localApi,
-        hasClearCache: !!this.assessing.localApi?.clearCache,
-      });
-
-      if (this.assessing.localApi && this.assessing.localApi.clearCache) {
-        const cardNumber = this.args.property?.current_card || 1;
-        const cacheKeys = [
-          `_properties_${propertyId}_card_${cardNumber}`,
-          `_properties_${propertyId}_assessment_building_card_${cardNumber}`,
-          `_properties_${propertyId}_assessment_building`,
-        ];
-        console.log('Attempting to clear cache keys:', cacheKeys);
-        cacheKeys.forEach((key) => {
-          try {
-            this.assessing.localApi.clearCache(key);
-            console.log(`Cleared cache for key: ${key}`);
-          } catch (e) {
-            console.warn('Failed to clear cache key:', key, e);
-          }
-        });
-      } else {
-        console.warn(
-          'Cache clearing not available - assessing.localApi or clearCache method not found',
-        );
-      }
 
       // Update the buildingAssessment args to show the latest data
       if (response.assessment) {

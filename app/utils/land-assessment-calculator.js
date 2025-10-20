@@ -75,7 +75,9 @@ class LandAssessmentCalculator {
             acreage,
             Math.max(0, (zone?.minimumAcreage || 0) - accumulatedAcreage),
           );
-          console.log(`Calculating non-excess land line: ${acreage} AC, zone min: ${zone?.minimumAcreage}, accumulated: ${accumulatedAcreage}, effective: ${effectiveAcreage}`);
+          console.log(
+            `Calculating non-excess land line: ${acreage} AC, zone min: ${zone?.minimumAcreage}, accumulated: ${accumulatedAcreage}, effective: ${effectiveAcreage}`,
+          );
 
           calculatedLine.baseValue = this.getLandLadderRate(
             acreage,
@@ -84,7 +86,9 @@ class LandAssessmentCalculator {
           calculatedLine.baseRate =
             acreage > 0 ? calculatedLine.baseValue / acreage : 0;
 
-          console.log(`Land line calculation result: baseValue=${calculatedLine.baseValue}, baseRate=${calculatedLine.baseRate}`);
+          console.log(
+            `Land line calculation result: baseValue=${calculatedLine.baseValue}, baseRate=${calculatedLine.baseRate}`,
+          );
         }
       } else if (frontage > 0) {
         calculatedLine.baseRate = this.getFrontageRate(propertyData.zoneId);
@@ -125,15 +129,21 @@ class LandAssessmentCalculator {
       );
 
       // Step 3: Calculate market value
-      calculatedLine.marketValue = Math.round(
+      const rawMarketValue =
         calculatedLine.baseValue *
-          calculatedLine.neighborhoodFactor *
-          calculatedLine.siteFactor *
-          calculatedLine.drivewayFactor *
-          calculatedLine.roadFactor *
-          calculatedLine.topographyFactor *
-          calculatedLine.conditionFactor,
-      );
+        calculatedLine.neighborhoodFactor *
+        calculatedLine.siteFactor *
+        calculatedLine.drivewayFactor *
+        calculatedLine.roadFactor *
+        calculatedLine.topographyFactor *
+        calculatedLine.conditionFactor;
+
+      // Store both raw and rounded values for different purposes
+      calculatedLine.rawMarketValue = rawMarketValue;
+
+      // CAMA Rule: Round all individual land lines to nearest $100 (including current use)
+      // Only the current use VALUE calculation is exact, not the market value
+      calculatedLine.marketValue = Math.round(rawMarketValue / 100) * 100;
 
       // Step 4: Calculate current use value if applicable
       if (this.isCurrentUseCategory(landLine.land_use_type)) {
@@ -141,8 +151,8 @@ class LandAssessmentCalculator {
           this.calculateCurrentUseValue(landLine);
         calculatedLine.currentUseCredit =
           calculatedLine.marketValue - calculatedLine.currentUseValue;
-        calculatedLine.assessedValue =
-          calculatedLine.marketValue - calculatedLine.currentUseCredit;
+        // For current use land, assessed value IS the current use value (what gets taxed)
+        calculatedLine.assessedValue = calculatedLine.currentUseValue;
       } else {
         calculatedLine.currentUseValue = 0;
         calculatedLine.currentUseCredit = 0;
@@ -235,9 +245,10 @@ class LandAssessmentCalculator {
   /**
    * Calculate complete property land assessment
    * @param {Object} landAssessment - Complete land assessment data
+   * @param {Array} views - Property views data (optional)
    * @returns {Object} Land assessment with calculated land lines and totals
    */
-  calculatePropertyAssessment(landAssessment) {
+  calculatePropertyAssessment(landAssessment, views = []) {
     const propertyData = {
       zoneId: landAssessment.zone,
       neighborhoodId: landAssessment.neighborhood,
@@ -246,8 +257,13 @@ class LandAssessmentCalculator {
       roadTypeId: landAssessment.road_type,
     };
 
-    console.log(`Calculating property assessment for zone: ${propertyData.zoneId} (type: ${typeof propertyData.zoneId})`);
-    console.log(`Available land ladder zones:`, Object.keys(this.landLadders || {}));
+    console.log(
+      `Calculating property assessment for zone: ${propertyData.zoneId} (type: ${typeof propertyData.zoneId})`,
+    );
+    console.log(
+      `Available land ladder zones:`,
+      Object.keys(this.landLadders || {}),
+    );
 
     const landLines = landAssessment.land_use_details || [];
     const calculatedLandLines = [];
@@ -268,13 +284,20 @@ class LandAssessmentCalculator {
       }
     }
 
-    // Calculate totals from the calculated land lines
-    const totals = this.calculateTotalsFromLandLines(calculatedLandLines);
+    // Calculate totals from the calculated land lines, views, and waterfronts
+    // TODO: Fetch waterfront data when waterfront functionality is implemented
+    const waterfronts = []; // Placeholder for future waterfront implementation
+    const totals = this.calculateTotalsFromLandLines(
+      calculatedLandLines,
+      views,
+      waterfronts,
+    );
 
     return {
       ...landAssessment,
       land_use_details: calculatedLandLines,
       calculated_totals: totals,
+      views: views || [],
     };
   }
 
@@ -283,7 +306,11 @@ class LandAssessmentCalculator {
    * @param {Array} calculatedLandLines - Array of calculated land lines
    * @returns {Object} All calculated totals
    */
-  calculateTotalsFromLandLines(calculatedLandLines) {
+  calculateTotalsFromLandLines(
+    calculatedLandLines,
+    views = [],
+    waterfronts = [],
+  ) {
     const totalAcreage = calculatedLandLines.reduce((total, line) => {
       const size = parseFloat(line.size) || 0;
       return line.size_unit === 'AC' ? total + size : total;
@@ -294,29 +321,105 @@ class LandAssessmentCalculator {
       return line.size_unit === 'FF' ? total + size : total;
     }, 0);
 
-    const totalMarketValue = calculatedLandLines.reduce((total, line) => {
-      return total + (line.marketValue || 0);
+    // Calculate LAND DETAILS values (land lines only - no views/waterfront)
+    let landDetailsMarketValue = 0;
+    let landCurrentUseValue = 0;
+    let landCurrentUseCredit = 0;
+
+    calculatedLandLines.forEach((line) => {
+      // Market value is always the true market value for land details
+      // Apply consistent treatment regardless of current use status
+      landDetailsMarketValue += line.marketValue || 0;
+      landCurrentUseValue += line.currentUseValue || 0;
+      landCurrentUseCredit += line.currentUseCredit || 0;
+    });
+
+    // Land Details Assessed Value = Market Value - Current Use Credit
+    const landDetailsAssessedValue =
+      landDetailsMarketValue - landCurrentUseCredit;
+
+    // Calculate VIEW values (market value is always the true value)
+    const viewMarketValue = views.reduce((total, view) => {
+      return total + (parseFloat(view.calculatedValue) || 0);
     }, 0);
 
-    const totalCurrentUseValue = calculatedLandLines.reduce((total, line) => {
-      return total + (line.currentUseValue || 0);
+    // View assessed value: market value unless the specific view is marked as current use
+    const viewAssessedValue = views.reduce((total, view) => {
+      const marketValue = parseFloat(view.calculatedValue) || 0;
+      // If this specific view is current use, assessed value is 0, otherwise use market value
+      return total + (view.current_use ? 0 : marketValue);
     }, 0);
 
-    const totalCurrentUseCredit = calculatedLandLines.reduce((total, line) => {
-      return total + (line.currentUseCredit || 0);
+    // Calculate WATERFRONT values (market value is always the true value)
+    const waterfrontMarketValue = waterfronts.reduce((total, waterfront) => {
+      return total + (parseFloat(waterfront.calculatedValue) || 0);
     }, 0);
 
-    const totalAssessedValue = calculatedLandLines.reduce((total, line) => {
-      return total + (line.assessedValue || 0);
+    // Waterfront assessed value: market value unless the specific waterfront is marked as current use
+    const waterfrontAssessedValue = waterfronts.reduce((total, waterfront) => {
+      const marketValue = parseFloat(waterfront.calculatedValue) || 0;
+      // If this specific waterfront is current use, assessed value is 0, otherwise use market value
+      return total + (waterfront.current_use ? 0 : marketValue);
     }, 0);
+
+    // Calculate TOTAL values
+    const totalMarketValue =
+      landDetailsMarketValue + viewMarketValue + waterfrontMarketValue;
+    const totalAssessedValue = totalMarketValue - landCurrentUseCredit;
+
+    // CAMA Rule: Keep exact totals for current use precision (individual lines already rounded appropriately)
+    const roundedLandDetailsMarketValue = Math.round(landDetailsMarketValue);
+    const roundedLandDetailsAssessedValue = Math.round(
+      landDetailsAssessedValue,
+    );
+    const roundedViewMarketValue = Math.round(viewMarketValue);
+    const roundedViewAssessedValue = Math.round(viewAssessedValue);
+    const roundedWaterfrontMarketValue = Math.round(waterfrontMarketValue);
+    const roundedWaterfrontAssessedValue = Math.round(waterfrontAssessedValue);
+    const roundedTotalMarketValue = Math.round(totalMarketValue);
+    const roundedTotalAssessedValue = Math.round(totalAssessedValue);
 
     return {
+      // Basic measurements
       totalAcreage: Math.round(totalAcreage * 1000) / 1000,
       totalFrontage: Math.round(totalFrontage * 100) / 100,
-      totalMarketValue: Math.round(totalMarketValue),
-      totalCurrentUseValue: Math.round(totalCurrentUseValue),
-      totalCurrentUseCredit: Math.round(totalCurrentUseCredit),
-      totalAssessedValue: Math.round(totalAssessedValue),
+
+      // Land totals (land lines only) - New field names
+      landMarketValue: roundedLandDetailsMarketValue,
+      landCurrentUseValue: Math.round(landCurrentUseValue),
+      landTaxableValue: roundedLandDetailsAssessedValue,
+
+      // Legacy field names for backward compatibility
+      landDetailsMarketValue: roundedLandDetailsMarketValue,
+      landDetailsAssessedValue: roundedLandDetailsAssessedValue,
+      landAssessedValue: roundedLandDetailsAssessedValue,
+
+      // View totals
+      viewMarketValue: roundedViewMarketValue,
+      viewTaxableValue: roundedViewAssessedValue,
+      viewAssessedValue: roundedViewAssessedValue,
+
+      // Waterfront totals
+      waterfrontMarketValue: roundedWaterfrontMarketValue,
+      waterfrontTaxableValue: roundedWaterfrontAssessedValue,
+      waterfrontAssessedValue: roundedWaterfrontAssessedValue,
+
+      // Grand totals (land + view + waterfront)
+      totalMarketValue: roundedTotalMarketValue,
+      totalCurrentUseValue: Math.round(landCurrentUseValue),
+      totalCurrentUseCredit: Math.round(landCurrentUseCredit),
+      totalTaxableValue: roundedTotalAssessedValue,
+      totalAssessedValue: roundedTotalAssessedValue,
+
+      // Legacy field names for other totals
+      totalLNICU: Math.round(landCurrentUseValue),
+      totalCUValue: Math.round(landCurrentUseValue),
+      totalViewValue: roundedViewMarketValue,
+
+      // Metadata
+      hasCurrentUseLand: calculatedLandLines.some((line) =>
+        this.isCurrentUseCategory(line.land_use_type),
+      ),
     };
   }
 
@@ -362,11 +465,20 @@ class LandAssessmentCalculator {
     console.log(`  - ladders length:`, ladders?.length);
 
     if (!ladders || !Array.isArray(ladders) || ladders.length === 0) {
-      console.warn(`No land ladder data found for zone ${zoneId}. Available zones:`, Object.keys(this.landLadders || {}));
-      console.warn(`Full landLadders object:`, JSON.stringify(this.landLadders, null, 2));
+      console.warn(
+        `No land ladder data found for zone ${zoneId}. Available zones:`,
+        Object.keys(this.landLadders || {}),
+      );
+      console.warn(
+        `Full landLadders object:`,
+        JSON.stringify(this.landLadders, null, 2),
+      );
       return 0;
     }
-    console.log(`Looking up ladder rate for ${acreage} acres in zone ${zoneId}. Available tiers:`, ladders.map(t => `${t.acreage}AC@${t.value}`));
+    console.log(
+      `Looking up ladder rate for ${acreage} acres in zone ${zoneId}. Available tiers:`,
+      ladders.map((t) => `${t.acreage}AC@${t.value}`),
+    );
 
     const sortedLadders = [...ladders].sort((a, b) => a.acreage - b.acreage);
 

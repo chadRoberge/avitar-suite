@@ -9,6 +9,7 @@ export default class ZoneEditModalComponent extends Component {
   @tracked minimumAcreage = '';
   @tracked minimumFrontage = '';
   @tracked excessLandCostPerAcre = '';
+  @tracked baseViewValue = '';
 
   constructor(owner, args) {
     super(owner, args);
@@ -22,12 +23,14 @@ export default class ZoneEditModalComponent extends Component {
       this.minimumAcreage = this.args.zone.minimumAcreage || '';
       this.minimumFrontage = this.args.zone.minimumFrontage || '';
       this.excessLandCostPerAcre = this.args.zone.excessLandCostPerAcre || '';
+      this.baseViewValue = this.args.zone.baseViewValue || '';
     } else {
       this.zoneName = '';
       this.zoneDescription = '';
       this.minimumAcreage = '';
       this.minimumFrontage = '';
       this.excessLandCostPerAcre = '';
+      this.baseViewValue = '';
     }
   }
 
@@ -54,6 +57,11 @@ export default class ZoneEditModalComponent extends Component {
   @action
   updateExcessLandCostPerAcre(event) {
     this.excessLandCostPerAcre = event.target.value;
+  }
+
+  @action
+  updateBaseViewValue(event) {
+    this.baseViewValue = event.target.value;
   }
 
   @action
@@ -94,6 +102,7 @@ export default class ZoneEditModalComponent extends Component {
       minimumAcreage: parseFloat(this.minimumAcreage),
       minimumFrontage: parseInt(this.minimumFrontage, 10),
       excessLandCostPerAcre: parseFloat(this.excessLandCostPerAcre) || 0,
+      baseViewValue: parseFloat(this.baseViewValue) || 0,
     };
 
     // Include ID if editing existing zone

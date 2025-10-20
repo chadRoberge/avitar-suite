@@ -36,7 +36,7 @@
         </div>
         <div class="avitar-flex-3 avitar-ml-3">
           <span class="avitar-text-sm avitar-font-bold avitar-text-success">
-            ${{number-format @model.landAssessment.calculated_totals.totalMarketValue}}
+            ${{number-format @model.landAssessment.market_value}}
           </span>
         </div>
       </div>
@@ -194,13 +194,13 @@
                 Total Market:
               </div>
               <div class="avitar-flex-table-cell avitar-flex-3 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
-                ${{number-format @model.landAssessment.calculated_totals.totalMarketValue}}
+                ${{number-format @model.landAssessment.calculated_totals.landDetailsMarketValue}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-secondary avitar-flex avitar-justify-end">
                 ${{number-format @model.landAssessment.calculated_totals.totalCurrentUseValue}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2 avitar-font-semibold avitar-text-info avitar-flex avitar-justify-end">
-                ${{number-format @model.landAssessment.calculated_totals.totalAssessedValue}}
+                ${{number-format @model.landAssessment.calculated_totals.landDetailsAssessedValue}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-4">
                 {{!-- Notes column - empty --}}
@@ -217,13 +217,243 @@
       {{/if}}
     </div>
   </div>
+
+  {{!-- View Assessment Card --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">View Assessment</h3>
+          <div class="avitar-card__subtitle">Property views and visual enhancements</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openViewEditModal}}
+            type="button"
+          >
+            <i class="fas fa-plus avitar-mr-2"></i>Add View
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if @model.views}}
+        {{!-- Views Table Header --}}
+        <div class="avitar-flex-table-header">
+          <div class="avitar-flex-table-cell avitar-flex-3">SUBJECT</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">WIDTH</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">DISTANCE</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">DEPTH</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">BASE VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-3">CALCULATED VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">ACTIONS</div>
+        </div>
+
+        {{!-- Views Table Body --}}
+        <div class="avitar-flex-table-body">
+          {{#each @model.views as |view|}}
+            <div class="avitar-flex-table-row">
+              <div class="avitar-flex-table-cell avitar-flex-3">
+                {{view.subjectName}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{view.widthName}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{view.distanceName}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{view.depthName}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                ${{number-format view.baseValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-3">
+                ${{number-format view.calculatedValue}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{#if (can "update" "assessing")}}
+                  <button
+                    class="avitar-btn avitar-btn--primary avitar-btn--xs"
+                    {{on "click" (fn this.editView view)}}
+                    type="button"
+                    title="Edit View"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="avitar-btn avitar-btn--danger avitar-btn--xs avitar-ml-1"
+                    {{on "click" (fn this.deleteView view)}}
+                    type="button"
+                    title="Delete View"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+
+          {{!-- View Totals Row --}}
+          <div class="avitar-flex-table-row avitar-font-bold avitar-py-4 avitar-bg-gray-50">
+            <div class="avitar-flex-table-cell avitar-flex-3 avitar-text-right avitar-text-muted">
+              Total View Value:
+            </div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-3 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
+              ${{number-format @model.landAssessment.calculated_totals.totalViewValue}}
+            </div>
+            <div class="avitar-flex-table-cell avitar-flex-1"></div>
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <div>No views added for this property</div>
+          <div class="avitar-text-sm avitar-mt-2">Click "Add View" to add property views and enhance land value</div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Waterfront Assessment Card --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <h3 class="avitar-card__title">Waterfront Assessment</h3>
+          <div class="avitar-card__subtitle">Water frontage and access values</div>
+        </div>
+        {{#if (can "update" "assessing")}}
+          <button
+            class="avitar-btn avitar-btn--primary avitar-btn--sm"
+            {{on "click" this.openWaterfrontEditModal}}
+            type="button"
+          >
+            <i class="fas fa-plus avitar-mr-2"></i>Add Waterfront
+          </button>
+        {{/if}}
+      </div>
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if @model.landAssessment.waterfront}}
+        {{!-- Waterfront Table Header --}}
+        <div class="avitar-flex-table-header">
+          <div class="avitar-flex-table-cell avitar-flex-3">WATER BODY</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">FRONTAGE</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">ACCESS</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">TOPOGRAPHY</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">LOCATION</div>
+          <div class="avitar-flex-table-cell avitar-flex-2">BASE VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-3">CALCULATED VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">ACTIONS</div>
+        </div>
+
+        {{!-- Waterfront Table Body --}}
+        <div class="avitar-flex-table-body">
+          {{#each @model.landAssessment.waterfront as |waterfront|}}
+            <div class="avitar-flex-table-row">
+              <div class="avitar-flex-table-cell avitar-flex-3">
+                {{waterfront.water_body_name}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{waterfront.frontage}} ft
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{waterfront.access}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{waterfront.topography}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                {{waterfront.location}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-2">
+                ${{number-format waterfront.base_value}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-3">
+                ${{number-format waterfront.calculated_value}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{#if (can "update" "assessing")}}
+                  <button
+                    class="avitar-btn avitar-btn--ghost avitar-btn--xs"
+                    {{on "click" (fn this.editWaterfront waterfront)}}
+                    type="button"
+                    title="Edit Waterfront"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="avitar-btn avitar-btn--danger avitar-btn--xs avitar-ml-1"
+                    {{on "click" (fn this.deleteWaterfront waterfront)}}
+                    type="button"
+                    title="Delete Waterfront"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
+
+          {{!-- Waterfront Totals Row --}}
+          <div class="avitar-flex-table-row avitar-font-bold avitar-py-4 avitar-bg-gray-50">
+            <div class="avitar-flex-table-cell avitar-flex-3 avitar-text-right avitar-text-muted">
+              Total Waterfront Value:
+            </div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-2"></div>
+            <div class="avitar-flex-table-cell avitar-flex-3 avitar-font-semibold avitar-text-success avitar-flex avitar-justify-end">
+              ${{number-format @model.landAssessment.calculated_totals.totalWaterfrontValue}}
+            </div>
+            <div class="avitar-flex-table-cell avitar-flex-1"></div>
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-text-muted avitar-py-8">
+          <div>No waterfront added for this property</div>
+          <div class="avitar-text-sm avitar-mt-2">Click "Add Waterfront" to add water access and enhance land value</div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
 </div>
 
 {{!-- Land Edit Modal --}}
-<Assessing::LandEditModal 
+<Assessing::LandEditModal
   @isOpen={{this.showLandEditModal}}
   @property={{@model.property}}
   @landAssessment={{@model.landAssessment}}
+  @views={{@model.views}}
   @onSave={{this.refreshLandProperty}}
   @onClose={{this.closeLandEditModal}}
+/>
+
+{{!-- View Edit Modal --}}
+<Assessing::ViewEditModal
+  @isOpen={{this.showViewEditModal}}
+  @property={{@model.property}}
+  @landAssessment={{@model.landAssessment}}
+  @view={{this.selectedView}}
+  @viewAttributes={{this.viewAttributes}}
+  @zoneBaseViewValues={{this.zoneBaseViewValues}}
+  @onSave={{this.saveView}}
+  @onClose={{this.closeViewEditModal}}
+/>
+
+{{!-- Waterfront Edit Modal --}}
+<Assessing::WaterfrontEditModal
+  @isOpen={{this.showWaterfrontEditModal}}
+  @property={{@model.property}}
+  @waterfront={{this.selectedWaterfront}}
+  @waterBodies={{this.waterBodies}}
+  @onSave={{this.saveWaterfront}}
+  @onClose={{this.closeWaterfrontEditModal}}
 />

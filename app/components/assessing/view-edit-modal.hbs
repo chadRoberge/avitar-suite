@@ -1,0 +1,221 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if @view "Edit View" "Add View"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+          {{!-- Subject Selection --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="view-subject">
+              Subject <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="view-subject"
+              class="avitar-select"
+              {{on "change" (fn this.updateField "subjectId")}}
+              required
+            >
+              <option value="">Select Subject</option>
+              {{#each this.subjectAttributes as |attribute|}}
+                <option
+                  value={{attribute._id}}
+                  selected={{if (eq this.viewData.subjectId attribute._id) "selected"}}
+                >
+                  {{attribute.name}} ({{attribute.factor}}x)
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{!-- Width Selection --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="view-width">
+              Width <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="view-width"
+              class="avitar-select"
+              {{on "change" (fn this.updateField "widthId")}}
+              required
+            >
+              <option value="">Select Width</option>
+              {{#each this.widthAttributes as |attribute|}}
+                <option value={{attribute._id}} selected={{if (eq this.viewData.widthId attribute._id) "selected"}}>
+                  {{attribute.name}} ({{attribute.factor}}x)
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{!-- Distance Selection --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="view-distance">
+              Distance <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="view-distance"
+              class="avitar-select"
+              {{on "change" (fn this.updateField "distanceId")}}
+              required
+            >
+              <option value="">Select Distance</option>
+              {{#each this.distanceAttributes as |attribute|}}
+                <option value={{attribute._id}} selected={{if (eq this.viewData.distanceId attribute._id) "selected"}}>
+                  {{attribute.name}} ({{attribute.factor}}x)
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{!-- Depth Selection --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="view-depth">
+              Depth <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              id="view-depth"
+              class="avitar-select"
+              {{on "change" (fn this.updateField "depthId")}}
+              required
+            >
+              <option value="">Select Depth</option>
+              {{#each this.depthAttributes as |attribute|}}
+                <option value={{attribute._id}} selected={{if (eq this.viewData.depthId attribute._id) "selected"}}>
+                  {{attribute.name}} ({{attribute.factor}}x)
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{!-- Condition Factor --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="condition-factor">
+              Condition Factor <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              id="condition-factor"
+              type="number"
+              class="avitar-input"
+              value={{this.viewData.conditionFactor}}
+              {{on "input" (fn this.updateField "conditionFactor")}}
+              min="0"
+              max="10"
+              step="0.1"
+              required
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Factor for unique conditions (default: 1.0)
+            </div>
+          </div>
+
+          {{!-- Calculated Value (read-only) --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="calculated-value">
+              Calculated Value
+            </label>
+            <input
+              id="calculated-value"
+              type="text"
+              class="avitar-input"
+              value="${{number-format this.calculatedValue}}"
+              readonly
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Automatically calculated based on view factors
+            </div>
+          </div>
+
+          {{!-- Current Use Designation --}}
+          <div class="avitar-form-group">
+            <label class="avitar-label">
+              Current Use Designation
+            </label>
+            <div class="avitar-checkbox-wrapper">
+              <input
+                id="current-use"
+                type="checkbox"
+                class="avitar-checkbox"
+                checked={{this.viewData.current_use}}
+                {{on "change" (fn this.updateCheckboxField "current_use")}}
+              />
+              <label for="current-use" class="avitar-checkbox-label">
+                This view is designated as current use
+              </label>
+            </div>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              When checked, the assessed value for this view will be $0
+            </div>
+          </div>
+        </div>
+
+        {{!-- Condition Notes --}}
+        <div class="avitar-form-group avitar-mt-4">
+          <label class="avitar-label" for="condition-notes">
+            Condition Notes
+          </label>
+          <textarea
+            id="condition-notes"
+            class="avitar-textarea"
+            rows="3"
+            value={{this.viewData.conditionNotes}}
+            {{on "input" (fn this.updateField "conditionNotes")}}
+            placeholder="Notes about unique conditions affecting the view assessment..."
+          ></textarea>
+        </div>
+
+        {{!-- View Calculation Details --}}
+        {{#if this.hasAllSelections}}
+          <div class="avitar-mt-6 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+            <h6 class="avitar-mb-3">View Calculation Details</h6>
+            <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4 avitar-text-sm">
+              <div>
+                <span class="avitar-text-muted">Base Value:</span>
+                <div class="avitar-font-semibold">${{number-format this.zoneBaseValue}}</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Subject Factor:</span>
+                <div class="avitar-font-semibold">{{divide this.selectedSubject.factor 100}}x</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Width Factor:</span>
+                <div class="avitar-font-semibold">{{divide this.selectedWidth.factor 100}}x</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Distance Factor:</span>
+                <div class="avitar-font-semibold">{{divide this.selectedDistance.factor 100}}x</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Depth Factor:</span>
+                <div class="avitar-font-semibold">{{divide this.selectedDepth.factor 100}}x</div>
+              </div>
+              <div>
+                <span class="avitar-text-muted">Condition Factor:</span>
+                <div class="avitar-font-semibold">{{this.formData.conditionFactor}}x</div>
+              </div>
+            </div>
+            <div class="avitar-mt-3 avitar-text-sm avitar-text-muted">
+              Calculation: Base Value × Subject × Width × Distance × Depth × Condition =
+              ${{number-format this.zoneBaseValue}} × {{divide this.selectedSubject.factor 100}} × {{divide this.selectedWidth.factor 100}} × {{divide this.selectedDistance.factor 100}} × {{divide this.selectedDepth.factor 100}} × {{this.formData.conditionFactor}} =
+              <span class="avitar-font-semibold avitar-text-success">${{number-format this.calculatedValue}}</span>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="avitar-modal__footer">
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+            Cancel
+          </button>
+          <button type="submit" class="avitar-btn avitar-btn--primary" disabled={{not this.isValid}}>
+            {{if @view "Update View" "Add View"}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

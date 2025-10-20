@@ -832,6 +832,19 @@ export default class SketchEditModalComponent extends Component {
   }
 
   get shapesForCanvas() {
+    // Check if we have a mismatch between args.sketch and editedSketch IDs
+    if (this.args.sketch && this.editedSketch) {
+      const argsId = this.args.sketch.id || this.args.sketch._id;
+      const editedId = this.editedSketch.id || this.editedSketch._id;
+
+      if (argsId && editedId && argsId !== editedId) {
+        setTimeout(() => {
+          this.initializeEditedSketch();
+        }, 0);
+        return this.args.sketch.shapes || [];
+      }
+    }
+
     // Check for different initialization scenarios:
     if (this.args.sketch) {
       // Case 1: editedSketch doesn't exist or shapes is undefined

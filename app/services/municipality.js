@@ -179,7 +179,14 @@ export default class MunicipalityService extends Service {
       ];
 
       // Add assessment section links - property-aware
-      const sections = ['general', 'land', 'building', 'features', 'sketch'];
+      const sections = [
+        'general',
+        'land',
+        'building',
+        'features',
+        'exemptions',
+        'sketch',
+      ];
       sections.forEach((section) => {
         const sectionChild = {
           title: section.charAt(0).toUpperCase() + section.slice(1),
@@ -206,6 +213,13 @@ export default class MunicipalityService extends Service {
           route: 'municipality.assessing.ai-review',
         });
       }
+
+      // Add Reports tab
+      nav[nav.length - 1].children.push({
+        title: 'Reports',
+        route: 'municipality.assessing.reports',
+        icon: 'file-chart-line',
+      });
 
       // Add Settings at the far right
       nav[nav.length - 1].children.push({

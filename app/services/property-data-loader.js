@@ -28,11 +28,16 @@ export default class PropertyDataLoaderService extends Service {
    * @param {Object} options - Loading options
    * @returns {Object} Progressive data loader with promises for each tier
    */
-  loadPropertyProgressively(propertyId, cardNumber = 1, assessmentYear = null, options = {}) {
+  loadPropertyProgressively(
+    propertyId,
+    cardNumber = 1,
+    assessmentYear = null,
+    options = {},
+  ) {
     const {
       skipCache = false,
       onTierComplete = () => {},
-      loadAll = false
+      loadAll = false,
     } = options;
 
     // Initialize loading state
@@ -42,14 +47,20 @@ export default class PropertyDataLoaderService extends Service {
       tier2: 'pending',
       tier3: 'pending',
       tier4: 'pending',
-      startTime: Date.now()
+      startTime: Date.now(),
     });
 
     // Check cache first for complete data
     if (!skipCache) {
-      const cached = this.propertyCache.get(propertyId, cardNumber, assessmentYear);
+      const cached = this.propertyCache.get(
+        propertyId,
+        cardNumber,
+        assessmentYear,
+      );
       if (cached && this.isCachedDataComplete(cached)) {
-        console.log('✅ Complete cached data found, returning all tiers immediately');
+        console.log(
+          '✅ Complete cached data found, returning all tiers immediately',
+        );
         return this.createProgressiveResult(cached, loadingKey);
       }
     }
@@ -59,18 +70,20 @@ export default class PropertyDataLoaderService extends Service {
       tier1: this.loadTier1(propertyId, cardNumber, assessmentYear, loadingKey),
       tier2: this.loadTier2(propertyId, cardNumber, assessmentYear, loadingKey),
       tier3: this.loadTier3(propertyId, cardNumber, assessmentYear, loadingKey),
-      tier4: this.loadTier4(propertyId, cardNumber, assessmentYear, loadingKey)
+      tier4: this.loadTier4(propertyId, cardNumber, assessmentYear, loadingKey),
     };
 
     // Set up tier completion callbacks
-    Object.keys(tierPromises).forEach(tier => {
-      tierPromises[tier].then(data => {
-        this.updateLoadingState(loadingKey, tier, 'complete');
-        onTierComplete(tier, data);
-      }).catch(error => {
-        this.updateLoadingState(loadingKey, tier, 'error');
-        console.warn(`${tier} loading failed:`, error);
-      });
+    Object.keys(tierPromises).forEach((tier) => {
+      tierPromises[tier]
+        .then((data) => {
+          this.updateLoadingState(loadingKey, tier, 'complete');
+          onTierComplete(tier, data);
+        })
+        .catch((error) => {
+          this.updateLoadingState(loadingKey, tier, 'error');
+          console.warn(`${tier} loading failed:`, error);
+        });
     });
 
     // If loadAll is true, wait for all tiers
@@ -81,7 +94,7 @@ export default class PropertyDataLoaderService extends Service {
     return {
       ...tierPromises,
       loadingState: () => this.loadingStates.get(loadingKey),
-      isComplete: () => this.isLoadingComplete(loadingKey)
+      isComplete: () => this.isLoadingComplete(loadingKey),
     };
   }
 
@@ -93,28 +106,35 @@ export default class PropertyDataLoaderService extends Service {
     this.updateLoadingState(loadingKey, 'tier1', 'loading');
 
     try {
-      // Try to load basic property data only
+      // Try to load basic property data only with network-first to ensure fresh cards data
       const response = await this.localApi.get(
         `/properties/${propertyId}?card=${cardNumber}&fields=basic`,
-        { maxAge: 15 * 60 * 1000 } // 15 minute cache
+        { maxAge: 15 * 60 * 1000, strategy: 'network-first' }, // 15 minute cache, network-first strategy
       );
 
       const basicData = {
         property: response.property || response,
         loadedAt: Date.now(),
-        tier: 1
+        tier: 1,
       };
 
-      console.log('✅ Tier 1 loaded:', Date.now() - this.loadingStates.get(loadingKey).startTime, 'ms');
+      console.log(
+        '✅ Tier 1 loaded:',
+        Date.now() - this.loadingStates.get(loadingKey).startTime,
+        'ms',
+      );
       return basicData;
     } catch (error) {
-      // Fallback to full property endpoint
+      // Fallback to full property endpoint with network-first strategy
       console.warn('Tier 1 fallback to full property endpoint');
-      const response = await this.localApi.get(`/properties/${propertyId}?card=${cardNumber}`);
+      const response = await this.localApi.get(
+        `/properties/${propertyId}?card=${cardNumber}`,
+        { strategy: 'network-first' }
+      );
       return {
         property: response.property || response,
         loadedAt: Date.now(),
-        tier: 1
+        tier: 1,
       };
     }
   }
@@ -131,16 +151,20 @@ export default class PropertyDataLoaderService extends Service {
       const assessmentUrl = `/properties/${propertyId}/assessment/current?card=${cardNumber}${assessmentYear ? `&assessment_year=${assessmentYear}` : ''}`;
 
       const assessment = await this.localApi.get(assessmentUrl, {
-        maxAge: 10 * 60 * 1000 // 10 minute cache for assessments
+        maxAge: 10 * 60 * 1000, // 10 minute cache for assessments
       });
 
       const assessmentData = {
         assessment: assessment.assessment || assessment,
         loadedAt: Date.now(),
-        tier: 2
+        tier: 2,
       };
 
-      console.log('✅ Tier 2 loaded:', Date.now() - this.loadingStates.get(loadingKey).startTime, 'ms');
+      console.log(
+        '✅ Tier 2 loaded:',
+        Date.now() - this.loadingStates.get(loadingKey).startTime,
+        'ms',
+      );
       return assessmentData;
     } catch (error) {
       console.warn('Tier 2 loading failed, continuing without assessment data');
@@ -158,25 +182,45 @@ export default class PropertyDataLoaderService extends Service {
     try {
       const municipalityId = this.municipality.currentMunicipality?.id;
 
-      const [assessmentHistoryResponse, listingHistoryResponse] = await Promise.allSettled([
-        this.localApi.get(`/properties/${propertyId}/assessment-history`, {}, { showLoading: false }),
-        this.localApi.get(`/municipalities/${municipalityId}/properties/${propertyId}/listing-history`, {}, { showLoading: false })
-      ]);
+      const [assessmentHistoryResponse, listingHistoryResponse] =
+        await Promise.allSettled([
+          this.localApi.get(
+            `/properties/${propertyId}/assessment-history`,
+            {},
+            { showLoading: false },
+          ),
+          // Use API service directly for listing-history to avoid cache issues with card parameter
+          this.assessing.api.get(
+            `/municipalities/${municipalityId}/properties/${propertyId}/listing-history?card=${cardNumber}`,
+          ),
+        ]);
 
       const historyData = {
-        assessmentHistory: assessmentHistoryResponse.status === 'fulfilled' ?
-          (assessmentHistoryResponse.value?.assessments || []) : [],
-        listingHistory: listingHistoryResponse.status === 'fulfilled' ?
-          (listingHistoryResponse.value?.listingHistory || []) : [],
-        salesHistory: listingHistoryResponse.status === 'fulfilled' ?
-          (listingHistoryResponse.value?.salesHistory || []) : [],
-        propertyNotes: listingHistoryResponse.status === 'fulfilled' ?
-          listingHistoryResponse.value?.propertyNotes : null,
+        assessmentHistory:
+          assessmentHistoryResponse.status === 'fulfilled'
+            ? assessmentHistoryResponse.value?.assessments || []
+            : [],
+        listingHistory:
+          listingHistoryResponse.status === 'fulfilled'
+            ? listingHistoryResponse.value?.listingHistory || []
+            : [],
+        salesHistory:
+          listingHistoryResponse.status === 'fulfilled'
+            ? listingHistoryResponse.value?.salesHistory || []
+            : [],
+        propertyNotes:
+          listingHistoryResponse.status === 'fulfilled'
+            ? listingHistoryResponse.value?.propertyNotes
+            : null,
         loadedAt: Date.now(),
-        tier: 3
+        tier: 3,
       };
 
-      console.log('✅ Tier 3 loaded:', Date.now() - this.loadingStates.get(loadingKey).startTime, 'ms');
+      console.log(
+        '✅ Tier 3 loaded:',
+        Date.now() - this.loadingStates.get(loadingKey).startTime,
+        'ms',
+      );
       return historyData;
     } catch (error) {
       console.warn('Tier 3 loading failed');
@@ -186,7 +230,7 @@ export default class PropertyDataLoaderService extends Service {
         salesHistory: [],
         propertyNotes: null,
         loadedAt: Date.now(),
-        tier: 3
+        tier: 3,
       };
     }
   }
@@ -200,18 +244,32 @@ export default class PropertyDataLoaderService extends Service {
 
     try {
       const [sketchResponse, featuresResponse] = await Promise.allSettled([
-        this.assessing.getPropertySketchesForYear(propertyId, cardNumber, assessmentYear),
-        this.assessing.getPropertyFeaturesForYear(propertyId, cardNumber, assessmentYear)
+        this.assessing.getPropertySketchesForYear(
+          propertyId,
+          cardNumber,
+          assessmentYear,
+        ),
+        this.assessing.getPropertyFeaturesForYear(
+          propertyId,
+          cardNumber,
+          assessmentYear,
+        ),
       ]);
 
       const optionalData = {
-        sketches: sketchResponse.status === 'fulfilled' ? sketchResponse.value : [],
-        features: featuresResponse.status === 'fulfilled' ? featuresResponse.value : [],
+        sketches:
+          sketchResponse.status === 'fulfilled' ? sketchResponse.value : [],
+        features:
+          featuresResponse.status === 'fulfilled' ? featuresResponse.value : [],
         loadedAt: Date.now(),
-        tier: 4
+        tier: 4,
       };
 
-      console.log('✅ Tier 4 loaded:', Date.now() - this.loadingStates.get(loadingKey).startTime, 'ms');
+      console.log(
+        '✅ Tier 4 loaded:',
+        Date.now() - this.loadingStates.get(loadingKey).startTime,
+        'ms',
+      );
       return optionalData;
     } catch (error) {
       console.warn('Tier 4 loading failed');
@@ -219,7 +277,7 @@ export default class PropertyDataLoaderService extends Service {
         sketches: [],
         features: [],
         loadedAt: Date.now(),
-        tier: 4
+        tier: 4,
       };
     }
   }
@@ -228,10 +286,12 @@ export default class PropertyDataLoaderService extends Service {
    * Check if cached data has all required tiers
    */
   isCachedDataComplete(cached) {
-    return cached.property &&
-           cached.assessment !== undefined &&
-           cached.assessmentHistory !== undefined &&
-           cached.currentYear !== undefined;
+    return (
+      cached.property &&
+      cached.assessment !== undefined &&
+      cached.assessmentHistory !== undefined &&
+      cached.currentYear !== undefined
+    );
   }
 
   /**
@@ -248,13 +308,13 @@ export default class PropertyDataLoaderService extends Service {
         property: cached.property,
         loadedAt: Date.now(),
         tier: 1,
-        fromCache: true
+        fromCache: true,
       }),
       tier2: Promise.resolve({
         assessment: cached.assessment,
         loadedAt: Date.now(),
         tier: 2,
-        fromCache: true
+        fromCache: true,
       }),
       tier3: Promise.resolve({
         assessmentHistory: cached.assessmentHistory || [],
@@ -263,17 +323,17 @@ export default class PropertyDataLoaderService extends Service {
         propertyNotes: cached.propertyNotes,
         loadedAt: Date.now(),
         tier: 3,
-        fromCache: true
+        fromCache: true,
       }),
       tier4: Promise.resolve({
         sketches: [],
         features: [],
         loadedAt: Date.now(),
         tier: 4,
-        fromCache: true
+        fromCache: true,
       }),
       loadingState: () => this.loadingStates.get(loadingKey),
-      isComplete: () => true
+      isComplete: () => true,
     };
   }
 
@@ -295,8 +355,8 @@ export default class PropertyDataLoaderService extends Service {
     const state = this.loadingStates.get(loadingKey);
     if (!state) return false;
 
-    return Object.values(state).every(tierState =>
-      tierState === 'complete' || tierState === 'error'
+    return Object.values(state).every(
+      (tierState) => tierState === 'complete' || tierState === 'error',
     );
   }
 
@@ -310,12 +370,12 @@ export default class PropertyDataLoaderService extends Service {
     const totalTime = Date.now() - state.startTime;
     return {
       totalTime,
-      completedTiers: Object.keys(state).filter(key =>
-        key.startsWith('tier') && state[key] === 'complete'
+      completedTiers: Object.keys(state).filter(
+        (key) => key.startsWith('tier') && state[key] === 'complete',
       ).length,
-      failedTiers: Object.keys(state).filter(key =>
-        key.startsWith('tier') && state[key] === 'error'
-      ).length
+      failedTiers: Object.keys(state).filter(
+        (key) => key.startsWith('tier') && state[key] === 'error',
+      ).length,
     };
   }
 

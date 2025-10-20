@@ -1,0 +1,44 @@
+{{!-- Property Assessment Summary Report Component --}}
+<div class="report-preview">
+  <div class="avitar-card avitar-card--outline">
+    <div class="avitar-card__header">
+      <h5 class="avitar-card__title">Property Assessment Summary</h5>
+      <div class="avitar-card__subtitle">Preview based on current parameters</div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{#if @parameters.assessment_year}}
+        <div class="preview-section avitar-mb-4">
+          <h6 class="avitar-mb-2">Assessment Year: {{@parameters.assessment_year}}</h6>
+
+          {{#if @parameters.property_class}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Property Class: {{@parameters.property_class}}
+            </p>
+          {{/if}}
+
+          {{#if @parameters.zone}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Zone: {{@parameters.zone}}
+            </p>
+          {{/if}}
+
+          <p class="avitar-text-sm avitar-text-muted">
+            Include Exemptions: {{#if @parameters.include_exemptions}}Yes{{else}}No{{/if}}
+          </p>
+        </div>
+
+        <div class="preview-content">
+          <p class="avitar-text-sm avitar-text-muted">
+            This report will include comprehensive property assessment data, statistical breakdowns,
+            and detailed property listings for the specified criteria.
+          </p>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-py-4">
+          <p class="avitar-text-muted">Please select an assessment year to preview this report.</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

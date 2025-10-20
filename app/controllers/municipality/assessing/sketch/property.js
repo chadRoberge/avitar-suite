@@ -7,6 +7,9 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
   @service api;
   @service assessing;
   @service notifications;
+  @service('property-cache') propertyCache;
+  @service realtime;
+  @service('property-selection') propertySelection;
 
   @tracked sketches = [];
   @tracked currentSketch = null;
@@ -24,6 +27,29 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
       sketchesCount: this.model.sketches?.length || 0,
       sketches: this.model.sketches,
     });
+
+    // Clear any stale currentSketch data when navigating between properties
+    // This prevents showing sketch data from the previous property
+    if (
+      this.currentSketch &&
+      this.currentSketch.property_id !== this.model.property?.id
+    ) {
+      console.log('🧹 Clearing stale sketch data from different property:', {
+        currentSketchPropertyId: this.currentSketch.property_id,
+        newPropertyId: this.model.property?.id,
+        currentSketchId: this.currentSketch._id,
+      });
+      this.currentSketch = null;
+    }
+
+    // Clear edit modal state when setting up sketches for a new property
+    // This prevents stale edit data from persisting across property navigation
+    if (this.isEditModalOpen) {
+      console.log('🧹 Clearing edit modal state due to property change');
+      this.isEditModalOpen = false;
+      this.sketchBeingEdited = null;
+      this.isDirty = false;
+    }
 
     // Get selected assessment year from model (or fall back to property tax year)
     const currentAssessmentYear =
@@ -121,6 +147,84 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
     });
 
     this.currentSketch = newCurrentSketch;
+
+    // If no sketch found for this property, log it for debugging
+    if (!newCurrentSketch && this.model.sketches?.length === 0) {
+      console.log(
+        'ℹ️ No sketches found for this property - canvas will show empty state',
+      );
+    } else if (!newCurrentSketch && this.model.sketches?.length > 0) {
+      const sketchDetails = this.model.sketches?.map((s) => ({
+        id: s.id || s._id,
+        property_id: s.property_id,
+        card_number: s.card_number,
+        assessment_year: s.assessment_year,
+        shapes_count: s.shapes?.length || 0,
+        name: s.name,
+      }));
+
+      console.warn('⚠️ Sketches exist but none match current criteria:', {
+        totalSketches: this.model.sketches?.length,
+        propertyId: this.model.property?.id,
+        currentCard: this.model.property?.current_card,
+        assessmentYear:
+          this.model.selectedAssessmentYear || this.model.property.tax_year,
+      });
+
+      console.log('📋 Available sketch details:', sketchDetails);
+
+      // Log each sketch individually for better visibility
+      sketchDetails.forEach((sketch, index) => {
+        console.log(`📋 Sketch ${index + 1}:`, {
+          id: sketch.id,
+          property_id: sketch.property_id,
+          card_number: sketch.card_number,
+          assessment_year: sketch.assessment_year,
+          shapes_count: sketch.shapes_count,
+          name: sketch.name,
+        });
+      });
+
+      // Try to find the best matching sketch for this property/card combo
+      const propertyCardSketches =
+        this.model.sketches?.filter(
+          (s) =>
+            s.property_id === this.model.property?.id &&
+            s.card_number === this.model.property?.current_card,
+        ) || [];
+
+      if (propertyCardSketches.length > 0) {
+        console.log(
+          '📋 Found sketches for this property/card but different assessment year:',
+          {
+            foundSketches: propertyCardSketches.length,
+            sketchYears: propertyCardSketches.map((s) => s.assessment_year),
+            requestedYear:
+              this.model.selectedAssessmentYear || this.model.property.tax_year,
+          },
+        );
+
+        // Use the most recent sketch if no exact year match
+        const mostRecentSketch = propertyCardSketches.reduce(
+          (latest, current) => {
+            const latestYear = latest.assessment_year || 0;
+            const currentYear = current.assessment_year || 0;
+            return currentYear > latestYear ? current : latest;
+          },
+        );
+
+        console.log('🎯 Using most recent sketch as fallback:', {
+          sketchId: mostRecentSketch._id || mostRecentSketch.id,
+          year: mostRecentSketch.assessment_year,
+          shapesCount: mostRecentSketch.shapes?.length || 0,
+        });
+
+        const processedFallbackSketch =
+          this.ensureSketchTotals(mostRecentSketch);
+        this.currentSketch = processedFallbackSketch;
+        this.sketches = [processedFallbackSketch];
+      }
+    }
   }
 
   // Helper method to ensure sketch has proper totals calculated
@@ -220,10 +324,82 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
   @action
   editSketch(sketch) {
-    // Start editing: create a draft copy
-    this.sketchBeingEdited = { ...sketch }; // Draft state
+    // Ensure we're editing the current sketch, not a stale reference
+    const sketchToEdit = sketch || this.currentSketch;
+
+    if (!sketchToEdit) {
+      console.error('No sketch available to edit');
+      return;
+    }
+
+    console.log('🖊️ Starting to edit sketch:', {
+      passedSketchId: sketch?._id,
+      currentSketchId: this.currentSketch?._id,
+      usingSketchId: sketchToEdit._id,
+      propertyId: this.model.property?.id,
+    });
+
+    // Start editing: create a draft copy of the correct sketch
+    this.sketchBeingEdited = { ...sketchToEdit }; // Draft state
     this.isDirty = false; // No changes yet
     this.isEditModalOpen = true;
+  }
+
+  @action
+  editCurrentSketch() {
+    // Edit the current sketch without relying on parameter passing
+    if (!this.currentSketch) {
+      console.error(
+        '❌ No current sketch available to edit - sketches may not be loaded yet',
+      );
+      console.log('🔍 Debug state:', {
+        hasModel: !!this.model,
+        propertyId: this.model?.property?.id,
+        sketchesCount: this.sketches?.length,
+        currentSketch: !!this.currentSketch,
+      });
+      return;
+    }
+
+    // Verify the current sketch belongs to the current property
+    if (this.currentSketch.property_id !== this.model?.property?.id) {
+      console.warn(
+        '⚠️ Current sketch belongs to different property, refreshing sketches',
+      );
+      this.setupSketches();
+
+      // Try again after refresh
+      if (
+        !this.currentSketch ||
+        this.currentSketch.property_id !== this.model?.property?.id
+      ) {
+        console.error('❌ Still no valid sketch after refresh');
+        return;
+      }
+    }
+
+    console.log('🖊️ Editing current sketch directly:', {
+      sketchId: this.currentSketch._id,
+      propertyId: this.model.property?.id,
+      sketchPropertyId: this.currentSketch.property_id,
+      cardNumber: this.currentSketch.card_number,
+      shapesCount: this.currentSketch.shapes?.length || 0,
+    });
+
+    // Process the sketch data through the same logic as the property record card modal
+    // to ensure proper effective area calculations and data consistency
+    const processedSketch = this.ensureSketchTotals(this.currentSketch);
+
+    // Create a draft copy of the processed sketch
+    this.sketchBeingEdited = { ...processedSketch };
+    this.isDirty = false;
+    this.isEditModalOpen = true;
+
+    console.log('✅ Edit modal opened with processed sketch data:', {
+      totalArea: this.sketchBeingEdited.total_area,
+      totalEffectiveArea: this.sketchBeingEdited.total_effective_area,
+      shapesProcessed: this.sketchBeingEdited.shapes?.length || 0,
+    });
   }
 
   @action
@@ -301,6 +477,43 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
           editedSketch,
         );
         savedSketch = response.sketch;
+
+        // After successful save, fetch fresh property data and update cache
+        try {
+          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+
+          if (freshProperty && freshProperty.property) {
+            // Update local storage cache
+            const cacheKey = `_properties_${this.model.property.id}`;
+            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+            // Also update in-memory property cache
+            this.propertyCache.set(this.model.property.id, freshProperty);
+
+            console.log('✅ Updated cache with fresh property data after sketch update');
+          }
+        } catch (error) {
+          console.warn('Could not update cache after sketch save:', error);
+          // Fall back to invalidation if update fails
+          this.propertyCache.invalidate(this.model.property.id);
+        }
+
+        // Clear sketch-specific caches
+        this.assessing.clearSketchCache(
+          this.model.property.id,
+          this.model.property.current_card,
+        );
+
+        // Emit realtime event to notify property record card modal to refresh immediately
+        this.realtime.emit('sketch:updated', {
+          propertyId: this.model.property.id,
+          cardNumber: this.model.property.current_card,
+          sketchId: savedSketch._id || savedSketch.id,
+        });
+
+        console.log(
+          '✅ Updated caches and emitted sketch:updated event after update',
+        );
       } else {
         // Create new sketch
         const { _id, ...sketchWithoutId } = editedSketch;
@@ -315,6 +528,43 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
           sketchData,
         );
         savedSketch = response.sketch;
+
+        // After successful save, fetch fresh property data and update cache
+        try {
+          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+
+          if (freshProperty && freshProperty.property) {
+            // Update local storage cache
+            const cacheKey = `_properties_${this.model.property.id}`;
+            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+            // Also update in-memory property cache
+            this.propertyCache.set(this.model.property.id, freshProperty);
+
+            console.log('✅ Updated cache with fresh property data after sketch creation');
+          }
+        } catch (error) {
+          console.warn('Could not update cache after sketch save:', error);
+          // Fall back to invalidation if update fails
+          this.propertyCache.invalidate(this.model.property.id);
+        }
+
+        // Clear sketch-specific caches
+        this.assessing.clearSketchCache(
+          this.model.property.id,
+          this.model.property.current_card,
+        );
+
+        // Emit realtime event to notify property record card modal to refresh immediately
+        this.realtime.emit('sketch:updated', {
+          propertyId: this.model.property.id,
+          cardNumber: this.model.property.current_card,
+          sketchId: savedSketch._id || savedSketch.id,
+        });
+
+        console.log(
+          '✅ Updated caches and emitted sketch:updated event after creation',
+        );
       }
 
       // Step 3: Update with server response (includes proper version)
@@ -334,13 +584,7 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
         this.viewCanvasForceUpdate();
       }
 
-      // Clear cache to ensure fresh data on next load
-      if (this.assessing.clearSketchCache) {
-        this.assessing.clearSketchCache(
-          this.model.property.id,
-          this.model.property.current_card,
-        );
-      }
+      // Cache already cleared immediately after save operation above
 
       // Update sketches list
       const sketchIndex = this.sketches.findIndex(
@@ -356,6 +600,12 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
       this.notifications.success('Sketch saved successfully');
       this.closeEditModal();
+
+      // Refresh assessment totals in property header
+      await this.propertySelection.refreshCurrentAssessmentTotals(
+        null,
+        this.model,
+      );
 
       return savedSketch;
     } catch (error) {
@@ -384,13 +634,7 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
             const retrySketch = { ...editedSketch, __v: refreshedSketch.__v };
             const result = await this.saveSketchFromModal(retrySketch, options);
 
-            // Clear cache after successful retry
-            if (this.assessing.clearSketchCache) {
-              this.assessing.clearSketchCache(
-                this.model.property.id,
-                this.model.property.current_card,
-              );
-            }
+            // Cache already cleared in recursive saveSketchFromModal call
 
             return result;
           }
@@ -410,11 +654,17 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
   }
 
   @action
-  refreshSketchProperty() {
+  async refreshSketchProperty() {
     // Use the route reference to refresh
     if (this.sketchRoute) {
       this.sketchRoute.refresh();
     }
+
+    // Also refresh assessment totals in property header
+    await this.propertySelection.refreshCurrentAssessmentTotals(
+      null,
+      this.model,
+    );
   }
 
   @action
@@ -450,13 +700,43 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
           }
         }
 
-        // Clear cache after successful delete
-        if (this.assessing.clearSketchCache) {
-          this.assessing.clearSketchCache(
-            this.model.property.id,
-            this.model.property.current_card,
-          );
+        // After successful delete, fetch fresh property data and update cache
+        try {
+          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+
+          if (freshProperty && freshProperty.property) {
+            // Update local storage cache
+            const cacheKey = `_properties_${this.model.property.id}`;
+            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+
+            // Also update in-memory property cache
+            this.propertyCache.set(this.model.property.id, freshProperty);
+
+            console.log('✅ Updated cache with fresh property data after sketch deletion');
+          }
+        } catch (error) {
+          console.warn('Could not update cache after sketch delete:', error);
+          // Fall back to invalidation if update fails
+          this.propertyCache.invalidate(this.model.property.id);
         }
+
+        // Clear sketch-specific caches
+        this.assessing.clearSketchCache(
+          this.model.property.id,
+          this.model.property.current_card,
+        );
+
+        // Emit realtime event to notify property record card modal to refresh immediately
+        this.realtime.emit('sketch:updated', {
+          propertyId: this.model.property.id,
+          cardNumber: this.model.property.current_card,
+          sketchId: sketchId,
+          operation: 'delete',
+        });
+
+        console.log(
+          '✅ Updated caches and emitted sketch:updated event after delete',
+        );
 
         this.notifications.success('Sketch deleted successfully');
       } catch (error) {

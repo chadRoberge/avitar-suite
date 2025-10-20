@@ -86,14 +86,37 @@ const landAssessmentSchema = new mongoose.Schema(
 
     // Calculated totals (computed by shared calculator)
     calculated_totals: {
+      // Basic measurements
       totalAcreage: { type: Number, default: 0 },
       totalFrontage: { type: Number, default: 0 },
+
+      // Land Details values (land lines only)
+      landDetailsMarketValue: { type: Number, default: 0 },
+      landDetailsAssessedValue: { type: Number, default: 0 },
+
+      // View values
+      viewMarketValue: { type: Number, default: 0 },
+      viewAssessedValue: { type: Number, default: 0 },
+
+      // Waterfront values
+      waterfrontMarketValue: { type: Number, default: 0 },
+      waterfrontAssessedValue: { type: Number, default: 0 },
+
+      // Total values (land details + view + waterfront)
       totalMarketValue: { type: Number, default: 0 },
-      totalCurrentUseValue: { type: Number, default: 0 },
       totalAssessedValue: { type: Number, default: 0 },
+
+      // Legacy fields for backward compatibility
+      totalCurrentUseValue: { type: Number, default: 0 },
       totalCurrentUseCredit: { type: Number, default: 0 },
       totalLNICU: { type: Number, default: 0 },
       totalCUValue: { type: Number, default: 0 },
+      totalViewValue: { type: Number, default: 0 }, // For backward compatibility
+      landMarketValue: { type: Number, default: 0 }, // Legacy alias
+      landAssessedValue: { type: Number, default: 0 }, // Legacy alias
+
+      // Additional metadata
+      hasCurrentUseLand: { type: Boolean, default: false },
     },
 
     // Calculation tracking
@@ -275,24 +298,34 @@ landAssessmentSchema.statics.updateForProperty = async function (
   return landAssessment;
 };
 
-// Trigger total assessment update after save/remove
+// Trigger parcel assessment update after save
 landAssessmentSchema.post('save', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
 
-    await updatePropertyTotalAssessment(
+    console.log(
+      `Land assessment saved, triggering parcel recalculation for property ${doc.property_id}...`,
+    );
+
+    const result = await updateParcelAssessment(
       doc.property_id,
       doc.municipality_id,
       doc.effective_year,
-      null, // userId not available in hook
+      { trigger: 'land_update', userId: null },
     );
+
     console.log(
-      `Updated total assessment for property ${doc.property_id} after land assessment change`,
+      `✓ Parcel assessment updated after land change:`,
+      `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()},`,
+      `Land: $${result.parcelTotals.total_land_value.toLocaleString()}`,
     );
   } catch (error) {
     console.error(
-      'Error updating total assessment after land assessment save:',
-      error,
+      'Error updating parcel assessment after land assessment save:',
+      {
+        propertyId: doc.property_id,
+        error: error.message,
+      },
     );
   }
 });
@@ -319,16 +352,22 @@ landAssessmentSchema.post('save', async function (doc) {
 
 landAssessmentSchema.post('remove', async function (doc) {
   try {
-    const { updatePropertyTotalAssessment } = require('../utils/assessment');
+    const { updateParcelAssessment } = require('../utils/assessment');
 
-    await updatePropertyTotalAssessment(
+    console.log(
+      `Land assessment removed, recalculating parcel for property ${doc.property_id}...`,
+    );
+
+    const result = await updateParcelAssessment(
       doc.property_id,
       doc.municipality_id,
       doc.effective_year,
-      null, // userId not available in hook
+      { trigger: 'land_update', userId: null },
     );
+
     console.log(
-      `Updated total assessment for property ${doc.property_id} after land assessment removal`,
+      `✓ Parcel assessment updated after land removal:`,
+      `Total: $${result.parcelTotals.total_assessed_value.toLocaleString()}`,
     );
 
     // Create audit entry for removal
@@ -344,8 +383,11 @@ landAssessmentSchema.post('remove', async function (doc) {
     }
   } catch (error) {
     console.error(
-      'Error updating total assessment after land assessment removal:',
-      error,
+      'Error updating parcel assessment after land assessment removal:',
+      {
+        propertyId: doc.property_id,
+        error: error.message,
+      },
     );
   }
 });
