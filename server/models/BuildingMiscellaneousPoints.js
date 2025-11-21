@@ -25,6 +25,12 @@ const buildingMiscellaneousPointsSchema = new mongoose.Schema(
       min: -1000,
       max: 1000,
     },
+    fireplacePoints: {
+      type: Number,
+      default: 0,
+      min: -1000,
+      max: 1000,
+    },
     generatorPoints: {
       type: Number,
       default: 0,
@@ -61,6 +67,7 @@ buildingMiscellaneousPointsSchema.statics.getOrCreateForMunicipality =
         municipalityId,
         airConditioningPoints: 0,
         extraKitchenPoints: 0,
+        fireplacePoints: 0,
         generatorPoints: 0,
       });
     }

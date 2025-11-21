@@ -10,16 +10,41 @@ export default class LadderEntryEditModalComponent extends Component {
   @tracked valueError = null;
   @tracked generalError = null;
 
+  // Store the previous values to detect changes
+  _previousEntryId = null;
+  _previousIsOpen = false;
+
   constructor() {
     super(...arguments);
-    this.initializeForm();
+  }
+
+  // Getter that triggers form update checks - called from template
+  get formInitializer() {
+    const currentEntryId = this.args.ladderEntry?.id || this.args.ladderEntry?._id;
+    const isOpen = this.args.isOpen;
+
+    // Check if entry changed or modal just opened
+    const entryChanged = currentEntryId !== this._previousEntryId;
+    const modalJustOpened = isOpen && !this._previousIsOpen;
+
+    if (entryChanged || modalJustOpened) {
+      // Use setTimeout to avoid updating during render
+      setTimeout(() => {
+        this.initializeForm();
+      }, 0);
+      this._previousEntryId = currentEntryId;
+    }
+
+    this._previousIsOpen = isOpen;
+    return null; // Don't render anything
   }
 
   initializeForm() {
     if (this.args.ladderEntry) {
       // Edit mode - populate existing values
       this.frontage = this.args.ladderEntry.frontage?.toString() || '';
-      this.value = this.args.ladderEntry.value?.toString() || '';
+      // Server stores as 'factor', but we may also get 'value' from legacy data
+      this.value = (this.args.ladderEntry.factor || this.args.ladderEntry.value)?.toString() || '';
     } else {
       // Create mode - clear values
       this.frontage = '';
@@ -54,23 +79,28 @@ export default class LadderEntryEditModalComponent extends Component {
       isValid = false;
     }
 
-    // Validate value
+    // Validate factor
     const valueNum = parseFloat(this.value);
     if (!this.value || this.value.trim() === '') {
-      this.valueError = 'Value is required';
+      this.valueError = 'Factor is required';
       isValid = false;
     } else if (isNaN(valueNum)) {
-      this.valueError = 'Value must be a valid number';
+      this.valueError = 'Factor must be a valid number';
       isValid = false;
     } else if (valueNum < 0) {
-      this.valueError = 'Value cannot be negative';
+      this.valueError = 'Factor cannot be negative';
       isValid = false;
-    } else if (valueNum > 100000000) {
-      this.valueError = 'Value cannot exceed $100,000,000';
+    } else if (valueNum > 1000) {
+      this.valueError = 'Factor cannot exceed 1,000';
       isValid = false;
     }
 
     return isValid;
+  }
+
+  @action
+  checkForUpdates() {
+    this.updateFormIfNeeded();
   }
 
   @action
@@ -110,13 +140,14 @@ export default class LadderEntryEditModalComponent extends Component {
     try {
       const entryData = {
         frontage: parseFloat(this.frontage),
-        value: parseFloat(this.value),
+        factor: parseFloat(this.value), // Server expects 'factor' not 'value'
         order: this.args.ladderEntry?.order || 0,
       };
 
-      // Add ID if editing existing entry
-      if (this.args.ladderEntry?.id) {
-        entryData.id = this.args.ladderEntry.id;
+      // Add ID if editing existing entry (check both id and _id)
+      const entryId = this.args.ladderEntry?.id || this.args.ladderEntry?._id;
+      if (entryId) {
+        entryData.id = entryId;
       }
 
       await this.args.onSave?.(entryData);

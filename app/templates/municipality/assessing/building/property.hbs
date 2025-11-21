@@ -42,7 +42,7 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Roof Style:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_style}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_style.displayText}}</span>
             </div>
           </div>
 
@@ -52,7 +52,7 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Roof Cover:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_cover}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.roof_cover.displayText}}</span>
             </div>
           </div>
 
@@ -62,9 +62,9 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Ext Wall:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_1}}</div>
+              <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_1.displayText}}</div>
               {{#if @model.buildingAssessment.exterior_wall_2}}
-                <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_2}}</div>
+                <div class="avitar-text-sm">{{@model.buildingAssessment.exterior_wall_2.displayText}}</div>
               {{/if}}
             </div>
           </div>
@@ -75,9 +75,9 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Int Wall:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_1}}</div>
+              <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_1.displayText}}</div>
               {{#if @model.buildingAssessment.interior_wall_2}}
-                <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_2}}</div>
+                <div class="avitar-text-sm">{{@model.buildingAssessment.interior_wall_2.displayText}}</div>
               {{/if}}
             </div>
           </div>
@@ -88,9 +88,9 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Flooring:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_1}}</div>
+              <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_1.displayText}}</div>
               {{#if @model.buildingAssessment.flooring_2}}
-                <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_2}}</div>
+                <div class="avitar-text-sm">{{@model.buildingAssessment.flooring_2.displayText}}</div>
               {{/if}}
             </div>
           </div>
@@ -101,7 +101,7 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Heating Fuel:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_fuel}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_fuel.displayText}}</span>
             </div>
           </div>
 
@@ -111,16 +111,27 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Heating Type:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_type}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.heating_type.displayText}}</span>
             </div>
           </div>
-          {{!-- A/C --}}
+
+          {{!-- Frame --}}
           <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
             <div class="avitar-flex-3 avitar-text-right">
-              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">A/C:</span>
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Frame:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.air_conditioning}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.frame.displayText}}</span>
+            </div>
+          </div>
+
+          {{!-- Ceiling Height --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Ceiling Height:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.ceiling_height.displayText}}</span>
             </div>
           </div>
         </div>
@@ -166,13 +177,24 @@
               <span class="avitar-text-sm">{{@model.buildingAssessment.extra_kitchen}}</span>
             </div>
           </div>
-           {{!-- Generator --}}
+
+          {{!-- A/C --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">A/C:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm">{{@model.buildingAssessment.air_conditioning.displayText}}</span>
+            </div>
+          </div>
+
+          {{!-- Generator --}}
           <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
             <div class="avitar-flex-3 avitar-text-right">
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Generator:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.generator}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.generator.displayText}}</span>
             </div>
           </div>
 
@@ -183,7 +205,7 @@
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
               <span class="avitar-text-sm avitar-font-semibold avitar-text-primary">
-                {{@model.buildingAssessment.quality_grade}}
+                {{@model.buildingAssessment.quality_grade.displayText}}
               </span>
             </div>
           </div>
@@ -194,7 +216,7 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Story Height:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.story_height}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.story_height.displayText}}</span>
             </div>
           </div>
 
@@ -204,7 +226,7 @@
               <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Base Type:</span>
             </div>
             <div class="avitar-flex-3 avitar-ml-3">
-              <span class="avitar-text-sm">{{@model.buildingAssessment.base_type}}</span>
+              <span class="avitar-text-sm">{{@model.buildingAssessment.base_type.displayText}}</span>
             </div>
           </div>
 
@@ -216,6 +238,18 @@
             <div class="avitar-flex-3 avitar-ml-3">
               <span class="avitar-text-sm avitar-font-semibold avitar-text-success">
                 ${{number-format @model.buildingAssessment.base_rate}}
+              </span>
+            </div>
+          </div>
+
+          {{!-- Adjusted Base Rate --}}
+          <div class="avitar-flex avitar-items-start avitar-skinny avitar-mb-3">
+            <div class="avitar-flex-3 avitar-text-right">
+              <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Adjusted Base Rate:</span>
+            </div>
+            <div class="avitar-flex-3 avitar-ml-3">
+              <span class="avitar-text-sm avitar-font-semibold avitar-text-primary">
+                ${{number-format @model.buildingAssessment.calculation_details.adjustedBaseRate 2}}
               </span>
             </div>
           </div>

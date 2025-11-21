@@ -759,6 +759,68 @@
       {{/if}}
     </div>
   </div>
+  {{!-- Ceiling Height Card --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-card__header--colored">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-card__title">Ceiling Height</h3>
+          <div class="avitar-card__subtitle">Point-based codes for Ceiling Height features</div>
+        </div>
+        {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "ceiling_height")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Ceiling Height Code
+        </button>
+        {{/unless}}
+      </div>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.ceilingHeightCodes.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table">
+          <thead>
+            <tr>
+              <th>Display Text</th>
+              <th>Description</th>
+              <th>Points</th>
+              <th class="avitar-table__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.ceilingHeightCodes as |code|}}
+            <tr>
+              <td>
+                <span class="avitar-badge avitar-badge--primary">{{code.displayText}}</span>
+              </td>
+              <td>{{code.description}}</td>
+              <td>{{code.points}}</td>
+              <td class="avitar-table__actions">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="avitar-empty-state avitar-text-center avitar-py-6">
+        <i class="fas fa-arrows-alt-v avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        <div class="avitar-font-semibold avitar-mb-2">No Ceiling Height Codes</div>
+        <div class="avitar-text-muted avitar-mb-4">Add ceiling height feature codes to get started</div>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "ceiling_height")}}>
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add First Ceiling Height Code
+        </button>
+      </div>
+      {{/if}}
+    </div>
+  </div>
   {{!-- Miscellaneous Points Section --}}
   <div class="avitar-card avitar-mb-6">
     <div class="avitar-card__header avitar-card__header--colored">

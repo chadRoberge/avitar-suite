@@ -1,0 +1,478 @@
+{{page-title "Platform Verification"}}
+
+<div class="contractor-page">
+  {{! Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-3xl avitar-font-bold avitar-text-gray-900">
+        Platform Verification
+      </h1>
+      <p class="avitar-text-muted avitar-mt-2">
+        Become a verified contractor to access premium features and fast-track permit approvals
+      </p>
+    </div>
+    {{#if this.verification}}
+      <span class={{this.statusBadgeClass}}>
+        {{this.statusText}}
+      </span>
+    {{/if}}
+  </div>
+
+  {{! Benefits Card }}
+  <div class="avitar-card avitar-bg-primary-light avitar-border-primary avitar-mb-6">
+    <div class="avitar-card__body avitar-p-4">
+      <h2 class="avitar-text-lg avitar-font-semibold avitar-mb-3">
+        <i class="fas fa-star avitar-mr-2 avitar-text-warning"></i>
+        Benefits of Platform Verification
+      </h2>
+      <ul class="avitar-grid avitar-grid-cols-2 avitar-gap-3">
+        <li class="avitar-flex avitar-items-start avitar-gap-2">
+          <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+          <span>Fast-track permit approvals at participating municipalities</span>
+        </li>
+        <li class="avitar-flex avitar-items-start avitar-gap-2">
+          <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+          <span>One-time verification for all municipalities</span>
+        </li>
+        <li class="avitar-flex avitar-items-start avitar-gap-2">
+          <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+          <span>Verified badge on your permit applications</span>
+        </li>
+        <li class="avitar-flex avitar-items-start avitar-gap-2">
+          <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+          <span>Valid for one year from approval date</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  {{! Status Messages }}
+  {{#if this.isApproved}}
+    <div class="avitar-card avitar-bg-success-light avitar-border-success avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+          <i class="fas fa-check-circle avitar-mr-2"></i>
+          Verification Approved!
+        </h3>
+        <p class="avitar-mb-2">
+          Your contractor verification has been approved and is valid until
+          {{date-format this.verification.expires_at "MMMM DD, YYYY"}}.
+        </p>
+        {{#if this.verification.review_notes}}
+          <p class="avitar-text-sm avitar-text-muted">
+            <strong>Reviewer Notes:</strong> {{this.verification.review_notes}}
+          </p>
+        {{/if}}
+      </div>
+    </div>
+  {{else if this.isSubmitted}}
+    <div class="avitar-card avitar-bg-info-light avitar-border-info avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+          <i class="fas fa-clock avitar-mr-2"></i>
+          Application Under Review
+        </h3>
+        <p>
+          Your verification application has been submitted and is currently being reviewed.
+          You will be notified once a decision has been made.
+        </p>
+        <p class="avitar-text-sm avitar-text-muted avitar-mt-2">
+          Submitted: {{date-format this.verification.submitted_at "MMMM DD, YYYY"}}
+        </p>
+      </div>
+    </div>
+  {{else if this.isRejected}}
+    <div class="avitar-card avitar-bg-danger-light avitar-border-danger avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+          <i class="fas fa-times-circle avitar-mr-2"></i>
+          Application Rejected
+        </h3>
+        <p class="avitar-mb-2">
+          Your verification application was rejected for the following reason:
+        </p>
+        <p class="avitar-font-medium">{{this.verification.rejection_reason}}</p>
+        {{#if this.verification.rejection_details}}
+          <p class="avitar-text-sm avitar-mt-2">{{this.verification.rejection_details}}</p>
+        {{/if}}
+        <p class="avitar-text-muted avitar-mt-3">
+          You can update your application and resubmit below.
+        </p>
+      </div>
+    </div>
+  {{else if this.isExpired}}
+    <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+          <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+          Verification Expired
+        </h3>
+        <p>
+          Your verification expired on {{date-format this.verification.expires_at "MMMM DD, YYYY"}}.
+          Please update your information and resubmit for verification.
+        </p>
+      </div>
+    </div>
+  {{/if}}
+
+  {{! Application Form (only if can edit) }}
+  {{#if this.canEdit}}
+    <div class="avitar-card avitar-mb-6">
+      <div class="avitar-card__header">
+        <h2 class="avitar-card__title">
+          <i class="fas fa-clipboard-list avitar-mr-2"></i>
+          Verification Application
+        </h2>
+      </div>
+
+      <div class="avitar-card__body">
+        {{! Professional Licenses Section }}
+        <div class="avitar-mb-6">
+          <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+            <h3 class="avitar-text-lg avitar-font-semibold">
+              Professional Licenses *
+            </h3>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--sm avitar-btn--primary"
+              {{on "click" this.addLicense}}
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add License
+            </button>
+          </div>
+
+          {{#if this.licenses.length}}
+            {{#each this.licenses as |license index|}}
+              <div class="avitar-border avitar-rounded avitar-p-4 avitar-mb-4 avitar-bg-gray-50">
+                <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-4">
+                  <h4 class="avitar-font-medium">License #{{add index 1}}</h4>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                    {{on "click" (fn this.removeLicense index)}}
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+
+                <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+                  <div>
+                    <label class="avitar-label">License Type *</label>
+                    <select
+                      class="avitar-select"
+                      value={{license.type}}
+                      {{on "change" (fn this.updateLicense index "type")}}
+                    >
+                      <option value="">Select type...</option>
+                      {{#each this.licenseTypeOptions as |licenseOption|}}
+                        <option value={{licenseOption.value}} selected={{eq license.type licenseOption.value}}>
+                          {{licenseOption.label}}
+                        </option>
+                      {{/each}}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="avitar-label">License Number *</label>
+                    <input
+                      type="text"
+                      class="avitar-input"
+                      value={{license.license_number}}
+                      {{on "input" (fn this.updateLicense index "license_number")}}
+                      placeholder="Enter license number"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="avitar-label">Issuing State *</label>
+                    <select
+                      class="avitar-select"
+                      value={{license.issuing_state}}
+                      {{on "change" (fn this.updateLicense index "issuing_state")}}
+                    >
+                      <option value="">Select state...</option>
+                      {{#each this.stateOptions as |stateOption|}}
+                        <option value={{stateOption.value}} selected={{eq license.issuing_state stateOption.value}}>
+                          {{stateOption.label}}
+                        </option>
+                      {{/each}}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="avitar-label">Expiration Date *</label>
+                    <input
+                      type="date"
+                      class="avitar-input"
+                      value={{license.expiration_date}}
+                      {{on "change" (fn this.updateLicense index "expiration_date")}}
+                    />
+                  </div>
+
+                  <div class="avitar-col-span-2">
+                    <label class="avitar-label">License Document *</label>
+                    <Shared::FileUpload
+                      @label="Upload License Copy"
+                      @accept="image/*,.pdf"
+                      @maxSize={{10}}
+                      @currentFile={{license.file}}
+                      @onUpload={{fn this.handleLicenseFileUpload index}}
+                      @required={{true}}
+                    />
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-id-card fa-3x avitar-text-muted avitar-mb-4"></i>
+              <p class="avitar-text-muted">
+                Click "Add License" to add your professional licenses
+              </p>
+            </div>
+          {{/if}}
+        </div>
+
+        {{! Driver's License Section }}
+        <div class="avitar-mb-6 avitar-border-t avitar-pt-6">
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+            Driver's License (ID Verification) *
+          </h3>
+
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+            <div>
+              <label class="avitar-label">License Number *</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.driversLicense.license_number}}
+                {{on "input" (fn this.updateDriversLicense "license_number")}}
+                placeholder="Enter license number"
+              />
+            </div>
+
+            <div>
+              <label class="avitar-label">Issuing State *</label>
+              <select
+                class="avitar-select"
+                value={{this.driversLicense.issuing_state}}
+                {{on "change" (fn this.updateDriversLicense "issuing_state")}}
+              >
+                <option value="">Select state...</option>
+                {{#each this.stateOptions as |stateOption|}}
+                  <option value={{stateOption.value}} selected={{eq this.driversLicense.issuing_state stateOption.value}}>
+                    {{stateOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <div>
+              <label class="avitar-label">Expiration Date *</label>
+              <input
+                type="date"
+                class="avitar-input"
+                value={{this.driversLicense.expiration_date}}
+                {{on "change" (fn this.updateDriversLicense "expiration_date")}}
+              />
+            </div>
+
+            <div class="avitar-col-span-2">
+              <label class="avitar-label">Driver's License Photo *</label>
+              <Shared::FileUpload
+                @label="Upload Driver's License"
+                @accept="image/*,.pdf"
+                @maxSize={{10}}
+                @currentFile={{this.driversLicense.file}}
+                @onUpload={{this.handleDriversLicenseFileUpload}}
+                @required={{true}}
+              />
+            </div>
+          </div>
+        </div>
+
+        {{! Insurance Section }}
+        <div class="avitar-border-t avitar-pt-6">
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+            Insurance Information (Optional)
+          </h3>
+
+          <div class="avitar-mb-4">
+            <label class="avitar-flex avitar-items-center avitar-gap-2">
+              <input
+                type="checkbox"
+                class="avitar-checkbox"
+                checked={{this.insurance.has_insurance}}
+                {{on "change" (fn this.updateInsurance "has_insurance")}}
+              />
+              <span>I have general liability insurance</span>
+            </label>
+          </div>
+
+          {{#if this.insurance.has_insurance}}
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div>
+                <label class="avitar-label">Policy Number</label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.insurance.policy_number}}
+                  {{on "input" (fn this.updateInsurance "policy_number")}}
+                  placeholder="Enter policy number"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Provider</label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.insurance.provider}}
+                  {{on "input" (fn this.updateInsurance "provider")}}
+                  placeholder="Insurance provider name"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Coverage Amount</label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  value={{this.insurance.coverage_amount}}
+                  {{on "input" (fn this.updateInsurance "coverage_amount")}}
+                  placeholder="Coverage amount"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Expiration Date</label>
+                <input
+                  type="date"
+                  class="avitar-input"
+                  value={{this.insurance.expiration_date}}
+                  {{on "change" (fn this.updateInsurance "expiration_date")}}
+                />
+              </div>
+
+              <div class="avitar-col-span-2">
+                <label class="avitar-label">Insurance Certificate</label>
+                <Shared::FileUpload
+                  @label="Upload Insurance Certificate"
+                  @accept="image/*,.pdf"
+                  @maxSize={{10}}
+                  @currentFile={{this.insurance.file}}
+                  @onUpload={{this.handleInsuranceFileUpload}}
+                />
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="avitar-card__footer avitar-flex avitar-justify-between avitar-gap-3">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.resetForm}}
+          disabled={{this.isSaving}}
+        >
+          <i class="fas fa-undo avitar-mr-2"></i>
+          Reset
+        </button>
+
+        <div class="avitar-flex avitar-gap-3">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--outline-primary"
+            {{on "click" this.saveDraft}}
+            disabled={{this.isSaving}}
+          >
+            {{#if this.isSaving}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Saving...
+            {{else}}
+              <i class="fas fa-save avitar-mr-2"></i>
+              Save Draft
+            {{/if}}
+          </button>
+
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.submitForReview}}
+            disabled={{or (not this.canSubmit) this.isLoading}}
+          >
+            {{#if this.isLoading}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Submitting...
+            {{else}}
+              <i class="fas fa-paper-plane avitar-mr-2"></i>
+              Submit for Review
+            {{/if}}
+          </button>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    {{! View-only mode for submitted applications }}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h2 class="avitar-card__title">
+          <i class="fas fa-clipboard-list avitar-mr-2"></i>
+          Application Details
+        </h2>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-mb-6">
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+            Professional Licenses
+          </h3>
+          {{#each this.verification.licenses as |license|}}
+            <div class="avitar-border avitar-rounded avitar-p-4 avitar-mb-3">
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-3">
+                <div>
+                  <span class="avitar-text-muted avitar-text-sm">Type:</span>
+                  <p class="avitar-font-medium">{{license.type}}</p>
+                </div>
+                <div>
+                  <span class="avitar-text-muted avitar-text-sm">Number:</span>
+                  <p class="avitar-font-medium">{{license.license_number}}</p>
+                </div>
+                <div>
+                  <span class="avitar-text-muted avitar-text-sm">State:</span>
+                  <p class="avitar-font-medium">{{license.issuing_state}}</p>
+                </div>
+                <div>
+                  <span class="avitar-text-muted avitar-text-sm">Expires:</span>
+                  <p class="avitar-font-medium">{{date-format license.expiration_date "MMM DD, YYYY"}}</p>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+
+        <div class="avitar-border-t avitar-pt-6">
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+            Driver's License
+          </h3>
+          <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4">
+            <div>
+              <span class="avitar-text-muted avitar-text-sm">Number:</span>
+              <p class="avitar-font-medium">{{this.verification.drivers_license.license_number}}</p>
+            </div>
+            <div>
+              <span class="avitar-text-muted avitar-text-sm">State:</span>
+              <p class="avitar-font-medium">{{this.verification.drivers_license.issuing_state}}</p>
+            </div>
+            <div>
+              <span class="avitar-text-muted avitar-text-sm">Expires:</span>
+              <p class="avitar-font-medium">{{date-format this.verification.drivers_license.expiration_date "MMM DD, YYYY"}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>

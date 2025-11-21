@@ -14,9 +14,8 @@ const propertyTreeSchema = new mongoose.Schema(
       type: String,
       required: true,
       index: true,
-      minlength: 18,
-      maxlength: 18,
-    }, // 18-digit raw PID
+      maxlength: 30,
+    }, // Raw PID (can include letters, numbers, and dashes)
     pid_formatted: { type: String, index: true }, // Municipality-formatted display PID
     account_number: { type: String, index: true }, // Municipal account #
 

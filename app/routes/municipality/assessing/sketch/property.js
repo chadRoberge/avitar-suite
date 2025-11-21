@@ -119,7 +119,9 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
           0;
 
         // Calculate CARD-SPECIFIC total from components
-        const cardTotalFromComponents = buildingValue + landValue + featuresValue;
+        // Only include land value for Card 1 (base land is parcel-level, only Card 1 gets it)
+        const cardLandValue = parseInt(cardNumber) === 1 ? landValue : 0;
+        const cardTotalFromComponents = buildingValue + cardLandValue + featuresValue;
         const cardProvidedTotal =
           assessment?.total_value ||
           assessment?.total ||

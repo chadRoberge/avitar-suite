@@ -51,6 +51,7 @@ const assessingReportSchema = new mongoose.Schema(
         'owner',
         'analysis',
         'compliance',
+        'dra_forms',
         'other',
       ],
       default: 'other',

@@ -1,0 +1,149 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          Create Analysis Sheet
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Selected Sales Info }}
+          <div class="avitar-card avitar-bg-primary-light avitar-border-primary avitar-p-4">
+            <div class="avitar-flex avitar-items-center avitar-gap-3">
+              <i class="fas fa-check-circle avitar-text-primary fa-2x"></i>
+              <div>
+                <h4 class="avitar-font-semibold">{{@selectedSalesCount}} Sales Selected</h4>
+                <p class="avitar-text-sm avitar-text-muted">
+                  These sales will be included in the new analysis sheet
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {{! Sheet Name }}
+          <div>
+            <label class="avitar-label">Sheet Name <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="e.g., RSA Building Rate Analysis"
+              value={{@newSheetName}}
+              {{on "input" @onUpdateName}} />
+          </div>
+
+          {{! Sheet Type }}
+          <div>
+            <label class="avitar-label">Sheet Type <span class="avitar-text-danger">*</span></label>
+            <select class="avitar-select" {{on "change" @onUpdateType}}>
+              {{#each @sheetTypeOptions as |sheetType|}}
+                <option value={{sheetType.value}} selected={{eq @newSheetType sheetType.value}}>
+                  {{sheetType.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Conditional Settings Based on Sheet Type }}
+          {{#if this.showDepreciationRate}}
+            <div>
+              <label class="avitar-label">Depreciation Rate (%)</label>
+              <input
+                type="number"
+                class="avitar-input"
+                placeholder="e.g., 1.5"
+                value={{@newSheetDepreciationRate}}
+                {{on "input" @onUpdateDepreciationRate}}
+                step="0.1"
+                min="0" />
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Annual depreciation rate percentage
+              </p>
+            </div>
+          {{/if}}
+
+          {{#if this.showMinAcreage}}
+            <div>
+              <label class="avitar-label">Minimum Acreage</label>
+              <div class="avitar-flex avitar-gap-2 avitar-items-center">
+                <input
+                  type="number"
+                  class="avitar-input"
+                  placeholder="e.g., 8.0"
+                  value={{@newSheetMinAcreage}}
+                  {{on "input" @onUpdateMinAcreage}}
+                  step="0.1"
+                  min="0" />
+                <span class="avitar-text-muted">acres</span>
+              </div>
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Minimum acreage threshold for analysis
+              </p>
+            </div>
+          {{/if}}
+
+          {{#if this.showBuildingCode}}
+            <div>
+              <label class="avitar-label">Building Code (Optional)</label>
+              <select class="avitar-select" {{on "change" @onUpdateBuildingCodeId}}>
+                <option value="">All Building Types</option>
+                {{#each @buildingCodes as |buildingCode|}}
+                  <option value={{buildingCode._id}} selected={{eq @newSheetBuildingCodeId buildingCode._id}}>
+                    {{buildingCode.code}} - {{buildingCode.description}}
+                  </option>
+                {{/each}}
+              </select>
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Filter analysis to a specific building type
+              </p>
+            </div>
+          {{/if}}
+
+          {{#if this.showLandUseCode}}
+            <div>
+              <label class="avitar-label">Land Use Code (Optional)</label>
+              <select class="avitar-select" {{on "change" @onUpdateLandUseCode}}>
+                <option value="">All Land Uses</option>
+                {{#each @landCodes as |landCode|}}
+                  <option value={{landCode.code}} selected={{eq @newSheetLandUseCode landCode.code}}>
+                    {{landCode.code}} - {{landCode.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Filter analysis to a specific land use
+              </p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" @onCreate}}
+          disabled={{not this.canCreate}}>
+          {{#if @isCreating}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Creating...
+          {{else}}
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Create Sheet
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

@@ -132,7 +132,9 @@ export default class MunicipalityAssessingBuildingPropertyRoute extends Route {
           0;
 
         // Calculate CARD-SPECIFIC total from components
-        const cardTotalFromComponents = buildingValue + landValue + featuresValue;
+        // Only include land value for Card 1 (base land is parcel-level, only Card 1 gets it)
+        const cardLandValue = parseInt(cardNumber) === 1 ? landValue : 0;
+        const cardTotalFromComponents = buildingValue + cardLandValue + featuresValue;
         const cardProvidedTotal =
           assessment?.total_value ||
           assessment?.total ||
@@ -187,13 +189,27 @@ export default class MunicipalityAssessingBuildingPropertyRoute extends Route {
 
       console.log('Building assessment response:', buildingAssessmentResponse);
 
+      // Handle both API response format (object with assessment/history/etc)
+      // and direct BuildingAssessment object from cache
+      let buildingAssessment = null;
+      let buildingHistory = [];
+      let depreciation = {};
+      let improvements = [];
+
+      if (buildingAssessmentResponse) {
+        // Service layer normalizes response format
+        buildingAssessment = buildingAssessmentResponse.assessment;
+        buildingHistory = buildingAssessmentResponse.history || [];
+        depreciation = buildingAssessmentResponse.depreciation || {};
+        improvements = buildingAssessmentResponse.improvements || [];
+      }
+
       const finalModel = {
         property: cleanProperty,
-        buildingAssessment:
-          buildingAssessmentResponse.assessment || buildingAssessmentResponse,
-        buildingHistory: buildingAssessmentResponse.history || [],
-        depreciation: buildingAssessmentResponse.depreciation || {},
-        improvements: buildingAssessmentResponse.improvements || [],
+        buildingAssessment: buildingAssessment,
+        buildingHistory: buildingHistory,
+        depreciation: depreciation,
+        improvements: improvements,
         showPropertySelection: false,
       };
 

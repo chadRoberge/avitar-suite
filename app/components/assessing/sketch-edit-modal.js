@@ -255,8 +255,11 @@ export default class SketchEditModalComponent extends Component {
       stringDescriptions,
     );
 
+    // Generate temporary client-side ID for new shapes until server assigns _id
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const newShape = {
-      // No ID - server will assign MongoDB _id
+      _id: tempId, // Temporary ID - server will replace with real MongoDB _id on save
       type: shapeData.type,
       coordinates: shapeData.coordinates,
       area: shapeData.area,
@@ -267,6 +270,10 @@ export default class SketchEditModalComponent extends Component {
 
     this.editedSketch.shapes = [...(this.editedSketch.shapes || []), newShape];
     this.calculateSketchTotals();
+
+    // Auto-select the newly created shape for immediate editing
+    this.selectedShape = newShape;
+    this.drawingMode = null; // Exit drawing mode after shape is created
 
     // Force the shapesForCanvas getter to re-evaluate by accessing it
     setTimeout(() => {

@@ -151,6 +151,7 @@ async function createTestUser() {
     // Also create an Avitar staff user
     let avitarUser = await User.findOne({ email: 'staff@avitar.com' });
 
+
     if (!avitarUser) {
       console.log('\nCreating Avitar staff user...');
       avitarUser = new User({
@@ -184,6 +185,10 @@ async function createTestUser() {
     console.log('\nMongoDB connection closed');
   }
 }
+
+//comm user
+//chad.roberge@gmail.com
+//avitarStaff123!
 
 // Run the script
 createTestUser();

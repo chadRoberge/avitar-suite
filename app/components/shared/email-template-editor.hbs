@@ -1,0 +1,111 @@
+{{! Email Template Editor Modal }}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.handleCancel}}>
+  <div class="avitar-modal avitar-modal--lg avitar-modal--xl" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+    {{! Header }}
+    <div class="avitar-modal__header">
+      <h2 class="avitar-modal__title">
+        <i class="fas fa-envelope avitar-mr-2"></i>
+        Edit Email Template: {{@template.name}}
+      </h2>
+      <button type="button" class="avitar-modal__close" {{on "click" this.handleCancel}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    {{! Body }}
+    <div class="avitar-modal__body">
+      <div class="avitar-space-y-6">
+        {{! Template Info }}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <div class="avitar-flex avitar-items-start avitar-gap-3">
+            <div class="avitar-flex-shrink-0 avitar-mt-1">
+              <i class="fas fa-info-circle avitar-text-primary"></i>
+            </div>
+            <div>
+              <p class="avitar-text-sm">
+                <strong>{{@template.description}}</strong>
+              </p>
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Use variables like <code>{{"{{"}}property_address{{"}}"}}</code>, <code>{{"{{"}}permit_number{{"}}"}}</code>, etc. to insert dynamic content.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {{! Subject Line }}
+        <div>
+          <label class="avitar-label">
+            Subject Line
+            <span class="avitar-text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            class="avitar-input"
+            placeholder="Enter email subject..."
+            value={{this.subject}}
+            {{on "input" this.updateSubject}}
+          />
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+            You can use variables in the subject line too
+          </p>
+        </div>
+
+        {{! Variables Helper }}
+        <div>
+          <label class="avitar-label avitar-mb-2">Quick Insert Variables</label>
+          <Shared::TemplateVariables @onInsert={{this.insertVariable}} @template={{@template}} />
+        </div>
+
+        {{! Rich Text Editor }}
+        <div>
+          <label class="avitar-label avitar-mb-2">Email Body</label>
+          <div class="avitar-border avitar-rounded avitar-bg-white">
+            <div {{did-insert this.initializeEditor}} style="min-height: 300px;"></div>
+          </div>
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+            Format your email with rich text and insert variables
+          </p>
+        </div>
+
+        {{! Preview Section }}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h4 class="avitar-font-semibold avitar-mb-2">Preview</h4>
+          <div class="avitar-bg-white avitar-p-4 avitar-border avitar-rounded">
+            <div class="avitar-mb-3">
+              <strong>Subject:</strong> {{this.subject}}
+            </div>
+            <div class="avitar-border-t avitar-pt-3">
+              {{{this.htmlContent}}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Footer }}
+    <div class="avitar-modal__footer">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" this.handleCancel}}
+        disabled={{@isLoading}}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.handleSave}}
+        disabled={{@isLoading}}
+      >
+        {{#if @isLoading}}
+          <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+          Saving...
+        {{else}}
+          <i class="fas fa-save avitar-mr-2"></i>
+          Save Template
+        {{/if}}
+      </button>
+    </div>
+  </div>
+</div>

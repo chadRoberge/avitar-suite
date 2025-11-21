@@ -1,0 +1,94 @@
+<div class="building-rate-analysis">
+  {{! Sales Analysis with Integrated Settings }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50 avitar-pb-2">
+      <div class="avitar-flex avitar-justify-between avitar-items-start">
+        <div>
+          <h4 class="avitar-font-semibold avitar-mb-2">Sales Analysis ({{this.salesData.length}} sales)</h4>
+          <div class="avitar-text-xs avitar-text-muted">
+            Base Year: {{this.baseYear}} | Depr: {{this.depreciationRate}}% | Site: {{this.siteAcreage}} ac @ {{format-currency this.buildableSiteValue}} | Time Trend: {{this.annualTrendDisplay}}
+          </div>
+        </div>
+        <div class="avitar-text-right avitar-text-sm">
+          <div><span class="avitar-text-muted">Avg Rate:</span> <strong>{{format-currency this.averageRate}}/SF</strong></div>
+          <div><span class="avitar-text-muted">Median Rate:</span> <strong>{{format-currency this.medianRate}}/SF</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="avitar-card__body avitar-p-0">
+      {{#if this.salesData.length}}
+        <div class="avitar-table-container" style="overflow-x: auto;">
+          <table class="avitar-table avitar-table--striped avitar-text-xs">
+            <thead>
+              <tr>
+                <th>Location<br/>PID</th>
+                <th>Sale Date<br/>Days</th>
+                <th>Price<br/>Adjusted</th>
+                <th>Zn</th>
+                <th>Nhbd</th>
+                <th>Site</th>
+                <th>Dway</th>
+                <th>Road</th>
+                <th>Topo</th>
+                <th>Cond</th>
+                <th>Adj Site<br/>Value</th>
+                <th>Features<br/>Value</th>
+                <th>Excess Ac<br/>Value</th>
+                <th>Excess FF<br/>Value</th>
+                <th>Bldg Residual<br/>Value</th>
+                <th>Bldg<br/>Rate</th>
+                <th>Year<br/>Built</th>
+                <th>Cond*</th>
+                <th>Age</th>
+                <th>Other</th>
+                <th>Bldg<br/>Sq Ft</th>
+                <th>Indicated<br/>Sq Ft Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.salesData as |sale|}}
+                <tr>
+                  <td>
+                    {{sale.property_address}}<br/>
+                    <span class="avitar-text-muted">{{sale.pid}}</span>
+                  </td>
+                  <td>
+                    {{date-format sale.sale_date "MM/DD/YY"}}<br/>
+                    {{sale.daysFromBaseDate}}
+                  </td>
+                  <td>
+                    {{format-currency sale.sale_price}}<br/>
+                    {{format-currency sale.adjustedPrice}}
+                  </td>
+                  <td>{{sale.zone}}</td>
+                  <td>{{sale.neighborhood}}</td>
+                  <td>{{sale.siteAdjustment}}</td>
+                  <td>{{sale.drivewayAdjustment}}</td>
+                  <td>{{sale.roadAdjustment}}</td>
+                  <td>{{sale.topoAdjustment}}</td>
+                  <td>{{sale.condAdjustment}}</td>
+                  <td>{{format-currency sale.adjSiteValue}}</td>
+                  <td>{{format-currency sale.featuresValue}}</td>
+                  <td>{{format-currency sale.excessAcValue}}</td>
+                  <td>{{format-currency sale.excessFFValue}}</td>
+                  <td>{{format-currency sale.buildingResidualValue}}</td>
+                  <td>{{sale.buildingRate}}</td>
+                  <td>{{sale.building_year_built}}</td>
+                  <td>{{sale.buildingCond}}</td>
+                  <td>{{sale.age}}</td>
+                  <td>{{sale.otherDepreciation}}</td>
+                  <td>{{sale.building_sf}}</td>
+                  <td>{{format-currency sale.indicatedSqFtValue}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-6">
+          <p class="avitar-text-muted">No sales data available for this analysis</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

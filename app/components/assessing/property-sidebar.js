@@ -12,6 +12,7 @@ export default class PropertySidebarComponent extends Component {
   @service('property-queue') propertyQueue;
   @service('property-prefetch') propertyPrefetch;
   @service('property-cache') propertyCache;
+  @service('hybrid-api') hybridApi;
 
   @tracked isOpen = true;
   @tracked groupBy = 'pid'; // 'pid', 'street', 'lastname'
@@ -23,10 +24,34 @@ export default class PropertySidebarComponent extends Component {
   @tracked isQueryModalOpen = false;
   @tracked isQueryMode = false;
   @tracked originalProperties = []; // Store original properties for clearing query
+  @tracked lastMunicipalityId = null;
 
   constructor() {
     super(...arguments);
-    this.loadProperties();
+
+    // Initialize selected property from current route if viewing a property
+    const currentRoute = this.router.currentRoute;
+    if (currentRoute?.params?.property_id) {
+      this.selectedPropertyId = currentRoute.params.property_id;
+      console.log('🎯 Initialized selected property from route:', this.selectedPropertyId);
+    }
+
+    // Only load properties if municipality changed or properties not loaded yet
+    const currentMunicipalityId = this.municipality.currentMunicipality?.id;
+    if (!this.properties.length || this.lastMunicipalityId !== currentMunicipalityId) {
+      this.lastMunicipalityId = currentMunicipalityId;
+      this.loadProperties();
+    }
+
+    // Listen for background refresh completion
+    this.hybridApi.on('propertiesRefreshed', this, this.handlePropertiesRefreshed);
+  }
+
+  @action
+  handlePropertiesRefreshed() {
+    // Silently reload properties from cache (which now has fresh data)
+    console.log('📢 Received propertiesRefreshed event - reloading silently');
+    this.loadProperties(true); // Pass true for silent reload
   }
 
   get activeModule() {
@@ -150,10 +175,26 @@ export default class PropertySidebarComponent extends Component {
               );
             }
           } else if (moduleName === 'building-permits') {
-            this.router.transitionTo(
-              'municipality.building-permits.property',
-              property.id,
-            );
+            // Check if we're in a specific building permits view
+            const propertyViews = ['property-permits', 'inspections', 'documents', 'certificates'];
+            const currentView = routeParts[2];
+
+            if (propertyViews.includes(currentView)) {
+              // Navigate to the property route under the same section
+              this.router.transitionTo(
+                `municipality.building-permits.${currentView}.property`,
+                property.id,
+              );
+            } else if (['queue', 'permits', 'applications'].includes(currentView)) {
+              // If in list views (non-property), stay there - just update selected property
+              console.log(`Selected property ${property.id} while in ${currentView} view`);
+            } else {
+              // Default to property permits view
+              this.router.transitionTo(
+                'municipality.building-permits.property-permits.property',
+                property.id,
+              );
+            }
           } else {
             // For other modules that don't have property routes, just select visually
             // The property will be highlighted but no navigation occurs
@@ -227,10 +268,17 @@ export default class PropertySidebarComponent extends Component {
     this.propertyQueue.clearQueue();
   }
 
-  async loadProperties() {
+  async loadProperties(silent = false) {
     if (!this.municipality.currentMunicipality) return;
 
-    this.isLoading = true;
+    // Preserve selected property ID during reload
+    const previousSelectedId = this.selectedPropertyId;
+
+    // Only show loading indicator if not a silent refresh
+    if (!silent) {
+      this.isLoading = true;
+    }
+
     try {
       // Use assessing service which implements local-first caching
       const response = await this.assessing.getProperties();
@@ -251,16 +299,26 @@ export default class PropertySidebarComponent extends Component {
       console.log(`🏘️ Loaded ${this.properties.length} properties`);
       console.log('🏘️ First property sample:', this.properties[0]);
 
-      // Reset query mode when loading fresh properties
-      this.isQueryMode = false;
-      this.originalProperties = [];
+      // Reset query mode when loading fresh properties (only if not silent)
+      if (!silent) {
+        this.isQueryMode = false;
+        this.originalProperties = [];
+      }
 
       this.groupProperties();
+
+      // Restore selected property ID after reload
+      if (previousSelectedId) {
+        this.selectedPropertyId = previousSelectedId;
+        console.log('🎯 Restored selected property ID:', previousSelectedId);
+      }
     } catch (error) {
       console.error('Failed to load properties:', error);
       this.properties = [];
     } finally {
-      this.isLoading = false;
+      if (!silent) {
+        this.isLoading = false;
+      }
     }
   }
 
@@ -292,6 +350,19 @@ export default class PropertySidebarComponent extends Component {
         // Sort each map group by lot-sub display (server already formatted)
         Object.keys(grouped).forEach((map) => {
           console.log(`🗂️ Map ${map} has ${grouped[map].length} properties`);
+
+          // Debug: Log all properties in Unknown map to identify what's being added
+          if (map === 'Unknown' && grouped[map].length > 0) {
+            console.log(`🔍 Unknown map properties:`, grouped[map].map(p => ({
+              id: p.id,
+              idType: typeof p.id,
+              mapNumber: p.mapNumber,
+              lotSubDisplay: p.lotSubDisplay,
+              pid_formatted: p.pid_formatted,
+              allKeys: Object.keys(p)
+            })));
+          }
+
           grouped[map].sort((a, b) => {
             // Use the lotSubDisplay from server or fallback to string comparison
             const displayA = a.lotSubDisplay || a.pid_formatted || '';
@@ -505,5 +576,8 @@ export default class PropertySidebarComponent extends Component {
 
     // Clear prefetch queue to avoid unnecessary requests
     this.propertyPrefetch.clearPrefetchQueue();
+
+    // Remove event listener
+    this.hybridApi.off('propertiesRefreshed', this, this.handlePropertiesRefreshed);
   }
 }

@@ -44,6 +44,17 @@ const landAssessmentSchema = new mongoose.Schema(
       ref: 'PropertyAttribute',
     },
 
+    // Property-level land use classification (for filtering/reporting)
+    property_use_code: {
+      type: String,
+      index: true,
+    },
+    property_use_category: {
+      type: String,
+      index: true,
+      enum: ['RES', 'COM', 'IND', 'AG', 'EX', 'MXU', null],
+    },
+
     // Land valuation
     current_use_credit: { type: Number, default: 0 },
     market_value: { type: Number, default: 0 },
@@ -52,7 +63,13 @@ const landAssessmentSchema = new mongoose.Schema(
     // Land use breakdown
     land_use_details: [
       {
-        land_use_type: String,
+        land_use_detail_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'LandUseDetail',
+        },
+        // Legacy fields (kept for backward compatibility during migration)
+        land_use_code: String, // Specific code like "R1", "R1A", "COM", etc.
+        land_use_type: String, // Category: "RES", "COM", "IND", "AG", "EX", "MXU"
         size: Number,
         size_unit: { type: String, enum: ['AC', 'FF'], default: 'AC' },
         topography: String,

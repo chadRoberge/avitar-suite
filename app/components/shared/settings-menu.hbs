@@ -52,13 +52,24 @@
       </li>
       
       <li class="avitar-sidebar__nav-item">
-        <LinkTo 
-          @route="municipality.settings.features" 
+        <LinkTo
+          @route="municipality.settings.features"
           class="avitar-sidebar__nav-link"
           @activeClass="avitar-sidebar__nav-link--active"
         >
           <i class="fas fa-star avitar-sidebar__nav-icon"></i>
           <span>Features</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="municipality.settings.email-templates"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-envelope avitar-sidebar__nav-icon"></i>
+          <span>Email Templates</span>
         </LinkTo>
       </li>
     </ul>

@@ -1,0 +1,130 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.cancel}}>
+    <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-upload avitar-mr-2"></i>
+          Upload Document
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.cancel}} aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{! Document Type Selection }}
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label avitar-label--required">
+            <i class="fas fa-tag avitar-mr-2"></i>
+            Document Type
+          </label>
+          <div class="avitar-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem;">
+            {{#each this.documentTypeOptions as |option|}}
+              <button
+                type="button"
+                class="avitar-btn {{if (eq this.documentType option.value) 'avitar-btn--success' 'avitar-btn--secondary'}}"
+                {{on "click" (fn this.selectDocumentType option.value)}}
+                style="justify-content: center;"
+              >
+                {{option.label}}
+              </button>
+            {{/each}}
+          </div>
+        </div>
+
+        {{! Description }}
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label">
+            <i class="fas fa-align-left avitar-mr-2"></i>
+            Description
+          </label>
+          <textarea
+            class="avitar-input"
+            rows="3"
+            placeholder="Enter document description (optional)"
+            value={{this.description}}
+            {{on "input" this.updateDescription}}
+          ></textarea>
+          <p class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+            Provide additional details about this document
+          </p>
+        </div>
+
+        {{! File Selection }}
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label avitar-label--required">
+            <i class="fas fa-file avitar-mr-2"></i>
+            Select Files
+          </label>
+          <div class="avitar-file-input-wrapper">
+            <label class="avitar-btn avitar-btn--secondary avitar-btn--block" style="margin: 0;">
+              <i class="fas fa-paperclip avitar-mr-2"></i>
+              Choose Files
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.dwg"
+                style="display: none;"
+                {{on "change" this.handleFileSelect}}
+              />
+            </label>
+          </div>
+          <p class="avitar-text-xs avitar-text-gray-600 avitar-mt-1">
+            Accepted formats: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX, DWG (Max 50MB per file)
+          </p>
+        </div>
+
+        {{! Selected Files List }}
+        {{#if this.selectedFiles.length}}
+          <div class="avitar-form-group avitar-mb-4">
+            <label class="avitar-label">
+              <i class="fas fa-list avitar-mr-2"></i>
+              Selected Files ({{this.selectedFiles.length}})
+            </label>
+            <div class="avitar-flex avitar-flex-col avitar-gap-2">
+              {{#each this.selectedFiles as |file index|}}
+                <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-p-2 avitar-bg-gray-50 avitar-rounded" style="border: 1px solid #e5e7eb;">
+                  <i class="fas fa-file-alt avitar-text-primary"></i>
+                  <span class="avitar-flex-1 avitar-text-sm">{{file.name}}</span>
+                  <span class="avitar-text-xs avitar-text-gray-500">{{file.size}} bytes</span>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                    {{on "click" (fn this.removeFile index)}}
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.cancel}}
+          disabled={{this.isUploading}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.uploadFiles}}
+          disabled={{or this.isUploading (eq this.selectedFiles.length 0)}}
+        >
+          {{#if this.isUploading}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Uploading...
+          {{else}}
+            <i class="fas fa-upload avitar-mr-2"></i>
+            Upload {{this.selectedFiles.length}} {{if (eq this.selectedFiles.length 1) "File" "Files"}}
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

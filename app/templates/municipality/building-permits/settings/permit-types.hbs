@@ -1,0 +1,246 @@
+{{page-title "Permit Types"}}
+
+<div class="avitar-page-header">
+  <div class="avitar-page-header__content">
+    <h1 class="avitar-page-header__title">
+      <i class="fas fa-file-alt avitar-mr-2"></i>
+      Permit Types
+    </h1>
+    <p class="avitar-page-header__subtitle">
+      Configure available permit types and their requirements
+    </p>
+  </div>
+
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openCreateModal}}
+    >
+      <i class="fas fa-plus avitar-mr-2"></i>
+      New Permit Type
+    </button>
+  </div>
+</div>
+
+{{! Stats Cards }}
+<div class="avitar-grid avitar-grid--3 avitar-mb-4">
+  <div class="avitar-card avitar-card--stat">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Total Types</div>
+        <div class="avitar-stat__value">{{@model.permitTypes.length}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Active</div>
+        <div class="avitar-stat__value avitar-text-success">{{this.activeCount}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Inactive</div>
+        <div class="avitar-stat__value avitar-text-muted">{{this.inactiveCount}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Filters }}
+<div class="avitar-card avitar-mb-4">
+  <div class="avitar-card__body">
+    <div class="avitar-filters">
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Search</label>
+        <input
+          type="text"
+          class="avitar-input"
+          placeholder="Search permit types..."
+          value={{this.searchText}}
+          {{on "input" this.updateSearch}}
+        />
+      </div>
+
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Category</label>
+        <select
+          class="avitar-select"
+          {{on "change" this.setFilterCategory}}
+        >
+          <option value="all" selected={{eq this.filterCategory "all"}}>All Categories</option>
+          <option value="building" selected={{eq this.filterCategory "building"}}>Building / Construction</option>
+          <option value="electrical" selected={{eq this.filterCategory "electrical"}}>Electrical</option>
+          <option value="plumbing" selected={{eq this.filterCategory "plumbing"}}>Plumbing</option>
+          <option value="mechanical" selected={{eq this.filterCategory "mechanical"}}>Mechanical / HVAC</option>
+          <option value="renovation" selected={{eq this.filterCategory "renovation"}}>Renovation</option>
+          <option value="demolition" selected={{eq this.filterCategory "demolition"}}>Demolition</option>
+          <option value="landscape" selected={{eq this.filterCategory "landscape"}}>Landscape</option>
+          <option value="replacement" selected={{eq this.filterCategory "replacement"}}>Replacement</option>
+          <option value="zoning" selected={{eq this.filterCategory "zoning"}}>Zoning</option>
+          <option value="roofing" selected={{eq this.filterCategory "roofing"}}>Roofing</option>
+          <option value="deck" selected={{eq this.filterCategory "deck"}}>Deck / Patio</option>
+          <option value="other" selected={{eq this.filterCategory "other"}}>Other</option>
+        </select>
+      </div>
+
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Status</label>
+        <select
+          class="avitar-select"
+          {{on "change" this.setFilterStatus}}
+        >
+          <option value="all" selected={{eq this.filterStatus "all"}}>All Statuses</option>
+          <option value="active" selected={{eq this.filterStatus "active"}}>Active Only</option>
+          <option value="inactive" selected={{eq this.filterStatus "inactive"}}>Inactive Only</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Permit Types List }}
+{{#if this.filteredPermitTypes.length}}
+  <div class="avitar-grid avitar-grid--2 avitar-gap-4">
+    {{#each this.filteredPermitTypes as |permitType|}}
+      <div class="avitar-card {{unless permitType.isActive 'avitar-card--muted'}}">
+        <div class="avitar-card__header">
+          <div class="avitar-flex avitar-justify-between avitar-items-start">
+            <div class="avitar-flex avitar-items-center avitar-gap-3">
+              <div class="avitar-icon-wrapper avitar-icon-wrapper--lg avitar-bg-primary-light">
+                <i class="fas fa-{{permitType.icon}}"></i>
+              </div>
+              <div>
+                <h3 class="avitar-card__title">
+                  {{permitType.name}}
+                  {{#if permitType.isProject}}
+                    <span class="avitar-badge avitar-badge--success avitar-ml-2">
+                      <i class="fas fa-folder avitar-mr-1"></i>
+                      Project
+                    </span>
+                  {{/if}}
+                  {{#unless permitType.isActive}}
+                    <span class="avitar-badge avitar-badge--secondary avitar-ml-2">Inactive</span>
+                  {{/unless}}
+                </h3>
+                <p class="avitar-text-muted avitar-text-sm avitar-mb-2">
+                  {{permitType.description}}
+                </p>
+                {{#if permitType.categories}}
+                  <div class="avitar-flex avitar-flex-wrap avitar-gap-1">
+                    {{#each permitType.categories as |cat|}}
+                      <span class="avitar-badge avitar-badge--info avitar-badge--sm">{{cat}}</span>
+                    {{/each}}
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+              {{on "click" (fn this.toggleStatus permitType)}}
+              title="{{if permitType.isActive 'Deactivate' 'Activate'}}"
+            >
+              <i class="fas fa-{{if permitType.isActive 'toggle-on' 'toggle-off'}}"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="avitar-card__body">
+          <div class="avitar-grid avitar-grid--3 avitar-gap-3 avitar-mb-3">
+            <div class="avitar-stat avitar-stat--sm">
+              <div class="avitar-stat__label">Base Fee</div>
+              <div class="avitar-stat__value">${{permitType.feeSchedule.baseAmount}}</div>
+            </div>
+
+            <div class="avitar-stat avitar-stat--sm">
+              <div class="avitar-stat__label">Departments</div>
+              <div class="avitar-stat__value">{{permitType.departmentReviews.length}}</div>
+            </div>
+
+            <div class="avitar-stat avitar-stat--sm">
+              <div class="avitar-stat__label">Required Docs</div>
+              <div class="avitar-stat__value">{{permitType.requiredDocuments.length}}</div>
+            </div>
+          </div>
+
+          {{#if permitType.departmentReviews.length}}
+            <div class="avitar-mb-3">
+              <div class="avitar-label avitar-label--sm avitar-mb-1">Review Departments:</div>
+              <div class="avitar-flex avitar-flex-wrap avitar-gap-1">
+                {{#each permitType.departmentReviews as |dept|}}
+                  <span class="avitar-badge {{if dept.isRequired 'avitar-badge--primary' 'avitar-badge--secondary'}}">
+                    {{dept.departmentName}}
+                    {{#if dept.isRequired}}*{{/if}}
+                  </span>
+                {{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="avitar-card__footer">
+          <div class="avitar-btn-group">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+              {{on "click" (fn this.openEditModal permitType)}}
+            >
+              <i class="fas fa-edit avitar-mr-1"></i>
+              Edit
+            </button>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--danger avitar-btn--sm"
+              {{on "click" (fn this.deletePermitType permitType)}}
+            >
+              <i class="fas fa-trash avitar-mr-1"></i>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="avitar-empty-state">
+    <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-3"></i>
+    <h3 class="avitar-mb-2">No Permit Types Found</h3>
+    <p class="avitar-text-muted avitar-mb-4">
+      {{#if this.searchText}}
+        No permit types match your search criteria.
+      {{else}}
+        Get started by creating your first permit type.
+      {{/if}}
+    </p>
+    {{#unless this.searchText}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.openCreateModal}}
+      >
+        <i class="fas fa-plus avitar-mr-2"></i>
+        Create First Permit Type
+      </button>
+    {{/unless}}
+  </div>
+{{/if}}
+
+{{! Modal }}
+{{#if this.isModalOpen}}
+  <BuildingPermits::PermitTypeModal
+    @isOpen={{this.isModalOpen}}
+    @permitType={{this.selectedPermitType}}
+    @isEditMode={{this.isEditMode}}
+    @onClose={{this.closeModal}}
+    @onSave={{this.savePermitType}}
+  />
+{{/if}}

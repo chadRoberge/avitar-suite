@@ -317,6 +317,35 @@ const sampleReports = [
       cache_duration_minutes: 30,
     },
   },
+  {
+    module: 'assessing',
+    name: 'ms1_summary_inventory',
+    display_name: 'MS-1 Summary Inventory of Valuation',
+    description:
+      'New Hampshire Department of Revenue Administration (DRA) MS-1 form. State-mandated annual report showing comprehensive valuation data including land, buildings, utilities, exemptions, and RSA compliance items.',
+    component_name: 'ms1-summary-inventory',
+    category: 'dra_forms',
+    parameters: [
+      {
+        name: 'assessment_year',
+        display_name: 'Assessment Year',
+        type: 'year',
+        required: true,
+        default_value: new Date().getFullYear(),
+      },
+    ],
+    output_formats: ['pdf'],
+    permissions: {
+      required_roles: ['admin', 'assessor'],
+      required_permissions: ['view_assessments'],
+    },
+    sort_order: 7,
+    execution_settings: {
+      timeout_minutes: 15,
+      max_records: 100000,
+      cache_duration_minutes: 0, // Don't cache DRA forms
+    },
+  },
 ];
 
 async function seedAssessingReports() {

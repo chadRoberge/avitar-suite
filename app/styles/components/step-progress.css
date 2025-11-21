@@ -1,0 +1,138 @@
+/* Step Progress Component Styles */
+
+.avitar-step-progress {
+  display: flex;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.avitar-step-progress__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.avitar-step-progress__number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.625rem;
+  transition: all 0.3s ease;
+  background: white;
+  position: relative;
+}
+
+/* Pending state */
+.avitar-step-progress__step--pending .avitar-step-progress__number {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+/* Active state */
+.avitar-step-progress__step--active .avitar-step-progress__number {
+  background-color: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Completed state */
+.avitar-step-progress__step--completed .avitar-step-progress__number {
+  background-color: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+/* Step label */
+.avitar-step-progress__label {
+  margin-top: 0.375rem;
+  font-size: 0.625rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.avitar-step-progress__step--active .avitar-step-progress__label {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.avitar-step-progress__step--completed .avitar-step-progress__label {
+  color: #10b981;
+  font-weight: 500;
+}
+
+/* Connector line */
+.avitar-step-progress__connector {
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 0 0.5rem;
+  min-width: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  top: -0.75rem;
+}
+
+.avitar-step-progress__connector--completed {
+  background-color: #10b981;
+}
+
+.avitar-step-progress__connector--active {
+  background: linear-gradient(to right, #10b981 50%, #e5e7eb 50%);
+}
+
+/* Icon inside number circle */
+.avitar-step-progress__icon {
+  font-size: 0.625rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .avitar-step-progress {
+    padding: 1.5rem 1rem;
+    overflow-x: auto;
+  }
+
+  .avitar-step-progress__number {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1rem;
+  }
+
+  .avitar-step-progress__label {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .avitar-step-progress__connector {
+    margin: 0 0.5rem;
+    top: -1.25rem;
+    min-width: 1.5rem;
+  }
+}
+
+/* Compact mode for many steps */
+.avitar-step-progress--compact .avitar-step-progress__number {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+}
+
+.avitar-step-progress--compact .avitar-step-progress__label {
+  font-size: 0.75rem;
+}

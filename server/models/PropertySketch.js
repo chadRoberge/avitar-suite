@@ -27,11 +27,11 @@ const shapeSchema = new mongoose.Schema({
       effective_area: {
         type: Number,
         required: true,
-        min: 0,
+        // No min restriction - allows negative values for deductions
       },
     },
   ], // Objects like {label: "HSF", effective_area: 270}
-  effective_area: { type: Number, default: 0, min: 0 },
+  effective_area: { type: Number, default: 0 }, // No min - allows negative values
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });
@@ -41,6 +41,12 @@ const propertySketchSchema = new mongoose.Schema(
     property_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Property',
+      required: true,
+      index: true,
+    },
+    municipality_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Municipality',
       required: true,
       index: true,
     },
@@ -57,8 +63,8 @@ const propertySketchSchema = new mongoose.Schema(
     shapes: [shapeSchema],
 
     // Calculated totals
-    total_area: { type: Number, default: 0, min: 0 },
-    total_effective_area: { type: Number, default: 0, min: 0 },
+    total_area: { type: Number, default: 0, min: 0 }, // Area itself must be positive
+    total_effective_area: { type: Number, default: 0 }, // No min - can be negative after deductions
 
     // Queryable fields for descriptions
     description_codes: [
@@ -108,6 +114,7 @@ propertySketchSchema.index({
   card_number: 1,
   assessment_year: 1,
 });
+propertySketchSchema.index({ municipality_id: 1, assessment_year: 1 });
 propertySketchSchema.index({ description_codes: 1, total_area: 1 });
 propertySketchSchema.index({ 'area_range.min': 1, 'area_range.max': 1 });
 propertySketchSchema.index({ building_type: 1, description_codes: 1 });

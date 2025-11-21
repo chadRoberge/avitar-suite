@@ -3,24 +3,24 @@ import { inject as service } from '@ember/service';
 
 export default class MunicipalityBuildingPermitsRoute extends Route {
   @service municipality;
+  @service('current-user') currentUser;
   @service router;
 
-  beforeModel() {
-    // Check if municipality has building permits module enabled
-    if (!this.municipality.hasModule('buildingPermits')) {
-      this.router.transitionTo('municipality.dashboard');
-      throw new Error(
-        'Building Permits module is not available for this municipality',
-      );
-    }
-  }
-
   async model() {
-    // Load building permits data
+    // Check if user has read access to building permits module
+    // hasModulePermission already checks for Avitar staff and returns true for them
+    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+      return {
+        accessDenied: true,
+        moduleName: 'Building Permits',
+        requiredPermission: 'read',
+      };
+    }
+
+    // User has access - return empty object for parent route
+    // Child routes will load their own data
     return {
-      permits: [], // Would come from API
-      recentApplications: [],
-      pendingInspections: [],
+      accessDenied: false,
     };
   }
 }

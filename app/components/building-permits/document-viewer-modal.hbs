@@ -1,0 +1,67 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
+    <div class="avitar-modal avitar-modal--xl" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          {{@file.displayName}}
+        </h2>
+        <div class="avitar-flex avitar-gap-2">
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.download}} title="Download File">
+            {{{lnr-icon "download"}}}
+            Download
+          </button>
+          <button type="button" class="avitar-modal__close" {{on "click" this.close}} aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="avitar-modal__body" style="padding: 0; max-height: 80vh; overflow: hidden;">
+        {{#if this.canPreview}}
+          {{#if this.isPDF}}
+            <iframe
+              src={{this.computedFileUrl}}
+              style="width: 100%; height: 80vh; border: none;"
+              title={{@file.displayName}}
+            ></iframe>
+          {{else if this.isImage}}
+            <div style="text-align: center; padding: 1rem; background: #f9fafb; overflow: auto; max-height: 80vh;">
+              <img
+                src={{this.computedFileUrl}}
+                alt={{@file.displayName}}
+                style="max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+              />
+            </div>
+          {{/if}}
+        {{else}}
+          <div class="avitar-alert avitar-alert--info" style="margin: 1rem;">
+            <i class="fas fa-info-circle avitar-mr-2"></i>
+            Preview not available for this file type. Please download the file to view it.
+            <div class="avitar-mt-3">
+              <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.download}}>
+                {{{lnr-icon "download"}}}
+                Download {{@file.displayName}}
+              </button>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-w-full">
+          <div class="avitar-text-sm avitar-text-gray-600">
+            <p><strong>Type:</strong> {{@file.category}}</p>
+            <p><strong>Uploaded:</strong> {{date-format @file.uploadedAt "MMM DD, YYYY"}} by {{@file.uploadedByName}}</p>
+            {{#if @file.description}}
+              <p><strong>Description:</strong> {{@file.description}}</p>
+            {{/if}}
+          </div>
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.close}}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}

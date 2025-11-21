@@ -1,0 +1,119 @@
+{{page-title "My Permits"}}
+
+<div class="avitar-layout">
+  {{! Fixed Navigation Container }}
+  <div class="contractor-navigation">
+    {{! Header using Avitar Topbar Design (matching municipal dashboard) }}
+    <nav class="avitar-topbar">
+      {{! Brand / Portal Name }}
+      <div class="avitar-topbar__brand">
+        <div class="avitar-topbar__brand-logo">
+          {{#if @model.userInfo.isContractor}}
+            <i class="fas fa-hard-hat"></i>
+          {{else}}
+            <i class="fas fa-user"></i>
+          {{/if}}
+        </div>
+        <div>
+          <div class="municipal-name">
+            {{#if @model.userInfo.isContractor}}
+              Contractor Portal
+            {{else}}
+              My Permits
+            {{/if}}
+          </div>
+        </div>
+      </div>
+
+      {{! User Actions }}
+      <div class="avitar-topbar__user">
+        {{! User Name Badge }}
+        <span class="avitar-text-white avitar-text-sm avitar-mr-3">
+          <i class="fas fa-user-circle avitar-mr-2"></i>
+          {{this.currentUser.user.first_name}} {{this.currentUser.user.last_name}}
+        </span>
+
+        {{! Manage Company Button (for contractors) }}
+        {{#if @model.userInfo.isContractor}}
+          <LinkTo
+            @route="contractor-management.team"
+            class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-ml-2"
+            title="Manage Company"
+          >
+            <i class="fas fa-building avitar-mr-1"></i>
+            Manage Company
+          </LinkTo>
+        {{/if}}
+
+        {{! Logout Button }}
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--danger avitar-btn--sm avitar-ml-2"
+          {{on "click" this.logout}}
+          title="Logout"
+        >
+          <i class="fas fa-sign-out-alt avitar-mr-1"></i>
+          Logout
+        </button>
+      </div>
+    </nav>
+
+    {{! Secondary Navigation for Contractor Sections }}
+    <nav class="avitar-topbar module-children-nav">
+      <ul class="avitar-topbar__nav">
+        <li class="avitar-topbar__nav-item">
+          <LinkTo
+            @route="my-permits.index"
+            class="avitar-topbar__nav-link {{if (eq this.router.currentRouteName 'my-permits.index') 'avitar-topbar__nav-link--active'}}"
+          >
+            <i class="fas fa-th-large"></i>
+            Dashboard
+          </LinkTo>
+        </li>
+        <li class="avitar-topbar__nav-item">
+          <LinkTo
+            @route="my-permits.index"
+            class="avitar-topbar__nav-link"
+          >
+            <i class="fas fa-file-alt"></i>
+            My Permits
+          </LinkTo>
+        </li>
+        <li class="avitar-topbar__nav-item">
+          <LinkTo
+            @route="my-permits.create"
+            class="avitar-topbar__nav-link {{if (eq this.router.currentRouteName 'my-permits.create') 'avitar-topbar__nav-link--active'}}"
+          >
+            <i class="fas fa-plus-circle"></i>
+            New Application
+          </LinkTo>
+        </li>
+        {{#if @model.userInfo.isContractor}}
+          <li class="avitar-topbar__nav-item">
+            <LinkTo
+              @route="my-permits.active"
+              class="avitar-topbar__nav-link {{if (eq this.router.currentRouteName 'my-permits.active') 'avitar-topbar__nav-link--active'}}"
+            >
+              <i class="fas fa-tasks"></i>
+              Active Projects
+            </LinkTo>
+          </li>
+          <li class="avitar-topbar__nav-item">
+            <LinkTo
+              @route="my-permits.history"
+              class="avitar-topbar__nav-link {{if (eq this.router.currentRouteName 'my-permits.history') 'avitar-topbar__nav-link--active'}}"
+            >
+              <i class="fas fa-history"></i>
+              History
+            </LinkTo>
+          </li>
+        {{/if}}
+      </ul>
+    </nav>
+  </div>
+
+  {{! Main Content with Padding for Fixed Navigation }}
+  <main class="contractor-page avitar-container avitar-py-6">
+    {{outlet}}
+  </main>
+</div>

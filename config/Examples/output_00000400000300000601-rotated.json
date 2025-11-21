@@ -1,0 +1,4607 @@
+{
+  "_id": {
+    "$oid": "690a4f12de8f926552e5aee4"
+  },
+  "property_id": {
+    "$oid": "690a4f129b80e72d9a3db6b4"
+  },
+  "card_number": {
+    "$numberInt": "1"
+  },
+  "name": "Building Sketch",
+  "description": "Imported from 00000400000300000601-rotated",
+  "shapes": [
+    {
+      "_id": {
+        "$oid": "690a4f123080ebc74d96b0e7"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1274c8c889b6da483e"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f120250abf2f7007b52"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f127df266adaf9cb9ff"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12513e776fddf9961a"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12c830960af42cff97"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f1232a5ecc9bd7bf29a"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12c3e98e4dbc6c8880"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "255"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f126385bb08c29c6e57"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f128e048058159922b8"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12ae11f161496037bb"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12786fa2eeea1727ac"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "255"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f129f16d41062614481"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12883965fe4bd7491b"
+          },
+          "label": "GAR",
+          "description": "Garage",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f123d1bea45b791d190"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f126c4b73129ba828c0"
+          },
+          "label": "GAR",
+          "description": "Garage",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "255"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f127efb128baa831b59"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12e53f0d562ddbc12b"
+          },
+          "label": "PAT",
+          "description": "Patio",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f127651b452547462d7"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f122c71fcf3603d50f3"
+          },
+          "label": "PAT",
+          "description": "Patio",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "255"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12471f7e95095f0347"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12b111ce5b5f05e26f"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f1294096982d3eff9f7"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12d3577cf9b3bc2c7d"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12aa1bf5675c602362"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12935ed7077681f0f1"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f1226c3cd228175e7e0"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12ca1616bea4b1cb40"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12f7b5e7ee0736fcb2"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f122ebfad873628fde8"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "63"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f121c2d10b72c66ccde"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1251e00b463eff42d1"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "256"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12fb812423fb564cf7"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1226ca08f6df34e12d"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f128087e60e78d06a03"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12686d73f5a3c8ac6f"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f126a81d1c7978537c0"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1225c0b67c701c61b3"
+          },
+          "label": "FFF",
+          "description": "First Finished Floor",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "8"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-21"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-21"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-18"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-18"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-18"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-13"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "-13"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12060377600616f93e"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1296fb5d6a8a9a90d2"
+          },
+          "label": "GAR",
+          "description": "Garage",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f126cd957fd000e25e5"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12f03491e04301bf26"
+          },
+          "label": "GAR",
+          "description": "Garage",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12cc4782b51aa2e246"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12bac3334694c3df45"
+          },
+          "label": "GAR",
+          "description": "Garage",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f125c61168418a2098b"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12f442404ccc3606ca"
+          },
+          "label": "PAT",
+          "description": "Patio",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f126f0673662b38dea4"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f1257002a022ce669d7"
+          },
+          "label": "PAT",
+          "description": "Patio",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "13"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12801fe2c41a456cce"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f126aced313589f94a6"
+          },
+          "label": "PAT",
+          "description": "Patio",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282930"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12e461d9f8cee56d18"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12aa1e7db15c498c4b"
+          },
+          "label": "SHD",
+          "description": "Shed",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12a3b32db504450d28"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12a3df06eb617a24ae"
+          },
+          "label": "SHD",
+          "description": "Shed",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "_id": {
+        "$oid": "690a4f12db9583367f1176b7"
+      },
+      "type": "polygon",
+      "area": {
+        "$numberInt": "0"
+      },
+      "effective_area": {
+        "$numberInt": "0"
+      },
+      "descriptions": [
+        {
+          "_id": {
+            "$oid": "690a4f12fc34623b1fb2e34b"
+          },
+          "label": "SHD",
+          "description": "Shed",
+          "effective_area": {
+            "$numberInt": "0"
+          }
+        }
+      ],
+      "extraction_confidence": 0.7,
+      "created_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "updated_at": {
+        "$date": {
+          "$numberLong": "1762283282931"
+        }
+      },
+      "coordinates": {
+        "points": [
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          },
+          {
+            "x": {
+              "$numberInt": "0"
+            },
+            "y": {
+              "$numberInt": "0"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "total_area": {
+    "$numberInt": "0"
+  },
+  "total_effective_area": {
+    "$numberInt": "0"
+  },
+  "description_codes": [
+    "FFF",
+    "GAR",
+    "PAT",
+    "SHD"
+  ],
+  "building_type": "residential",
+  "assessment_year": {
+    "$numberInt": "2025"
+  },
+  "created_at": {
+    "$date": {
+      "$numberLong": "1762283282931"
+    }
+  },
+  "updated_at": {
+    "$date": {
+      "$numberLong": "1762283282931"
+    }
+  },
+  "__v": {
+    "$numberInt": "0"
+  },
+  "import_metadata": {
+    "source_file": "00000400000300000601-rotated.vdf",
+    "file_size": 54454,
+    "file_hash": "fcf7c1ec1dcaf8e0b212cbef68af2a08",
+    "format": "VectroDrawFormat",
+    "format_version": "4.1",
+    "parser_version": "3.0",
+    "import_timestamp": "2025-11-04T14:08:02.932063",
+    "shapes_found": 28,
+    "average_confidence": 0.7,
+    "scale": {
+      "units_per_foot": 10,
+      "description": "10 units = 1 foot = 12 inches"
+    }
+  }
+}

@@ -24,7 +24,7 @@ function addSecurityHeaders() {
     },
     {
       name: 'X-Frame-Options',
-      content: 'DENY',
+      content: 'SAMEORIGIN',
     },
     {
       name: 'X-XSS-Protection',
@@ -37,7 +37,7 @@ function addSecurityHeaders() {
     {
       name: 'Content-Security-Policy',
       content:
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss:; worker-src 'self'; manifest-src 'self'",
+        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.quilljs.com; connect-src 'self' ws: wss: http://localhost:3000 https://avitar-suite.vercel.app https://api.stripe.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' http://localhost:3000 https://avitar-suite.vercel.app https://js.stripe.com https://hooks.stripe.com",
     },
   ];
 

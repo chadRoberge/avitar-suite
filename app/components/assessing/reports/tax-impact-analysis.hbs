@@ -1,0 +1,69 @@
+{{!-- Tax Impact Analysis Report Component --}}
+<div class="report-preview">
+  <div class="avitar-card avitar-card--outline">
+    <div class="avitar-card__header">
+      <h5 class="avitar-card__title">Tax Impact Analysis</h5>
+      <div class="avitar-card__subtitle">Preview based on current parameters</div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{#if @parameters.base_year}}
+        <div class="preview-section avitar-mb-4">
+          <h6 class="avitar-mb-2">
+            Comparing: {{@parameters.base_year}}
+            {{#if @parameters.comparison_year}}
+              → {{@parameters.comparison_year}}
+            {{/if}}
+          </h6>
+
+          {{#if @parameters.tax_rate}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Tax Rate: ${{@parameters.tax_rate}} per $1,000
+            </p>
+          {{/if}}
+
+          {{#if @parameters.property_class}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Property Class: {{@parameters.property_class}}
+            </p>
+          {{/if}}
+
+          {{#if @parameters.zone}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Zone: {{@parameters.zone}}
+            </p>
+          {{/if}}
+
+          {{#if @parameters.neighborhood}}
+            <p class="avitar-text-sm avitar-text-muted">
+              Neighborhood: {{@parameters.neighborhood}}
+            </p>
+          {{/if}}
+        </div>
+
+        <div class="preview-content">
+          <p class="avitar-text-sm avitar-text-muted">
+            This report will analyze the tax impact of assessment changes between the base year
+            and comparison year, showing revenue differences, property-level tax changes, and
+            statistical breakdowns by property class, zone, and neighborhood.
+          </p>
+
+          <div class="avitar-mt-4 avitar-p-3 avitar-bg-blue-50 avitar-border-l-4 avitar-border-blue-500">
+            <p class="avitar-text-sm avitar-font-medium">Report will include:</p>
+            <ul class="avitar-text-sm avitar-mt-2 avitar-ml-4 avitar-space-y-1">
+              <li>• Overall tax revenue comparison</li>
+              <li>• Property-by-property tax impact analysis</li>
+              <li>• Statistical distribution of tax changes</li>
+              <li>• Breakdown by property class, zone, and neighborhood</li>
+              <li>• Properties with largest tax increases/decreases</li>
+            </ul>
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-text-center avitar-py-4">
+          <p class="avitar-text-muted">Please select a base year to preview this report.</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Municipality = require('../models/Municipality');
+const Contractor = require('../models/Contractor');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -50,19 +51,19 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // Create new user
+    // Create new user - convert camelCase to snake_case for User model
     const userData = {
-      firstName,
-      lastName,
+      first_name: firstName,
+      last_name: lastName,
       email,
       password,
-      userType,
+      global_role: userType === 'commercial' ? 'contractor' : 'citizen',
     };
 
     // Add commercial-specific fields
     if (userType === 'commercial') {
-      userData.businessName = businessName;
-      userData.businessType = businessType;
+      userData.business_name = businessName;
+      userData.business_type = businessType;
     }
 
     // Add optional fields
@@ -84,14 +85,14 @@ router.post('/register', async (req, res) => {
       token,
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        first_name: user.first_name,
+        last_name: user.last_name,
         fullName: user.fullName,
         email: user.email,
-        userType: user.userType,
-        businessName: user.businessName,
-        businessType: user.businessType,
-        isActive: user.isActive,
+        global_role: user.global_role,
+        business_name: user.business_name,
+        business_type: user.business_type,
+        is_active: user.is_active,
         createdAt: user.createdAt,
       },
     });
@@ -157,11 +158,13 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user._id,
+        _id: user._id,
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
         phone: user.phone,
         global_role: user.global_role,
+        contractor_id: user.contractor_id,
         municipal_permissions: user.municipal_permissions,
         preferences: user.preferences,
         last_login: user.last_login,
@@ -207,11 +210,13 @@ router.get('/me', authenticateToken, async (req, res) => {
       success: true,
       user: {
         id: user._id,
+        _id: user._id,
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
         phone: user.phone,
         global_role: user.global_role,
+        contractor_id: user.contractor_id,
         municipal_permissions: user.municipal_permissions,
         preferences: user.preferences,
         last_login: user.last_login,

@@ -1,0 +1,723 @@
+{{!-- CAMA Data Import Wizard --}}
+<div class="avitar-content">
+  <div class="avitar-page-header">
+    <h1 class="avitar-page-title">Data Import</h1>
+    <div class="avitar-page-subtitle">Import property data and sketches</div>
+  </div>
+
+  {{!-- CAMA Data Import Section --}}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">
+        <i class="fas fa-database avitar-mr-2"></i>
+        CAMA Data Import
+      </h3>
+      <div class="avitar-card__subtitle">Import property data from another CAMA system</div>
+    </div>
+    <div class="avitar-card__body">
+      <p class="avitar-text-gray-600 avitar-mb-4">
+        Use the wizard below to import building codes, zones, neighborhoods, properties, and assessments from an Excel export.
+      </p>
+    </div>
+  </div>
+
+  {{!-- Wizard Progress Indicator --}}
+  <div class="avitar-step-progress avitar-mb-4">
+    {{!-- Step 1: System --}}
+    <div class="avitar-step-progress__step {{if (eq this.currentStep 1) 'avitar-step-progress__step--active' (if (gt this.currentStep 1) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (gt this.currentStep 1)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          1
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__label">System</div>
+    </div>
+
+    <div class="avitar-step-progress__connector {{if (gt this.currentStep 2) 'avitar-step-progress__connector--completed' (if (eq this.currentStep 2) 'avitar-step-progress__connector--active' '')}}"></div>
+
+    {{!-- Step 2: Land Codes --}}
+    <div class="avitar-step-progress__step {{if (eq this.currentStep 2) 'avitar-step-progress__step--active' (if (gt this.currentStep 2) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (gt this.currentStep 2)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          2
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__label">Land Codes</div>
+    </div>
+
+    <div class="avitar-step-progress__connector {{if (gt this.currentStep 3) 'avitar-step-progress__connector--completed' (if (eq this.currentStep 3) 'avitar-step-progress__connector--active' '')}}"></div>
+
+    {{!-- Step 3: Building Codes --}}
+    <div class="avitar-step-progress__step {{if (eq this.currentStep 3) 'avitar-step-progress__step--active' (if (gt this.currentStep 3) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (gt this.currentStep 3)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          3
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__label">Building Codes</div>
+    </div>
+
+    <div class="avitar-step-progress__connector {{if (gt this.currentStep 4) 'avitar-step-progress__connector--completed' (if (eq this.currentStep 4) 'avitar-step-progress__connector--active' '')}}"></div>
+
+    {{!-- Step 4: Property Data Upload --}}
+    <div class="avitar-step-progress__step {{if (eq this.currentStep 4) 'avitar-step-progress__step--active' (if (gt this.currentStep 4) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (gt this.currentStep 4)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          4
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__label">Upload File</div>
+    </div>
+
+    <div class="avitar-step-progress__connector {{if (gt this.currentStep 5) 'avitar-step-progress__connector--completed' (if (eq this.currentStep 5) 'avitar-step-progress__connector--active' '')}}"></div>
+
+    {{!-- Step 5: Import Properties --}}
+    <div class="avitar-step-progress__step {{if (eq this.currentStep 5) 'avitar-step-progress__step--active' (if (gt this.currentStep 5) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (gt this.currentStep 5)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          5
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__label">Import Data</div>
+    </div>
+  </div>
+
+  {{!-- Step 1: Select CAMA System --}}
+  {{#if (eq this.currentStep 1)}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">Select CAMA System</h3>
+        <div class="avitar-card__subtitle">Choose the source system for your import</div>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-radio-group">
+          {{#each @model.camaSystemOptions as |system|}}
+            <label class="avitar-radio">
+              <input
+                type="radio"
+                name="cama-system"
+                value={{system.value}}
+                checked={{eq this.selectedSystem system.value}}
+                {{on "change" (fn this.selectSystem system.value)}}
+              >
+              <span class="avitar-radio__checkmark"></span>
+              <span class="avitar-radio__label">{{system.label}}</span>
+            </label>
+          {{/each}}
+        </div>
+
+        <div class="avitar-mt-6">
+          <div class="avitar-alert avitar-alert--info">
+            <i class="fas fa-info-circle avitar-mr-2"></i>
+            <div>
+              <strong>Import Process:</strong>
+              <ol class="avitar-mt-2 avitar-ml-4">
+                <li>Import land codes (zones, land ladders, neighborhoods, view & waterfront attributes)</li>
+                <li>Import building codes (building types, feature codes with points/factors)</li>
+                <li>Upload property data file (properties, buildings, land, features)</li>
+                <li>Import property records (matches to imported codes, creates properties, buildings, land assessments, features)</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="avitar-form-actions avitar-mt-6">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" (fn this.goToStep 2)}}
+            disabled={{not this.selectedSystem}}
+          >
+            Continue
+            <i class="fas fa-arrow-right avitar-ml-2"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  {{!-- Step 2: Land Codes Import --}}
+  {{#if (eq this.currentStep 2)}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">Phase 1: Import Land Codes</h3>
+        <div class="avitar-card__subtitle">Zones, land ladders, neighborhoods, and land attributes</div>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-alert avitar-alert--info avitar-mb-4">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          <div>
+            <strong>Land Codes File:</strong>
+            <p class="avitar-mt-1">Upload the land codes Excel file (separate from property data). This file contains zones with land pricing tiers, neighborhoods, land use codes, view attributes, water bodies, and waterfront attributes.</p>
+            <p class="avitar-mt-2"><strong>Imports:</strong></p>
+            <ul class="avitar-mt-1 avitar-ml-4">
+              <li>Zones with minimum acreage, frontage, excess costs, and base view values</li>
+              <li>Land ladders (pricing tiers by acreage for each zone)</li>
+              <li>Land use codes and neighborhood codes with adjustment rates</li>
+              <li>Site/topography modifiers, road and driveway types</li>
+              <li>Current use codes, view attributes (subjects, widths, depths, distances)</li>
+              <li>Water bodies with frontage ladders and waterfront attributes</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label">Land Codes Excel File (.xlsx or .xls)</label>
+          <input
+            type="file"
+            class="avitar-input"
+            accept=".xlsx,.xls"
+            {{on "change" this.handleLandCodesFileSelect}}
+          >
+          {{#if this.landCodesFile}}
+            <div class="avitar-help-text avitar-text-success avitar-mt-2">
+              <i class="fas fa-check-circle avitar-mr-1"></i>
+              Selected: {{this.landCodesFile.name}}
+            </div>
+          {{/if}}
+        </div>
+
+        {{#if this.landCodesValidationResults}}
+          <div class="avitar-alert avitar-alert--{{if this.landCodesValidationResults.valid 'success' 'error'}} avitar-mb-4">
+            <i class="fas fa-{{if this.landCodesValidationResults.valid 'check-circle' 'exclamation-circle'}} avitar-mr-2"></i>
+            <div>
+              <strong>Validation Results:</strong>
+              {{#if this.landCodesValidationResults.valid}}
+                <p class="avitar-mt-2">File will import:</p>
+                <ul class="avitar-mt-2 avitar-ml-4 avitar-text-sm">
+                  <li><strong>{{this.landCodesValidationResults.summary.sectionsFound}}</strong> sections found</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.zones}}</strong> zones</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.landLadders}}</strong> land ladder tiers</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.landUseCodes}}</strong> land use codes</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.neighborhoodCodes}}</strong> neighborhood codes</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.propertyAttributes}}</strong> property attributes (site, topography, road, driveway)</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.currentUseCodes}}</strong> current use codes</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.viewAttributes}}</strong> view attributes (subject, width, depth, distance)</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.waterBodies}}</strong> water bodies</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.waterBodyLadders}}</strong> water body ladder tiers</li>
+                  <li><strong>{{this.landCodesValidationResults.summary.waterfrontAttributes}}</strong> waterfront attributes (access, location, topography)</li>
+                </ul>
+              {{else}}
+                <p class="avitar-mt-2 avitar-text-red-600">{{this.landCodesValidationResults.error}}</p>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.landCodesImportResults}}
+          <div class="avitar-alert avitar-alert--success avitar-mb-4">
+            <i class="fas fa-check-circle avitar-mr-2"></i>
+            <div>
+              <strong>Land Codes Import Complete!</strong>
+              <p class="avitar-mt-2">Successfully imported:</p>
+              <ul class="avitar-mt-2 avitar-ml-4">
+                <li>{{this.landCodesImportResults.zones.created}} zones created, {{this.landCodesImportResults.zones.updated}} updated</li>
+                <li>{{this.landCodesImportResults.landLadders.created}} land ladder tiers created, {{this.landCodesImportResults.landLadders.updated}} updated</li>
+                <li>{{this.landCodesImportResults.landUseCodes.created}} land use codes created, {{this.landCodesImportResults.landUseCodes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.neighborhoodCodes.created}} neighborhood codes created, {{this.landCodesImportResults.neighborhoodCodes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.siteConditions.created}} site/topography modifiers created, {{this.landCodesImportResults.siteConditions.updated}} updated</li>
+                <li>{{this.landCodesImportResults.roadTypes.created}} road types created, {{this.landCodesImportResults.roadTypes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.drivewayTypes.created}} driveway types created, {{this.landCodesImportResults.drivewayTypes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.currentUseCodes.created}} current use codes created, {{this.landCodesImportResults.currentUseCodes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.viewAttributes.created}} view attributes created, {{this.landCodesImportResults.viewAttributes.updated}} updated</li>
+                <li>{{this.landCodesImportResults.waterBodies.created}} water bodies created, {{this.landCodesImportResults.waterBodies.updated}} updated</li>
+                <li>{{this.landCodesImportResults.waterBodyLadders.created}} water body ladder tiers created, {{this.landCodesImportResults.waterBodyLadders.updated}} updated</li>
+                <li>{{this.landCodesImportResults.waterfrontAttributes.created}} waterfront attributes created, {{this.landCodesImportResults.waterfrontAttributes.updated}} updated</li>
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="avitar-form-actions avitar-mt-6">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary avitar-mr-2"
+            {{on "click" (fn this.goToStep 1)}}
+            disabled={{or this.isValidatingLandCodes this.isExecutingLandCodes this.landCodesImportResults}}
+          >
+            <i class="fas fa-arrow-left avitar-mr-2"></i>
+            Back
+          </button>
+
+          {{#unless this.landCodesImportResults}}
+            {{#unless this.landCodesValidationResults}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.validateLandCodes}}
+                disabled={{or this.isValidatingLandCodes (not this.landCodesFile)}}
+              >
+                {{#if this.isValidatingLandCodes}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Validating...
+                {{else}}
+                  <i class="fas fa-check-circle avitar-mr-2"></i>
+                  Validate File
+                {{/if}}
+              </button>
+            {{else}}
+              {{#if this.landCodesValidationResults.valid}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.executeLandCodesImport}}
+                  disabled={{this.isExecutingLandCodes}}
+                >
+                  {{#if this.isExecutingLandCodes}}
+                    <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                    Importing...
+                  {{else}}
+                    <i class="fas fa-upload avitar-mr-2"></i>
+                    Import Land Codes
+                  {{/if}}
+                </button>
+              {{/if}}
+            {{/unless}}
+          {{else}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" (fn this.goToStep 3)}}
+            >
+              Continue to Building Codes
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  {{!-- Step 3: Phase 1.5 - Building Codes Import --}}
+  {{#if (eq this.currentStep 3)}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">Phase 1.5: Import Building Codes</h3>
+        <div class="avitar-card__subtitle">Building types and feature codes with points/factors</div>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-alert avitar-alert--info avitar-mb-4">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          <div>
+            <strong>Building Codes File:</strong>
+            <p class="avitar-mt-1">Upload the building codes Excel file (separate from property data). This file typically contains building types, quality grades, roof styles, exterior walls, interior walls, flooring, heating, and other feature codes with their associated points or factors.</p>
+          </div>
+        </div>
+
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label">Building Codes Excel File (.xlsx or .xls)</label>
+          <input
+            type="file"
+            class="avitar-input"
+            accept=".xlsx,.xls"
+            {{on "change" this.handleBuildingCodesFileSelect}}
+          >
+          {{#if this.buildingCodesFile}}
+            <div class="avitar-help-text avitar-text-success avitar-mt-2">
+              <i class="fas fa-check-circle avitar-mr-1"></i>
+              Selected: {{this.buildingCodesFile.name}}
+            </div>
+          {{/if}}
+        </div>
+
+        {{#if this.buildingCodesValidationResults}}
+          <div class="avitar-alert avitar-alert--{{if this.buildingCodesValidationResults.valid 'success' 'error'}} avitar-mb-4">
+            <i class="fas fa-{{if this.buildingCodesValidationResults.valid 'check-circle' 'exclamation-circle'}} avitar-mr-2"></i>
+            <div>
+              <strong>Validation Results:</strong>
+              {{#if this.buildingCodesValidationResults.valid}}
+                <p class="avitar-mt-2">File will import:</p>
+                <ul class="avitar-mt-2 avitar-ml-4 avitar-text-sm">
+                  <li>
+                    <strong>Building Type Codes:</strong> {{this.buildingCodesValidationResults.summary.buildingCodes}} codes
+                  </li>
+                  <li>
+                    <strong>Building Feature Codes:</strong> {{this.buildingCodesValidationResults.summary.featureCodes}} total
+                    {{#if this.buildingCodesValidationResults.summary.featureCodesByType}}
+                      <ul class="avitar-ml-4 avitar-mt-1">
+                        {{#each this.buildingCodesValidationResults.summary.featureCodesByType as |typeInfo|}}
+                          <li>{{typeInfo.count}} {{typeInfo.type}}</li>
+                        {{/each}}
+                      </ul>
+                    {{/if}}
+                  </li>
+                  <li>
+                    <strong>Sketch Sub-Area Factors:</strong> {{this.buildingCodesValidationResults.summary.subAreaFactors}} factors
+                  </li>
+                  {{#if this.buildingCodesValidationResults.summary.miscellaneousPoints}}
+                    <li>
+                      <strong>Building Accessories:</strong>
+                      <ul class="avitar-ml-4 avitar-mt-1">
+                        <li>Air Conditioning: {{this.buildingCodesValidationResults.summary.miscellaneousPoints.airConditioningPoints}} points</li>
+                        <li>Extra Kitchen: {{this.buildingCodesValidationResults.summary.miscellaneousPoints.extraKitchenPoints}} points</li>
+                        <li>Fireplace: {{this.buildingCodesValidationResults.summary.miscellaneousPoints.fireplacePoints}} points</li>
+                        <li>Generator: {{this.buildingCodesValidationResults.summary.miscellaneousPoints.generatorPoints}} points</li>
+                      </ul>
+                    </li>
+                  {{/if}}
+                </ul>
+              {{else}}
+                <p class="avitar-mt-2 avitar-text-red-600">{{this.buildingCodesValidationResults.error}}</p>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.buildingCodesImportResults}}
+          <div class="avitar-alert avitar-alert--success avitar-mb-4">
+            <i class="fas fa-check-circle avitar-mr-2"></i>
+            <div>
+              <strong>Building Codes Import Complete!</strong>
+              <p class="avitar-mt-2">Successfully imported:</p>
+              <ul class="avitar-mt-2 avitar-ml-4 avitar-text-sm">
+                <li>
+                  <strong>Building Type Codes:</strong>
+                  {{this.buildingCodesImportResults.buildingCodesCreated}} created
+                  {{#if this.buildingCodesImportResults.buildingCodesUpdated}}
+                    , {{this.buildingCodesImportResults.buildingCodesUpdated}} updated
+                  {{/if}}
+                  {{#if this.buildingCodesImportResults.buildingCodesDeleted}}
+                    , {{this.buildingCodesImportResults.buildingCodesDeleted}} deleted
+                  {{/if}}
+                  {{#if this.buildingCodesImportResults.stats}}
+                    ({{this.buildingCodesImportResults.stats.buildingCodesCount}} total in file)
+                  {{/if}}
+                </li>
+                <li>
+                  <strong>Building Feature Codes:</strong>
+                  {{this.buildingCodesImportResults.featureCodesCreated}} created
+                  {{#if this.buildingCodesImportResults.featureCodesUpdated}}
+                    , {{this.buildingCodesImportResults.featureCodesUpdated}} updated
+                  {{/if}}
+                  {{#if this.buildingCodesImportResults.featureCodesDeleted}}
+                    , {{this.buildingCodesImportResults.featureCodesDeleted}} deleted
+                  {{/if}}
+                  {{#if this.buildingCodesImportResults.stats}}
+                    ({{this.buildingCodesImportResults.stats.featureCodesCount}} total in file)
+                  {{/if}}
+                  {{#if this.buildingCodesImportResults.stats.featureCodesByType}}
+                    <ul class="avitar-ml-4 avitar-mt-1">
+                      {{#each-in this.buildingCodesImportResults.stats.featureCodesByType as |type count|}}
+                        <li>{{count}} {{type}} codes</li>
+                      {{/each-in}}
+                    </ul>
+                  {{/if}}
+                </li>
+                {{#if this.buildingCodesImportResults.stats}}
+                  <li>
+                    <strong>Sketch Sub-Area Factors:</strong> {{this.buildingCodesImportResults.stats.subAreaFactorsCount}} factors imported
+                  </li>
+                {{/if}}
+                {{#if this.buildingCodesImportResults.miscellaneousPoints}}
+                  <li>
+                    <strong>Building Accessories:</strong>
+                    <ul class="avitar-ml-4 avitar-mt-1">
+                      <li>Air Conditioning: {{this.buildingCodesImportResults.miscellaneousPoints.airConditioningPoints}} points</li>
+                      <li>Extra Kitchen: {{this.buildingCodesImportResults.miscellaneousPoints.extraKitchenPoints}} points</li>
+                      <li>Fireplace: {{this.buildingCodesImportResults.miscellaneousPoints.fireplacePoints}} points</li>
+                      <li>Generator: {{this.buildingCodesImportResults.miscellaneousPoints.generatorPoints}} points</li>
+                    </ul>
+                  </li>
+                {{/if}}
+                {{#if this.buildingCodesImportResults.errors}}
+                  {{#if this.buildingCodesImportResults.errors.length}}
+                    <li class="avitar-text-red-600">
+                      <strong>Errors:</strong> {{this.buildingCodesImportResults.errors.length}} errors occurred during import
+                    </li>
+                  {{/if}}
+                {{/if}}
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="avitar-form-actions avitar-mt-6">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary avitar-mr-2"
+            {{on "click" (fn this.goToStep 2)}}
+            disabled={{or this.isValidatingBuildingCodes this.isExecutingBuildingCodes this.buildingCodesImportResults}}
+          >
+            <i class="fas fa-arrow-left avitar-mr-2"></i>
+            Back
+          </button>
+
+          {{#unless this.buildingCodesImportResults}}
+            {{#unless this.buildingCodesValidationResults}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.validateBuildingCodes}}
+                disabled={{or this.isValidatingBuildingCodes (not this.buildingCodesFile)}}
+              >
+                {{#if this.isValidatingBuildingCodes}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Validating...
+                {{else}}
+                  <i class="fas fa-check-circle avitar-mr-2"></i>
+                  Validate File
+                {{/if}}
+              </button>
+            {{else}}
+              {{#if this.buildingCodesValidationResults.valid}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.executeBuildingCodesImport}}
+                  disabled={{this.isExecutingBuildingCodes}}
+                >
+                  {{#if this.isExecutingBuildingCodes}}
+                    <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                    Importing...
+                  {{else}}
+                    <i class="fas fa-upload avitar-mr-2"></i>
+                    Import Building Codes
+                  {{/if}}
+                </button>
+              {{/if}}
+            {{/unless}}
+          {{else}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" (fn this.goToStep 4)}}
+            >
+              Continue to Property Data
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  {{!-- Step 4: Upload Property Data Excel File --}}
+  {{#if (eq this.currentStep 4)}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">Upload Property Data File</h3>
+        <div class="avitar-card__subtitle">Select the main property data export from {{this.selectedSystem}}</div>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-alert avitar-alert--info avitar-mb-4">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          <div>
+            <strong>About Property Data File:</strong>
+            <p class="avitar-mt-1">This is the main export containing properties, buildings, land records, and features. Building codes and land codes have been uploaded in previous steps.</p>
+          </div>
+        </div>
+
+        {{!-- Permit Handling Option --}}
+        <div class="avitar-form-group avitar-mb-4">
+          <label class="avitar-label">Building Permit Handling</label>
+          <div class="avitar-help-text avitar-mb-3">
+            Choose how to handle existing building permits during import. Permits reference properties, which will get new IDs during import.
+          </div>
+          <div class="avitar-radio-group">
+            <label class="avitar-radio">
+              <input
+                type="radio"
+                name="permit-handling"
+                value="remap"
+                checked={{eq this.permitHandling "remap"}}
+                {{on "change" (fn this.setPermitHandling "remap")}}
+              >
+              <span class="avitar-radio__checkmark"></span>
+              <div class="avitar-radio__label-wrapper">
+                <span class="avitar-radio__label">Preserve & Remap Permits (Recommended)</span>
+                <span class="avitar-radio__description">Keep existing permits and update property references to match new property IDs based on PID</span>
+              </div>
+            </label>
+            <label class="avitar-radio">
+              <input
+                type="radio"
+                name="permit-handling"
+                value="delete"
+                checked={{eq this.permitHandling "delete"}}
+                {{on "change" (fn this.setPermitHandling "delete")}}
+              >
+              <span class="avitar-radio__checkmark"></span>
+              <div class="avitar-radio__label-wrapper">
+                <span class="avitar-radio__label">Delete All Permits</span>
+                <span class="avitar-radio__description">Remove all existing permits and start fresh (cannot be undone)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Property Data Excel File (.xlsx or .xls)</label>
+          <input
+            type="file"
+            class="avitar-input"
+            accept=".xlsx,.xls"
+            {{on "change" this.handleFileSelect}}
+          >
+          {{#if this.uploadedFile}}
+            <div class="avitar-help-text avitar-text-success avitar-mt-2">
+              <i class="fas fa-check-circle avitar-mr-1"></i>
+              Selected: {{this.uploadedFile.name}}
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="avitar-alert avitar-alert--warning avitar-mt-4">
+          <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+          <div>
+            <strong>Before Importing:</strong>
+            <ul class="avitar-mt-2 avitar-ml-4">
+              <li>Ensure the Excel file contains property, building, and land sheets</li>
+              <li>Make sure column headers match the expected format for {{this.selectedSystem}}</li>
+              <li>Back up your database before proceeding</li>
+              {{#if (eq this.permitHandling "delete")}}
+                <li class="avitar-text-danger"><strong>All building permits will be permanently deleted</strong></li>
+              {{/if}}
+            </ul>
+          </div>
+        </div>
+
+        <div class="avitar-form-actions avitar-mt-6">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary avitar-mr-2"
+            {{on "click" (fn this.goToStep 3)}}
+          >
+            <i class="fas fa-arrow-left avitar-mr-2"></i>
+            Back
+          </button>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.uploadAndParse}}
+            disabled={{or this.isUploading (not this.uploadedFile)}}
+          >
+            {{#if this.isUploading}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Parsing...
+            {{else}}
+              Parse File
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            {{/if}}
+          </button>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  {{!-- Step 5: Property Data Import --}}
+  {{#if (eq this.currentStep 5)}}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">Phase 3: Import Property Data</h3>
+        <div class="avitar-card__subtitle">Properties, buildings, land assessments, and features</div>
+      </div>
+
+      <div class="avitar-card__body">
+        {{#if this.phase3ValidationResults}}
+          <div class="avitar-alert {{if this.phase3ValidationResults.isValid 'avitar-alert--success' 'avitar-alert--error'}} avitar-mb-4">
+            <i class="fas {{if this.phase3ValidationResults.isValid 'fa-check-circle' 'fa-exclamation-circle'}} avitar-mr-2"></i>
+            <div>
+              {{#if this.phase3ValidationResults.isValid}}
+                <strong>Validation Passed!</strong>
+                <p class="avitar-mt-1">
+                  Ready to import {{this.phase3ValidationResults.propertyCount}} properties with
+                  {{this.phase3ValidationResults.buildingCount}} buildings,
+                  {{this.phase3ValidationResults.landCount}} land records,
+                  and {{this.phase3ValidationResults.featureCount}} features
+                </p>
+              {{else}}
+                <strong>Validation Errors:</strong>
+                <ul class="avitar-mt-2 avitar-ml-4">
+                  {{#each this.phase3ValidationResults.errors as |error|}}
+                    <li>{{error}}</li>
+                  {{/each}}
+                </ul>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
+
+        {{#if this.phase3Complete}}
+          <div class="avitar-alert avitar-alert--success avitar-mb-4">
+            <i class="fas fa-check-circle avitar-mr-2"></i>
+            <div>
+              <strong>Import Complete!</strong>
+              <p class="avitar-mt-2">Successfully imported:</p>
+              <ul class="avitar-mt-2 avitar-ml-4">
+                <li>{{this.importProgress.propertiesCreated}} properties</li>
+                <li>{{this.importProgress.buildingsCreated}} buildings</li>
+                <li>{{this.importProgress.landRecordsCreated}} land records</li>
+                <li>{{this.importProgress.featuresCreated}} features</li>
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+
+        <div class="avitar-alert avitar-alert--warning avitar-mb-4">
+          <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+          <div>
+            <strong>Important:</strong> Phase 3 import may take several minutes depending on the number of properties.
+            Do not close this window during the import process.
+          </div>
+        </div>
+
+        <div class="avitar-form-actions avitar-mt-6">
+          {{#unless this.phase3Complete}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary avitar-mr-2"
+              {{on "click" this.validatePhase3}}
+              disabled={{this.isValidatingPhase3}}
+            >
+              {{#if this.isValidatingPhase3}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Validating...
+              {{else}}
+                <i class="fas fa-check avitar-mr-2"></i>
+                Validate
+              {{/if}}
+            </button>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.executePhase3}}
+              disabled={{or this.isExecutingPhase3 (not this.phase3ValidationResults.isValid)}}
+            >
+              {{#if this.isExecutingPhase3}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Importing...
+              {{else}}
+                <i class="fas fa-upload avitar-mr-2"></i>
+                Execute Phase 3
+              {{/if}}
+            </button>
+          {{else}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.resetWizard}}
+            >
+              <i class="fas fa-redo avitar-mr-2"></i>
+              Start New Import
+            </button>
+          {{/unless}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>

@@ -1,0 +1,149 @@
+<div class="revaluation-print-all">
+  {{! Print Header - Only shows on print }}
+  <div class="print-only avitar-mb-6">
+    <div class="avitar-text-center avitar-border-b avitar-pb-4">
+      <h1 class="avitar-text-2xl avitar-font-bold">Revaluation Analysis Report</h1>
+      <h2 class="avitar-text-xl avitar-mt-2">{{this.municipality}}</h2>
+      <p class="avitar-text-lg avitar-text-muted avitar-mt-1">Effective Year: {{this.effectiveYear}}</p>
+      <p class="avitar-text-sm avitar-text-muted">Generated: {{date-format (now) "MMMM DD, YYYY"}}</p>
+    </div>
+  </div>
+
+  {{! Print Button - Hidden on print }}
+  <div class="no-print avitar-mb-6 avitar-flex avitar-justify-end">
+    <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.print}}>
+      <i class="fas fa-print avitar-mr-2"></i>
+      Print All Sheets
+    </button>
+  </div>
+
+  {{! Global Settings Summary }}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-bg-primary avitar-text-white">
+      <h3 class="avitar-font-semibold">Global Settings</h3>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4">
+        <div>
+          <label class="avitar-label">Base Year</label>
+          <p class="avitar-font-semibold">{{@globalSettings.base_year}}</p>
+        </div>
+        <div>
+          <label class="avitar-label">Max Current Use Acreage</label>
+          <p class="avitar-font-semibold">
+            {{@globalSettings.current_use.max_current_use_acreage}} acres
+          </p>
+        </div>
+        <div>
+          <label class="avitar-label">Time Trend Entries</label>
+          <p class="avitar-font-semibold">
+            {{or @globalSettings.time_trend.length 0}} entries
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Iterate through each sheet }}
+  {{#each this.sheetsWithSales as |item index|}}
+    <div class="sheet-section {{if (gt index 0) 'page-break-before'}} avitar-mb-8">
+      {{! Sheet Number and Name Header }}
+      <div class="avitar-card avitar-mb-4">
+        <div class="avitar-card__header avitar-bg-gray-800 avitar-text-white">
+          <h2 class="avitar-text-xl avitar-font-bold">
+            Sheet {{add index 1}}: {{item.sheet.sheet_name}}
+          </h2>
+          <p class="avitar-text-sm avitar-mt-1">
+            Type: {{item.sheet.sheet_type}} | Sales: {{item.sales.length}}
+          </p>
+        </div>
+      </div>
+
+      {{! Render the appropriate sheet component based on type }}
+      {{#if (eq item.sheet.sheet_type "excess_acreage")}}
+        <Assessing::Revaluations::SheetExcessAcreage
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "vacant_land")}}
+        <Assessing::Revaluations::SheetVacantLand
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "developed_land")}}
+        <Assessing::Revaluations::SheetDevelopedLand
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "building_rate")}}
+        <Assessing::Revaluations::SheetBuildingRate
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "view_base_rate")}}
+        <Assessing::Revaluations::SheetViewBaseRate
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "waterfront_base_rate")}}
+        <Assessing::Revaluations::SheetWaterfrontBaseRate
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{else if (eq item.sheet.sheet_type "amenity_rate")}}
+        <Assessing::Revaluations::SheetAmenityRate
+          @sheet={{item.sheet}}
+          @sales={{item.sales}}
+          @globalSettings={{@globalSettings}} />
+      {{/if}}
+    </div>
+
+    {{! Add page break for print after each sheet except the last }}
+    {{#unless (eq index (sub this.sheetsWithSales.length 1))}}
+      <div class="print-only avitar-my-8" style="page-break-after: always;"></div>
+    {{/unless}}
+  {{else}}
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <div class="avitar-empty-state avitar-py-8">
+          <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+          <h3 class="avitar-text-lg avitar-font-semibold">No Analysis Sheets</h3>
+          <p class="avitar-text-muted">Create your first analysis sheet to begin the revaluation process.</p>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+
+  {{! Print Footer - Only shows on print }}
+  <div class="print-only avitar-mt-8 avitar-border-t avitar-pt-4">
+    <p class="avitar-text-center avitar-text-sm avitar-text-muted">
+      This report was generated by Avitar Suite on {{date-format (now) "MMMM DD, YYYY 'at' h:mm A"}}
+    </p>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    .print-only {
+      display: block !important;
+    }
+
+    .page-break-before {
+      page-break-before: always;
+    }
+
+    .sheet-section {
+      page-break-inside: avoid;
+    }
+  }
+
+  @media screen {
+    .print-only {
+      display: none;
+    }
+  }
+</style>

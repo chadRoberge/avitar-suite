@@ -1,0 +1,473 @@
+{{page-title "Team Management"}}
+
+<div>
+  {{#if this.needsOnboarding}}
+    {{! Onboarding Required Message }}
+    <div class="avitar-card avitar-bg-primary-light avitar-border-primary">
+      <div class="avitar-card__body avitar-p-6">
+        <div class="avitar-flex avitar-items-center avitar-gap-4">
+          <div class="avitar-flex-shrink-0">
+            <div class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+              <i class="fas fa-clipboard-check fa-2x"></i>
+            </div>
+          </div>
+          <div class="avitar-flex-1">
+            <h3 class="avitar-text-xl avitar-font-bold avitar-mb-2">
+              Complete Your Contractor Profile First
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Before you can add team members, you need to complete your contractor profile with your business and licensing information.
+            </p>
+            <LinkTo @route="contractor-management.verification" class="avitar-btn avitar-btn--primary">
+              <i class="fas fa-arrow-right avitar-mr-2"></i>
+              Complete Profile
+            </LinkTo>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    {{! Header }}
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+      <div>
+        <h2 class="avitar-text-2xl avitar-font-bold avitar-text-gray-900">
+          Team Management
+        </h2>
+        <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+          Manage your team members and their permissions
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.openAddMemberModal}}
+      >
+        <i class="fas fa-user-plus avitar-mr-2"></i>
+        Add Team Member
+      </button>
+    </div>
+
+    {{! Subscription Feature Gate }}
+  {{#unless this.hasTeamManagementFeature}}
+    <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <div class="avitar-flex avitar-items-start avitar-gap-4">
+          <div class="avitar-flex-shrink-0">
+            <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-warning avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+              <i class="fas fa-lock fa-lg"></i>
+            </div>
+          </div>
+          <div class="avitar-flex-1">
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              Team Management is a Premium Feature
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Upgrade to the <strong>Professional</strong> or <strong>Enterprise</strong> plan to add team members, manage permissions, and enable collaborative permit management.
+            </p>
+            <div class="avitar-flex avitar-gap-3">
+              <LinkTo @route="contractor-management.subscription" class="avitar-btn avitar-btn--primary">
+                <i class="fas fa-arrow-up avitar-mr-2"></i>
+                Upgrade Now
+              </LinkTo>
+              <button type="button" class="avitar-btn avitar-btn--secondary">
+                <i class="fas fa-info-circle avitar-mr-2"></i>
+                Learn More
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/unless}}
+
+  {{! Team Stats }}
+  <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6 avitar-mb-6">
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label avitar-mb-2">Active Members</div>
+          <div class="avitar-stat__value avitar-text-primary">
+            {{this.activeMembers.length}} / {{this.maxTeamMembers}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label avitar-mb-2">Subscription Plan</div>
+          <div class="avitar-stat__value avitar-text-success">
+            {{this.contractor.subscriptionDisplay}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label avitar-mb-2">Available Slots</div>
+          <div class="avitar-stat__value
+            {{if this.canAddMember 'avitar-text-success' 'avitar-text-danger'}}">
+            {{sub this.maxTeamMembers this.activeMembers.length}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Team Members List }}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">
+        Team Members
+      </h3>
+    </div>
+
+    <div class="avitar-card__body avitar-p-0">
+      {{#if this.activeMembers.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Title</th>
+                <th>Permissions</th>
+                <th>Added</th>
+                <th class="avitar-text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.activeMembers as |member|}}
+                <tr>
+                  <td>
+                    <div class="avitar-flex avitar-items-center avitar-gap-3">
+                      <div class="avitar-avatar avitar-bg-primary-light avitar-text-primary">
+                        {{substring member.user_id.first_name 0 1}}{{substring member.user_id.last_name 0 1}}
+                      </div>
+                      <div>
+                        <div class="avitar-font-medium">
+                          {{member.user_id.first_name}} {{member.user_id.last_name}}
+                        </div>
+                        {{#if (eq member.role "owner")}}
+                          <span class="avitar-badge avitar-badge--sm avitar-badge--primary">
+                            <i class="fas fa-crown avitar-mr-1"></i>
+                            Owner
+                          </span>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <span class="avitar-text-sm avitar-text-muted">
+                      {{member.user_id.email}}
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="avitar-badge avitar-badge--secondary">
+                      {{member.role}}
+                    </span>
+                  </td>
+
+                  <td>
+                    {{#if member.title}}
+                      <span class="avitar-text-sm">{{member.title}}</span>
+                    {{else}}
+                      <span class="avitar-text-sm avitar-text-muted avitar-italic">-</span>
+                    {{/if}}
+                  </td>
+
+                  <td>
+                    <div class="avitar-flex avitar-flex-wrap avitar-gap-1">
+                      {{#each member.permissions as |permission|}}
+                        <span class="avitar-badge avitar-badge--sm avitar-badge--info">
+                          {{permission}}
+                        </span>
+                      {{else}}
+                        <span class="avitar-text-sm avitar-text-muted avitar-italic">None</span>
+                      {{/each}}
+                    </div>
+                  </td>
+
+                  <td>
+                    <span class="avitar-text-sm avitar-text-muted">
+                      {{date-format member.added_date "MMM DD, YYYY"}}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="avitar-flex avitar-justify-center avitar-gap-2">
+                      {{#unless (eq member.role "owner")}}
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                          {{on "click" (fn this.openEditMemberModal member)}}
+                          title="Edit Member"
+                        >
+                          <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--danger"
+                          {{on "click" (fn this.removeMember member)}}
+                          title="Remove Member"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      {{/unless}}
+                    </div>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-8">
+          <i class="fas fa-users fa-3x avitar-text-muted avitar-mb-4"></i>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+            No Team Members Yet
+          </h3>
+          <p class="avitar-text-muted avitar-mb-4">
+            Add team members to collaborate on permit applications
+          </p>
+          {{#if this.hasTeamManagementFeature}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.openAddMemberModal}}
+            >
+              <i class="fas fa-user-plus avitar-mr-2"></i>
+              Add First Team Member
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+</div>
+
+{{! Add Member Modal }}
+{{#if this.showAddMemberModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeAddMemberModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-user-plus avitar-mr-2"></i>
+          Add Team Member
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeAddMemberModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Email }}
+          <div>
+            <label class="avitar-label">
+              Email Address
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="email"
+              class="avitar-input"
+              placeholder="member@example.com"
+              value={{this.newMemberEmail}}
+              {{on "input" this.updateEmail}}
+            />
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              User must already have an account
+            </p>
+          </div>
+
+          {{! Role }}
+          <div>
+            <label class="avitar-label">Role</label>
+            <select class="avitar-select" {{on "change" this.updateRole}}>
+              {{#each this.roleOptions as |roleOption|}}
+                <option value={{roleOption.value}} selected={{eq this.newMemberRole roleOption.value}}>
+                  {{roleOption.label}} - {{roleOption.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Title }}
+          <div>
+            <label class="avitar-label">Job Title (Optional)</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="e.g., Project Manager, Foreman"
+              value={{this.newMemberTitle}}
+              {{on "input" this.updateTitle}}
+            />
+          </div>
+
+          {{! Permissions }}
+          <div>
+            <label class="avitar-label avitar-mb-3">Permissions</label>
+            <div class="avitar-space-y-2">
+              {{#each this.availablePermissions as |permission|}}
+                <label class="avitar-flex avitar-items-start avitar-gap-3 avitar-cursor-pointer avitar-p-3 avitar-border avitar-rounded hover:avitar-bg-gray-50">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox avitar-mt-1"
+                    checked={{includes this.newMemberPermissions permission.id}}
+                    {{on "change" (fn this.togglePermission permission.id)}}
+                  />
+                  <div>
+                    <div class="avitar-font-medium">{{permission.label}}</div>
+                    <div class="avitar-text-sm avitar-text-muted">{{permission.description}}</div>
+                  </div>
+                </label>
+              {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeAddMemberModal}}
+          disabled={{this.isLoading}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.addTeamMember}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Adding...
+          {{else}}
+            <i class="fas fa-user-plus avitar-mr-2"></i>
+            Add Member
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Edit Member Modal }}
+{{#if this.showEditMemberModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeEditMemberModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-user-edit avitar-mr-2"></i>
+          Edit Team Member
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeEditMemberModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Member Info Display }}
+          <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+            <div class="avitar-flex avitar-items-center avitar-gap-3">
+              <div class="avitar-avatar avitar-bg-primary-light avitar-text-primary avitar-w-12 avitar-h-12">
+                {{substring this.selectedMember.user_id.first_name 0 1}}{{substring this.selectedMember.user_id.last_name 0 1}}
+              </div>
+              <div>
+                <div class="avitar-font-semibold">
+                  {{this.selectedMember.user_id.first_name}} {{this.selectedMember.user_id.last_name}}
+                </div>
+                <div class="avitar-text-sm avitar-text-muted">
+                  {{this.selectedMember.user_id.email}}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{! Role }}
+          <div>
+            <label class="avitar-label">Role</label>
+            <select class="avitar-select" {{on "change" this.updateRole}}>
+              {{#each this.roleOptions as |roleOption|}}
+                <option value={{roleOption.value}} selected={{eq this.newMemberRole roleOption.value}}>
+                  {{roleOption.label}} - {{roleOption.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Title }}
+          <div>
+            <label class="avitar-label">Job Title (Optional)</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="e.g., Project Manager, Foreman"
+              value={{this.newMemberTitle}}
+              {{on "input" this.updateTitle}}
+            />
+          </div>
+
+          {{! Permissions }}
+          <div>
+            <label class="avitar-label avitar-mb-3">Permissions</label>
+            <div class="avitar-space-y-2">
+              {{#each this.availablePermissions as |permission|}}
+                <label class="avitar-flex avitar-items-start avitar-gap-3 avitar-cursor-pointer avitar-p-3 avitar-border avitar-rounded hover:avitar-bg-gray-50">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox avitar-mt-1"
+                    checked={{includes this.newMemberPermissions permission.id}}
+                    {{on "change" (fn this.togglePermission permission.id)}}
+                  />
+                  <div>
+                    <div class="avitar-font-medium">{{permission.label}}</div>
+                    <div class="avitar-text-sm avitar-text-muted">{{permission.description}}</div>
+                  </div>
+                </label>
+              {{/each}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeEditMemberModal}}
+          disabled={{this.isLoading}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.saveEditedMember}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Changes
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

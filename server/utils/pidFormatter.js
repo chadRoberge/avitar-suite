@@ -4,17 +4,17 @@
  */
 
 /**
- * Format a raw 18-digit PID according to municipality settings
+ * Format a raw 18-digit PID according to PIDFormat model
  * @param {string} pidRaw - The raw 18-digit PID
- * @param {object} municipalityConfig - Municipality PID configuration
+ * @param {object} pidFormatModel - PIDFormat model object
  * @returns {string} - Formatted PID display string
  */
-function formatPid(pidRaw, municipalityConfig) {
+function formatPid(pidRaw, pidFormatModel) {
   if (!pidRaw || pidRaw.length !== 18) {
     return pidRaw || 'Invalid PID';
   }
 
-  const config = getPidConfig(municipalityConfig);
+  const config = getPidConfig(pidFormatModel);
   if (!config) {
     return pidRaw;
   }
@@ -92,29 +92,39 @@ function formatParts(parts, config) {
 }
 
 /**
- * Get PID configuration from municipality data
- * @param {object} municipality - Municipality object with PID configuration
+ * Get PID configuration from PIDFormat model object
+ * @param {object} pidFormatModel - PIDFormat model object (from PIDFormat collection)
  * @returns {object|null} - PID configuration or null if not available
  */
-function getPidConfig(municipality) {
-  if (!municipality) {
-    return null;
-  }
-
-  // Get PID format configuration from municipality settings
-  const pidFormat = municipality.pid_format;
-  if (pidFormat) {
+function getPidConfig(pidFormatModel) {
+  if (!pidFormatModel) {
+    // Default configuration if none specified
     return {
-      mapDigits: pidFormat.map?.digits || 2,
-      lotDigits: pidFormat.lot?.digits || 3,
-      subDigits: pidFormat.sublot?.digits || 3,
-      separator: pidFormat.separator || '-',
-      removeLeadingZeros: pidFormat.removeLeadingZeros !== false,
-      showSubOnlyWhenPresent: pidFormat.showSubOnlyWhenPresent || false,
+      mapDigits: 2,
+      lotDigits: 3,
+      subDigits: 3,
+      separator: '-',
+      removeLeadingZeros: true,
+      showSubOnlyWhenPresent: false,
     };
   }
 
-  // Default configuration if none specified
+  // Get PID format configuration from PIDFormat model
+  const format = pidFormatModel.format;
+  const display = pidFormatModel.display;
+
+  if (format && display) {
+    return {
+      mapDigits: format.map?.digits || 2,
+      lotDigits: format.lot?.digits || 3,
+      subDigits: format.sublot?.digits || 3,
+      separator: display.separator || '-',
+      removeLeadingZeros: !display.show_leading_zeros,
+      showSubOnlyWhenPresent: display.compact_optional || false,
+    };
+  }
+
+  // Fallback to defaults
   return {
     mapDigits: 2,
     lotDigits: 3,
@@ -128,15 +138,15 @@ function getPidConfig(municipality) {
 /**
  * Get map number from raw PID
  * @param {string} pidRaw - Raw 18-digit PID
- * @param {object} municipality - Municipality configuration
+ * @param {object} pidFormatModel - PIDFormat model object
  * @returns {string} - Map number (formatted)
  */
-function getMapFromPid(pidRaw, municipality) {
+function getMapFromPid(pidRaw, pidFormatModel) {
   if (!pidRaw || pidRaw.length !== 18) {
     return 'Unknown';
   }
 
-  const config = getPidConfig(municipality);
+  const config = getPidConfig(pidFormatModel);
   if (!config) {
     return pidRaw.substring(0, 2);
   }
@@ -148,15 +158,15 @@ function getMapFromPid(pidRaw, municipality) {
 /**
  * Get lot and sublot display from raw PID (for property tree display)
  * @param {string} pidRaw - Raw 18-digit PID
- * @param {object} municipality - Municipality configuration
+ * @param {object} pidFormatModel - PIDFormat model object
  * @returns {string} - Lot-sublot display (e.g., "1-5", "20")
  */
-function getLotSubFromPid(pidRaw, municipality) {
+function getLotSubFromPid(pidRaw, pidFormatModel) {
   if (!pidRaw || pidRaw.length !== 18) {
     return 'Unknown';
   }
 
-  const config = getPidConfig(municipality);
+  const config = getPidConfig(pidFormatModel);
   if (!config) {
     return 'Unknown';
   }

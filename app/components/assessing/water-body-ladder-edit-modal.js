@@ -36,7 +36,8 @@ export default class WaterBodyLadderEditModalComponent extends Component {
       this.tiers = this.args.waterBodyLadder.entries.map((entry, index) => ({
         id: entry.id,
         frontage: entry.frontage,
-        value: entry.value,
+        // Handle both 'factor' (current) and 'value' (legacy) field names
+        value: entry.factor ?? entry.value,
         order: entry.order || index + 1,
       }));
     } else {
@@ -220,7 +221,7 @@ export default class WaterBodyLadderEditModalComponent extends Component {
         entries: sortedTiers.map((tier) => ({
           id: tier.id,
           frontage: parseFloat(tier.frontage),
-          value: parseFloat(tier.value),
+          factor: parseFloat(tier.value), // Server expects 'factor' not 'value'
           order: tier.order,
         })),
       };

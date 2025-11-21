@@ -32,12 +32,12 @@ router.get(
       }).populate('createdBy updatedBy', 'firstName lastName');
 
       const salesHistory = await SalesHistory.find({
-        municipalityId,
-        propertyId,
+        municipality_id: municipalityId,
+        property_id: propertyId,
       })
-        .sort({ saleDate: -1 })
-        .populate('createdBy', 'firstName lastName')
-        .populate('updatedBy', 'firstName lastName');
+        .sort({ sale_date: -1 })
+        .populate('created_by', 'firstName lastName')
+        .populate('updated_by', 'firstName lastName');
 
       res.json({
         listingHistory,

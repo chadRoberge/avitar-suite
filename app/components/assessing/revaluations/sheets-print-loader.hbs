@@ -1,0 +1,11 @@
+{{#if this.isLoading}}
+  <div class="avitar-flex avitar-justify-center avitar-items-center avitar-py-8">
+    <i class="fas fa-spinner fa-spin avitar-text-primary avitar-mr-2"></i>
+    <span>Loading sheets for printing...</span>
+  </div>
+{{else}}
+  <Assessing::Revaluations::SheetsPrint
+    @sheets={{this.sheetsData}}
+    @municipality={{@municipality}}
+    @globalSettings={{@revaluation.global_settings}} />
+{{/if}}

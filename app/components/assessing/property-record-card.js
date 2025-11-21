@@ -19,6 +19,7 @@ export default class PropertyRecordCardComponent extends Component {
   }
 
   get hasBuildingData() {
+    console.log(this.args.buildingAssessment);
     return this.args.buildingAssessment?.assessment;
   }
 
@@ -139,8 +140,7 @@ export default class PropertyRecordCardComponent extends Component {
   // Get current year's values from assessment history for displaying in totals sections
   get currentYearValues() {
     const history = this.assessedValuesHistory;
-    // Return the first item (current year) from the history
-    console.log(history && history.length > 0 ? history[0] : null);
+    // Return the first item (current year) from the history    
     return history && history.length > 0 ? history[0] : null;
   }
 
@@ -165,7 +165,6 @@ export default class PropertyRecordCardComponent extends Component {
         const yearRecord = historyByYear[year];
 
         if (yearRecord && yearRecord.current_card) {
-          console.log(yearRecord);
           // We have actual historical data for this card
           years.push({
             year,
@@ -214,14 +213,7 @@ export default class PropertyRecordCardComponent extends Component {
           ?.totalAssessedValue ||
         this.args.landAssessment?.assessment?.land_value ||
         this.args.landAssessment?.assessment?.value ||
-        0;
-
-      console.log('🎯 Property Record Card - Land data:', {
-        year,
-        cardNumber,
-        baseLandValue,
-        landAssessmentData: this.args.landAssessment?.assessment,
-      });
+        0;      
 
       if (cardNumber === 1) {
         // Card 1: Gets the full base land value
@@ -289,6 +281,10 @@ export default class PropertyRecordCardComponent extends Component {
 
       const cardTotal = landValue + buildingValue + featuresValue;
 
+      // For fallback calculation, use cardTotal as parcelTotal
+      // (we don't have multi-card data in this path)
+      const parcelTotal = cardTotal;
+
       console.log('🎯 Property Record Card - Calculated totals:', {
         year,
         cardNumber,
@@ -296,6 +292,7 @@ export default class PropertyRecordCardComponent extends Component {
         buildingValue,
         featuresValue,
         cardTotal,
+        parcelTotal,
         isCurrent: i === 0,
       });
 

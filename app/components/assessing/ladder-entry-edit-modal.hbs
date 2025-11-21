@@ -3,7 +3,7 @@
   <div class="avitar-modal avitar-modal--md">
         <div class="avitar-modal__header">
           <h3 class="avitar-modal__title">
-            {{if @ladderEntry "Edit Ladder Entry" "Add Ladder Entry"}}
+            {{if @ladderEntry "Update Ladder Entry" "Add Ladder Entry"}}
           </h3>
           <button type="button" class="avitar-modal__close" {{on "click" @onClose}} aria-label="Close modal">
             <i class="fas fa-times"></i>
@@ -11,6 +11,9 @@
         </div>
 
         <div class="avitar-modal__body">
+          {{! Trigger check for form updates }}
+          {{this.formInitializer}}
+
           {{#if @waterBodyName}}
             <div class="avitar-alert avitar-alert--info avitar-mb-4">
               <div class="avitar-alert__icon">
@@ -48,27 +51,24 @@
             </div>
 
             <div class="avitar-form-group">
-              <label class="avitar-label" for="value">Value ($) <span class="avitar-text-danger">*</span></label>
-              <div class="avitar-input-group">
-                <span class="avitar-input-group__addon">$</span>
-                <input 
-                  type="number" 
-                  id="value"
-                  class="avitar-input {{if this.valueError 'avitar-input--error'}}" 
-                  value={{this.value}} 
-                  {{on "input" this.updateValue}}
-                  placeholder="Enter property value..."
-                  step="100"
-                  min="0"
-                  max="100000000"
-                  required
-                />
-              </div>
+              <label class="avitar-label" for="value">Factor <span class="avitar-text-danger">*</span></label>
+              <input
+                type="number"
+                id="value"
+                class="avitar-input {{if this.valueError 'avitar-input--error'}}"
+                value={{this.value}}
+                {{on "input" this.updateValue}}
+                placeholder="Enter factor value..."
+                step="0.01"
+                min="0"
+                max="1000"
+                required
+              />
               {{#if this.valueError}}
                 <div class="avitar-form-error">{{this.valueError}}</div>
               {{/if}}
               <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
-                Total property value for this frontage amount
+                Multiplication factor applied to waterfront value for this frontage
               </div>
             </div>
 

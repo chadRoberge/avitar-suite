@@ -87,6 +87,7 @@ const parcelAssessmentSchema = new mongoose.Schema(
         'initial_calculation',
         'card_added',
         'card_removed',
+        'import',
       ],
     },
 

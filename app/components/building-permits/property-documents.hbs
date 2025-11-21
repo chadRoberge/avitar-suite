@@ -1,0 +1,356 @@
+{{!-- Property Documents Component - Modern folder view for permits and projects --}}
+<div class="avitar-card">
+  <div class="avitar-card__header">
+    <div class="avitar-flex avitar-items-center avitar-justify-between">
+      <h3 class="avitar-card__title">
+        <i class="fas fa-folder-open avitar-mr-2"></i>
+        Property Documents
+      </h3>
+      <div class="avitar-flex avitar-gap-2">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+          {{on "click" this.toggleViewMode}}
+          title="{{if this.isListView 'Grid View' 'List View'}}"
+        >
+          <i class="fas fa-{{if this.isListView 'th' 'list'}}"></i>
+        </button>
+        {{#if @canUpload}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--sm avitar-btn--primary"
+            {{on "click" this.uploadDocument}}
+          >
+            <i class="fas fa-upload avitar-mr-2"></i>
+            Upload
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card__body">
+    {{#if @isLoading}}
+      <div class="avitar-flex avitar-items-center avitar-justify-center avitar-py-6">
+        <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+        Loading documents...
+      </div>
+    {{else if this.hasDocuments}}
+      {{!-- Projects and Permits Organization --}}
+      <div class="avitar-flex avitar-flex-col avitar-gap-4">
+        {{!-- Projects Section --}}
+        {{#each this.organizedDocuments.projects as |project|}}
+          <div class="avitar-border avitar-rounded avitar-overflow-hidden">
+            {{!-- Project Header --}}
+            <div
+              class="avitar-flex avitar-items-center avitar-justify-between avitar-p-4 avitar-bg-primary-light"
+            >
+              <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-cursor-pointer avitar-flex-1" {{on "click" (fn this.toggleFolder project.id)}}>
+                <div class="avitar-stat__icon avitar-stat__icon--sm avitar-bg-primary avitar-text-white">
+                  <i class="fas fa-folder"></i>
+                </div>
+                <div>
+                  <h4 class="avitar-font-semibold avitar-text-primary">
+                    {{project.name}}
+                  </h4>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    {{project.childPermits.length}} permits • {{project.totalFiles}} files
+                  </div>
+                </div>
+              </div>
+              <div class="avitar-flex avitar-items-center avitar-gap-2">
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--xs avitar-btn--primary"
+                  {{on "click" (fn this.uploadToProject project)}}
+                  title="Upload to Project"
+                >
+                  {{{lnr-icon "upload"}}}
+                </button>
+                <i class="fas fa-chevron-{{if (get this.expandedFolders project.id) 'up' 'down'}} avitar-text-primary avitar-cursor-pointer" {{on "click" (fn this.toggleFolder project.id)}}></i>
+              </div>
+            </div>
+
+            {{!-- Project Content (Expandable) --}}
+            {{#if (get this.expandedFolders project.id)}}
+              <div class="avitar-p-4 avitar-bg-gray-50">
+                {{!-- Project-level files --}}
+                {{#if project.files.length}}
+                  <div class="avitar-mb-4">
+                    <h5 class="avitar-text-sm avitar-font-medium avitar-mb-2 avitar-text-muted">
+                      <i class="fas fa-file avitar-mr-1"></i>
+                      Project Files
+                    </h5>
+                    <div class="avitar-flex avitar-flex-col avitar-gap-2">
+                      {{#each project.files as |file|}}
+                        {{! Render file row }}
+                        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-white avitar-rounded avitar-border">
+                          <div class="avitar-flex avitar-items-center avitar-gap-3">
+                            <i class="fas fa-{{this.getFileIcon file.fileExtension}} avitar-text-2xl avitar-text-muted"></i>
+                            <div>
+                              <div class="avitar-font-medium avitar-text-sm">{{file.displayName}}</div>
+                              <div class="avitar-text-xs avitar-text-muted">
+                                {{this.formatFileSize file.fileSize}} • {{this.formatDate file.uploadedAt}}
+                              </div>
+                            </div>
+                          </div>
+                          <div class="avitar-flex avitar-gap-2">
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                              {{on "click" (fn this.viewFile file)}}
+                              title="View File"
+                            >
+                              {{{lnr-icon "eye"}}}
+                            </button>
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                              {{on "click" (fn this.downloadFile file)}}
+                              title="Download File"
+                            >
+                              {{{lnr-icon "download"}}}
+                            </button>
+                          </div>
+                        </div>
+                      {{/each}}
+                    </div>
+                  </div>
+                {{/if}}
+
+                {{!-- Child Permits --}}
+                {{#each project.childPermits as |permit|}}
+                  <div class="avitar-mb-3">
+                    <div
+                      class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-white avitar-rounded avitar-border avitar-cursor-pointer"
+                      {{on "click" (fn this.toggleFolder permit.id)}}
+                    >
+                      <div class="avitar-flex avitar-items-center avitar-gap-2">
+                        <i class="fas fa-file-alt avitar-text-info"></i>
+                        <span class="avitar-font-medium avitar-text-sm">{{permit.permitNumber}} - {{permit.subtype}}</span>
+                        <span class="avitar-badge avitar-badge--sm avitar-badge--secondary">
+                          {{permit.files.length}} files
+                        </span>
+                      </div>
+                      <i class="fas fa-chevron-{{if (get this.expandedFolders permit.id) 'up' 'down'}}"></i>
+                    </div>
+
+                    {{#if (get this.expandedFolders permit.id)}}
+                      <div class="avitar-mt-2 avitar-ml-4 avitar-flex avitar-flex-col avitar-gap-2">
+                        {{#each permit.files as |file|}}
+                          <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-2 avitar-bg-white avitar-rounded avitar-border">
+                            <div class="avitar-flex avitar-items-center avitar-gap-2">
+                              <i class="fas fa-{{this.getFileIcon file.fileExtension}} avitar-text-muted"></i>
+                              <div>
+                                <div class="avitar-font-medium avitar-text-xs">{{file.displayName}}</div>
+                                <div class="avitar-text-xs avitar-text-muted">
+                                  {{this.formatFileSize file.fileSize}}
+                                </div>
+                              </div>
+                            </div>
+                            <div class="avitar-flex avitar-gap-1">
+                              <button
+                                type="button"
+                                class="avitar-btn avitar-btn--xs avitar-btn--ghost avitar-btn--secondary"
+                                {{on "click" (fn this.viewFile file)}}
+                                title="View File"
+                              >
+                                {{{lnr-icon "eye"}}}
+                              </button>
+                              <button
+                                type="button"
+                                class="avitar-btn avitar-btn--xs avitar-btn--ghost avitar-btn--secondary"
+                                {{on "click" (fn this.downloadFile file)}}
+                                title="Download File"
+                              >
+                                {{{lnr-icon "download"}}}
+                              </button>
+                            </div>
+                          </div>
+                        {{/each}}
+                      </div>
+                    {{/if}}
+                  </div>
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+
+        {{!-- Standalone Permits (not part of projects) --}}
+        {{#each this.organizedDocuments.standalonePermits as |permit|}}
+          <div class="avitar-border avitar-rounded avitar-overflow-hidden">
+            <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-4 avitar-bg-info-light">
+              <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-cursor-pointer avitar-flex-1" {{on "click" (fn this.toggleFolder permit.id)}}>
+                <div class="avitar-stat__icon avitar-stat__icon--sm avitar-bg-info avitar-text-white">
+                  <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                  <h4 class="avitar-font-semibold avitar-text-info">
+                    {{permit.permitNumber}} - {{permit.subtype}}
+                  </h4>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    {{permit.files.length}} files
+                  </div>
+                </div>
+              </div>
+              <div class="avitar-flex avitar-items-center avitar-gap-2">
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--xs avitar-btn--info"
+                  {{on "click" (fn this.uploadToPermit permit)}}
+                  title="Upload to Permit"
+                >
+                  {{{lnr-icon "upload"}}}
+                </button>
+                <i class="fas fa-chevron-{{if (get this.expandedFolders permit.id) 'up' 'down'}} avitar-text-info avitar-cursor-pointer" {{on "click" (fn this.toggleFolder permit.id)}}></i>
+              </div>
+            </div>
+
+            {{#if (get this.expandedFolders permit.id)}}
+              <div class="avitar-p-4 avitar-bg-gray-50">
+                <div class="avitar-flex avitar-flex-col avitar-gap-2">
+                  {{#each permit.files as |file|}}
+                    <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-white avitar-rounded avitar-border">
+                      <div class="avitar-flex avitar-items-center avitar-gap-3">
+                        <i class="fas fa-{{this.getFileIcon file.fileExtension}} avitar-text-2xl avitar-text-muted"></i>
+                        <div>
+                          <div class="avitar-font-medium avitar-text-sm">{{file.displayName}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">
+                            {{this.formatFileSize file.fileSize}} • {{this.formatDate file.uploadedAt}}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="avitar-flex avitar-gap-2">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                          {{on "click" (fn this.viewFile file)}}
+                          title="View File"
+                        >
+                          {{{lnr-icon "eye"}}}
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                          {{on "click" (fn this.downloadFile file)}}
+                          title="Download File"
+                        >
+                          {{{lnr-icon "download"}}}
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+
+        {{!-- Other Department Files --}}
+        {{#if this.organizedDocuments.otherFiles.length}}
+          <div class="avitar-border avitar-rounded avitar-overflow-hidden">
+            <div
+              class="avitar-flex avitar-items-center avitar-justify-between avitar-p-4 avitar-bg-gray-100 avitar-cursor-pointer"
+              {{on "click" (fn this.toggleFolder "other")}}
+            >
+              <div class="avitar-flex avitar-items-center avitar-gap-3">
+                <div class="avitar-stat__icon avitar-stat__icon--sm avitar-bg-gray-500 avitar-text-white">
+                  <i class="fas fa-folder"></i>
+                </div>
+                <div>
+                  <h4 class="avitar-font-semibold avitar-text-gray-700">
+                    Other Documents
+                  </h4>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    {{this.organizedDocuments.otherFiles.length}} files
+                  </div>
+                </div>
+              </div>
+              <i class="fas fa-chevron-{{if (get this.expandedFolders "other") 'up' 'down'}} avitar-text-gray-700"></i>
+            </div>
+
+            {{#if (get this.expandedFolders "other")}}
+              <div class="avitar-p-4 avitar-bg-gray-50">
+                <div class="avitar-flex avitar-flex-col avitar-gap-2">
+                  {{#each this.organizedDocuments.otherFiles as |file|}}
+                    <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-white avitar-rounded avitar-border">
+                      <div class="avitar-flex avitar-items-center avitar-gap-3">
+                        <i class="fas fa-{{this.getFileIcon file.fileExtension}} avitar-text-2xl avitar-text-muted"></i>
+                        <div>
+                          <div class="avitar-font-medium avitar-text-sm">{{file.displayName}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">
+                            {{this.formatFileSize file.fileSize}} • {{this.formatDate file.uploadedAt}}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="avitar-flex avitar-gap-2">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                          {{on "click" (fn this.viewFile file)}}
+                          title="View File"
+                        >
+                          {{{lnr-icon "eye"}}}
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                          {{on "click" (fn this.downloadFile file)}}
+                          title="Download File"
+                        >
+                          {{{lnr-icon "download"}}}
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+      </div>
+    {{else}}
+      {{!-- Empty State --}}
+      <div class="avitar-empty-state avitar-py-6">
+        <div class="avitar-flex avitar-flex-col avitar-items-center">
+          <i class="fas fa-folder-open fa-3x avitar-text-muted avitar-mb-3"></i>
+          <h4 class="avitar-font-medium avitar-mb-1">No Documents Found</h4>
+          <p class="avitar-text-sm avitar-text-muted avitar-mb-4">
+            No documents have been uploaded for this property yet.
+          </p>
+          {{#if @canUpload}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.uploadDocument}}
+            >
+              <i class="fas fa-upload avitar-mr-2"></i>
+              Upload First Document
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>
+
+{{! Document Viewer Modal }}
+<BuildingPermits::DocumentViewerModal
+  @isOpen={{this.showViewerModal}}
+  @file={{this.selectedFile}}
+  @onClose={{this.closeViewerModal}}
+/>
+
+{{! Document Upload Modal }}
+<BuildingPermits::DocumentUploadModal
+  @isOpen={{this.showUploadModal}}
+  @propertyId={{@propertyId}}
+  @municipalityId={{@municipalityId}}
+  @permitId={{this.uploadContext.permitId}}
+  @permitNumber={{this.uploadContext.permitNumber}}
+  @projectName={{this.uploadContext.projectName}}
+  @isProject={{this.uploadContext.isProject}}
+  @onClose={{this.closeUploadModal}}
+  @onUpload={{this.handleUploadComplete}}
+/>

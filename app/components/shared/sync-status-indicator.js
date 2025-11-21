@@ -7,6 +7,7 @@ export default class SyncStatusIndicatorComponent extends Component {
   @service syncManager;
   @service realtime;
   @service notifications;
+  @service('hybrid-api') hybridApi;
 
   @tracked isExpanded = false;
   @tracked _syncStatus = null;
@@ -124,19 +125,22 @@ export default class SyncStatusIndicatorComponent extends Component {
   }
 
   @action
-  forceSync() {
+  async forceSync() {
     try {
-      this.syncManager
-        .forceFullSync()
-        .then(() => {
-          this.notifications.success('Full sync completed');
-        })
-        .catch((error) => {
-          this.notifications.error('Sync failed: ' + error.message);
-        });
+      // Trigger smart property sync (only fetches changed properties)
+      const propertySync = await this.hybridApi.forceSync();
+
+      // Also trigger the old full sync mechanism
+      await this.syncManager.forceFullSync();
+
+      const message = propertySync?.hasUpdates
+        ? `Synced ${propertySync.totalUpdated} updated properties`
+        : 'No property updates found';
+
+      this.notifications.success(message);
     } catch (error) {
       console.error('Error starting sync:', error);
-      this.notifications.error('Failed to start sync');
+      this.notifications.error('Sync failed: ' + error.message);
     }
   }
 
@@ -152,5 +156,10 @@ export default class SyncStatusIndicatorComponent extends Component {
       console.error('Error reconnecting realtime:', error);
       this.notifications.error('Failed to reconnect');
     }
+  }
+
+  @action
+  stopPropagation(event) {
+    event.stopPropagation();
   }
 }

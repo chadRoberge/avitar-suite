@@ -1,0 +1,1254 @@
+{
+  "zones": [
+    {
+      "name": "01",
+      "description": "RD  RES DISTRICT",
+      "minimumAcreage": 0.46,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    },
+    {
+      "name": "02",
+      "description": "MD  MODERATE DENS",
+      "minimumAcreage": 1,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    },
+    {
+      "name": "03",
+      "description": "LD   LOW DENSITY",
+      "minimumAcreage": 2,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    },
+    {
+      "name": "04",
+      "description": "SA   SENSITIVE AREA",
+      "minimumAcreage": 2,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    },
+    {
+      "name": "05",
+      "description": "MU  MIXED USE",
+      "minimumAcreage": 0.46,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    },
+    {
+      "name": "06",
+      "description": "PD  PLANNED DEVEL",
+      "minimumAcreage": 0.46,
+      "minimumFrontage": 100,
+      "excessLandCostPerAcre": 100000,
+      "baseViewValue": 580000
+    }
+  ],
+  "landLadders": [
+    {
+      "zoneCode": "01",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 4
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 5
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 6
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 7
+    },
+    {
+      "zoneCode": "01",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 8
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 1,
+      "value": 675000,
+      "order": 4
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 1,
+      "value": 675000,
+      "order": 5
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 1,
+      "value": 675000,
+      "order": 6
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 1,
+      "value": 675000,
+      "order": 7
+    },
+    {
+      "zoneCode": "02",
+      "acreage": 1,
+      "value": 675000,
+      "order": 8
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 1,
+      "value": 675000,
+      "order": 4
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 2,
+      "value": 775000,
+      "order": 5
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 2,
+      "value": 775000,
+      "order": 6
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 2,
+      "value": 775000,
+      "order": 7
+    },
+    {
+      "zoneCode": "03",
+      "acreage": 2,
+      "value": 775000,
+      "order": 8
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 1,
+      "value": 675000,
+      "order": 4
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 2,
+      "value": 775000,
+      "order": 5
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 2,
+      "value": 775000,
+      "order": 6
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 2,
+      "value": 775000,
+      "order": 7
+    },
+    {
+      "zoneCode": "04",
+      "acreage": 2,
+      "value": 775000,
+      "order": 8
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 4
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 5
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 6
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 7
+    },
+    {
+      "zoneCode": "05",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 8
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.01,
+      "value": 380000,
+      "order": 0
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.1,
+      "value": 600000,
+      "order": 1
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.25,
+      "value": 610000,
+      "order": 2
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 3
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 4
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 5
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 6
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 7
+    },
+    {
+      "zoneCode": "06",
+      "acreage": 0.46,
+      "value": 620000,
+      "order": 8
+    }
+  ],
+  "landUseCodes": [
+    {
+      "code": "79D",
+      "description": "79-D HISTORIC BARN"
+    },
+    {
+      "code": "79F",
+      "description": "79-F FARM STRUCT"
+    },
+    {
+      "code": "CI",
+      "description": "COM/IND"
+    },
+    {
+      "code": "EX-F",
+      "description": "EXEMPT-FED"
+    },
+    {
+      "code": "EX-M",
+      "description": "EXEMPT-MUNIC"
+    },
+    {
+      "code": "EX-P",
+      "description": "EXEMPT-PILT"
+    },
+    {
+      "code": "EX-S",
+      "description": "EXEMPT-STATE"
+    },
+    {
+      "code": "MXU",
+      "description": "MIXED USE"
+    },
+    {
+      "code": "R1",
+      "description": "1F RES"
+    },
+    {
+      "code": "R1A",
+      "description": "1F RES WTR ACS"
+    },
+    {
+      "code": "R1W",
+      "description": "1F RES WTRFRNT"
+    },
+    {
+      "code": "R2",
+      "description": "2F RES"
+    },
+    {
+      "code": "R2A",
+      "description": "2F RES WTR ACS"
+    },
+    {
+      "code": "R2W",
+      "description": "2F RES WTRFRNT"
+    },
+    {
+      "code": "R3",
+      "description": "3F RES"
+    },
+    {
+      "code": "R3A",
+      "description": "3F RES WTR ACS"
+    },
+    {
+      "code": "R3W",
+      "description": "3F RES WTRFRNT"
+    },
+    {
+      "code": "R4",
+      "description": "4F RES"
+    },
+    {
+      "code": "R4A",
+      "description": "4F RES WTR ACS"
+    },
+    {
+      "code": "R4W",
+      "description": "4F RES WTRFRNT"
+    },
+    {
+      "code": "UTL",
+      "description": "UTILITY-OTHER"
+    },
+    {
+      "code": "UTLE",
+      "description": "UTILITY-ELEC"
+    },
+    {
+      "code": "UTLG",
+      "description": "UTILITY-GAS"
+    },
+    {
+      "code": "UTLW",
+      "description": "UTILITY-WATER"
+    }
+  ],
+  "neighborhoodCodes": [
+    {
+      "code": "A",
+      "description": "AVG -40  60%",
+      "rate": 60
+    },
+    {
+      "code": "B",
+      "description": "AVG -30  70&",
+      "rate": 70
+    },
+    {
+      "code": "C",
+      "description": "AVG -20  80%",
+      "rate": 80
+    },
+    {
+      "code": "D",
+      "description": "AVG -10  90%",
+      "rate": 90
+    },
+    {
+      "code": "E",
+      "description": "AVG      100%",
+      "rate": 100
+    },
+    {
+      "code": "F",
+      "description": "AVG +10  110%",
+      "rate": 110
+    },
+    {
+      "code": "G",
+      "description": "AVG +20  120%",
+      "rate": 120
+    },
+    {
+      "code": "H",
+      "description": "AVG +30  130%",
+      "rate": 130
+    },
+    {
+      "code": "I",
+      "description": "AVG +40  140%",
+      "rate": 140
+    },
+    {
+      "code": "J",
+      "description": "AVG +50  150%",
+      "rate": 150
+    },
+    {
+      "code": "K",
+      "description": "AVG +60  160%",
+      "rate": 160
+    },
+    {
+      "code": "L",
+      "description": "AVG +70  170%",
+      "rate": 170
+    },
+    {
+      "code": "M",
+      "description": "AVG +80  180%",
+      "rate": 180
+    },
+    {
+      "code": "N",
+      "description": "AVG +90  190%",
+      "rate": 190
+    },
+    {
+      "code": "P",
+      "description": "AVG +100 200%",
+      "rate": 200
+    },
+    {
+      "code": "Q",
+      "description": "SPECIAL 225%",
+      "rate": 225
+    },
+    {
+      "code": "R",
+      "description": "SPECIAL 250%",
+      "rate": 250
+    },
+    {
+      "code": "S",
+      "description": "SPECIAL 275%",
+      "rate": 275
+    },
+    {
+      "code": "T",
+      "description": "SPECIAL 300%",
+      "rate": 300
+    },
+    {
+      "code": "X",
+      "description": "BACKLAND",
+      "rate": 100
+    }
+  ],
+  "siteConditions": [
+    {
+      "code": "A",
+      "description": "AVERAGE",
+      "factor": 100,
+      "type": "site"
+    },
+    {
+      "code": "A",
+      "description": "LEVEL",
+      "factor": 100,
+      "type": "topography"
+    },
+    {
+      "code": "B",
+      "description": "BEST",
+      "factor": 125,
+      "type": "site"
+    },
+    {
+      "code": "B",
+      "description": "MILD",
+      "factor": 95,
+      "type": "topography"
+    },
+    {
+      "code": "C",
+      "description": "UND/CLEARED/GRASS",
+      "factor": 90,
+      "type": "site"
+    },
+    {
+      "code": "C",
+      "description": "ROLLING",
+      "factor": 90,
+      "type": "topography"
+    },
+    {
+      "code": "E",
+      "description": "EXC",
+      "factor": 115,
+      "type": "site"
+    },
+    {
+      "code": "D",
+      "description": "MODERATE",
+      "factor": 85,
+      "type": "topography"
+    },
+    {
+      "code": "F",
+      "description": "FAIR",
+      "factor": 95,
+      "type": "site"
+    },
+    {
+      "code": "E",
+      "description": "STEEP",
+      "factor": 80,
+      "type": "topography"
+    },
+    {
+      "code": "G",
+      "description": "GOOD",
+      "factor": 105,
+      "type": "site"
+    },
+    {
+      "code": "F",
+      "description": "SEVERE",
+      "factor": 70,
+      "type": "topography"
+    },
+    {
+      "code": "U",
+      "description": "UNDEVELOPED/WOODED",
+      "factor": 88,
+      "type": "site"
+    },
+    {
+      "code": "Y",
+      "description": "VERY GOOD",
+      "factor": 110,
+      "type": "site"
+    }
+  ],
+  "roadTypes": [
+    {
+      "code": "C",
+      "description": "CRUSH ROCK/STONE",
+      "factor": 95
+    },
+    {
+      "code": "D",
+      "description": "DIRT",
+      "factor": 90
+    },
+    {
+      "code": "G",
+      "description": "GRAVEL",
+      "factor": 90
+    },
+    {
+      "code": "P",
+      "description": "PAVED",
+      "factor": 100
+    },
+    {
+      "code": "U",
+      "description": "UNDEVELOPED",
+      "factor": 85
+    }
+  ],
+  "drivewayTypes": [
+    {
+      "code": "A",
+      "description": "PAVERS",
+      "factor": 102
+    },
+    {
+      "code": "G",
+      "description": "GRAVEL/DIRT",
+      "factor": 95
+    },
+    {
+      "code": "K",
+      "description": "BRICK/COBBLE STONE",
+      "factor": 105
+    },
+    {
+      "code": "P",
+      "description": "PAVED",
+      "factor": 100
+    },
+    {
+      "code": "S",
+      "description": "STREET PRK ONLY",
+      "factor": 75
+    },
+    {
+      "code": "U",
+      "description": "UNDEVELOPED",
+      "factor": 90
+    }
+  ],
+  "currentUseCodes": [
+    {
+      "code": "CUDE",
+      "description": "DISCRETNRY",
+      "minValue": 15,
+      "maxValue": 425
+    },
+    {
+      "code": "CUFL",
+      "description": "FARM LAND",
+      "minValue": 57,
+      "maxValue": 473
+    },
+    {
+      "code": "CUMH",
+      "description": "MNGD HARDWD",
+      "minValue": 43,
+      "maxValue": 65
+    },
+    {
+      "code": "CUMO",
+      "description": "MNGD OTHER",
+      "minValue": 25,
+      "maxValue": 37
+    },
+    {
+      "code": "CUMW",
+      "description": "MNGD PINE",
+      "minValue": 78,
+      "maxValue": 118
+    },
+    {
+      "code": "CUUH",
+      "description": "UNMNGD HARDWD",
+      "minValue": 72,
+      "maxValue": 108
+    },
+    {
+      "code": "CUUL",
+      "description": "UNPRODUCTIVE",
+      "minValue": 25,
+      "maxValue": 25
+    },
+    {
+      "code": "CUUO",
+      "description": "UNMNGD OTHER",
+      "minValue": 42,
+      "maxValue": 62
+    },
+    {
+      "code": "CUUW",
+      "description": "UNMNGD PINE",
+      "minValue": 130,
+      "maxValue": 196
+    },
+    {
+      "code": "CUWL",
+      "description": "WETLANDS",
+      "minValue": 25,
+      "maxValue": 25
+    }
+  ],
+  "viewAttributes": [
+    {
+      "attributeType": "subject",
+      "name": "BAY",
+      "description": "BAY AREA",
+      "displayText": "BAY AREA",
+      "factor": 80
+    },
+    {
+      "attributeType": "width",
+      "name": "AVE",
+      "description": "AVERAGE",
+      "displayText": "AVERAGE",
+      "factor": 100
+    },
+    {
+      "attributeType": "subject",
+      "name": "BAYCA",
+      "description": "BAY/CAUSEWAY AREA",
+      "displayText": "BAY/CAUSEWAY AREA",
+      "factor": 60
+    },
+    {
+      "attributeType": "width",
+      "name": "NAR",
+      "description": "NARROW",
+      "displayText": "NARROW",
+      "factor": 80
+    },
+    {
+      "attributeType": "subject",
+      "name": "LHBR",
+      "description": "LITTLE HARBOR",
+      "displayText": "LITTLE HARBOR",
+      "factor": 100
+    },
+    {
+      "attributeType": "width",
+      "name": "PAN",
+      "description": "PANORAMIC",
+      "displayText": "PANORAMIC",
+      "factor": 150
+    },
+    {
+      "attributeType": "subject",
+      "name": "MAR",
+      "description": "MARSH",
+      "displayText": "MARSH",
+      "factor": 10
+    },
+    {
+      "attributeType": "width",
+      "name": "TUN",
+      "description": "TUNNEL",
+      "displayText": "TUNNEL",
+      "factor": 50
+    },
+    {
+      "attributeType": "subject",
+      "name": "OCEAN",
+      "description": "OCEAN",
+      "displayText": "OCEAN",
+      "factor": 105
+    },
+    {
+      "attributeType": "width",
+      "name": "WID",
+      "description": "WIDE",
+      "displayText": "WIDE",
+      "factor": 125
+    },
+    {
+      "attributeType": "subject",
+      "name": "RIVER",
+      "description": "RIVER AREA",
+      "displayText": "RIVER AREA",
+      "factor": 90
+    },
+    {
+      "attributeType": "depth",
+      "name": "D100",
+      "description": "FULL VIEW",
+      "displayText": "FULL VIEW",
+      "factor": 100
+    },
+    {
+      "attributeType": "distance",
+      "name": "CLS",
+      "description": "CLOSE UP VU",
+      "displayText": "CLOSE UP VU",
+      "factor": 75
+    },
+    {
+      "attributeType": "distance",
+      "name": "DST",
+      "description": "DISTANT VU",
+      "displayText": "DISTANT VU",
+      "factor": 100
+    }
+  ],
+  "waterBodies": [
+    {
+      "name": "BAY",
+      "description": "BAY",
+      "waterBodyType": "bay"
+    },
+    {
+      "name": "LITTLE HARBOR",
+      "description": "LITTLE HARBOR",
+      "waterBodyType": "bay"
+    },
+    {
+      "name": "OCEAN",
+      "description": "OCEAN",
+      "waterBodyType": "ocean"
+    },
+    {
+      "name": "RIVER",
+      "description": "RIVER",
+      "waterBodyType": "river"
+    }
+  ],
+  "waterBodyLadders": [
+    {
+      "waterBodyName": "BAY",
+      "frontage": 1,
+      "value": 10,
+      "order": 0
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 10,
+      "value": 45,
+      "order": 1
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 60,
+      "value": 80,
+      "order": 2
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 75,
+      "value": 90,
+      "order": 3
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 100,
+      "value": 100,
+      "order": 4
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 150,
+      "value": 105,
+      "order": 5
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 175,
+      "value": 110,
+      "order": 6
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 250,
+      "value": 115,
+      "order": 7
+    },
+    {
+      "waterBodyName": "BAY",
+      "frontage": 500,
+      "value": 120,
+      "order": 8
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 1,
+      "value": 10,
+      "order": 0
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 10,
+      "value": 45,
+      "order": 1
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 60,
+      "value": 80,
+      "order": 2
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 75,
+      "value": 90,
+      "order": 3
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 100,
+      "value": 100,
+      "order": 4
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 150,
+      "value": 105,
+      "order": 5
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 175,
+      "value": 110,
+      "order": 6
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 250,
+      "value": 115,
+      "order": 7
+    },
+    {
+      "waterBodyName": "LITTLE HARBOR",
+      "frontage": 500,
+      "value": 120,
+      "order": 8
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 1,
+      "value": 10,
+      "order": 0
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 10,
+      "value": 45,
+      "order": 1
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 60,
+      "value": 80,
+      "order": 2
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 75,
+      "value": 90,
+      "order": 3
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 100,
+      "value": 100,
+      "order": 4
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 150,
+      "value": 105,
+      "order": 5
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 175,
+      "value": 110,
+      "order": 6
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 250,
+      "value": 115,
+      "order": 7
+    },
+    {
+      "waterBodyName": "OCEAN",
+      "frontage": 500,
+      "value": 120,
+      "order": 8
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 1,
+      "value": 10,
+      "order": 0
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 10,
+      "value": 45,
+      "order": 1
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 60,
+      "value": 80,
+      "order": 2
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 75,
+      "value": 90,
+      "order": 3
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 100,
+      "value": 100,
+      "order": 4
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 150,
+      "value": 105,
+      "order": 5
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 175,
+      "value": 110,
+      "order": 6
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 250,
+      "value": 115,
+      "order": 7
+    },
+    {
+      "waterBodyName": "RIVER",
+      "frontage": 500,
+      "value": 120,
+      "order": 8
+    }
+  ],
+  "waterfrontAttributes": [
+    {
+      "attributeType": "water_access",
+      "name": "LND",
+      "description": "BEACH AND/OR LNDSCPE",
+      "displayText": "BEACH AND/OR LNDSCPE",
+      "factor": 120
+    },
+    {
+      "attributeType": "water_access",
+      "name": "ACSS",
+      "description": "ACCESS ONLY",
+      "displayText": "ACCESS ONLY",
+      "factor": 50
+    },
+    {
+      "attributeType": "water_access",
+      "name": "GRSSY",
+      "description": "GRASSY AND/OR WALL",
+      "displayText": "GRASSY AND/OR WALL",
+      "factor": 110
+    },
+    {
+      "attributeType": "water_access",
+      "name": "CWSIS",
+      "description": "CAUSEWAY/ISLAND",
+      "displayText": "CAUSEWAY/ISLAND",
+      "factor": 85
+    },
+    {
+      "attributeType": "water_access",
+      "name": "MARSH",
+      "description": "MARSH AND/OR SHALLOW",
+      "displayText": "MARSH AND/OR SHALLOW",
+      "factor": 80
+    },
+    {
+      "attributeType": "water_access",
+      "name": "MAIN BODY ACROSS RD",
+      "description": "MAIN BODY",
+      "displayText": "MAIN BODY",
+      "factor": 100
+    },
+    {
+      "attributeType": "water_access",
+      "name": "NAT",
+      "description": "NATURAL AND/OR ROCKY",
+      "displayText": "NATURAL AND/OR ROCKY",
+      "factor": 100
+    },
+    {
+      "attributeType": "water_access",
+      "name": "MBA",
+      "description": "MAIN BODY ACROSS RD",
+      "displayText": "MAIN BODY ACROSS RD",
+      "factor": 30
+    },
+    {
+      "attributeType": "water_access",
+      "name": "UND",
+      "description": "UNDEVELOPED",
+      "displayText": "UNDEVELOPED",
+      "factor": 80
+    },
+    {
+      "attributeType": "water_access",
+      "name": "TIDL",
+      "description": "TIDAL-SHALLOW",
+      "displayText": "TIDAL-SHALLOW",
+      "factor": 65
+    },
+    {
+      "attributeType": "topography",
+      "name": "A",
+      "description": "LEVEL",
+      "displayText": "LEVEL",
+      "factor": 100
+    },
+    {
+      "attributeType": "topography",
+      "name": "B",
+      "description": "MILD",
+      "displayText": "MILD",
+      "factor": 95
+    },
+    {
+      "attributeType": "topography",
+      "name": "C",
+      "description": "MODERATE",
+      "displayText": "MODERATE",
+      "factor": 85
+    },
+    {
+      "attributeType": "topography",
+      "name": "D",
+      "description": "ROLLING",
+      "displayText": "ROLLING",
+      "factor": 90
+    },
+    {
+      "attributeType": "topography",
+      "name": "E",
+      "description": "SEVERE",
+      "displayText": "SEVERE",
+      "factor": 60
+    },
+    {
+      "attributeType": "topography",
+      "name": "F",
+      "description": "STEEP",
+      "displayText": "STEEP",
+      "factor": 75
+    }
+  ],
+  "stats": {
+    "totalRows": 247,
+    "zonesCount": 6,
+    "landLaddersCount": 54,
+    "landUseCodesCount": 24,
+    "neighborhoodCodesCount": 20,
+    "siteConditionsCount": 14,
+    "roadTypesCount": 5,
+    "drivewayTypesCount": 6,
+    "currentUseCodesCount": 10,
+    "viewAttributesCount": 14,
+    "waterBodiesCount": 4,
+    "waterBodyLaddersCount": 36,
+    "waterfrontAttributesCount": 16
+  }
+}

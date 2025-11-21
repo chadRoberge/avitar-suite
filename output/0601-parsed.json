@@ -1,0 +1,273 @@
+{
+  "filename": "00000400000300000601.vdf",
+  "totalShapes": 7,
+  "shapes": [
+    {
+      "shapeNumber": 1,
+      "type": "rectangle",
+      "descriptions": [
+        "FFF",
+        "BMU"
+      ],
+      "area": 418,
+      "coordinates": [
+        {
+          "x": 868,
+          "y": 868
+        },
+        {
+          "x": 868,
+          "y": 887
+        },
+        {
+          "x": 890,
+          "y": 887
+        },
+        {
+          "x": 890,
+          "y": 868
+        }
+      ],
+      "boundingBox": {
+        "minX": 868,
+        "maxX": 890,
+        "minY": 868,
+        "maxY": 887,
+        "width": 22,
+        "height": 19
+      }
+    },
+    {
+      "shapeNumber": 2,
+      "type": "rectangle",
+      "descriptions": [
+        "TQF",
+        "FFF",
+        "BMU"
+      ],
+      "area": 1334,
+      "coordinates": [
+        {
+          "x": 1780,
+          "y": 884
+        },
+        {
+          "x": 1826,
+          "y": 884
+        },
+        {
+          "x": 1826,
+          "y": 855
+        },
+        {
+          "x": 1780,
+          "y": 855
+        }
+      ],
+      "boundingBox": {
+        "minX": 1780,
+        "maxX": 1826,
+        "minY": 855,
+        "maxY": 884,
+        "width": 46,
+        "height": 29
+      }
+    },
+    {
+      "shapeNumber": 3,
+      "type": "polygon",
+      "descriptions": [
+        "DEK"
+      ],
+      "area": 773.38,
+      "coordinates": [
+        {
+          "x": 1826,
+          "y": 855
+        },
+        {
+          "x": 1826,
+          "y": 847
+        },
+        {
+          "x": 1820.01,
+          "y": 843.81
+        },
+        {
+          "x": 1790,
+          "y": 844
+        },
+        {
+          "x": 1790,
+          "y": 849
+        },
+        {
+          "x": 1760,
+          "y": 856
+        },
+        {
+          "x": 1756,
+          "y": 856
+        },
+        {
+          "x": 1756,
+          "y": 868
+        },
+        {
+          "x": 1780,
+          "y": 868
+        },
+        {
+          "x": 1780,
+          "y": 855
+        }
+      ],
+      "boundingBox": {
+        "minX": 1756,
+        "maxX": 1826,
+        "minY": 843.81,
+        "maxY": 868,
+        "width": 70,
+        "height": 24.19
+      }
+    },
+    {
+      "shapeNumber": 4,
+      "type": "rectangle",
+      "descriptions": [
+        "TQF",
+        "FFF",
+        "BMU"
+      ],
+      "area": 312,
+      "coordinates": [
+        {
+          "x": 1826,
+          "y": 856
+        },
+        {
+          "x": 1838,
+          "y": 856
+        },
+        {
+          "x": 1838,
+          "y": 882
+        },
+        {
+          "x": 1826,
+          "y": 882
+        }
+      ],
+      "boundingBox": {
+        "minX": 1826,
+        "maxX": 1838,
+        "minY": 856,
+        "maxY": 882,
+        "width": 12,
+        "height": 26
+      }
+    },
+    {
+      "shapeNumber": 5,
+      "type": "rectangle",
+      "descriptions": [
+        "GAR"
+      ],
+      "area": 576,
+      "coordinates": [
+        {
+          "x": 1838,
+          "y": 885
+        },
+        {
+          "x": 1862,
+          "y": 885
+        },
+        {
+          "x": 1862,
+          "y": 861
+        },
+        {
+          "x": 1838,
+          "y": 861
+        }
+      ],
+      "boundingBox": {
+        "minX": 1838,
+        "maxX": 1862,
+        "minY": 861,
+        "maxY": 885,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "shapeNumber": 6,
+      "type": "rectangle",
+      "descriptions": [
+        "ENT"
+      ],
+      "area": 35,
+      "coordinates": [
+        {
+          "x": 1801,
+          "y": 884
+        },
+        {
+          "x": 1801,
+          "y": 889
+        },
+        {
+          "x": 1794,
+          "y": 889
+        },
+        {
+          "x": 1794,
+          "y": 884
+        }
+      ],
+      "boundingBox": {
+        "minX": 1794,
+        "maxX": 1801,
+        "minY": 884,
+        "maxY": 889,
+        "width": 7,
+        "height": 5
+      }
+    },
+    {
+      "shapeNumber": 7,
+      "type": "rectangle",
+      "descriptions": [
+        "PAT"
+      ],
+      "area": 140,
+      "coordinates": [
+        {
+          "x": 1804,
+          "y": 889
+        },
+        {
+          "x": 1804,
+          "y": 899
+        },
+        {
+          "x": 1790,
+          "y": 899
+        },
+        {
+          "x": 1790,
+          "y": 889
+        }
+      ],
+      "boundingBox": {
+        "minX": 1790,
+        "maxX": 1804,
+        "minY": 889,
+        "maxY": 899,
+        "width": 14,
+        "height": 10
+      }
+    }
+  ]
+}

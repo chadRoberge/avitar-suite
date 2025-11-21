@@ -35,7 +35,7 @@ class BuildingAssessmentCalculationService {
           }),
           BuildingCode.find({
             municipalityId: municipalityId,
-            is_active: true,
+            isActive: true,
           }),
           BuildingCalculationConfig.getOrCreateForMunicipality(
             municipalityId,
@@ -46,8 +46,9 @@ class BuildingAssessmentCalculationService {
       // Prepare reference data for calculator
       this.referenceData = {
         buildingFeatureCodes,
-        buildingLadders: buildingCodes,
+        buildingCodes: buildingCodes,
         calculationConfig: calculationConfig.toCalculationConfig(),
+        municipalityId: municipalityId,
       };
 
       // Initialize calculator with reference data
@@ -56,6 +57,18 @@ class BuildingAssessmentCalculationService {
       console.log(
         `Calculator initialized with ${buildingFeatureCodes.length} feature codes, ${buildingCodes.length} building codes`,
       );
+
+      // Debug: Log sample building codes
+      if (buildingCodes.length > 0) {
+        console.log('Sample building codes:', buildingCodes.slice(0, 3).map(bc => ({
+          baseType: bc.base_type,
+          displayName: bc.display_name,
+          isActive: bc.isActive
+        })));
+      } else {
+        console.warn('⚠️  WARNING: No building codes loaded! Buildings will have 0 base rate.');
+      }
+
       return true;
     } catch (error) {
       console.error(
@@ -139,17 +152,43 @@ class BuildingAssessmentCalculationService {
                 this.calculateBuildingAssessment(buildingAssessment);
 
               if (!calculatedValues.error) {
-                // Update building assessment with new calculated values
+                // Update building assessment with new calculated values (rounded to nearest hundred)
                 buildingAssessment.building_value =
-                  calculatedValues.buildingValue;
+                  Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
                 buildingAssessment.replacement_cost_new =
                   calculatedValues.replacementCostNew;
                 buildingAssessment.assessed_value =
-                  calculatedValues.buildingValue;
+                  Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
                 buildingAssessment.base_rate = calculatedValues.baseRate;
                 buildingAssessment.age = calculatedValues.buildingAge;
                 buildingAssessment.calculation_details = calculatedValues;
                 buildingAssessment.last_calculated = new Date();
+
+                // Update normal depreciation percentage if calculated
+                if (!buildingAssessment.depreciation) {
+                  buildingAssessment.depreciation = {
+                    normal: { description: '', percentage: 0 },
+                    physical: { notes: '', percentage: 0 },
+                    functional: { notes: '', percentage: 0 },
+                    economic: { notes: '', percentage: 0 },
+                    temporary: { notes: '', percentage: 0 },
+                  };
+                }
+
+                // Update normal depreciation from calculation
+                if (
+                  calculatedValues.buildingAge > 0 &&
+                  calculatedValues.baseDepreciationRate > 0
+                ) {
+                  if (!buildingAssessment.depreciation.normal) {
+                    buildingAssessment.depreciation.normal = {
+                      description: '',
+                      percentage: 0,
+                    };
+                  }
+                  buildingAssessment.depreciation.normal.percentage =
+                    calculatedValues.normalDepreciation * 100;
+                }
 
                 if (options.save !== false) {
                   await buildingAssessment.save();
@@ -186,16 +225,31 @@ class BuildingAssessmentCalculationService {
 
         const results = await Promise.all(batchPromises);
 
+        // Collect unique property IDs that need totals updated
+        const propertyIdsToUpdate = new Set();
+
         // Count results
         results.forEach((result) => {
           processedCount++;
           if (result.success) {
             updatedCount++;
+            propertyIdsToUpdate.add(result.propertyId.toString());
           } else {
             errorCount++;
             errors.push(result);
           }
         });
+
+        // Update property totals for all affected properties in this batch
+        if (propertyIdsToUpdate.size > 0) {
+          await this.updatePropertyTotals(
+            Array.from(propertyIdsToUpdate),
+            currentYear,
+          );
+          console.log(
+            `Updated totals for ${propertyIdsToUpdate.size} properties in batch`,
+          );
+        }
 
         // Log progress
         const progress = Math.round((processedCount / totalCount) * 100);
@@ -294,14 +348,44 @@ class BuildingAssessmentCalculationService {
           this.calculateBuildingAssessment(buildingAssessment);
 
         if (!calculatedValues.error) {
-          buildingAssessment.building_value = calculatedValues.buildingValue;
+          // Update building assessment with new calculated values (rounded to nearest hundred)
+          buildingAssessment.building_value =
+            Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
           buildingAssessment.replacement_cost_new =
             calculatedValues.replacementCostNew;
-          buildingAssessment.assessed_value = calculatedValues.buildingValue;
+          buildingAssessment.assessed_value =
+            Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
           buildingAssessment.base_rate = calculatedValues.baseRate;
           buildingAssessment.age = calculatedValues.buildingAge;
           buildingAssessment.calculation_details = calculatedValues;
           buildingAssessment.last_calculated = new Date();
+
+          // Update normal depreciation percentage if calculated
+          if (!buildingAssessment.depreciation) {
+            buildingAssessment.depreciation = {
+              normal: { description: '', percentage: 0 },
+              physical: { notes: '', percentage: 0 },
+              functional: { notes: '', percentage: 0 },
+              economic: { notes: '', percentage: 0 },
+              temporary: { notes: '', percentage: 0 },
+            };
+          }
+
+          // Update normal depreciation from calculation
+          if (
+            calculatedValues.buildingAge > 0 &&
+            calculatedValues.baseDepreciationRate > 0
+          ) {
+            if (!buildingAssessment.depreciation.normal) {
+              buildingAssessment.depreciation.normal = {
+                description: '',
+                percentage: 0,
+              };
+            }
+            buildingAssessment.depreciation.normal.percentage =
+              calculatedValues.normalDepreciation * 100;
+          }
+
           await buildingAssessment.save();
 
           updatedCount++;
@@ -419,6 +503,66 @@ class BuildingAssessmentCalculationService {
       baseDepreciationRate: 0,
       buildingValue: 0,
     };
+  }
+
+  /**
+   * Update property assessment totals for given properties
+   * @param {Array} propertyIds - Array of property IDs to update
+   * @param {Number} effectiveYear - Assessment year
+   */
+  async updatePropertyTotals(propertyIds, effectiveYear) {
+    const PropertyAssessment = require('../models/PropertyAssessment');
+    const {
+      getPropertyAssessmentComponents,
+      calculateTotalAssessedValue,
+    } = require('../utils/assessment');
+
+    console.log(`Updating totals for ${propertyIds.length} properties...`);
+
+    for (const propertyId of propertyIds) {
+      try {
+        // Get all assessment components
+        const components = await getPropertyAssessmentComponents(
+          propertyId,
+          effectiveYear,
+        );
+
+        // Calculate total assessed value
+        const totalValue = calculateTotalAssessedValue({
+          landValue: components.landValue || 0,
+          buildingValue: components.buildingValue || 0,
+          featuresValue: components.featuresValue || 0,
+          hasCurrentUse: components.hasCurrentUse || false,
+        });
+
+        // Update or create property assessment record
+        await PropertyAssessment.findOneAndUpdate(
+          {
+            property_id: propertyId,
+            effective_year: effectiveYear,
+          },
+          {
+            property_id: propertyId,
+            effective_year: effectiveYear,
+            land_value: components.landValue || 0,
+            building_value: components.buildingValue || 0,
+            features_value: components.featuresValue || 0,
+            total_value: totalValue,
+            updated_at: new Date(),
+          },
+          {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true,
+          },
+        );
+      } catch (error) {
+        console.error(
+          `Error updating property totals for ${propertyId}:`,
+          error,
+        );
+      }
+    }
   }
 }
 

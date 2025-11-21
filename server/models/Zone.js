@@ -15,12 +15,14 @@ const zoneSchema = new mongoose.Schema(
     },
     minimumAcreage: {
       type: Number,
-      required: [true, 'Minimum acreage is required'],
+      required: false,
+      default: 0,
       min: [0, 'Minimum acreage must be positive'],
     },
     minimumFrontage: {
       type: Number,
-      required: [true, 'Minimum frontage is required'],
+      required: false,
+      default: 0,
       min: [0, 'Minimum frontage must be positive'],
     },
     // Land valuation rates
@@ -28,6 +30,11 @@ const zoneSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, 'Excess land cost must be positive'],
+    },
+    excessFrontageCostPerFoot: {
+      type: Number,
+      default: 0,
+      min: [0, 'Excess frontage cost must be positive'],
     },
     // View assessment base value
     baseViewValue: {

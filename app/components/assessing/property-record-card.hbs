@@ -748,29 +748,60 @@
           </div>
           {{!-- Quality Row --}}
           <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
-            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Quality:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
               {{@buildingAssessment.assessment.quality_grade}}
             </div>
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+              
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              
+            </div>
           </div>
           {{!-- Commercial Wall Row --}}
           <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
-            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
-              Comm Wall:
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+              Frame Type:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
               {{@buildingAssessment.assessment.frame}}
             </div>
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+              Ceiling Ht:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.ceiling_height}}
+            </div>
           </div>
           {{!-- Size Adj & Base Rate Row --}}
           <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
-            <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Size Adj:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.calculation_details.sizeAdjustmentFactor}}
+              {{number-format @buildingAssessment.assessment.calculation_details.sizeAdjustmentFactor 4}}
+            </div>
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+              Base Rate:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              {{@buildingAssessment.assessment.base_type}} - ${{number-format @buildingAssessment.assessment.base_rate}}
+            </div>
+          </div>
+          {{!-- Adjusted Base Rate Row --}}
+          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+            </div>
+            <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
+              Adj Base Rate:
+            </div>
+            <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
+              ${{number-format @buildingAssessment.assessment.calculation_details.adjustedBaseRate 2}}
             </div>
           </div>
         </div>

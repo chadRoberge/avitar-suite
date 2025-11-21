@@ -43,7 +43,7 @@
                 id="login-email"
                 class="avitar-input"
                 placeholder="Enter your email address"
-                value={{this.model.loginForm.email}}
+                value={{this.loginEmail}}
                 {{on "input" (fn this.updateLoginField "email")}}
                 required
               />
@@ -58,7 +58,7 @@
                 id="login-password"
                 class="avitar-input"
                 placeholder="Enter your password"
-                value={{this.model.loginForm.password}}
+                value={{this.loginPassword}}
                 {{on "input" (fn this.updateLoginField "password")}}
                 required
               />
@@ -116,7 +116,7 @@
               <div class="avitar-user-type-selector">
                 <button
                   type="button"
-                  class="avitar-user-type-option {{if (eq this.model.signupForm.userType 'residential') 'avitar-user-type-option--active'}}"
+                  class="avitar-user-type-option {{if (eq this.signupUserType 'residential') 'avitar-user-type-option--active'}}"
                   {{on "click" (fn this.selectUserType "residential")}}
                 >
                   <div class="avitar-user-type-option__icon">🏠</div>
@@ -130,7 +130,7 @@
 
                 <button
                   type="button"
-                  class="avitar-user-type-option {{if (eq this.model.signupForm.userType 'commercial') 'avitar-user-type-option--active'}}"
+                  class="avitar-user-type-option {{if (eq this.signupUserType 'commercial') 'avitar-user-type-option--active'}}"
                   {{on "click" (fn this.selectUserType "commercial")}}
                 >
                   <div class="avitar-user-type-option__icon">🏢</div>
@@ -144,6 +144,52 @@
               </div>
             </div>
 
+            {{!-- Commercial Business Fields (only show for commercial) --}}
+            {{#if (eq this.signupUserType "commercial")}}
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required" for="signup-business-name">
+                  Business Name
+                </label>
+                <input
+                  type="text"
+                  id="signup-business-name"
+                  class="avitar-input"
+                  placeholder="Enter your business name"
+                  value={{this.signupBusinessName}}
+                  {{on "input" (fn this.updateSignupField "businessName")}}
+                  required
+                />
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required" for="signup-business-type">
+                  Business Type
+                </label>
+                <select
+                  id="signup-business-type"
+                  class="avitar-select"
+                  value={{this.signupBusinessType}}
+                  {{on "change" (fn this.updateSignupField "businessType")}}
+                  required
+                >
+                  <option value="">Select business type</option>
+                  <option value="general_contractor">General Contractor</option>
+                  <option value="electrical">Electrical Contractor</option>
+                  <option value="plumbing">Plumbing Contractor</option>
+                  <option value="mechanical">Mechanical/HVAC Contractor</option>
+                  <option value="roofing">Roofing Contractor</option>
+                  <option value="foundation">Foundation Contractor</option>
+                  <option value="framing">Framing Contractor</option>
+                  <option value="masonry">Masonry Contractor</option>
+                  <option value="landscaping">Landscaping</option>
+                  <option value="demolition">Demolition</option>
+                  <option value="property_management">Property Management</option>
+                  <option value="real_estate">Real Estate</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            {{/if}}
+
             {{!-- Name Fields --}}
             <div class="avitar-form-row">
               <div class="avitar-form-group">
@@ -155,7 +201,7 @@
                   id="signup-firstname"
                   class="avitar-input"
                   placeholder="First name"
-                  value={{this.model.signupForm.firstName}}
+                  value={{this.signupFirstName}}
                   {{on "input" (fn this.updateSignupField "firstName")}}
                   required
                 />
@@ -170,7 +216,7 @@
                   id="signup-lastname"
                   class="avitar-input"
                   placeholder="Last name"
-                  value={{this.model.signupForm.lastName}}
+                  value={{this.signupLastName}}
                   {{on "input" (fn this.updateSignupField "lastName")}}
                   required
                 />
@@ -186,7 +232,7 @@
                 id="signup-email"
                 class="avitar-input"
                 placeholder="Enter your email address"
-                value={{this.model.signupForm.email}}
+                value={{this.signupEmail}}
                 {{on "input" (fn this.updateSignupField "email")}}
                 required
               />
@@ -201,7 +247,7 @@
                 id="signup-password"
                 class="avitar-input"
                 placeholder="Create a password (8+ characters)"
-                value={{this.model.signupForm.password}}
+                value={{this.signupPassword}}
                 {{on "input" (fn this.updateSignupField "password")}}
                 required
               />
@@ -219,7 +265,7 @@
                 id="signup-confirm-password"
                 class="avitar-input"
                 placeholder="Confirm your password"
-                value={{this.model.signupForm.confirmPassword}}
+                value={{this.signupConfirmPassword}}
                 {{on "input" (fn this.updateSignupField "confirmPassword")}}
                 required
               />

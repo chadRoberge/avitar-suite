@@ -1,0 +1,44 @@
+{{!-- Building Permits Settings Menu Component --}}
+<nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar" style="top: 120px">
+  <div class="avitar-sidebar__header">
+    <h2 class="avitar-sidebar__title">Building Permits Settings</h2>
+    <div class="avitar-sidebar__subtitle">Configure permits module</div>
+  </div>
+
+  <div class="avitar-sidebar__nav">
+    <ul class="avitar-sidebar__nav-list">
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="municipality.building-permits.settings.permit-types"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-file-alt avitar-sidebar__nav-icon"></i>
+          <span>Permit Types</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="municipality.building-permits.settings.inspections"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-clipboard-check avitar-sidebar__nav-icon"></i>
+          <span>Inspections</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="municipality.building-permits.settings.users"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-users avitar-sidebar__nav-icon"></i>
+          <span>Users & Inspectors</span>
+        </LinkTo>
+      </li>
+    </ul>
+  </div>
+</nav>

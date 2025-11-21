@@ -28,6 +28,9 @@ const landUseDetailSchema = new mongoose.Schema(
         'residential_waterfront',
         'commercial',
         'residential_multifamily',
+        'utility',
+        'exempt',
+        'mixed_use',
       ],
     },
     isActive: {
@@ -50,6 +53,9 @@ landUseDetailSchema.virtual('formattedLandUseType').get(function () {
     residential_waterfront: 'Residential Waterfront',
     commercial: 'Commercial',
     residential_multifamily: 'Residential Multifamily',
+    utility: 'Utility',
+    exempt: 'Exempt',
+    mixed_use: 'Mixed Use',
   };
   return typeMap[this.landUseType] || this.landUseType;
 });

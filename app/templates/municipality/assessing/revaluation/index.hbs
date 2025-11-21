@@ -1,0 +1,272 @@
+{{page-title "Revaluation Sales"}}
+
+<div class="avitar-content">
+  {{! Page Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-2xl avitar-font-bold">Sales Selection</h1>
+      <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+        Select sales to create a new analysis sheet
+      </p>
+    </div>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--secondary"
+      {{on "click" this.openGlobalSettingsModal}}>
+      <i class="fas fa-cog avitar-mr-2"></i>
+      Global Settings
+    </button>
+  </div>
+
+  {{! Sales Selection Section }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div>
+          <h3 class="avitar-font-semibold">Available Sales</h3>
+          <p class="avitar-text-sm avitar-text-muted">
+            Select sales to create a new analysis sheet
+          </p>
+        </div>
+        <div class="avitar-flex avitar-gap-2">
+          {{#if this.selectedSalesCount}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+              {{on "click" this.clearSelection}}>
+              Clear Selection ({{this.selectedSalesCount}})
+            </button>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--sm avitar-btn--primary"
+              {{on "click" this.openCreateSheetModal}}>
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Create Sheet
+            </button>
+          {{else}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+              {{on "click" this.selectAllSales}}>
+              Select All
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card__body avitar-p-0">
+      {{! Filters }}
+      <div class="avitar-p-4 avitar-border-b">
+        <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-3">
+          <span class="avitar-text-sm avitar-font-medium avitar-mr-2">Filters:</span>
+
+          <select class="avitar-select avitar-select--sm" {{on "change" this.setPropertyTypeFilter}}>
+            <option value="all" selected={{eq this.propertyTypeFilter "all"}}>All Types</option>
+            <option value="improved" selected={{eq this.propertyTypeFilter "improved"}}>Improved</option>
+            <option value="vacant" selected={{eq this.propertyTypeFilter "vacant"}}>Vacant</option>
+          </select>
+
+          <input
+            type="date"
+            class="avitar-input avitar-input--sm"
+            placeholder="From Date"
+            value={{this.dateFrom}}
+            {{on "input" this.updateDateFrom}} />
+
+          <input
+            type="date"
+            class="avitar-input avitar-input--sm"
+            placeholder="To Date"
+            value={{this.dateTo}}
+            {{on "input" this.updateDateTo}} />
+        </div>
+
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <span class="avitar-text-sm avitar-font-medium avitar-mr-2" style="visibility: hidden;">Filters:</span>
+
+          <select class="avitar-select avitar-select--sm" {{on "change" this.setLandUseCategoryFilter}}>
+            {{#each this.landUseCategoryOptions as |categoryOpt|}}
+              <option value={{categoryOpt.value}} selected={{eq this.landUseCategoryFilter categoryOpt.value}}>
+                {{categoryOpt.label}}
+              </option>
+            {{/each}}
+          </select>
+
+          <select class="avitar-select avitar-select--sm" {{on "change" this.setLandUseCodeFilter}}>
+            {{#each this.landUseCodeOptions as |codeOpt|}}
+              <option value={{codeOpt.value}} selected={{eq this.landUseCodeFilter codeOpt.value}}>
+                {{codeOpt.label}}
+              </option>
+            {{/each}}
+          </select>
+
+          <select class="avitar-select avitar-select--sm" {{on "change" this.setBuildingRateFilter}}>
+            {{#each this.buildingRateOptions as |buildingOpt|}}
+              <option value={{buildingOpt.value}} selected={{eq this.buildingRateFilter buildingOpt.value}}>
+                {{buildingOpt.label}}
+              </option>
+            {{/each}}
+          </select>
+
+          <input
+            type="number"
+            class="avitar-input avitar-input--sm"
+            placeholder="Min Acreage"
+            value={{this.minAcreage}}
+            {{on "input" this.updateMinAcreage}}
+            step="0.1" />
+
+          <input
+            type="number"
+            class="avitar-input avitar-input--sm"
+            placeholder="Max Acreage"
+            value={{this.maxAcreage}}
+            {{on "input" this.updateMaxAcreage}}
+            step="0.1" />
+        </div>
+      </div>
+
+      {{! Sales Table }}
+      {{#if this.filteredSales.length}}
+        <div class="avitar-table-container" style="max-height: 500px; overflow-x: auto;">
+          <table class="avitar-table avitar-table--striped avitar-table--hover">
+            <thead>
+              <tr>
+                <th class="avitar-w-12" style="position: sticky; left: 0; background: white; z-index: 1;">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox"
+                    {{on "change" this.selectAllSales}} />
+                </th>
+                <th>Sale Date</th>
+                <th>Property Address</th>
+                <th>Type</th>
+                <th>Sale Price</th>
+                <th>Acreage</th>
+                <th>Building SF</th>
+                <th>Building Code</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.filteredSales as |sale|}}
+                <tr>
+                  <td style="position: sticky; left: 0; background: white; z-index: 1;">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{includes this.selectedSales sale}}
+                      {{on "change" (fn this.toggleSaleSelection sale)}} />
+                  </td>
+                  <td>{{date-format sale.sale_date "MM/DD/YYYY"}}</td>
+                  <td>{{sale.property_address}}</td>
+                  <td>
+                    {{#if sale.is_vacant}}
+                      <span class="avitar-badge avitar-badge--secondary avitar-badge--sm">Vacant</span>
+                    {{else}}
+                      <span class="avitar-badge avitar-badge--info avitar-badge--sm">Improved</span>
+                    {{/if}}
+                  </td>
+                  <td>{{format-currency sale.sale_price}}</td>
+                  <td>{{sale.acreage}}</td>
+                  <td>{{sale.building_sf}}</td>
+                  <td>{{sale.base_type.description}}</td>
+                  <td>
+                    <div class="avitar-flex avitar-flex-col avitar-gap-1">
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--sm avitar-btn--ghost"
+                        title="View Property Card"
+                        {{on "click" (fn this.viewProperty sale)}}>
+                        <i class="lnr lnr-eye"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--sm avitar-btn--ghost"
+                        title="Edit Property"
+                        {{on "click" (fn this.editProperty sale)}}>
+                        <i class="lnr lnr-pencil"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-8">
+          <i class="fas fa-search fa-3x avitar-text-muted avitar-mb-4"></i>
+          <h3 class="avitar-text-lg avitar-font-semibold">No Sales Found</h3>
+          <p class="avitar-text-muted">
+            Adjust your filters or import sales data to begin analysis
+          </p>
+        </div>
+      {{/if}}
+    </div>
+
+    {{#if this.filteredSales.length}}
+      <div class="avitar-card__footer avitar-bg-gray-50">
+        <div class="avitar-flex avitar-justify-between avitar-items-center">
+          <div class="avitar-text-sm avitar-text-muted">
+            Showing {{this.filteredSales.length}} of {{this.model.totalSales}} sales
+          </div>
+          <div class="avitar-flex avitar-gap-4">
+            <div class="avitar-text-sm">
+              <span class="avitar-font-semibold">Average:</span>
+              {{format-currency this.salesStatistics.averagePrice}}
+            </div>
+            <div class="avitar-text-sm">
+              <span class="avitar-font-semibold">Median:</span>
+              {{format-currency this.salesStatistics.medianPrice}}
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>
+
+{{! Create Sheet Modal }}
+<Assessing::Revaluations::CreateSheetModal
+  @isOpen={{this.showCreateSheetModal}}
+  @sheetTypeOptions={{this.sheetTypeOptions}}
+  @buildingCodes={{this.model.buildingCodes}}
+  @landCodes={{this.model.landCodes}}
+  @newSheetName={{this.newSheetName}}
+  @newSheetType={{this.newSheetType}}
+  @newSheetDepreciationRate={{this.newSheetDepreciationRate}}
+  @newSheetMinAcreage={{this.newSheetMinAcreage}}
+  @newSheetBuildingCodeId={{this.newSheetBuildingCodeId}}
+  @newSheetLandUseCode={{this.newSheetLandUseCode}}
+  @selectedSalesCount={{this.selectedSalesCount}}
+  @isCreating={{this.isCreatingSheet}}
+  @onClose={{this.closeCreateSheetModal}}
+  @onCreate={{this.createSheet}}
+  @onUpdateName={{this.updateNewSheetName}}
+  @onUpdateType={{this.updateNewSheetType}}
+  @onUpdateDepreciationRate={{this.updateNewSheetDepreciationRate}}
+  @onUpdateMinAcreage={{this.updateNewSheetMinAcreage}}
+  @onUpdateBuildingCodeId={{this.updateNewSheetBuildingCodeId}}
+  @onUpdateLandUseCode={{this.updateNewSheetLandUseCode}} />
+
+{{! Global Settings Modal }}
+<Assessing::Revaluations::GlobalSettingsModal
+  @isOpen={{this.showGlobalSettingsModal}}
+  @baseYear={{this.baseYear}}
+  @timeTrendEntries={{this.timeTrendEntries}}
+  @currentUseMaxAcreage={{this.currentUseMaxAcreage}}
+  @isSaving={{this.isSavingSettings}}
+  @onClose={{this.closeGlobalSettingsModal}}
+  @onSave={{this.saveGlobalSettings}}
+  @onUpdateBaseYear={{this.updateBaseYear}}
+  @onUpdateCurrentUseMaxAcreage={{this.updateCurrentUseMaxAcreage}}
+  @onAddTimeTrendEntry={{this.addTimeTrendEntry}}
+  @onRemoveTimeTrendEntry={{this.removeTimeTrendEntry}}
+  @onUpdateTimeTrendEntry={{this.updateTimeTrendEntry}} />
+
+{{! Property Record Card Modal }}
+<Assessing::PropertyRecordCardModal
+  @isOpen={{this.showPropertyCardModal}}
+  @onClose={{this.closePropertyCardModal}} />

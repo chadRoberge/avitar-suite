@@ -1,0 +1,14 @@
+{{! Template Variables Helper Component }}
+<div class="avitar-flex avitar-flex-wrap avitar-gap-2">
+  {{#each this.availableVariables as |variable|}}
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+      {{on "click" (fn this.insertVariable variable)}}
+      title={{variable.example}}
+    >
+      <i class="fas fa-plus-circle avitar-mr-1"></i>
+      {{variable.label}}
+    </button>
+  {{/each}}
+</div>

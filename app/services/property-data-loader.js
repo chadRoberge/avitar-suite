@@ -106,10 +106,11 @@ export default class PropertyDataLoaderService extends Service {
     this.updateLoadingState(loadingKey, 'tier1', 'loading');
 
     try {
-      // Try to load basic property data only with network-first to ensure fresh cards data
+      // Use hybrid strategy: IndexedDB first with background refresh
+      // This gives instant loading from IndexedDB while ensuring data freshness
       const response = await this.localApi.get(
         `/properties/${propertyId}?card=${cardNumber}&fields=basic`,
-        { maxAge: 15 * 60 * 1000, strategy: 'network-first' }, // 15 minute cache, network-first strategy
+        { strategy: 'hybrid' }, // Stale-while-revalidate: always use IndexedDB if available
       );
 
       const basicData = {
@@ -125,11 +126,11 @@ export default class PropertyDataLoaderService extends Service {
       );
       return basicData;
     } catch (error) {
-      // Fallback to full property endpoint with network-first strategy
+      // Fallback to full property endpoint with hybrid strategy
       console.warn('Tier 1 fallback to full property endpoint');
       const response = await this.localApi.get(
         `/properties/${propertyId}?card=${cardNumber}`,
-        { strategy: 'network-first' }
+        { strategy: 'hybrid' }
       );
       return {
         property: response.property || response,
@@ -151,7 +152,7 @@ export default class PropertyDataLoaderService extends Service {
       const assessmentUrl = `/properties/${propertyId}/assessment/current?card=${cardNumber}${assessmentYear ? `&assessment_year=${assessmentYear}` : ''}`;
 
       const assessment = await this.localApi.get(assessmentUrl, {
-        maxAge: 10 * 60 * 1000, // 10 minute cache for assessments
+        strategy: 'hybrid', // IndexedDB first with background refresh
       });
 
       const assessmentData = {

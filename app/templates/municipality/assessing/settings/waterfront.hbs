@@ -79,7 +79,7 @@
                   </td>
                   <td>
                     <span class="avitar-text-success avitar-font-semibold">
-                      {{number-format entry.value}}
+                      {{number-format entry.factor}}
                     </span>
                   </td>
                   <td class="avitar-table__actions">
@@ -100,10 +100,10 @@
         <div class="avitar-flex-6">
           <div class="avitar-border avitar-rounded avitar-p-4">
             <h5 class="avitar-font-semibold avitar-mb-3">Waterfront Factor Curve</h5>
-            <LineGraph 
+            <LineGraph
               @data={{ladder.entries}}
               @xField="frontage"
-              @yField="value"
+              @yField="factor"
               @xLabel="Frontage (ft)"
               @yLabel="Factor"
               @lineColor="#3b82f6"

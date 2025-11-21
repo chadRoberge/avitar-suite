@@ -42,14 +42,31 @@
             {{!-- Frame --}}
             <div class="avitar-flex-1">
               <label for="frame-select" class="avitar-label">Frame</label>
-              <select 
+              <select
                 id="frame-select"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "frame")}}
               >
                 <option value="">Select Frame...</option>
                 {{#each this.featureCodes.frame as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.frame code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.frame code._id) "selected"}}>
+                    {{code.displayText}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            {{!-- Ceiling Height --}}
+            <div class="avitar-flex-1">
+              <label for="ceiling-height" class="avitar-label">Ceiling Height</label>
+              <select
+                id="ceiling-height"
+                class="avitar-select"
+                {{on "change" (fn this.updateField "ceilingHeight")}}
+              >
+                <option value="">Select Ceiling Height...</option>
+                {{#each this.featureCodes.ceiling_height as |code|}}
+                  <option value={{code._id}} selected={{if (eq this.buildingData.ceilingHeight code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -59,9 +76,9 @@
             {{!-- Year Built --}}
             <div class="avitar-flex-1">
               <label for="year-built" class="avitar-label">Year Built</label>
-              <input 
+              <input
                 id="year-built"
-                type="number" 
+                type="number"
                 class="avitar-input"
                 value={{this.buildingData.yearBuilt}}
                 {{on "input" (fn this.updateField "yearBuilt")}}
@@ -80,7 +97,7 @@
               >
                 <option value="">Select Base Type...</option>
                 {{#each this.buildingCodes as |code|}}
-                  <option value={{code.code}} selected={{if (eq this.buildingData.baseType code.code) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.baseType code._id) "selected"}}>
                     {{code.code}} - {{code.description}}
                   </option>
                 {{/each}}
@@ -90,14 +107,14 @@
             {{!-- Quality Grade --}}
             <div class="avitar-flex-1">
               <label for="quality-grade" class="avitar-label">Quality Grade</label>
-              <select 
+              <select
                 id="quality-grade"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "qualityGrade")}}
               >
                 <option value="">Select Quality...</option>
                 {{#each this.featureCodes.quality as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.qualityGrade code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.qualityGrade code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -107,14 +124,14 @@
             {{!-- Story Height --}}
             <div class="avitar-flex-1">
               <label for="story-height" class="avitar-label">Story Height</label>
-              <select 
+              <select
                 id="story-height"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "storyHeight")}}
               >
                 <option value="">Select Story Height...</option>
                 {{#each this.featureCodes.story_height as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.storyHeight code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.storyHeight code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -134,14 +151,14 @@
             {{!-- Roof Style --}}
             <div class="avitar-flex-1">
               <label for="roof-style" class="avitar-label">Roof Style</label>
-              <select 
+              <select
                 id="roof-style"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "roofStyle")}}
               >
                 <option value="">Select Roof Style...</option>
                 {{#each this.featureCodes.roof_style as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.roofStyle code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.roofStyle code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -151,14 +168,14 @@
             {{!-- Roof Cover --}}
             <div class="avitar-flex-1">
               <label for="roof-cover" class="avitar-label">Roof Cover</label>
-              <select 
+              <select
                 id="roof-cover"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "roofCover")}}
               >
                 <option value="">Select Roof Cover...</option>
                 {{#each this.featureCodes.roofing as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.roofCover code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.roofCover code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -178,14 +195,14 @@
             {{!-- Exterior Wall 1 --}}
             <div class="avitar-flex-1">
               <label for="exterior-wall-1" class="avitar-label">Exterior Wall 1</label>
-              <select 
+              <select
                 id="exterior-wall-1"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "exteriorWall1")}}
               >
                 <option value="">Select Exterior Wall...</option>
                 {{#each this.featureCodes.exterior_wall as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.exteriorWall1 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.exteriorWall1 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{else}}
@@ -197,14 +214,14 @@
             {{!-- Exterior Wall 2 --}}
             <div class="avitar-flex-1">
               <label for="exterior-wall-2" class="avitar-label">Exterior Wall 2</label>
-              <select 
+              <select
                 id="exterior-wall-2"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "exteriorWall2")}}
               >
                 <option value="">Select Exterior Wall...</option>
                 {{#each this.featureCodes.exterior_wall as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.exteriorWall2 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.exteriorWall2 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -216,14 +233,14 @@
             {{!-- Interior Wall 1 --}}
             <div class="avitar-flex-1">
               <label for="interior-wall-1" class="avitar-label">Interior Wall 1</label>
-              <select 
+              <select
                 id="interior-wall-1"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "interiorWall1")}}
               >
                 <option value="">Select Interior Wall...</option>
                 {{#each this.featureCodes.interior_wall as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.interiorWall1 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.interiorWall1 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -233,14 +250,14 @@
             {{!-- Interior Wall 2 --}}
             <div class="avitar-flex-1">
               <label for="interior-wall-2" class="avitar-label">Interior Wall 2</label>
-              <select 
+              <select
                 id="interior-wall-2"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "interiorWall2")}}
               >
                 <option value="">Select Interior Wall...</option>
                 {{#each this.featureCodes.interior_wall as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.interiorWall2 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.interiorWall2 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -260,14 +277,14 @@
             {{!-- Flooring 1 --}}
             <div class="avitar-flex-1">
               <label for="flooring-1" class="avitar-label">Flooring 1</label>
-              <select 
+              <select
                 id="flooring-1"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "flooring1")}}
               >
                 <option value="">Select Flooring...</option>
                 {{#each this.featureCodes.flooring as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.flooring1 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.flooring1 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -277,14 +294,14 @@
             {{!-- Flooring 2 --}}
             <div class="avitar-flex-1">
               <label for="flooring-2" class="avitar-label">Flooring 2</label>
-              <select 
+              <select
                 id="flooring-2"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "flooring2")}}
               >
                 <option value="">Select Flooring...</option>
                 {{#each this.featureCodes.flooring as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.flooring2 code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.flooring2 code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -304,14 +321,14 @@
             {{!-- Heating Fuel --}}
             <div class="avitar-flex-1">
               <label for="heating-fuel" class="avitar-label">Heating Fuel</label>
-              <select 
+              <select
                 id="heating-fuel"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "heatingFuel")}}
               >
                 <option value="">Select Heating Fuel...</option>
                 {{#each this.featureCodes.heating_fuel as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.heatingFuel code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.heatingFuel code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}
@@ -321,14 +338,14 @@
             {{!-- Heating Type --}}
             <div class="avitar-flex-1">
               <label for="heating-type" class="avitar-label">Heating Type</label>
-              <select 
+              <select
                 id="heating-type"
                 class="avitar-select"
                 {{on "change" (fn this.updateField "heatingType")}}
               >
                 <option value="">Select Heating Type...</option>
                 {{#each this.featureCodes.heating_type as |code|}}
-                  <option value={{code.displayText}} selected={{if (eq this.buildingData.heatingType code.displayText) "selected"}}>
+                  <option value={{code._id}} selected={{if (eq this.buildingData.heatingType code._id) "selected"}}>
                     {{code.displayText}}
                   </option>
                 {{/each}}

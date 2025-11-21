@@ -1,0 +1,88 @@
+{{page-title (concat "Sheet: " this.model.sheet.sheet_name)}}
+
+<div class="avitar-content">
+  {{! Page Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3">
+    <div>
+      <div class="avitar-text-xs avitar-text-muted">{{this.model.currentMunicipality.name}}</div>
+      <h1 class="avitar-text-xl avitar-font-bold">{{this.model.sheet.sheet_name}}</h1>
+      <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mt-1">
+        <span class="avitar-badge avitar-badge--info avitar-badge--sm">{{this.model.sheet.sheet_type}}</span>
+        {{#if this.model.sheet.building_code}}
+          <span class="avitar-text-xs avitar-text-muted">
+            <i class="fas fa-building avitar-mr-1"></i>
+            {{this.model.sheet.building_code.code}} - {{this.model.sheet.building_code.description}}
+          </span>
+        {{/if}}
+        <span class="avitar-text-xs avitar-text-muted">
+          <i class="fas fa-chart-bar avitar-mr-1"></i>
+          {{this.model.sheetSales.length}} sales
+        </span>
+      </div>
+    </div>
+    <div class="avitar-flex avitar-gap-2">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" this.openSettingsModal}}>
+        <i class="fas fa-cog avitar-mr-2"></i>
+        Settings
+      </button>
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" this.printSheet}}>
+        <i class="fas fa-print avitar-mr-2"></i>
+        Print
+      </button>
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--danger"
+        {{on "click" this.deleteSheet}}>
+        <i class="fas fa-trash avitar-mr-2"></i>
+        Delete Sheet
+      </button>
+    </div>
+  </div>
+
+  {{! Sheet Analysis View }}
+  <Assessing::Revaluations::SheetView
+    @sheet={{this.model.sheet}}
+    @sales={{this.model.sheetSales}}
+    @globalSettings={{this.model.revaluation.global_settings}} />
+</div>
+
+{{! Sheet Settings Modal }}
+{{#if this.showSettingsModal}}
+  <Assessing::Revaluations::SheetSettingsModal
+    @isOpen={{this.showSettingsModal}}
+    @sheetName={{this.sheetName}}
+    @sheetType={{this.model.sheet.sheet_type}}
+    @depreciationRate={{this.depreciationRate}}
+    @buildableSiteValue={{this.buildableSiteValue}}
+    @siteAcreage={{this.siteAcreage}}
+    @excessFootFrontage={{this.excessFootFrontage}}
+    @excessAcreageValue={{this.excessAcreageValue}}
+    @baseDate={{this.baseDate}}
+    @annualTrend={{this.annualTrend}}
+    @isSaving={{this.isSavingSettings}}
+    @onClose={{this.closeSettingsModal}}
+    @onSave={{this.saveSheetSettings}}
+    @onUpdateSheetName={{this.updateSheetName}}
+    @onUpdateDepreciationRate={{this.updateDepreciationRate}}
+    @onUpdateBuildableSiteValue={{this.updateBuildableSiteValue}}
+    @onUpdateSiteAcreage={{this.updateSiteAcreage}}
+    @onUpdateExcessFootFrontage={{this.updateExcessFootFrontage}}
+    @onUpdateExcessAcreageValue={{this.updateExcessAcreageValue}}
+    @onUpdateBaseDate={{this.updateBaseDate}}
+    @onUpdateAnnualTrend={{this.updateAnnualTrend}} />
+{{/if}}
+
+{{! Print Modal }}
+{{#if this.showPrintModal}}
+  <Assessing::Revaluations::SheetsPrint
+    @sheet={{this.model.sheet}}
+    @revaluation={{this.model.revaluation}}
+    @municipality={{this.model.currentMunicipality}}
+    @onClose={{this.closePrintModal}} />
+{{/if}}

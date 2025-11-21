@@ -326,24 +326,6 @@ uppercase {
   max-height: none !important;
 }
 
-/* Print-specific styles for sketch canvas */
-@media print {
-  .property-record-sketch {
-    border: 1px solid #000 !important;
-    background: white !important;
-    page-break-inside: avoid;
-  }
-
-  .property-record-sketch .sketch-canvas-container svg {
-    print-color-adjust: exact !important;
-    -webkit-print-color-adjust: exact !important;
-  }
-
-  .property-record-sketch__item {
-    border: 1px solid #ccc !important;
-  }
-}
-
 .property-record-sketch__placeholder {
   display: flex;
   flex-direction: column;
@@ -415,54 +397,6 @@ uppercase {
   .property-record-card-page--2 {
     margin: 20px auto; /* Center on screen */
     box-shadow: 0 0 10px rgb(0 0 0 / 10%); /* Paper effect */
-  }
-}
-
-/* Print Styles */
-@media print {
-  .property-record-modal-overlay {
-    background: white;
-    position: static;
-    padding: 0;
-  }
-
-  .property-record-modal {
-    max-width: none;
-    max-height: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  .property-record-modal__header {
-    display: none;
-  }
-
-  .property-record-card-page {
-    padding: 20px;
-    page-break-after: always;
-    border-bottom: none;
-  }
-
-  .property-record-card-page--1,
-  .property-record-card-page--2 {
-    height: 8.5in;
-    width: 11in;
-    margin: 0;
-    box-shadow: none;
-  }
-
-  .property-record-card-page:last-child {
-    page-break-after: auto;
-  }
-
-  /* Hide page break indicators in print */
-  .property-record-card-page [style*="page-break-before"] {
-    border: none !important;
-    margin: 0 !important;
-  }
-
-  .property-record-card-page [style*="page-break-before"]::after {
-    display: none !important;
   }
 }
 

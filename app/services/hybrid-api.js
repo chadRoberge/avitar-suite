@@ -2,9 +2,10 @@ import Service from '@ember/service';
 import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
+import Evented from '@ember/object/evented';
 import { applyPidFormattingBulk } from 'avitar-suite/utils/pid-formatter';
 
-export default class HybridApiService extends Service {
+export default class HybridApiService extends Service.extend(Evented) {
   @service indexedDb;
   @service api; // Original network API service
   @service currentUser;
@@ -20,6 +21,9 @@ export default class HybridApiService extends Service {
   constructor() {
     super(...arguments);
 
+    // Track if we've already migrated old property cache format
+    this.propertyCacheMigrated = false;
+
     // Listen for online/offline events
     window.addEventListener('online', () => {
       this.isOnline = true;
@@ -30,6 +34,19 @@ export default class HybridApiService extends Service {
       this.isOnline = false;
       this.onConnectivityChange();
     });
+
+    // Start smart polling for property updates after a short delay
+    // to allow municipality service to initialize
+    setTimeout(() => {
+      if (this.municipality?.currentMunicipality) {
+        this.startSmartPolling();
+      }
+    }, 2000);
+  }
+
+  willDestroy() {
+    super.willDestroy();
+    this.stopSmartPolling();
   }
 
   async onConnectivityChange() {
@@ -72,6 +89,13 @@ export default class HybridApiService extends Service {
     if (forceRefresh) {
       strategy = 'network-first';
       console.log(`🔄 Force refresh requested - overriding strategy to network-first`);
+    }
+
+    // Configuration/settings endpoints should always use network-first strategy
+    // to ensure we get the latest data when online
+    if (this.isConfigurationEndpoint(endpoint) && this.isOnline) {
+      strategy = 'network-first';
+      console.log(`⚙️ Configuration endpoint detected - using network-first strategy`);
     }
 
     console.log(
@@ -168,6 +192,17 @@ export default class HybridApiService extends Service {
 
         localData = await this.indexedDb.getAll(collection, filter);
 
+        console.log(`🔍 [HybridAPI] IndexedDB getAll result for ${collection}:`, {
+          endpoint,
+          collection,
+          filter,
+          resultCount: localData?.length || 0,
+          firstItem: localData?.[0] ? {
+            id: localData[0].id || localData[0]._id,
+            keys: Object.keys(localData[0]),
+          } : null,
+        });
+
         if (localData && localData.length > 0) {
           // Check for corrupted cache where API response object was cached as single item
           // This happens when {success: true, properties: [...]} was cached instead of individual items
@@ -180,6 +215,48 @@ export default class HybridApiService extends Service {
               return this.getFromNetwork(endpoint, collection, isItemRequest, options);
             }
             throw new Error(`Corrupted cache detected for ${endpoint} and device is offline`);
+          }
+
+          // Check for incomplete property cache FIRST (before using the data)
+          // The server always returns mapNumber/lotSubDisplay, so if cache is missing them,
+          // it's from old data - clear cache and force network fetch
+          // Only perform this migration ONCE per session to avoid repeated re-fetches
+          if (collection === 'properties' && endpoint.includes('/municipalities/') && !this.propertyCacheMigrated) {
+            const sampleProperty = localData[0];
+
+            // Check if this is old/malformed data:
+            // 1. Missing mapNumber or lotSubDisplay fields
+            // 2. ID is a number instead of string (old format)
+            const hasOldIdFormat = sampleProperty && typeof sampleProperty.id === 'number';
+            const missingPIDFields = sampleProperty && (!sampleProperty.mapNumber || !sampleProperty.lotSubDisplay);
+
+            if (hasOldIdFormat || missingPIDFields) {
+              console.warn('⚠️ Old/malformed property cache detected - performing one-time migration', {
+                reason: hasOldIdFormat ? 'ID is number (old format)' : 'Missing PID fields',
+                sampleId: sampleProperty?.id,
+                idType: typeof sampleProperty?.id,
+                mapNumber: sampleProperty?.mapNumber,
+                lotSubDisplay: sampleProperty?.lotSubDisplay
+              });
+
+              // Mark migration as complete to prevent repeated clears
+              this.propertyCacheMigrated = true;
+
+              // Clear the old cache
+              await this.indexedDb.clearCollection(collection);
+
+              // Force network fetch to get properly formatted data
+              if (this.isOnline) {
+                return this.getFromNetwork(endpoint, collection, isItemRequest, options);
+              }
+
+              // If offline, return the stale data (better than nothing)
+              console.log('📱 Offline - returning stale properties despite old format');
+              // Fall through to return localData below
+            } else {
+              // Cache has good data format, mark migration as complete
+              this.propertyCacheMigrated = true;
+            }
           }
 
           // Post-filter features by card number (IndexedDB doesn't support MongoDB $or queries)
@@ -209,23 +286,6 @@ export default class HybridApiService extends Service {
               if (beforeFilterCount > 0 && localData.length === 0 && this.isOnline) {
                 console.log(`⚠️ Cache has ${beforeFilterCount} features but 0 match card ${cardNumber} - falling back to network`);
                 return this.getFromNetwork(endpoint, collection, isItemRequest, options);
-              }
-            }
-          }
-
-          // Check for incomplete property cache (missing required fields like mapNumber, lotSubDisplay)
-          // Instead of refetching, apply PID formatting on-the-fly
-          if (collection === 'properties' && endpoint.includes('/municipalities/')) {
-            const sampleProperty = localData[0];
-            if (!sampleProperty.mapNumber || !sampleProperty.lotSubDisplay) {
-              console.log(`🔧 Applying PID formatting to ${localData.length} cached properties`);
-              // Apply PID formatting to all cached properties
-              const municipality = this.municipality.currentMunicipality;
-              if (municipality && municipality.pid_format) {
-                localData = applyPidFormattingBulk(localData, municipality);
-                console.log(`✅ PID formatting applied successfully`);
-              } else {
-                console.warn('⚠️ Municipality PID format not available - properties may not group correctly');
               }
             }
           }
@@ -262,9 +322,51 @@ export default class HybridApiService extends Service {
   }
 
   async getFromNetwork(endpoint, collection, isItemRequest, options) {
+    // Deduplication: if a request is already in flight for this endpoint, wait for it
+    const requestKey = `${endpoint}?${JSON.stringify(options.params || {})}`;
+
+    if (this.activeNetworkRequests?.has(requestKey)) {
+      console.log(`⏳ Network request already in progress for: ${endpoint}, waiting for it...`);
+      return this.activeNetworkRequests.get(requestKey);
+    }
+
+    // Initialize activeNetworkRequests Map if needed
+    if (!this.activeNetworkRequests) {
+      this.activeNetworkRequests = new Map();
+    }
+
     try {
       console.log(`🌐 Network fetch: ${endpoint}`);
-      const response = await this.api.get(endpoint, options.params);
+
+      // Create the request promise and store it for deduplication
+      const requestPromise = this.api.get(endpoint, options.params);
+      this.activeNetworkRequests.set(requestKey, requestPromise);
+
+      const response = await requestPromise;
+
+      // Debug log the response structure for properties endpoint
+      if (endpoint.includes('/municipalities/') && endpoint.includes('/properties') && !endpoint.includes('/zones')) {
+        console.log('🔍 Properties endpoint response structure:', {
+          hasPropertiesArray: !!(response?.properties),
+          isArray: Array.isArray(response),
+          responseKeys: response ? Object.keys(response) : [],
+          firstItemSample: response?.properties?.[0] || response?.[0]
+        });
+      }
+
+      // Debug log assessment endpoint responses
+      if (endpoint.includes('/assessment/')) {
+        console.log('🏗️ [HybridAPI] Assessment endpoint response:', {
+          endpoint,
+          collection,
+          responseKeys: response ? Object.keys(response) : [],
+          hasAssessment: !!response?.assessment,
+          assessmentType: response?.assessment ? typeof response.assessment : null,
+          assessmentKeys: response?.assessment ? Object.keys(response.assessment) : null,
+          assessmentLandUseDetails: response?.assessment?.land_use_details,
+          assessmentLandUseDetailsIsArray: Array.isArray(response?.assessment?.land_use_details),
+        });
+      }
 
       // Handle API response format: {success: true, properties: [...], total: ...}
       // Extract the actual data array if present
@@ -277,6 +379,10 @@ export default class HybridApiService extends Service {
           // Extract the properties array for caching
           dataToCache = response.properties;
           console.log(`🔍 Extracted ${dataToCache.length} items from response.properties`);
+        } else if (response.property && typeof response.property === 'object') {
+          // Extract single property from wrapped response: {success: true, property: {...}}
+          dataToCache = response.property;
+          console.log(`🔍 Extracted single property from response.property`);
         } else if (response.features && Array.isArray(response.features)) {
           // Extract features array
           dataToCache = response.features;
@@ -285,6 +391,10 @@ export default class HybridApiService extends Service {
           // Extract sketches array
           dataToCache = response.sketches;
           console.log(`🔍 Extracted ${dataToCache.length} items from response.sketches`);
+        } else if (response.assessment && typeof response.assessment === 'object') {
+          // Extract single assessment from wrapped response
+          dataToCache = response.assessment;
+          console.log(`🔍 Extracted single assessment from response.assessment`);
         }
       }
 
@@ -292,12 +402,38 @@ export default class HybridApiService extends Service {
       if (Array.isArray(dataToCache)) {
         // Collection response
         console.log(`🗄️ Caching ${dataToCache.length} items to ${collection} collection`);
+
+        // Log first item to verify data format
+        if (dataToCache.length > 0 && collection === 'properties') {
+          console.log('🔍 First property being cached:', {
+            id: dataToCache[0].id,
+            idType: typeof dataToCache[0].id,
+            mapNumber: dataToCache[0].mapNumber,
+            lotSubDisplay: dataToCache[0].lotSubDisplay,
+            pid_formatted: dataToCache[0].pid_formatted
+          });
+        }
+
         for (const item of dataToCache) {
           await this.cacheItem(collection, item);
         }
       } else {
         // Single item response
         console.log(`🗄️ Caching single item to ${collection} collection`);
+
+        // Debug log assessment data being cached
+        if (collection === 'assessments' || collection === 'land_assessments') {
+          console.log(`🔍 [DEBUG] Caching ${collection} item:`, {
+            id: dataToCache.id || dataToCache._id,
+            property_id: dataToCache.property_id,
+            property_id_type: typeof dataToCache.property_id,
+            card_number: dataToCache.card_number,
+            gross_area: dataToCache.gross_area,
+            building_value: dataToCache.building_value,
+            allKeys: Object.keys(dataToCache).slice(0, 15),
+          });
+        }
+
         await this.cacheItem(collection, dataToCache);
       }
 
@@ -316,12 +452,13 @@ export default class HybridApiService extends Service {
       }
 
       throw error;
+    } finally {
+      // Clean up the active request from the map
+      this.activeNetworkRequests?.delete(requestKey);
     }
   }
 
   async getHybrid(endpoint, collection, isItemRequest, options) {
-    const { maxAge = 5 * 60 * 1000 } = options;
-
     try {
       let localData;
 
@@ -332,15 +469,25 @@ export default class HybridApiService extends Service {
         localData = await this.indexedDb.getAll(collection, options.filter);
       }
 
-      // Check if local data is fresh
-      const isFresh = localData && this.isDataFresh(localData, maxAge);
+      // If we have data in IndexedDB, always return it immediately (stale-while-revalidate)
+      if (localData && (Array.isArray(localData) ? localData.length > 0 : true) && !options.forceRefresh) {
+        console.log(`⚡ Hybrid HIT (IndexedDB): ${endpoint}`);
 
-      if (isFresh && !options.forceRefresh) {
-        console.log(`⚡ Hybrid HIT (fresh): ${endpoint}`);
-
-        // Background refresh for next time
+        // Always trigger background refresh to check for updates
+        // This ensures data stays current without blocking the UI
         if (this.isOnline) {
           this.backgroundRefresh(endpoint, collection, isItemRequest, options);
+        }
+
+        // Check for incomplete property cache - but still return cached data
+        // Background refresh will update it with proper formatting
+        if (!isItemRequest && collection === 'properties' && Array.isArray(localData)) {
+          const sampleProperty = localData[0];
+          if (sampleProperty && (!sampleProperty.mapNumber || !sampleProperty.lotSubDisplay)) {
+            console.warn('⚠️ Cached properties missing PID formatting - returning cached data, background refresh will update');
+            // Background refresh was already triggered above
+            // Just return the cached data immediately for fast loading
+          }
         }
 
         return isItemRequest
@@ -348,8 +495,9 @@ export default class HybridApiService extends Service {
           : this.normalizeCollectionResponse(localData, collection);
       }
 
-      // Data is stale or missing, try network
+      // No data in IndexedDB, fetch from network
       if (this.isOnline) {
+        console.log(`📡 IndexedDB MISS, fetching from network: ${endpoint}`);
         return this.getFromNetwork(
           endpoint,
           collection,
@@ -358,14 +506,7 @@ export default class HybridApiService extends Service {
         );
       }
 
-      // Offline with stale data
-      if (localData) {
-        console.log(`📱 Hybrid HIT (stale): ${endpoint}`);
-        return isItemRequest
-          ? this.normalizeResponse(localData)
-          : this.normalizeCollectionResponse(localData, collection);
-      }
-
+      // Offline with no data
       throw new Error(
         `No data available for ${endpoint} and device is offline`,
       );
@@ -599,22 +740,67 @@ export default class HybridApiService extends Service {
   // === BACKGROUND OPERATIONS ===
 
   async backgroundRefresh(endpoint, collection, isItemRequest, options) {
+    // Deduplication: if a background refresh is already in progress for this endpoint, skip it
+    const refreshKey = `${endpoint}?${JSON.stringify(options.params || {})}`;
+    if (this.activeBackgroundRefreshes?.has(refreshKey)) {
+      console.log(`⏭️ Background refresh already in progress for: ${endpoint}, skipping duplicate`);
+      return;
+    }
+
+    // Initialize activeBackgroundRefreshes Set if needed
+    if (!this.activeBackgroundRefreshes) {
+      this.activeBackgroundRefreshes = new Set();
+    }
+
+    // Mark this refresh as in progress
+    this.activeBackgroundRefreshes.add(refreshKey);
+
     try {
       console.log(`🔄 Background refresh: ${endpoint}`);
-      const response = await this.api.get(endpoint, options.params);
+      // Pass background: true to prevent loading overlay
+      const response = await this.api.get(endpoint, options.params, { background: true });
+
+      // Extract the actual data from wrapped responses (same logic as getFromNetwork)
+      let dataToCache = response;
+
+      if (response && typeof response === 'object' && !Array.isArray(response)) {
+        // Check if this is a wrapped response with a data property
+        if (response.properties && Array.isArray(response.properties)) {
+          dataToCache = response.properties;
+        } else if (response.property && typeof response.property === 'object') {
+          // Single property response: {success: true, property: {...}}
+          dataToCache = response.property;
+        } else if (response.features && Array.isArray(response.features)) {
+          dataToCache = response.features;
+        } else if (response.sketches && Array.isArray(response.sketches)) {
+          dataToCache = response.sketches;
+        } else if (response.assessment && typeof response.assessment === 'object') {
+          // Single assessment response
+          dataToCache = response.assessment;
+        }
+      }
 
       // Cache the fresh data
-      if (Array.isArray(response)) {
-        for (const item of response) {
+      if (Array.isArray(dataToCache)) {
+        for (const item of dataToCache) {
           await this.cacheItem(collection, item);
         }
       } else {
-        await this.cacheItem(collection, response);
+        await this.cacheItem(collection, dataToCache);
       }
 
       console.log(`✅ Background refresh complete: ${endpoint}`);
+
+      // Trigger event for properties collection so components can react
+      if (collection === 'properties' && !isItemRequest) {
+        console.log('📢 Triggering propertiesRefreshed event');
+        this.trigger('propertiesRefreshed', response);
+      }
     } catch (error) {
       console.warn(`Background refresh failed for ${endpoint}:`, error);
+    } finally {
+      // Remove from active refreshes when done
+      this.activeBackgroundRefreshes.delete(refreshKey);
     }
   }
 
@@ -670,6 +856,24 @@ export default class HybridApiService extends Service {
   // === UTILITY METHODS ===
 
   async cacheItem(collection, item) {
+    // Debug logging for properties collection to track what's being cached
+    if (collection === 'properties') {
+      console.log('🗄️ Caching item to properties collection:', {
+        id: item.id,
+        idType: typeof item.id,
+        mapNumber: item.mapNumber,
+        lotSubDisplay: item.lotSubDisplay,
+        pid_formatted: item.pid_formatted,
+        hasPropertyField: !!item.property,
+        allKeys: Object.keys(item).slice(0, 10) // First 10 keys
+      });
+
+      // Warn if this looks like a wrapped response object
+      if (item.success !== undefined || item.property !== undefined) {
+        console.error('⚠️ WARNING: Attempting to cache a wrapped response object to properties!', item);
+      }
+    }
+
     await this.indexedDb.put(collection, {
       ...item,
       _syncState: 'synced',
@@ -721,6 +925,18 @@ export default class HybridApiService extends Service {
     const cleanEndpoint = endpoint.split('?')[0];
     const parts = cleanEndpoint.replace(/^\//, '').split('/');
 
+    // Handle nested endpoints like /municipalities/{id}/properties/zones
+    // These are sub-resources under properties and should NOT be cached in properties collection
+    if (parts.length >= 4 && parts[0] === 'municipalities' && parts[2] === 'properties') {
+      const subResource = parts[3];
+
+      // Special handling for property sub-resources
+      if (subResource === 'zones' || subResource === 'updates') {
+        console.log(`🎯 Property sub-resource ${endpoint} -> excluded from caching (will fetch from network)`);
+        return null; // Don't cache zones config or update checks
+      }
+    }
+
     // Handle nested endpoints like /municipalities/{id}/properties
     if (parts.length >= 3 && parts[0] === 'municipalities') {
       const resourceName = parts[2];
@@ -755,6 +971,17 @@ export default class HybridApiService extends Service {
         return resourceName;
       }
       if (resourceName === 'assessment') {
+        // Map different assessment endpoints to their own collections
+        // This keeps ParcelAssessment, BuildingAssessment, LandAssessment separate
+        if (endpoint.includes('/assessment/building')) {
+          console.log(`🎯 Mapping ${endpoint} -> building_assessments collection`);
+          return 'building_assessments';
+        }
+        if (endpoint.includes('/assessment/land')) {
+          console.log(`🎯 Mapping ${endpoint} -> land_assessments collection`);
+          return 'land_assessments';
+        }
+        // Default to assessments collection for current/general parcel assessments
         console.log(`🎯 Mapping ${endpoint} -> assessments collection`);
         return 'assessments';
       }
@@ -955,5 +1182,167 @@ export default class HybridApiService extends Service {
       isOnline: this.isOnline,
       syncInProgress: this.syncInProgress,
     };
+  }
+
+  /**
+   * Check if endpoint is for configuration/settings data that should use network-first
+   * These endpoints represent system configuration that changes infrequently but
+   * must be current when modified
+   */
+  isConfigurationEndpoint(endpoint) {
+    const cleanEndpoint = endpoint.split('?')[0];
+    const configurationPatterns = [
+      '/sketch-sub-area-factors',
+      '/building-codes',
+      '/building-feature-codes',
+      '/building-miscellaneous-points',
+      '/zones',
+      '/neighborhood-codes',
+      '/land-use-details',
+      '/current-use',
+      '/acreage-discount-settings',
+      '/exemption-types',
+      '/feature-codes',
+      '/pid-format',
+    ];
+
+    return configurationPatterns.some(pattern => cleanEndpoint.includes(pattern));
+  }
+
+  // === SMART POLLING FOR PROPERTY UPDATES ===
+
+  /**
+   * Start smart polling for property updates
+   * Checks every 5 minutes for properties that have been updated
+   * Only fetches changed properties instead of entire list
+   */
+  startSmartPolling() {
+    // Clear any existing interval
+    this.stopSmartPolling();
+
+    console.log('📡 Starting smart polling for property updates (5-min interval)');
+
+    // Poll immediately, then every 5 minutes
+    this.checkForPropertyUpdates();
+    this.pollingInterval = setInterval(() => {
+      this.checkForPropertyUpdates();
+    }, 5 * 60 * 1000); // 5 minutes
+  }
+
+  /**
+   * Stop smart polling
+   */
+  stopSmartPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      console.log('🛑 Stopped smart polling');
+    }
+  }
+
+  /**
+   * Force an immediate check for property updates (manual sync)
+   */
+  async forceSync() {
+    console.log('🔄 Manual sync triggered');
+    return await this.checkForPropertyUpdates();
+  }
+
+  /**
+   * Check for property updates since last sync
+   * Only fetches properties that have actually changed
+   */
+  async checkForPropertyUpdates() {
+    try {
+      const municipalityId = this.municipality?.currentMunicipality?.id;
+      if (!municipalityId) {
+        console.log('⏭️ No municipality selected, skipping property update check');
+        return;
+      }
+
+      // Get last sync timestamp from IndexedDB metadata
+      const lastSync = await this.indexedDb.getMetadata('properties_last_sync');
+      const sinceParam = lastSync?.timestamp ? `?since=${lastSync.timestamp}` : '';
+
+      console.log(`🔍 Checking for property updates since: ${lastSync?.timestamp || 'initial sync'}`);
+
+      // Call the lightweight updates endpoint
+      const response = await this.api.get(
+        `/municipalities/${municipalityId}/properties/updates${sinceParam}`,
+        {},
+        { background: true } // Don't show loading overlay
+      );
+
+      if (!response.hasUpdates) {
+        console.log('✅ No property updates found');
+        // Update last sync timestamp even if no updates
+        await this.indexedDb.setMetadata('properties_last_sync', {
+          timestamp: response.checkedAt || new Date().toISOString(),
+        });
+        return { hasUpdates: false };
+      }
+
+      // If this is an initial sync (no previous timestamp), don't fetch individual properties
+      // The main properties list endpoint will handle the initial load more efficiently
+      if (!lastSync?.timestamp) {
+        console.log('⏭️ Initial sync detected - skipping individual property fetches. Main properties endpoint will handle initial load.');
+        await this.indexedDb.setMetadata('properties_last_sync', {
+          timestamp: response.checkedAt || new Date().toISOString(),
+        });
+        return { hasUpdates: false, isInitialSync: true };
+      }
+
+      console.log(`📥 Found ${response.totalUpdated} updated properties, fetching full data...`);
+
+      // Limit concurrent requests to avoid overwhelming the server
+      const BATCH_SIZE = 10;
+      const validProperties = [];
+
+      for (let i = 0; i < response.updatedPropertyIds.length; i += BATCH_SIZE) {
+        const batch = response.updatedPropertyIds.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (propertyId) => {
+            try {
+              const propertyResponse = await this.api.get(
+                `/properties/${propertyId}`,
+                {},
+                { background: true }
+              );
+              return propertyResponse.property || propertyResponse;
+            } catch (error) {
+              console.warn(`Failed to fetch property ${propertyId}:`, error);
+              return null;
+            }
+          })
+        );
+
+        // Filter out nulls and cache
+        const validBatch = batchResults.filter(p => p !== null);
+        for (const property of validBatch) {
+          await this.cacheItem('properties', property);
+        }
+        validProperties.push(...validBatch);
+
+        console.log(`✅ Cached batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validBatch.length} properties`);
+      }
+
+      console.log(`✅ Cached total: ${validProperties.length} updated properties`);
+
+      // Update last sync timestamp
+      await this.indexedDb.setMetadata('properties_last_sync', {
+        timestamp: response.checkedAt || new Date().toISOString(),
+      });
+
+      // Trigger event for components to react
+      this.trigger('propertiesRefreshed', validProperties);
+
+      return {
+        hasUpdates: true,
+        totalUpdated: validProperties.length,
+      };
+    } catch (error) {
+      console.error('Smart polling error:', error);
+      return { hasUpdates: false, error: error.message };
+    }
   }
 }

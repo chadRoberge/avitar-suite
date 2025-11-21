@@ -73,22 +73,22 @@ export default class MunicipalityAssessingLandPropertyRoute extends Route {
           0;
 
         // Use land assessment data directly for accurate land taxable value
-        const landAssessment =
-          landAssessmentResponse.assessment || landAssessmentResponse;
+        // Service layer normalizes response format
+        const landAssessmentForCalc = landAssessmentResponse.assessment || landAssessmentResponse;
 
         // Calculate land taxable value from land assessment calculated totals
         // For current use land: landMarketValue - totalCurrentUseCredit = land taxable value
         const landMarketValue =
-          landAssessment?.calculated_totals?.landMarketValue ?? 0;
+          landAssessmentForCalc?.calculated_totals?.landMarketValue ?? 0;
         const totalCurrentUseCredit =
-          landAssessment?.calculated_totals?.totalCurrentUseCredit ?? 0;
+          landAssessmentForCalc?.calculated_totals?.totalCurrentUseCredit ?? 0;
         const landTaxableValueFromCalculation =
           landMarketValue - totalCurrentUseCredit;
         // Debug calculation logging removed
 
         const landValue =
           landTaxableValueFromCalculation !== 0 ? landTaxableValueFromCalculation :
-          landAssessment?.taxable_value ??
+          landAssessmentForCalc?.taxable_value ??
           assessment?.land?.value ??
           (typeof assessment?.land === 'number' ? assessment.land : null) ??
           assessment?.calculated_totals?.landTaxableValue ??
@@ -104,7 +104,9 @@ export default class MunicipalityAssessingLandPropertyRoute extends Route {
           0;
 
         // Calculate CARD-SPECIFIC total from components
-        const cardTotalFromComponents = buildingValue + landValue + featuresValue;
+        // Only include land value for Card 1 (base land is parcel-level, only Card 1 gets it)
+        const cardLandValue = parseInt(cardNumber) === 1 ? landValue : 0;
+        const cardTotalFromComponents = buildingValue + cardLandValue + featuresValue;
         const cardProvidedTotal =
           assessment?.total_value ||
           assessment?.total ||
@@ -140,33 +142,20 @@ export default class MunicipalityAssessingLandPropertyRoute extends Route {
       // Update property selection service so other routes work correctly
       this.propertySelection.setSelectedProperty(cleanProperty);
 
-      // Create clean copies of assessment data
-      const landAssessment =
-        landAssessmentResponse.assessment || landAssessmentResponse;
+      // Service layer normalizes response format
+      const landAssessment = landAssessmentResponse.assessment || landAssessmentResponse;
       const cleanLandAssessment = landAssessment
         ? JSON.parse(JSON.stringify(landAssessment))
         : {};
 
-      // Process views data from land assessment response
-      const views = landAssessmentResponse?.views || [];
-      const viewsArray = Array.isArray(views) ? views : [];
-
-      // Process view attributes and zones data from land assessment response
-      const viewAttributes = landAssessmentResponse?.viewAttributes || [];
-      const zones = landAssessmentResponse?.zones || [];
-
       return {
         property: cleanProperty,
         landAssessment: cleanLandAssessment,
-        landHistory: landAssessmentResponse.history
-          ? [...landAssessmentResponse.history]
-          : [],
-        comparables: landAssessmentResponse.comparables
-          ? [...landAssessmentResponse.comparables]
-          : [],
-        views: [...viewsArray],
-        viewAttributes: [...viewAttributes],
-        zones: [...zones],
+        landHistory: landAssessmentResponse.history || [],
+        comparables: landAssessmentResponse.comparables || [],
+        views: landAssessmentResponse.views || [],
+        viewAttributes: landAssessmentResponse.viewAttributes || [],
+        zones: landAssessmentResponse.zones || [],
         showPropertySelection: false,
       };
     } catch (error) {

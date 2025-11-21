@@ -12,9 +12,13 @@ class BuildingAssessmentCalculator {
     // Store municipality info for validation
     this.municipalityId = referenceData.municipalityId || null;
 
-    // Caching for batch processing efficiency
-    this.featureCache = new Map();
-    this.codeCache = new Map();
+    // Create ObjectId-based lookup maps for fast access
+    this.featureCodeById = new Map(
+      this.buildingFeatureCodes.map(fc => [fc._id.toString(), fc])
+    );
+    this.buildingCodeById = new Map(
+      this.buildingCodes.map(bc => [bc._id.toString(), bc])
+    );
   }
 
   /**
@@ -37,6 +41,8 @@ class BuildingAssessmentCalculator {
         roofPoints: 0,
         heatingPoints: 0,
         flooringPoints: 0,
+        framePoints: 0,
+        ceilingHeightPoints: 0,
         bedroomBathRate: 0,
         airConditioningPoints: 0,
         extraKitchenPoints: 0,
@@ -219,6 +225,28 @@ class BuildingAssessmentCalculator {
       );
     }
 
+    // Calculate frame points
+    if (buildingData.frame) {
+      calculations.framePoints = this.getFeaturePoints(
+        'frame',
+        buildingData.frame,
+      );
+      console.log(
+        `🏠 Frame (${buildingData.frame}): ${calculations.framePoints} points`,
+      );
+    }
+
+    // Calculate ceiling height points
+    if (buildingData.ceiling_height) {
+      calculations.ceilingHeightPoints = this.getFeaturePoints(
+        'ceiling_height',
+        buildingData.ceiling_height,
+      );
+      console.log(
+        `🏠 Ceiling Height (${buildingData.ceiling_height}): ${calculations.ceilingHeightPoints} points`,
+      );
+    }
+
     // Calculate air conditioning points using percentage
     if (buildingData.air_conditioning) {
       calculations.airConditioningPoints = this.calculateAirConditioningPoints(
@@ -267,6 +295,8 @@ class BuildingAssessmentCalculator {
       calculations.roofPoints +
       calculations.heatingPoints +
       calculations.flooringPoints +
+      calculations.framePoints +
+      calculations.ceilingHeightPoints +
       calculations.bedroomBathRate +
       calculations.airConditioningPoints +
       calculations.extraKitchenPoints +
@@ -288,14 +318,13 @@ class BuildingAssessmentCalculator {
       calculations.baseRate = buildingCode.rate;
       calculations.baseDepreciationRate = buildingCode.depreciation / 100; // Convert percentage to decimal
       console.log(
-        `Found building code for ${baseType}: Rate $${buildingCode.rate}, Depreciation ${buildingCode.depreciation}%`,
+        `Found building code ${buildingCode.code}: Rate $${buildingCode.rate}, Depreciation ${buildingCode.depreciation}%`,
       );
     } else {
       calculations.baseRate = config.defaultBaseRate || 0;
       calculations.baseDepreciationRate = config.defaultDepreciationRate || 0;
       console.warn(
-        `No building code found for base_type '${baseType}', using defaults. Available codes:`,
-        this.buildingCodes.map((c) => c.code).join(', '),
+        `No building code found for base_type ID '${baseType}', using defaults.`,
       );
     }
 
@@ -476,77 +505,76 @@ class BuildingAssessmentCalculator {
   /**
    * Helper method to get feature points
    */
-  getFeaturePoints(featureType, displayText) {
-    if (!displayText) return 0;
+  getFeaturePoints(featureType, featureCodeId) {
+    if (!featureCodeId) return 0;
 
-    const cacheKey = `${featureType}:${displayText}`;
-    if (this.featureCache.has(cacheKey)) {
-      return this.featureCache.get(cacheKey);
+    // Convert ObjectId to string for Map lookup
+    const idString = featureCodeId.toString();
+    const feature = this.featureCodeById.get(idString);
+
+    if (!feature) {
+      console.warn(`⚠️ Feature code not found for ID: ${idString}`);
+      return 0;
     }
 
-    const feature = this.buildingFeatureCodes.find(
-      (f) =>
-        f.featureType === featureType &&
-        f.displayText === displayText &&
-        f.isActive,
-    );
+    // Verify the feature type matches (safety check)
+    if (feature.featureType !== featureType) {
+      console.warn(`⚠️ Feature type mismatch: expected ${featureType}, got ${feature.featureType}`);
+      return 0;
+    }
 
-    const points = feature ? feature.points || 0 : 0;
-    this.featureCache.set(cacheKey, points);
-    return points;
+    // Only use points from active feature codes
+    if (!feature.isActive) {
+      console.warn(`⚠️ Feature code ${idString} is inactive`);
+      return 0;
+    }
+
+    return feature.points || 0;
   }
 
   /**
    * Helper method to get building code by base type
    */
-  getBuildingCodeByType(baseType) {
-    if (!baseType) return null;
+  getBuildingCodeByType(baseTypeId) {
+    if (!baseTypeId) return null;
 
-    // Include municipality in cache key for safety (though codes should already be filtered)
-    const cacheKey = `${this.municipalityId || 'default'}:${baseType}`;
-    if (this.codeCache.has(cacheKey)) {
-      return this.codeCache.get(cacheKey);
+    // Convert ObjectId to string for Map lookup
+    const idString = baseTypeId.toString();
+    const buildingCode = this.buildingCodeById.get(idString);
+
+    if (!buildingCode) {
+      console.warn(`⚠️ Building code not found for ID: ${idString}`);
+      return null;
     }
 
-    // Find building code - codes should already be filtered by municipality
-    // but we double-check municipalityId if available
-    const buildingCode = this.buildingCodes.find(
-      (code) =>
-        code.code === baseType &&
-        code.isActive &&
-        (!this.municipalityId ||
-          code.municipalityId?.toString() === this.municipalityId?.toString()),
-    );
+    // Only use active building codes
+    if (!buildingCode.isActive) {
+      console.warn(`⚠️ Building code ${idString} is inactive`);
+      return null;
+    }
 
-    this.codeCache.set(cacheKey, buildingCode);
     return buildingCode;
   }
 
   /**
    * Helper method to get building type for size adjustment from base type
    */
-  getBuildingTypeForSizeAdjustment(baseType) {
-    if (!baseType) return 'residential'; // Default fallback
+  getBuildingTypeForSizeAdjustment(baseTypeId) {
+    if (!baseTypeId) return 'residential'; // Default fallback
 
-    const buildingCode = this.getBuildingCodeByType(baseType);
+    const buildingCode = this.getBuildingCodeByType(baseTypeId);
 
-    if (buildingCode && buildingCode.sizeAdjustmentCategory) {
+    if (!buildingCode) {
+      return 'residential'; // Default fallback
+    }
+
+    if (buildingCode.sizeAdjustmentCategory) {
       return buildingCode.sizeAdjustmentCategory;
     }
 
     // Fallback to buildingType if sizeAdjustmentCategory not available
-    if (buildingCode && buildingCode.buildingType) {
+    if (buildingCode.buildingType) {
       return buildingCode.buildingType;
-    }
-
-    // Final fallback - try to infer from base type code patterns
-    const upperBaseType = baseType.toUpperCase();
-    if (upperBaseType.includes('MAN') || upperBaseType.includes('MOB')) {
-      return 'manufactured';
-    } else if (upperBaseType.includes('COM') || upperBaseType.includes('BUS')) {
-      return 'commercial';
-    } else if (upperBaseType.includes('IND') || upperBaseType.includes('WAR')) {
-      return 'industrial';
     }
 
     return 'residential'; // Default fallback

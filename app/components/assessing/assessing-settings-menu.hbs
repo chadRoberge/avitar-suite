@@ -96,14 +96,66 @@
       </li>
       
       <li class="avitar-sidebar__nav-item">
-        <LinkTo 
-          @route="municipality.assessing.settings.exemptions-credits" 
+        <LinkTo
+          @route="municipality.assessing.settings.exemptions-credits"
           class="avitar-sidebar__nav-link"
           @activeClass="avitar-sidebar__nav-link--active"
         >
           <i class="fas fa-percent avitar-sidebar__nav-icon"></i>
           <span>Exemptions & Credits</span>
         </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="municipality.assessing.settings.import"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-file-import avitar-sidebar__nav-icon"></i>
+          <span>Data Import</span>
+        </LinkTo>
+      </li>
+
+      {{! Advanced Dropdown }}
+      <li class="avitar-sidebar__nav-item avitar-sidebar__nav-item--dropdown">
+        <button
+          type="button"
+          class="avitar-sidebar__nav-link avitar-sidebar__nav-link--dropdown"
+          {{on "click" this.toggleAdvancedDropdown}}
+        >
+          <i class="fas fa-flask avitar-sidebar__nav-icon"></i>
+          <span>Advanced</span>
+          <i class="fas fa-chevron-{{if this.showAdvancedDropdown 'up' 'down'}} avitar-sidebar__nav-dropdown-icon"></i>
+        </button>
+
+        {{#if this.showAdvancedDropdown}}
+          <ul class="avitar-sidebar__nav-submenu">
+            <li class="avitar-sidebar__nav-item">
+              <LinkTo
+                @route="municipality.assessing.reports"
+                class="avitar-sidebar__nav-link avitar-sidebar__nav-link--submenu"
+                @activeClass="avitar-sidebar__nav-link--active"
+                {{on "mousedown" this.closeAdvancedDropdown}}
+              >
+                <i class="fas fa-file-alt avitar-sidebar__nav-icon"></i>
+                <span>Reports</span>
+              </LinkTo>
+            </li>
+
+            <li class="avitar-sidebar__nav-item">
+              <LinkTo
+                @route="municipality.assessing.revaluation"
+                class="avitar-sidebar__nav-link avitar-sidebar__nav-link--submenu"
+                @activeClass="avitar-sidebar__nav-link--active"
+                {{on "mousedown" this.closeAdvancedDropdown}}
+              >
+                <i class="fas fa-chart-line avitar-sidebar__nav-icon"></i>
+                <span>Revaluation</span>
+              </LinkTo>
+            </li>
+          </ul>
+        {{/if}}
       </li>
     </ul>
   </div>

@@ -28,39 +28,43 @@ const buildingAssessmentSchema = new mongoose.Schema(
 
     // Basic Building Information
     building_model: { type: String, trim: true },
-    frame: { type: String, trim: true },
+    frame: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    frame_height: { type: Number },
+    ceiling_height: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
     year_built: { type: Number },
-    base_type: { type: String, trim: true },
-    quality_grade: { type: String, trim: true },
-    story_height: { type: String, trim: true },
+    base_type: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingCode' },
+    quality_grade: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    story_height: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Roof Details
-    roof_style: { type: String, trim: true },
-    roof_cover: { type: String, trim: true },
+    roof_style: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    roof_cover: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Wall Details
-    exterior_wall_1: { type: String, trim: true },
-    exterior_wall_2: { type: String, trim: true },
-    interior_wall_1: { type: String, trim: true },
-    interior_wall_2: { type: String, trim: true },
+    exterior_wall_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    exterior_wall_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    interior_wall_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    interior_wall_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Flooring
-    flooring_1: { type: String, trim: true },
-    flooring_2: { type: String, trim: true },
+    flooring_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    flooring_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Heating/Cooling
-    heating_fuel: { type: String, trim: true },
-    heating_type: { type: String, trim: true },
-    air_conditioning: { type: String, trim: true },
+    heating_fuel: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    heating_type: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    air_conditioning: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Room Details
     bedrooms: { type: Number, default: 0 },
     full_baths: { type: Number, default: 0 },
     half_baths: { type: Number, default: 0 },
     extra_kitchen: { type: Number, default: 0 },
+    fireplaces: { type: Number, default: 0 },
 
     // Additional Features
-    generator: { type: String, trim: true },
+    generator: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    condition: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
 
     // Building Valuation
     base_rate: { type: Number, default: 0 },
@@ -69,6 +73,8 @@ const buildingAssessmentSchema = new mongoose.Schema(
     assessed_value: { type: Number, default: 0 },
 
     // Building size and area information
+    gross_area: { type: Number, default: 0 },
+    gross_living_area: { type: Number, default: 0 },
     effective_area: { type: Number, default: 0 },
 
     // Building age information

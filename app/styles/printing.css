@@ -1,0 +1,219 @@
+/* Printing Styles for Avitar Suite */
+/* All print-specific styles for modals, reports, and documents */
+
+/* Formula text - applies on screen and print */
+.print-formulas {
+  margin-top: 10px;
+  font-size: 5pt !important;
+  border-top: 1px solid #000;
+  padding-top: 3px;
+}
+
+.print-formulas h4 {
+  margin: 0 0 1px 0;
+  font-size: 5.5pt !important;
+  font-weight: bold;
+}
+
+.print-formulas p {
+  margin: 0.5px 0;
+  line-height: 1.1;
+  font-size: 5pt !important;
+}
+
+.print-formulas strong {
+  font-size: 5pt !important;
+  font-weight: bold;
+}
+
+@media print {
+  /* Property Record Card Modal Print Styles */
+  .property-record-modal-overlay {
+    background: white;
+    position: static;
+    padding: 0;
+  }
+
+  .property-record-modal {
+    max-width: none;
+    max-height: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .property-record-modal__header {
+    display: none;
+  }
+
+  .property-record-card-page {
+    padding: 20px;
+    page-break-after: always;
+    border-bottom: none;
+  }
+
+  .property-record-card-page--1,
+  .property-record-card-page--2 {
+    height: 8.5in;
+    width: 11in;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .property-record-card-page:last-child {
+    page-break-after: auto;
+  }
+
+  /* Hide page break indicators in print */
+  .property-record-card-page [style*="page-break-before"] {
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .property-record-card-page [style*="page-break-before"]::after {
+    display: none !important;
+  }
+
+  /* Property Record Card Sketch Print Styles */
+  .property-record-sketch {
+    border: 1px solid #000 !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .property-record-sketch .sketch-canvas-container svg {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .property-record-sketch__item {
+    border: 1px solid #ccc !important;
+  }
+
+  /* Revaluation Sheet Print Styles */
+  .building-rate-print {
+    font-size: 8pt;
+    font-family: Arial, sans-serif;
+    width: 100%;
+  }
+
+  .print-page {
+    padding: 0.5in;
+    page-break-after: always;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+  }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .municipality-name {
+    font-size: 14pt;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .report-title {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 5px 0 10px 0;
+  }
+
+  .print-settings-box {
+    border: 1px solid #000;
+    padding: 8px;
+    margin-bottom: 10px;
+    font-size: 5.5pt;
+  }
+
+  .print-settings-box .label {
+    font-weight: normal;
+    white-space: nowrap;
+  }
+
+  .print-settings-box .value {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  /* Flex-based table for printing */
+  .print-flex-table {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .print-flex-table__header {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    font-size: 0.55rem;
+    border-top: 1px solid #000;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-flex-table__header .print-flex-table__cell {
+    font-weight: bold;
+  }
+
+  .print-flex-table__row {
+    page-break-inside: avoid;
+  }
+
+  .print-flex-table__cell {
+    padding: 2px 4px;
+    text-align: right;
+    border-right: 1px solid #ddd;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .print-flex-table__cell--left {
+    text-align: left;
+  }
+
+  .print-flex-table__cell:first-child {
+    border-left: 1px solid #000;
+  }
+
+  .print-flex-table__cell:last-child {
+    border-right: 1px solid #000;
+  }
+
+  .print-summary {
+    margin: 10px 0;
+    text-align: right;
+    font-size: 8pt;
+  }
+
+  .summary-row {
+    margin-bottom: 4px;
+  }
+
+  .summary-row .label {
+    margin-right: 10px;
+  }
+
+  .summary-row .value {
+    font-weight: bold;
+  }
+
+  .print-analysis {
+    margin: 10px 0;
+    font-size: 7pt;
+    text-align: justify;
+  }
+
+  .print-footer {
+    position: fixed;
+    bottom: 0.3in;
+    left: 0.5in;
+    right: 0.5in;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7pt;
+    border-top: 1px solid #000;
+    padding-top: 5px;
+  }
+}

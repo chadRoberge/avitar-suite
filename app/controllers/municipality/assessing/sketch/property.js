@@ -471,10 +471,35 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
       if (sketchId && existingSketch) {
         // Update existing sketch
+        // Strip temporary IDs from shapes before updating
+        const cleanedShapes = (editedSketch.shapes || []).map(shape => {
+          const { _id: shapeId, ...shapeWithoutId } = shape;
+
+          // Also clean description _ids if they exist
+          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(desc => {
+            if (desc._id && desc._id.toString().startsWith('temp-')) {
+              const { _id, ...descWithoutId } = desc;
+              return descWithoutId;
+            }
+            return desc;
+          });
+
+          // Only include _id if it's a real MongoDB ObjectId (not a temp ID)
+          if (shapeId && !shapeId.toString().startsWith('temp-')) {
+            return { ...shape, descriptions: cleanedDescriptions }; // Keep the original _id
+          }
+          return { ...shapeWithoutId, descriptions: cleanedDescriptions }; // Omit the temp _id
+        });
+
+        const cleanedSketch = {
+          ...editedSketch,
+          shapes: cleanedShapes,
+        };
+
         const response = await this.assessing.updatePropertySketch(
           this.model.property.id,
           sketchId,
-          editedSketch,
+          cleanedSketch,
         );
         savedSketch = response.sketch;
 
@@ -517,9 +542,32 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
       } else {
         // Create new sketch
         const { _id, ...sketchWithoutId } = editedSketch;
+
+        // Strip temporary IDs from shapes (they start with "temp-")
+        const cleanedShapes = (sketchWithoutId.shapes || []).map(shape => {
+          const { _id: shapeId, ...shapeWithoutId } = shape;
+
+          // Also clean description _ids if they exist
+          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(desc => {
+            if (desc._id && desc._id.toString().startsWith('temp-')) {
+              const { _id, ...descWithoutId } = desc;
+              return descWithoutId;
+            }
+            return desc;
+          });
+
+          // Only include _id if it's a real MongoDB ObjectId (not a temp ID)
+          if (shapeId && !shapeId.toString().startsWith('temp-')) {
+            return { ...shape, descriptions: cleanedDescriptions }; // Keep the original _id
+          }
+          return { ...shapeWithoutId, descriptions: cleanedDescriptions }; // Omit the temp _id
+        });
+
         const sketchData = {
           ...sketchWithoutId,
+          shapes: cleanedShapes,
           property_id: this.model.property.id,
+          municipality_id: this.model.property.municipality_id,
           card_number: this.model.property.current_card,
         };
 

@@ -1,0 +1,27 @@
+{{! Breadcrumb Navigation Component }}
+<nav class="avitar-breadcrumb" aria-label="Breadcrumb">
+  <ol class="avitar-breadcrumb__list">
+    {{#each @items as |item|}}
+      <li class="avitar-breadcrumb__item">
+        {{#if item.route}}
+          <LinkTo @route={{item.route}} class="avitar-breadcrumb__link">
+            {{#if item.icon}}
+              <i class="fas fa-{{item.icon}} avitar-mr-1"></i>
+            {{/if}}
+            {{item.label}}
+          </LinkTo>
+        {{else}}
+          <span class="avitar-breadcrumb__current">
+            {{#if item.icon}}
+              <i class="fas fa-{{item.icon}} avitar-mr-1"></i>
+            {{/if}}
+            {{item.label}}
+          </span>
+        {{/if}}
+        {{#unless @last}}
+          <i class="fas fa-chevron-right avitar-breadcrumb__separator"></i>
+        {{/unless}}
+      </li>
+    {{/each}}
+  </ol>
+</nav>

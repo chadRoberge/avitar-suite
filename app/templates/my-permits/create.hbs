@@ -1,0 +1,556 @@
+{{page-title "Create New Permit"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-2xl avitar-font-bold avitar-text-gray-900">
+        <i class="fas fa-plus-circle avitar-mr-2 avitar-text-primary"></i>
+        New Permit Application
+      </h1>
+      <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+        {{#if @model.isContractor}}
+          Submit a permit application on behalf of your company
+        {{else}}
+          Submit a new building permit application
+        {{/if}}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--ghost avitar-btn--secondary"
+      {{on "click" this.cancel}}
+    >
+      <i class="fas fa-times avitar-mr-2"></i>
+      Cancel
+    </button>
+  </div>
+
+  {{! Progress Bar }}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__body avitar-py-4">
+      {{! Step Indicators }}
+      <div class="avitar-flex avitar-justify-between avitar-mb-4">
+        {{#each this.steps as |step|}}
+          <div
+            class="avitar-flex avitar-flex-col avitar-items-center avitar-flex-1 avitar-cursor-pointer"
+            {{on "click" (fn this.goToStep step.number)}}
+          >
+            <div
+              class="avitar-flex avitar-items-center avitar-justify-center avitar-w-12 avitar-h-12 avitar-rounded-full avitar-mb-2
+                {{if (eq this.currentStep step.number) 'avitar-bg-primary avitar-text-white'
+                  (if (gt this.currentStep step.number) 'avitar-bg-success avitar-text-white' 'avitar-bg-gray-200 avitar-text-gray-600')}}"
+            >
+              {{#if (gt this.currentStep step.number)}}
+                <i class="fas fa-check"></i>
+              {{else}}
+                <i class="fas fa-{{step.icon}}"></i>
+              {{/if}}
+            </div>
+            <span
+              class="avitar-text-xs avitar-font-medium
+                {{if (eq this.currentStep step.number) 'avitar-text-primary' 'avitar-text-gray-600'}}"
+            >
+              {{step.name}}
+            </span>
+          </div>
+        {{/each}}
+      </div>
+
+      {{! Progress Bar }}
+      <div class="avitar-w-full avitar-bg-gray-200 avitar-rounded-full avitar-h-2">
+        <div
+          class="avitar-bg-primary avitar-h-2 avitar-rounded-full avitar-transition-all"
+          style="width: {{this.progressPercentage}}%"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  {{! Wizard Content }}
+  <div class="avitar-card">
+    <div class="avitar-card__body avitar-p-6">
+      {{! Step 1: Municipality Selection }}
+      {{#if (eq this.currentStep 1)}}
+        <div>
+          <h2 class="avitar-text-xl avitar-font-semibold avitar-mb-4">
+            Select Municipality
+          </h2>
+          <p class="avitar-text-muted avitar-mb-6">
+            Choose the municipality where the permit will be filed
+          </p>
+
+          {{#if @model.municipalities.length}}
+            <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+              {{#each @model.municipalities as |municipality|}}
+                <div
+                  class="avitar-card avitar-card--hover avitar-cursor-pointer
+                    {{if (eq this.selectedMunicipality.id municipality.id) 'avitar-ring-2 avitar-ring-primary'}}"
+                  {{on "click" (fn this.selectMunicipality municipality)}}
+                >
+                  <div class="avitar-card__body avitar-p-4">
+                    <div class="avitar-flex avitar-items-center avitar-gap-3">
+                      <div class="avitar-flex-shrink-0">
+                        <div
+                          class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary-light avitar-text-primary avitar-flex avitar-items-center avitar-justify-center"
+                        >
+                          <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                      </div>
+                      <div class="avitar-flex-1">
+                        <h3 class="avitar-font-semibold avitar-text-gray-900">
+                          {{municipality.name}}
+                        </h3>
+                        {{#if (eq this.selectedMunicipality.id municipality.id)}}
+                          <span class="avitar-badge avitar-badge--success avitar-badge--sm">
+                            <i class="fas fa-check avitar-mr-1"></i>
+                            Selected
+                          </span>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-exclamation-triangle fa-3x avitar-text-warning avitar-mb-4"></i>
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+                No Municipalities Available
+              </h3>
+              <p class="avitar-text-muted avitar-text-center" style="max-width: 400px;">
+                No municipalities are currently available. Please contact support.
+              </p>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
+      {{! Step 2: Property Selection }}
+      {{#if (eq this.currentStep 2)}}
+        <div>
+          <h2 class="avitar-text-xl avitar-font-semibold avitar-mb-4">
+            Select Property
+          </h2>
+          <p class="avitar-text-muted avitar-mb-6">
+            Search for the property address or PID
+          </p>
+
+          {{! Search Form }}
+          <form {{on "submit" this.searchProperties}} class="avitar-mb-6">
+            <div class="avitar-flex avitar-gap-3">
+              <div class="avitar-flex-1">
+                <input
+                  type="text"
+                  class="avitar-input"
+                  placeholder="Enter address or PID..."
+                  value={{this.propertySearchText}}
+                  {{on "input" this.updatePropertySearch}}
+                />
+              </div>
+              <button
+                type="submit"
+                class="avitar-btn avitar-btn--primary"
+                disabled={{this.searchingProperties}}
+              >
+                {{#if this.searchingProperties}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Searching...
+                {{else}}
+                  <i class="fas fa-search avitar-mr-2"></i>
+                  Search
+                {{/if}}
+              </button>
+            </div>
+          </form>
+
+          {{! Selected Property }}
+          {{#if this.selectedProperty}}
+            <div class="avitar-card avitar-ring-2 avitar-ring-success avitar-mb-4">
+              <div class="avitar-card__body avitar-p-4">
+                <div class="avitar-flex avitar-justify-between avitar-items-start">
+                  <div>
+                    <span class="avitar-badge avitar-badge--success avitar-mb-2">
+                      <i class="fas fa-check avitar-mr-1"></i>
+                      Selected
+                    </span>
+                    <h3 class="avitar-font-semibold avitar-text-gray-900">
+                      {{this.selectedProperty.pidFormatted}}
+                    </h3>
+                    <p class="avitar-text-sm avitar-text-muted">
+                      {{this.selectedProperty.address}}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                    {{on "click" (fn this.selectProperty null)}}
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Search Results }}
+          {{#if this.properties.length}}
+            <div class="avitar-space-y-2">
+              <h3 class="avitar-text-sm avitar-font-medium avitar-text-gray-700 avitar-mb-3">
+                Search Results ({{this.properties.length}})
+              </h3>
+              {{#each this.properties as |property|}}
+                <div
+                  class="avitar-card avitar-card--hover avitar-cursor-pointer"
+                  {{on "click" (fn this.selectProperty property)}}
+                >
+                  <div class="avitar-card__body avitar-p-3">
+                    <div class="avitar-flex avitar-items-center avitar-gap-3">
+                      <div class="avitar-flex-shrink-0">
+                        <div
+                          class="avitar-w-8 avitar-h-8 avitar-rounded-full avitar-bg-primary-light avitar-text-primary avitar-flex avitar-items-center avitar-justify-center"
+                        >
+                          <i class="fas fa-home"></i>
+                        </div>
+                      </div>
+                      <div class="avitar-flex-1">
+                        <div class="avitar-font-medium avitar-text-gray-900">
+                          {{property.pidFormatted}}
+                        </div>
+                        <div class="avitar-text-sm avitar-text-muted">
+                          {{property.address}}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
+      {{! Step 3: Permit Type Selection }}
+      {{#if (eq this.currentStep 3)}}
+        <div>
+          <h2 class="avitar-text-xl avitar-font-semibold avitar-mb-4">
+            Select Permit Type
+          </h2>
+          <p class="avitar-text-muted avitar-mb-6">
+            Choose the type of permit you need
+          </p>
+
+          {{#if this.permitTypes.length}}
+            <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+              {{#each this.permitTypes as |permitType|}}
+                <div
+                  class="avitar-card avitar-card--hover avitar-cursor-pointer
+                    {{if (eq this.selectedPermitType.id permitType.id) 'avitar-ring-2 avitar-ring-primary'}}"
+                  {{on "click" (fn this.selectPermitType permitType)}}
+                >
+                  <div class="avitar-card__body avitar-p-4">
+                    <div class="avitar-flex avitar-items-start avitar-gap-3">
+                      <div class="avitar-flex-shrink-0">
+                        <div
+                          class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary-light avitar-text-primary avitar-flex avitar-items-center avitar-justify-center"
+                        >
+                          <i class="fas fa-{{permitType.icon}}"></i>
+                        </div>
+                      </div>
+                      <div class="avitar-flex-1">
+                        <h3 class="avitar-font-semibold avitar-text-gray-900 avitar-mb-1">
+                          {{permitType.name}}
+                        </h3>
+                        <p class="avitar-text-sm avitar-text-muted">
+                          {{permitType.description}}
+                        </p>
+                        {{#if (eq this.selectedPermitType.id permitType.id)}}
+                          <span class="avitar-badge avitar-badge--success avitar-badge--sm avitar-mt-2">
+                            <i class="fas fa-check avitar-mr-1"></i>
+                            Selected
+                          </span>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-exclamation-circle fa-3x avitar-text-muted avitar-mb-4"></i>
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+                No Permit Types Available
+              </h3>
+              <p class="avitar-text-muted">
+                Please contact the municipality to set up permit types.
+              </p>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
+      {{! Step 4: Permit Details }}
+      {{#if (eq this.currentStep 4)}}
+        <div>
+          <h2 class="avitar-text-xl avitar-font-semibold avitar-mb-4">
+            Permit Details
+          </h2>
+          <p class="avitar-text-muted avitar-mb-6">
+            Provide details about the work to be performed
+          </p>
+
+          <div class="avitar-space-y-4">
+            {{! Description }}
+            <div>
+              <label class="avitar-label">
+                Work Description
+                <span class="avitar-text-danger">*</span>
+              </label>
+              <textarea
+                class="avitar-input"
+                rows="4"
+                placeholder="Describe the work to be performed..."
+                value={{@model.wizard.permitData.description}}
+                {{on "input" (fn this.updatePermitField "description")}}
+              ></textarea>
+            </div>
+
+            {{! Scope of Work }}
+            <div>
+              <label class="avitar-label">Scope of Work (Optional)</label>
+              <textarea
+                class="avitar-input"
+                rows="3"
+                placeholder="Additional details about the scope..."
+                value={{@model.wizard.permitData.scopeOfWork}}
+                {{on "input" (fn this.updatePermitField "scopeOfWork")}}
+              ></textarea>
+            </div>
+
+            {{! Estimated Value and Square Footage }}
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div>
+                <label class="avitar-label">
+                  Estimated Value ($)
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  value={{@model.wizard.permitData.estimatedValue}}
+                  {{on "input" (fn this.updatePermitField "estimatedValue")}}
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Square Footage (Optional)</label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  placeholder="0"
+                  min="0"
+                  value={{@model.wizard.permitData.squareFootage}}
+                  {{on "input" (fn this.updatePermitField "squareFootage")}}
+                />
+              </div>
+            </div>
+
+            {{! Applicant Information }}
+            <div class="avitar-mt-6">
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+                Applicant Information
+              </h3>
+
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+                <div>
+                  <label class="avitar-label">Name</label>
+                  <input
+                    type="text"
+                    class="avitar-input"
+                    value={{@model.wizard.permitData.applicant.name}}
+                    {{on "input" (fn this.updateApplicantField "name")}}
+                  />
+                </div>
+
+                <div>
+                  <label class="avitar-label">Email</label>
+                  <input
+                    type="email"
+                    class="avitar-input"
+                    value={{@model.wizard.permitData.applicant.email}}
+                    {{on "input" (fn this.updateApplicantField "email")}}
+                  />
+                </div>
+
+                <div>
+                  <label class="avitar-label">Phone</label>
+                  <input
+                    type="tel"
+                    class="avitar-input"
+                    value={{@model.wizard.permitData.applicant.phone}}
+                    {{on "input" (fn this.updateApplicantField "phone")}}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
+      {{! Step 5: Review and Submit }}
+      {{#if (eq this.currentStep 5)}}
+        <div>
+          <h2 class="avitar-text-xl avitar-font-semibold avitar-mb-4">
+            Review Application
+          </h2>
+          <p class="avitar-text-muted avitar-mb-6">
+            Please review your permit application before submitting
+          </p>
+
+          <div class="avitar-space-y-6">
+            {{! Municipality }}
+            <div>
+              <h3 class="avitar-text-sm avitar-font-medium avitar-text-gray-700 avitar-mb-2">
+                Municipality
+              </h3>
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body avitar-p-4">
+                  <div class="avitar-flex avitar-items-center avitar-gap-3">
+                    <i class="fas fa-map-marker-alt avitar-text-primary"></i>
+                    <span class="avitar-font-medium">{{this.selectedMunicipality.name}}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{! Property }}
+            <div>
+              <h3 class="avitar-text-sm avitar-font-medium avitar-text-gray-700 avitar-mb-2">
+                Property
+              </h3>
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body avitar-p-4">
+                  <div class="avitar-font-medium">{{this.selectedProperty.pidFormatted}}</div>
+                  <div class="avitar-text-sm avitar-text-muted">
+                    {{this.selectedProperty.address}}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{! Permit Type }}
+            <div>
+              <h3 class="avitar-text-sm avitar-font-medium avitar-text-gray-700 avitar-mb-2">
+                Permit Type
+              </h3>
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body avitar-p-4">
+                  <div class="avitar-font-medium">{{this.selectedPermitType.name}}</div>
+                  <div class="avitar-text-sm avitar-text-muted">
+                    {{this.selectedPermitType.description}}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{! Work Details }}
+            <div>
+              <h3 class="avitar-text-sm avitar-font-medium avitar-text-gray-700 avitar-mb-2">
+                Work Description
+              </h3>
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body avitar-p-4">
+                  <p>{{@model.wizard.permitData.description}}</p>
+                  {{#if @model.wizard.permitData.scopeOfWork}}
+                    <p class="avitar-mt-2 avitar-text-sm avitar-text-muted">
+                      {{@model.wizard.permitData.scopeOfWork}}
+                    </p>
+                  {{/if}}
+                  <div class="avitar-flex avitar-gap-6 avitar-mt-4">
+                    <div>
+                      <span class="avitar-text-sm avitar-text-muted">Estimated Value:</span>
+                      <span class="avitar-font-medium avitar-ml-2">
+                        ${{@model.wizard.permitData.estimatedValue}}
+                      </span>
+                    </div>
+                    {{#if @model.wizard.permitData.squareFootage}}
+                      <div>
+                        <span class="avitar-text-sm avitar-text-muted">Square Footage:</span>
+                        <span class="avitar-font-medium avitar-ml-2">
+                          {{@model.wizard.permitData.squareFootage}}
+                          sq ft
+                        </span>
+                      </div>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+
+    {{! Wizard Navigation }}
+    <div class="avitar-card__footer avitar-bg-gray-50 avitar-flex avitar-justify-between avitar-p-4">
+      <div>
+        {{#if this.canGoPrevious}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.previousStep}}
+            disabled={{this.isLoading}}
+          >
+            <i class="fas fa-arrow-left avitar-mr-2"></i>
+            Previous
+          </button>
+        {{/if}}
+      </div>
+
+      <div class="avitar-flex avitar-gap-3">
+        {{#if (eq this.currentStep 5)}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.saveDraft}}
+            disabled={{this.isLoading}}
+          >
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Draft
+          </button>
+
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.submitPermit}}
+            disabled={{this.isLoading}}
+          >
+            {{#if this.isLoading}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Submitting...
+            {{else}}
+              <i class="fas fa-paper-plane avitar-mr-2"></i>
+              Submit Application
+            {{/if}}
+          </button>
+        {{else}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.nextStep}}
+            disabled={{(not this.canGoNext)}}
+          >
+            Next
+            <i class="fas fa-arrow-right avitar-ml-2"></i>
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>

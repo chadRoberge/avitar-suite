@@ -14,6 +14,7 @@ const validFeatureTypes = [
   'quality',
   'story_height',
   'frame',
+  'ceiling_height',
 ];
 
 // GET /api/municipalities/:municipalityId/building-feature-codes

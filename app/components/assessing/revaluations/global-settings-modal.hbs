@@ -1,0 +1,162 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-cog avitar-mr-2"></i>
+          Global Revaluation Settings
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-6">
+          {{! Base Year }}
+          <div>
+            <label class="avitar-label">Base Year <span class="avitar-text-danger">*</span></label>
+            <input
+              type="number"
+              class="avitar-input"
+              placeholder="Enter base year (e.g., 2024)"
+              value={{@baseYear}}
+              {{on "input" @onUpdateBaseYear}}
+              min="1900"
+              max="2100" />
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              The base year is used for calculating age and depreciation
+            </p>
+          </div>
+
+          {{! Current Use Settings }}
+          <div>
+            <label class="avitar-label">Max Current Use Acreage</label>
+            <div class="avitar-flex avitar-gap-2 avitar-items-center">
+              <input
+                type="number"
+                class="avitar-input"
+                placeholder="2.0"
+                value={{@currentUseMaxAcreage}}
+                {{on "input" @onUpdateCurrentUseMaxAcreage}}
+                step="0.1"
+                min="0" />
+              <span class="avitar-text-muted">acres</span>
+            </div>
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Maximum acreage for current use classification
+            </p>
+          </div>
+
+          {{! Time Trend Section }}
+          <div>
+            <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3">
+              <label class="avitar-label avitar-mb-0">Time Trend Adjustments</label>
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                {{on "click" @onAddTimeTrendEntry}}>
+                <i class="fas fa-plus avitar-mr-2"></i>
+                Add Entry
+              </button>
+            </div>
+
+            {{#if @timeTrendEntries.length}}
+              <div class="avitar-space-y-3">
+                {{#each @timeTrendEntries as |entry index|}}
+                  <div class="avitar-card avitar-border avitar-p-3">
+                    <div class="avitar-flex avitar-gap-3 avitar-items-start">
+                      <div class="avitar-flex-1">
+                        <div class="avitar-grid avitar-grid-cols-3 avitar-gap-3">
+                          <div>
+                            <label class="avitar-label avitar-text-xs">From Date</label>
+                            <input
+                              type="date"
+                              class="avitar-input avitar-input--sm"
+                              value={{entry.from_date}}
+                              {{on "input" (fn @onUpdateTimeTrendEntry index "from_date")}} />
+                          </div>
+                          <div>
+                            <label class="avitar-label avitar-text-xs">To Date</label>
+                            <input
+                              type="date"
+                              class="avitar-input avitar-input--sm"
+                              value={{entry.to_date}}
+                              {{on "input" (fn @onUpdateTimeTrendEntry index "to_date")}} />
+                          </div>
+                          <div>
+                            <label class="avitar-label avitar-text-xs">Adjustment Factor</label>
+                            <input
+                              type="number"
+                              class="avitar-input avitar-input--sm"
+                              placeholder="1.0"
+                              value={{entry.adjustment_factor}}
+                              {{on "input" (fn @onUpdateTimeTrendEntry index "adjustment_factor")}}
+                              step="0.01"
+                              min="0" />
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                        {{on "click" (fn @onRemoveTimeTrendEntry index)}}>
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-card avitar-bg-gray-50 avitar-border avitar-p-4 avitar-text-center">
+                <p class="avitar-text-sm avitar-text-muted">
+                  No time trend adjustments defined. Click "Add Entry" to create one.
+                </p>
+              </div>
+            {{/if}}
+
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+              Time trend factors adjust sale prices based on the sale date to account for market changes
+            </p>
+          </div>
+
+          {{! Warning Box }}
+          <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-p-4">
+            <div class="avitar-flex avitar-gap-3">
+              <i class="fas fa-exclamation-triangle avitar-text-warning"></i>
+              <div>
+                <h4 class="avitar-font-semibold avitar-mb-1">Important</h4>
+                <p class="avitar-text-sm">
+                  Changing global settings will recalculate ALL analysis sheets in this revaluation.
+                  This process may take a moment depending on the number of sheets and sales.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" @onSave}}
+          disabled={{not this.canSave}}>
+          {{#if @isSaving}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving & Recalculating...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Settings
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

@@ -1,0 +1,10 @@
+{{page-title "Documents - " @model.property.location.address}}
+
+{{! Property Documents Component }}
+<BuildingPermits::PropertyDocuments
+  @propertyId={{@model.propertyId}}
+  @municipalityId={{@model.municipalityId}}
+  @files={{@model.files}}
+  @permits={{@model.permits}}
+  @onRefresh={{this.refreshDocuments}}
+/>

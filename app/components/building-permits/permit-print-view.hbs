@@ -1,0 +1,479 @@
+{{!-- Permit Print View - Designed for printing --}}
+<div class="permit-print-container">
+  {{!-- Print Header --}}
+  <div class="permit-print-header">
+    <div class="municipality-info">
+      <h1>{{@municipality.name}}</h1>
+      <p>{{@municipality.address}}</p>
+      <p>{{@municipality.city}}, {{@municipality.state}} {{@municipality.zip}}</p>
+      <p>Phone: {{@municipality.phone}}</p>
+      {{#if @municipality.email}}
+        <p>Email: {{@municipality.email}}</p>
+      {{/if}}
+    </div>
+
+    <div class="permit-logo">
+      {{#if @municipality.logo}}
+        <img src={{@municipality.logo}} alt="{{@municipality.name}} Logo" />
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="permit-title">
+    <h2>BUILDING PERMIT</h2>
+    <div class="permit-number">Permit #: {{@permit.permitNumber}}</div>
+  </div>
+
+  {{!-- Permit Information --}}
+  <div class="permit-section">
+    <h3>Permit Information</h3>
+    <table class="permit-info-table">
+      <tr>
+        <td class="label">Permit Type:</td>
+        <td class="value">{{@permit.permitType}}</td>
+        <td class="label">Subtype:</td>
+        <td class="value">{{@permit.subtype}}</td>
+      </tr>
+      <tr>
+        <td class="label">Application Date:</td>
+        <td class="value">{{date-format @permit.applicationDate "MMMM DD, YYYY"}}</td>
+        <td class="label">Issue Date:</td>
+        <td class="value">{{date-format @permit.issueDate "MMMM DD, YYYY"}}</td>
+      </tr>
+      <tr>
+        <td class="label">Expiration Date:</td>
+        <td class="value">{{date-format @permit.expirationDate "MMMM DD, YYYY"}}</td>
+        <td class="label">Status:</td>
+        <td class="value status-{{@permit.status}}"><uppercase>{{@permit.status}}</uppercase></td>
+      </tr>
+    </table>
+  </div>
+
+  {{!-- Property Information --}}
+  <div class="permit-section">
+    <h3>Property Information</h3>
+    <table class="permit-info-table">
+      <tr>
+        <td class="label">Property Address:</td>
+        <td class="value" colspan="3">
+          {{#if @permit.property}}
+            {{@permit.property.location.address}}
+          {{else}}
+            {{@permit.propertyAddress}}
+          {{/if}}
+        </td>
+      </tr>
+      <tr>
+        <td class="label">Parcel ID:</td>
+        <td class="value">
+          {{#if @permit.property}}
+            {{@permit.property.pid_formatted}}
+          {{else}}
+            {{@permit.pidFormatted}}
+          {{/if}}
+        </td>
+        <td class="label">Zone:</td>
+        <td class="value">
+          {{#if @permit.property.zone_code}}
+            {{@permit.property.zone_code}}
+          {{else if @permit.property.zoning.code}}
+            {{@permit.property.zoning.code}}
+          {{/if}}
+        </td>
+      </tr>
+      {{#if @permit.property.owners.primary.owner_name}}
+        <tr>
+          <td class="label">Property Owner:</td>
+          <td class="value" colspan="3">{{@permit.property.owners.primary.owner_name}}</td>
+        </tr>
+      {{/if}}
+      {{#if @permit.property.owners.primary.mailing_address}}
+        <tr>
+          <td class="label">Owner Mailing Address:</td>
+          <td class="value" colspan="3">{{@permit.property.owners.primary.mailing_address}}</td>
+        </tr>
+      {{/if}}
+    </table>
+  </div>
+
+  {{!-- Applicant/Owner Information --}}
+  <div class="permit-section">
+    <h3>Applicant Information</h3>
+    <table class="permit-info-table">
+      {{#if @permit.applicant}}
+        <tr>
+          <td class="label">Applicant Name:</td>
+          <td class="value">{{@permit.applicant.name}}</td>
+          <td class="label">Phone:</td>
+          <td class="value">{{@permit.applicant.phone}}</td>
+        </tr>
+        <tr>
+          <td class="label">Email:</td>
+          <td class="value">{{@permit.applicant.email}}</td>
+          <td class="label">Relationship:</td>
+          <td class="value"><uppercase>{{@permit.applicant.relationshipToProperty}}</uppercase></td>
+        </tr>
+        {{#if @permit.applicant.address}}
+          <tr>
+            <td class="label">Applicant Address:</td>
+            <td class="value" colspan="3">{{@permit.applicant.address}}</td>
+          </tr>
+        {{/if}}
+      {{/if}}
+      {{#if @permit.contractor.companyName}}
+        <tr>
+          <td class="label">Contractor Company:</td>
+          <td class="value">{{@permit.contractor.companyName}}</td>
+          <td class="label">License #:</td>
+          <td class="value">{{@permit.contractor.licenseNumber}}</td>
+        </tr>
+        <tr>
+          <td class="label">Contractor Contact:</td>
+          <td class="value">{{@permit.contractor.contactName}}</td>
+          <td class="label">Phone:</td>
+          <td class="value">{{@permit.contractor.phone}}</td>
+        </tr>
+        <tr>
+          <td class="label">Email:</td>
+          <td class="value">{{@permit.contractor.email}}</td>
+          <td class="label">Address:</td>
+          <td class="value">{{@permit.contractor.address}}</td>
+        </tr>
+      {{/if}}
+    </table>
+  </div>
+
+  {{!-- Scope of Work --}}
+  <div class="permit-section">
+    <h3>Scope of Work</h3>
+    <div class="scope-box">
+      {{@permit.scopeOfWork}}
+    </div>
+
+    {{#if @permit.estimatedCost}}
+      <table class="permit-info-table">
+        <tr>
+          <td class="label">Estimated Cost:</td>
+          <td class="value">{{format-currency @permit.estimatedCost}}</td>
+          <td class="label">Square Footage:</td>
+          <td class="value">{{@permit.squareFootage}} sq ft</td>
+        </tr>
+      </table>
+    {{/if}}
+  </div>
+
+  {{!-- Fees --}}
+  {{#if @permit.fees}}
+    <div class="permit-section">
+      <h3>Permit Fees</h3>
+      <table class="fees-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each @permit.fees as |fee|}}
+            <tr>
+              <td>{{fee.description}}</td>
+              <td class="amount">{{format-currency fee.amount}}</td>
+            </tr>
+          {{/each}}
+          <tr class="total-row">
+            <td><strong>Total Fees:</strong></td>
+            <td class="amount"><strong>{{format-currency @permit.totalFees}}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  {{!-- Approval Section --}}
+  <div class="permit-section approval-section">
+    <h3>Official Approval</h3>
+    <div class="approval-info">
+      <div class="signature-block">
+        <div class="signature-line">
+          {{#if @permit.approvedBySignature}}
+            <img src={{@permit.approvedBySignature}} alt="Signature" class="signature-image" />
+          {{/if}}
+        </div>
+        <div class="signature-label">
+          <strong>{{@permit.approvedBy}}</strong><br />
+          {{@permit.approverTitle}}<br />
+          Date: {{date-format @permit.approvalDate "MMMM DD, YYYY"}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Conditions/Notes --}}
+  {{#if @permit.conditions}}
+    <div class="permit-section">
+      <h3>Conditions & Requirements</h3>
+      <div class="conditions-box">
+        {{@permit.conditions}}
+      </div>
+    </div>
+  {{/if}}
+
+  {{!-- Required Inspections --}}
+  {{#if @inspections.length}}
+    <div class="permit-section">
+      <h3>Required Inspections</h3>
+      <table class="inspections-table">
+        <thead>
+          <tr>
+            <th>Inspection Type</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Inspector</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each @inspections as |inspection|}}
+            <tr>
+              <td>{{inspection.type}}</td>
+              <td>{{inspection.status}}</td>
+              <td>{{date-format inspection.scheduledDate "MM/DD/YYYY"}}</td>
+              <td>{{inspection.inspectorName}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{/if}}
+
+  {{!-- Footer --}}
+  <div class="permit-footer">
+    <p><strong>Important:</strong> This permit must be posted in a visible location at the work site.
+    All work must comply with applicable building codes and zoning regulations.
+    Failure to comply may result in permit revocation and penalties.</p>
+    <p class="print-date">Printed on: {{date-format this.currentDate "MMMM DD, YYYY hh:mm A"}}</p>
+  </div>
+</div>
+
+<style>
+  @media print {
+    /* Hide everything except the print container */
+    body * {
+      visibility: hidden;
+    }
+
+    .permit-print-container,
+    .permit-print-container * {
+      visibility: visible;
+    }
+
+    .permit-print-container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+
+    /* Page breaks */
+    .permit-section {
+      page-break-inside: avoid;
+    }
+
+    /* Remove any margins/padding from print */
+    @page {
+      margin: 0.5in;
+    }
+  }
+
+  .permit-print-container {
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+    font-size: 12pt;
+    line-height: 1.4;
+    background: white;
+    color: black;
+  }
+
+  .permit-print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 3px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+
+  .municipality-info h1 {
+    margin: 0 0 10px 0;
+    font-size: 20pt;
+    font-weight: bold;
+  }
+
+  .municipality-info p {
+    margin: 2px 0;
+    font-size: 10pt;
+  }
+
+  .permit-logo img {
+    max-height: 80px;
+    max-width: 150px;
+  }
+
+  .permit-title {
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .permit-title h2 {
+    margin: 0;
+    font-size: 18pt;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+
+  .permit-number {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  .permit-section {
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    padding: 15px;
+  }
+
+  .permit-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 14pt;
+    font-weight: bold;
+    border-bottom: 2px solid #666;
+    padding-bottom: 5px;
+  }
+
+  .permit-info-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .permit-info-table tr {
+    border-bottom: 1px solid #eee;
+  }
+
+  .permit-info-table td {
+    padding: 8px 10px;
+  }
+
+  .permit-info-table .label {
+    font-weight: bold;
+    width: 25%;
+    background: #f5f5f5;
+  }
+
+  .permit-info-table .value {
+    width: 25%;
+  }
+
+  .scope-box,
+  .conditions-box {
+    border: 1px solid #ccc;
+    padding: 12px;
+    background: #fafafa;
+    min-height: 80px;
+    white-space: pre-wrap;
+  }
+
+  .fees-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .fees-table th,
+  .fees-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .fees-table th {
+    background: #f0f0f0;
+    font-weight: bold;
+  }
+
+  .fees-table .amount {
+    text-align: right;
+    width: 150px;
+  }
+
+  .fees-table .total-row {
+    border-top: 2px solid #333;
+    background: #f9f9f9;
+  }
+
+  .approval-section {
+    background: #f9f9f9;
+  }
+
+  .signature-block {
+    margin-top: 15px;
+  }
+
+  .signature-line {
+    border-bottom: 2px solid #333;
+    height: 60px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .signature-image {
+    max-height: 50px;
+    margin-bottom: 5px;
+  }
+
+  .signature-label {
+    font-size: 10pt;
+    line-height: 1.6;
+  }
+
+  .inspections-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .inspections-table th,
+  .inspections-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  .inspections-table th {
+    background: #f0f0f0;
+    font-weight: bold;
+  }
+
+  .permit-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 2px solid #333;
+    font-size: 9pt;
+    color: #666;
+  }
+
+  .permit-footer p {
+    margin: 5px 0;
+  }
+
+  .print-date {
+    text-align: right;
+    font-style: italic;
+  }
+
+  .status-approved { color: green; font-weight: bold; }
+  .status-pending { color: orange; font-weight: bold; }
+  .status-rejected { color: red; font-weight: bold; }
+</style>

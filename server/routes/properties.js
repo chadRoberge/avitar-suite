@@ -10,6 +10,7 @@ const LandAssessmentCalculationService = require('../services/landAssessmentCalc
 const SalesHistory = require('../models/SalesHistory');
 const PropertyView = require('../models/PropertyView');
 const Municipality = require('../models/Municipality');
+const PIDFormat = require('../models/PIDFormat');
 const PropertySketch = require('../models/PropertySketch');
 const Zone = require('../models/Zone');
 const NeighborhoodCode = require('../models/NeighborhoodCode');
@@ -175,8 +176,11 @@ router.get(
         let query = { municipality_id: municipalityObjectId };
 
         // Load municipality data for PID formatting
-        const municipality =
-          await Municipality.findById(municipalityObjectId).lean();
+        const [municipality, pidFormat] = await Promise.all([
+          Municipality.findById(municipalityObjectId).lean(),
+          PIDFormat.findOne({ municipality_id: municipalityObjectId }),
+        ]);
+
         if (!municipality) {
           throw new Error(`Municipality not found: ${municipalityId}`);
         }
@@ -214,14 +218,14 @@ router.get(
               buildOwnerInfo(property._id),
             ]);
 
-            // Format PID using municipality configuration
+            // Format PID using PIDFormat model
             let pid_formatted, mapNumber, lotSubDisplay;
 
             if (property.pid_raw) {
-              // Use server-side formatter with municipality config
-              pid_formatted = formatPid(property.pid_raw, municipality);
-              mapNumber = getMapFromPid(property.pid_raw, municipality);
-              lotSubDisplay = getLotSubFromPid(property.pid_raw, municipality);
+              // Use server-side formatter with PIDFormat model
+              pid_formatted = formatPid(property.pid_raw, pidFormat);
+              mapNumber = getMapFromPid(property.pid_raw, pidFormat);
+              lotSubDisplay = getLotSubFromPid(property.pid_raw, pidFormat);
             } else {
               pid_formatted = property.pid_formatted || null;
               mapNumber = 'Unknown';
@@ -286,6 +290,104 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve properties',
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/properties/updates
+// @desc    Check for property updates since a given timestamp (lightweight)
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/properties/updates',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { since } = req.query; // ISO timestamp of last sync
+
+      console.log(
+        `🔍 Checking for property updates since: ${since}`,
+      );
+
+      // Check if user has access to this municipality
+      const hasAccess =
+        ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
+        req.user.municipal_permissions?.some(
+          (perm) => perm.municipality_id.toString() === municipalityId,
+        );
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied to this municipality',
+        });
+      }
+
+      const mongoose = require('mongoose');
+      if (!mongoose.Types.ObjectId.isValid(municipalityId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid municipality ID',
+        });
+      }
+
+      const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+      // If no 'since' timestamp provided, return all property IDs (initial sync)
+      if (!since) {
+        const allProperties = await PropertyTreeNode.find({
+          municipality_id: municipalityObjectId,
+        })
+          .select('_id')
+          .lean();
+
+        return res.json({
+          success: true,
+          hasUpdates: true,
+          updatedPropertyIds: allProperties.map((p) => p._id.toString()),
+          totalUpdated: allProperties.length,
+          message: 'Initial sync - all properties returned',
+        });
+      }
+
+      // Convert 'since' to Date object
+      const sinceDate = new Date(since);
+      if (isNaN(sinceDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid timestamp format',
+        });
+      }
+
+      // Query for properties updated since the given timestamp
+      // This is MUCH faster than fetching full property data
+      const updatedProperties = await PropertyTreeNode.find({
+        municipality_id: municipalityObjectId,
+        $or: [
+          { updatedAt: { $gt: sinceDate } },
+          { last_updated: { $gt: sinceDate } },
+        ],
+      })
+        .select('_id updatedAt last_updated')
+        .lean();
+
+      console.log(
+        `✅ Found ${updatedProperties.length} properties updated since ${since}`,
+      );
+
+      res.json({
+        success: true,
+        hasUpdates: updatedProperties.length > 0,
+        updatedPropertyIds: updatedProperties.map((p) => p._id.toString()),
+        totalUpdated: updatedProperties.length,
+        checkedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Check property updates error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to check for property updates',
       });
     }
   },
@@ -460,10 +562,11 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
       }
 
       console.log('propertyData', property);
-      // Load municipality data for PID formatting
-      const municipality = await Municipality.findById(
-        property.municipality_id,
-      ).lean();
+      // Load municipality data and PID format for PID formatting
+      const [municipality, pidFormat] = await Promise.all([
+        Municipality.findById(property.municipality_id).lean(),
+        PIDFormat.findOne({ municipality_id: property.municipality_id }),
+      ]);
       if (!municipality) {
         throw new Error(
           `Municipality not found for property: ${property.municipality_id}`,
@@ -533,14 +636,14 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
         buildOwnerInfo(propertyObjectId),
       ]);
 
-      // Format PID using municipality configuration
+      // Format PID using PIDFormat model
       let pid_formatted, mapNumber, lotSubDisplay;
 
       if (property.pid_raw) {
-        // Use server-side formatter with municipality config
-        pid_formatted = formatPid(property.pid_raw, municipality);
-        mapNumber = getMapFromPid(property.pid_raw, municipality);
-        lotSubDisplay = getLotSubFromPid(property.pid_raw, municipality);
+        // Use server-side formatter with PIDFormat model
+        pid_formatted = formatPid(property.pid_raw, pidFormat);
+        mapNumber = getMapFromPid(property.pid_raw, pidFormat);
+        lotSubDisplay = getLotSubFromPid(property.pid_raw, pidFormat);
       } else {
         pid_formatted = property.pid_formatted || null;
         mapNumber = 'Unknown';
@@ -741,10 +844,16 @@ router.get(
           currentYear,
           cardNumber, // Pass card number for card-specific calculations
         );
-        const totalAssessedValue = calculateTotalAssessedValue(components);
+        const totalAssessedValue = calculateTotalAssessedValue({
+          ...components,
+          hasCurrentUse: components.hasCurrentUse,
+        });
 
         // Round component values for consistency with total calculation
-        const roundedLandValue = roundToNearestHundred(components.landValue);
+        // Don't round land value if it has current use
+        const roundedLandValue = components.hasCurrentUse
+          ? components.landValue
+          : roundToNearestHundred(components.landValue);
         const roundedBuildingValue = roundToNearestHundred(
           components.buildingValue,
         );
@@ -781,7 +890,10 @@ router.get(
         assessment = computedAssessment;
 
         console.log(`Computed current assessment for property ${id}:`, {
+          hasCurrentUse: components.hasCurrentUse,
           land: roundedLandValue,
+          landRaw: components.landValue,
+          landWasRounded: !components.hasCurrentUse,
           building: roundedBuildingValue,
           features: roundedFeaturesValue,
           total: totalAssessedValue,
@@ -843,6 +955,13 @@ router.get(
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
 
+      console.log('🌳 [Land Assessment GET] Request:', {
+        propertyId: id,
+        propertyObjectId: propertyObjectId.toString(),
+        cardNumber: cardNumber,
+        assessmentYear: currentYear,
+      });
+
       // Get land assessment using temporal logic - most recent up to currentYear
       const landAssessment = await LandAssessment.findOne({
         property_id: propertyObjectId,
@@ -861,7 +980,7 @@ router.get(
           { path: 'road_type', select: 'displayText description' },
         ]);
 
-      console.log('Looking for land assessment:', {
+      console.log('🌳 [Land Assessment GET] Query result:', {
         propertyId: propertyObjectId,
         year: currentYear,
         found: landAssessment ? landAssessment._id : 'null',
@@ -875,6 +994,18 @@ router.get(
             }
           : null,
       });
+
+      if (landAssessment) {
+        console.log('🌳 [Land Assessment GET] Land assessment details:', {
+          _id: landAssessment._id.toString(),
+          property_id: landAssessment.property_id.toString(),
+          effective_year: landAssessment.effective_year,
+          market_value: landAssessment.market_value,
+          taxable_value: landAssessment.taxable_value,
+          land_use_details_count: landAssessment.land_use_details?.length || 0,
+          land_use_details: landAssessment.land_use_details,
+        });
+      }
 
       // Debug: Check if the referenced documents actually exist
       if (
@@ -1076,12 +1207,25 @@ router.get(
         }));
       }
 
-      console.log('Final assessmentData being sent:', {
+      console.log('🔍 [Land Assessment GET] Assessment data transformation:', {
         site_conditions_name: assessmentData?.site_conditions_name,
         driveway_type_name: assessmentData?.driveway_type_name,
         road_type_name: assessmentData?.road_type_name,
         zone_name: assessmentData?.zone_name,
-        neighborhood_name: assessmentData?.neighborhood_name,
+        neighborhood_code: assessmentData?.neighborhood_code,
+        land_use_details_count: assessmentData?.land_use_details?.length || 0,
+        view_details_count: assessmentData?.view_details?.length || 0,
+      });
+
+      console.log('📤 [Land Assessment GET] Response payload:', {
+        success: true,
+        assessment_keys: Object.keys(assessmentData),
+        assessment_has_land_use_details: !!assessmentData.land_use_details,
+        assessment_land_use_details_is_array: Array.isArray(assessmentData.land_use_details),
+        history_count: landHistory.length,
+        views_count: views.length,
+        viewAttributes_count: viewAttributes.length,
+        zones_count: zones.length,
       });
 
       res.json({
@@ -1204,6 +1348,26 @@ router.put(
         throw saveError;
       }
 
+      // Trigger parcel assessment recalculation after land value changes
+      const { updateParcelAssessment } = require('../utils/assessment');
+      try {
+        await updateParcelAssessment(
+          propertyObjectId,
+          municipalityObjectId,
+          currentYear,
+          { trigger: 'land_update', userId: req.user.id },
+        );
+        console.log(
+          `✅ Parcel assessment updated after land assessment change for property ${propertyId}`,
+        );
+      } catch (recalcError) {
+        console.error(
+          'Error recalculating parcel assessment after land update:',
+          recalcError,
+        );
+        // Don't fail the land save if recalculation fails
+      }
+
       res.json({
         success: true,
         message: 'Land assessment updated successfully',
@@ -1237,17 +1401,31 @@ router.get(
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
 
+      console.log('🏗️ [Building Assessment GET] Request:', {
+        propertyId: id,
+        propertyObjectId: propertyObjectId.toString(),
+        cardNumber: card,
+        assessmentYear: currentYear,
+      });
+
       // First get the property to extract municipality_id
       const property = await PropertyTreeNode.findById(propertyObjectId);
       if (!property) {
+        console.log('❌ [Building Assessment GET] Property not found:', id);
         return res.status(404).json({
           success: false,
           message: 'Property not found',
         });
       }
 
+      console.log('✓ [Building Assessment GET] Property found:', {
+        propertyId: property._id.toString(),
+        municipalityId: property.municipality_id.toString(),
+        pid: property.pid,
+      });
+
       // Get or create building assessment for this property/card
-      const buildingAssessment =
+      let buildingAssessment =
         await BuildingAssessment.getOrCreateForPropertyCard(
           propertyObjectId,
           property.municipality_id,
@@ -1255,19 +1433,76 @@ router.get(
           currentYear,
         );
 
+      console.log('🏗️ [Building Assessment GET] Raw assessment from getOrCreate:', {
+        _id: buildingAssessment._id.toString(),
+        property_id: buildingAssessment.property_id.toString(),
+        card_number: buildingAssessment.card_number,
+        effective_year: buildingAssessment.effective_year,
+        building_value: buildingAssessment.building_value,
+        base_type: buildingAssessment.base_type,
+      });
+
+      // Populate all reference fields with displayText for UI display
+      buildingAssessment = await BuildingAssessment.findById(buildingAssessment._id)
+        .populate('base_type', 'code description displayText rate depreciation')
+        .populate('frame', 'displayText points')
+        .populate('ceiling_height', 'displayText points')
+        .populate('quality_grade', 'displayText points')
+        .populate('story_height', 'displayText points')
+        .populate('roof_style', 'displayText points')
+        .populate('roof_cover', 'displayText points')
+        .populate('exterior_wall_1', 'displayText points')
+        .populate('exterior_wall_2', 'displayText points')
+        .populate('interior_wall_1', 'displayText points')
+        .populate('interior_wall_2', 'displayText points')
+        .populate('flooring_1', 'displayText points')
+        .populate('flooring_2', 'displayText points')
+        .populate('heating_fuel', 'displayText points')
+        .populate('heating_type', 'displayText points')
+        .populate('air_conditioning', 'displayText points')
+        .populate('generator', 'displayText points')
+        .populate('condition', 'displayText points');
+
+      // Keep populated objects intact so frontend can extract _id for editing
+      // The frontend will handle extracting displayText for display and _id for form binding
+      const transformedAssessment = buildingAssessment.toObject();
+
+      console.log('🔍 [Building Assessment GET] After populate (keeping objects):', {
+        base_type: typeof transformedAssessment.base_type,
+        base_type_value: transformedAssessment.base_type,
+        frame: typeof transformedAssessment.frame,
+        frame_value: transformedAssessment.frame,
+        building_value: buildingAssessment.building_value,
+      });
+
       // Get building assessment history
       const buildingHistory = await BuildingAssessment.find({
         property_id: propertyObjectId,
         card_number: parseInt(card),
       })
         .sort({ effective_year: -1 })
-        .limit(5);
+        .limit(5)
+        .populate('base_type', 'code description rate')
+        .populate('frame', 'displayText points')
+        .populate('quality_grade', 'displayText points')
+        .populate('story_height', 'displayText points')
+        .populate('roof_style', 'displayText points')
+        .populate('roof_cover', 'displayText points')
+        .populate('condition', 'displayText points');
+
+      console.log('📤 [Building Assessment GET] Response payload:', {
+        success: true,
+        assessment_id: transformedAssessment._id,
+        assessment_keys: Object.keys(transformedAssessment),
+        history_count: buildingHistory.length,
+        depreciation_keys: Object.keys(transformedAssessment.depreciation || {}),
+      });
 
       res.json({
         success: true,
-        assessment: buildingAssessment,
+        assessment: transformedAssessment,
         history: buildingHistory,
-        depreciation: buildingAssessment.depreciation || {},
+        depreciation: transformedAssessment.depreciation || {},
         improvements: [], // Would be populated with improvement records
       });
     } catch (error) {
@@ -1365,39 +1600,47 @@ router.patch(
       // Add fields only if they are provided in the request
       if (buildingData.building_model !== undefined)
         buildingAssessmentData.building_model = buildingData.building_model;
+
+      // ObjectId fields - convert empty strings to null
       if (buildingData.frame !== undefined)
-        buildingAssessmentData.frame = buildingData.frame;
+        buildingAssessmentData.frame = buildingData.frame || null;
+      if (buildingData.ceiling_height !== undefined)
+        buildingAssessmentData.ceiling_height = buildingData.ceiling_height || null;
+      if (buildingData.base_type !== undefined)
+        buildingAssessmentData.base_type = buildingData.base_type || null;
+      if (buildingData.quality_grade !== undefined)
+        buildingAssessmentData.quality_grade = buildingData.quality_grade || null;
+      if (buildingData.story_height !== undefined)
+        buildingAssessmentData.story_height = buildingData.story_height || null;
+      if (buildingData.roof_style !== undefined)
+        buildingAssessmentData.roof_style = buildingData.roof_style || null;
+      if (buildingData.roof_cover !== undefined)
+        buildingAssessmentData.roof_cover = buildingData.roof_cover || null;
+      if (buildingData.exterior_wall_1 !== undefined)
+        buildingAssessmentData.exterior_wall_1 = buildingData.exterior_wall_1 || null;
+      if (buildingData.exterior_wall_2 !== undefined)
+        buildingAssessmentData.exterior_wall_2 = buildingData.exterior_wall_2 || null;
+      if (buildingData.interior_wall_1 !== undefined)
+        buildingAssessmentData.interior_wall_1 = buildingData.interior_wall_1 || null;
+      if (buildingData.interior_wall_2 !== undefined)
+        buildingAssessmentData.interior_wall_2 = buildingData.interior_wall_2 || null;
+      if (buildingData.flooring_1 !== undefined)
+        buildingAssessmentData.flooring_1 = buildingData.flooring_1 || null;
+      if (buildingData.flooring_2 !== undefined)
+        buildingAssessmentData.flooring_2 = buildingData.flooring_2 || null;
+      if (buildingData.heating_fuel !== undefined)
+        buildingAssessmentData.heating_fuel = buildingData.heating_fuel || null;
+      if (buildingData.heating_type !== undefined)
+        buildingAssessmentData.heating_type = buildingData.heating_type || null;
+      if (buildingData.air_conditioning !== undefined)
+        buildingAssessmentData.air_conditioning = buildingData.air_conditioning || null;
+      if (buildingData.generator !== undefined)
+        buildingAssessmentData.generator = buildingData.generator || null;
+
+      // Number fields
       if (buildingData.year_built !== undefined)
         buildingAssessmentData.year_built =
           parseInt(buildingData.year_built) || null;
-      if (buildingData.base_type !== undefined)
-        buildingAssessmentData.base_type = buildingData.base_type;
-      if (buildingData.quality_grade !== undefined)
-        buildingAssessmentData.quality_grade = buildingData.quality_grade;
-      if (buildingData.story_height !== undefined)
-        buildingAssessmentData.story_height = buildingData.story_height;
-      if (buildingData.roof_style !== undefined)
-        buildingAssessmentData.roof_style = buildingData.roof_style;
-      if (buildingData.roof_cover !== undefined)
-        buildingAssessmentData.roof_cover = buildingData.roof_cover;
-      if (buildingData.exterior_wall_1 !== undefined)
-        buildingAssessmentData.exterior_wall_1 = buildingData.exterior_wall_1;
-      if (buildingData.exterior_wall_2 !== undefined)
-        buildingAssessmentData.exterior_wall_2 = buildingData.exterior_wall_2;
-      if (buildingData.interior_wall_1 !== undefined)
-        buildingAssessmentData.interior_wall_1 = buildingData.interior_wall_1;
-      if (buildingData.interior_wall_2 !== undefined)
-        buildingAssessmentData.interior_wall_2 = buildingData.interior_wall_2;
-      if (buildingData.flooring_1 !== undefined)
-        buildingAssessmentData.flooring_1 = buildingData.flooring_1;
-      if (buildingData.flooring_2 !== undefined)
-        buildingAssessmentData.flooring_2 = buildingData.flooring_2;
-      if (buildingData.heating_fuel !== undefined)
-        buildingAssessmentData.heating_fuel = buildingData.heating_fuel;
-      if (buildingData.heating_type !== undefined)
-        buildingAssessmentData.heating_type = buildingData.heating_type;
-      if (buildingData.air_conditioning !== undefined)
-        buildingAssessmentData.air_conditioning = buildingData.air_conditioning;
       if (buildingData.bedrooms !== undefined)
         buildingAssessmentData.bedrooms = parseInt(buildingData.bedrooms) || 0;
       if (buildingData.full_baths !== undefined)
@@ -1409,8 +1652,6 @@ router.patch(
       if (buildingData.extra_kitchen !== undefined)
         buildingAssessmentData.extra_kitchen =
           parseInt(buildingData.extra_kitchen) || 0;
-      if (buildingData.generator !== undefined)
-        buildingAssessmentData.generator = buildingData.generator;
       if (buildingData.change_reason !== undefined)
         buildingAssessmentData.change_reason = buildingData.change_reason;
 
@@ -1432,7 +1673,7 @@ router.patch(
         dataKeys: Object.keys(buildingAssessmentData),
       });
 
-      const buildingAssessment = await BuildingAssessment.updateForPropertyCard(
+      let buildingAssessment = await BuildingAssessment.updateForPropertyCard(
         propertyObjectId,
         municipalityId,
         cardNumber,
@@ -1440,6 +1681,33 @@ router.patch(
         req.user._id,
         currentYear,
       );
+
+      // Populate ObjectId references so frontend can extract _id for form binding
+      buildingAssessment = await BuildingAssessment.findById(buildingAssessment._id)
+        .populate('base_type')
+        .populate('frame')
+        .populate('ceiling_height')
+        .populate('quality_grade')
+        .populate('story_height')
+        .populate('roof_style')
+        .populate('roof_cover')
+        .populate('exterior_wall_1')
+        .populate('exterior_wall_2')
+        .populate('interior_wall_1')
+        .populate('interior_wall_2')
+        .populate('flooring_1')
+        .populate('flooring_2')
+        .populate('heating_fuel')
+        .populate('heating_type')
+        .populate('air_conditioning')
+        .populate('generator');
+
+      console.log('🔍 [Building Assessment PATCH] Populated response:', {
+        base_type: typeof buildingAssessment.base_type,
+        base_type_value: buildingAssessment.base_type,
+        frame: typeof buildingAssessment.frame,
+        frame_value: buildingAssessment.frame,
+      });
 
       res.json({
         success: true,
@@ -2319,9 +2587,19 @@ router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
 
     const propertyObjectId = new mongoose.Types.ObjectId(id);
 
+    // Get property to extract municipality_id
+    const property = await PropertyTreeNode.findById(propertyObjectId);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: 'Property not found',
+      });
+    }
+
     const sketchData = {
       ...req.body,
       property_id: propertyObjectId,
+      municipality_id: property.municipality_id,
       created_by: req.user.id,
       updated_by: req.user.id,
     };

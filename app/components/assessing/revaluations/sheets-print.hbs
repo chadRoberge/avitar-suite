@@ -1,0 +1,63 @@
+{{! Parent Print Component for Revaluation Sheets - Reuses Property Record Card Print Styles }}
+<div class="property-record-modal-overlay">
+  <div class="property-record-modal">
+    {{! Modal Header with Print Button }}
+    <div class="property-record-modal__header">
+      <div class="property-record-modal__title">
+        <h2>Revaluation Analysis Sheets</h2>
+        {{#if @revaluation}}
+          <p>{{@municipality.name}} - {{@revaluation.year}}</p>
+        {{/if}}
+      </div>
+      <div class="property-record-modal__actions">
+        <button type="button" class="avitar-button avitar-button--sm avitar-button--primary" {{on "click" this.print}} title="Print Sheets">
+          <i class="fas fa-print"></i>
+          Print
+        </button>
+        {{#if @onClose}}
+          <button type="button" class="avitar-button avitar-button--sm avitar-button--outline" {{on "click" @onClose}} title="Close">
+            <i class="fas fa-times"></i>
+            Close
+          </button>
+        {{/if}}
+      </div>
+    </div>
+
+    {{! Modal Content }}
+    <div class="property-record-modal__content">
+      {{#each this.sheetsArray as |sheet index|}}
+        <div class="property-record-card-page">
+          {{#if (eq sheet.sheet_type "building_rate")}}
+            <Assessing::Revaluations::PrintBuildingRate
+              @sheet={{sheet}}
+              @revaluation={{@revaluation}}
+              @municipality={{@municipality}}
+              @pageNumber={{add index 1}}
+              @totalPages={{this.sheetsArray.length}} />
+          {{else if (eq sheet.sheet_type "excess_acreage")}}
+            <Assessing::Revaluations::PrintExcessAcreage
+              @sheet={{sheet}}
+              @revaluation={{@revaluation}}
+              @municipality={{@municipality}}
+              @pageNumber={{add index 1}}
+              @totalPages={{this.sheetsArray.length}} />
+          {{else if (eq sheet.sheet_type "vacant_land")}}
+            <Assessing::Revaluations::PrintVacantLand
+              @sheet={{sheet}}
+              @revaluation={{@revaluation}}
+              @municipality={{@municipality}}
+              @pageNumber={{add index 1}}
+              @totalPages={{this.sheetsArray.length}} />
+          {{else if (eq sheet.sheet_type "developed_land")}}
+            <Assessing::Revaluations::PrintDevelopedLand
+              @sheet={{sheet}}
+              @revaluation={{@revaluation}}
+              @municipality={{@municipality}}
+              @pageNumber={{add index 1}}
+              @totalPages={{this.sheetsArray.length}} />
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</div>

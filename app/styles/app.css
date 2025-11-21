@@ -3,9 +3,16 @@
 /* Import Linearicons font */
 @import url("./linearicons.css");
 
+/* Import printing styles */
+@import url("./printing.css");
+
+/* Import Quill WYSIWYG Editor */
+@import url("https://cdn.quilljs.com/1.3.6/quill.snow.css");
+
 /* Import component styles */
 @import url("./components/property-record-modal.css");
 @import url("./components/exemption-edit-modal.css");
+@import url("./components/step-progress.css");
 
 /* ===============================================
    DESIGN TOKENS & CSS CUSTOM PROPERTIES
@@ -303,6 +310,71 @@ body {
   color: var(--avitar-yellow-light);
 }
 
+.avitar-topbar__nav-link--icon-only {
+  padding: var(--space-2);
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Topbar Dropdown Navigation */
+.avitar-topbar__nav-item--dropdown {
+  position: relative;
+}
+
+.avitar-topbar__nav-link--dropdown {
+  color: var(--color-white);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: auto;
+  text-align: left;
+  font-family: inherit;
+}
+
+.avitar-topbar__nav-link--dropdown:hover {
+  background-color: rgb(255 255 255 / 10%);
+  color: var(--avitar-yellow-light);
+}
+
+.avitar-topbar__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--color-white);
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-lg);
+  margin-top: var(--space-2);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+}
+
+.avitar-topbar__dropdown-link {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-gray-700);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.avitar-topbar__dropdown-link:hover {
+  background-color: var(--color-gray-100);
+  color: var(--avitar-green);
+}
+
 .avitar-topbar__user {
   display: flex;
   align-items: center;
@@ -446,6 +518,40 @@ body {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
   margin-left: auto;
+}
+
+/* Dropdown Navigation */
+.avitar-sidebar__nav-link--dropdown {
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  justify-content: space-between;
+}
+
+.avitar-sidebar__nav-dropdown-icon {
+  font-size: var(--font-size-xs);
+  transition: transform var(--transition-fast);
+  margin-left: auto;
+}
+
+.avitar-sidebar__nav-submenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: var(--color-gray-50);
+  border-left: 2px solid var(--avitar-green);
+  margin-left: var(--space-4);
+}
+
+.avitar-sidebar__nav-link--submenu {
+  font-size: var(--font-size-sm);
+  padding-left: var(--space-6);
+}
+
+.avitar-sidebar__nav-link--submenu:hover {
+  padding-left: var(--space-8);
 }
 
 /* Mobile Navigation Toggle */
@@ -1560,6 +1666,10 @@ body {
    =============================================== */
 
 /* Text Utilities */
+.avitar-text-xxs {
+  font-size: 0.55rem; /* 15% smaller than xs (0.65rem * 0.85 = 0.5525rem) */
+}
+
 .avitar-text-xs {
   font-size: var(--font-size-xs);
 }
@@ -2823,6 +2933,45 @@ body {
   margin: 0;
 }
 
+.loading-overlay__progress {
+  margin-top: var(--space-4);
+}
+
+.loading-overlay__phase {
+  color: var(--color-gray-600);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-3);
+}
+
+.loading-overlay__progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-2);
+}
+
+.loading-overlay__progress-fill {
+  height: 100%;
+  background: var(--avitar-green);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.loading-overlay__progress-text {
+  color: var(--color-gray-600);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.loading-overlay__time-remaining {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-2);
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -3379,6 +3528,12 @@ body {
 .property-sidebar--open ~ main.municipality-page,
 main.municipality-page.has-sidebar {
   margin-left: 320px;
+  transition: margin-left var(--transition-base);
+}
+
+/* Adjust main content when sidebar is closed - only show toggle button width */
+.property-sidebar--closed ~ main.municipality-page {
+  margin-left: 40px;
   transition: margin-left var(--transition-base);
 }
 
@@ -4016,5 +4171,111 @@ main.municipality-page.has-sidebar {
 
   .avitar-flex-table-cell:last-child {
     border-bottom: none;
+  }
+}
+
+/* ===============================================
+   BREADCRUMB NAVIGATION
+   =============================================== */
+
+.avitar-breadcrumb {
+  background: var(--color-gray-50);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.avitar-breadcrumb__list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.avitar-breadcrumb__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.avitar-breadcrumb__link {
+  color: var(--avitar-green);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.avitar-breadcrumb__link:hover {
+  color: var(--avitar-green-dark);
+  text-decoration: underline;
+}
+
+.avitar-breadcrumb__current {
+  color: var(--color-gray-700);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.avitar-breadcrumb__separator {
+  color: var(--color-gray-400);
+  font-size: 0.7rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .avitar-breadcrumb {
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .avitar-breadcrumb__list {
+    gap: var(--space-1);
+  }
+
+  .avitar-breadcrumb__item {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* ===============================================
+   CONTRACTOR PORTAL NAVIGATION
+   =============================================== */
+
+/* Contractor navigation container (fixed position) */
+.contractor-navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-fixed);
+}
+
+/* Adjust main content to account for double navigation height */
+.contractor-page {
+  padding-top: calc(var(--topbar-height) * 2);
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+  transition: padding-top var(--transition-fast);
+}
+
+/* Responsive padding adjustments for contractor page */
+@media (max-width: 640px) {
+  .contractor-page {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
+
+@media (min-width: 1280px) {
+  .contractor-page {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
   }
 }

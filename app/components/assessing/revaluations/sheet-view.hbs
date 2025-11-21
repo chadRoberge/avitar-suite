@@ -1,0 +1,45 @@
+<div class="revaluation-sheet-view">
+  {{! Conditional Sheet Content Based on Type }}
+  {{#if (eq this.sheetType "excess_acreage")}}
+    <Assessing::Revaluations::SheetExcessAcreage
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "vacant_land")}}
+    <Assessing::Revaluations::SheetVacantLand
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "developed_land")}}
+    <Assessing::Revaluations::SheetDevelopedLand
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "building_rate")}}
+    <Assessing::Revaluations::SheetBuildingRate
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "view_base_rate")}}
+    <Assessing::Revaluations::SheetViewBaseRate
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "waterfront_base_rate")}}
+    <Assessing::Revaluations::SheetWaterfrontBaseRate
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else if (eq this.sheetType "amenity_rate")}}
+    <Assessing::Revaluations::SheetAmenityRate
+      @sheet={{@sheet}}
+      @sales={{@sales}}
+      @globalSettings={{@globalSettings}} />
+  {{else}}
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <p class="avitar-text-muted">Unknown sheet type: {{this.sheetType}}</p>
+      </div>
+    </div>
+  {{/if}}
+</div>

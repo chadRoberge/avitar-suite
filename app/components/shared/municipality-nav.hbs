@@ -86,11 +86,36 @@
   {{#if this.hasActiveChildren}}
     <nav class="avitar-topbar module-children-nav">
       <ul class="avitar-topbar__nav">
-        {{#each this.activeModuleChildren as |child|}}
-          <li class="avitar-topbar__nav-item">
+        {{#each this.activeModuleChildren as |child index|}}
+          <li class="avitar-topbar__nav-item {{if child.dropdown 'avitar-topbar__nav-item--dropdown'}}">
             {{#if child.component}}
               {{!-- Render component directly instead of link --}}
               {{component child.component property=this.selectedProperty selectedYear=this.assessmentYear onYearChange=this.onAssessmentYearChange onAddToQueue=this.addSelectedToQueue onOpenPrint=this.openPrintModal}}
+            {{else if child.dropdown}}
+              {{!-- Dropdown navigation item --}}
+              <button
+                type="button"
+                class="avitar-topbar__nav-link avitar-topbar__nav-link--dropdown"
+                {{on "click" (fn this.toggleDropdown index)}}
+              >
+                <i class="fas fa-{{child.icon}}"></i>
+                {{child.title}}
+                <i class="fas fa-chevron-{{if (this.isDropdownOpen index) 'up' 'down'}} avitar-ml-2"></i>
+              </button>
+
+              {{#if (this.isDropdownOpen index)}}
+                <div class="avitar-topbar__dropdown" {{on "click" this.stopPropagation}}>
+                  {{#each child.items as |item|}}
+                    <LinkTo
+                      @route={{item.route}}
+                      class="avitar-topbar__dropdown-link"
+                    >
+                      <i class="fas fa-{{item.icon}} avitar-mr-2"></i>
+                      {{item.title}}
+                    </LinkTo>
+                  {{/each}}
+                </div>
+              {{/if}}
             {{else if child.models}}
               <LinkTo
                 @route={{child.route}}
@@ -111,11 +136,16 @@
               <LinkTo
                 @route={{child.route}}
                 @query={{this.currentQueryParams}}
-                class="avitar-topbar__nav-link"
+                class="avitar-topbar__nav-link {{if child.iconOnly 'avitar-topbar__nav-link--icon-only'}}"
                 @activeClass="avitar-topbar__nav-link--active"
+                title={{if child.iconOnly child.title}}
               >
-                <i class="fas fa-{{child.icon}}"></i>
-                {{child.title}}
+                {{#if child.iconOnly}}
+                  {{lnr-icon child.icon}}
+                {{else}}
+                  <i class="fas fa-{{child.icon}}"></i>
+                  {{child.title}}
+                {{/if}}
                 {{#if child.badge}}
                   <span class="avitar-badge avitar-badge--warning">
                     {{child.badge}}

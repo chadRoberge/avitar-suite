@@ -38,11 +38,30 @@ const userSchema = new mongoose.Schema(
       match: [/^\+?1?\d{9,15}$/, 'Please enter a valid phone number'],
     },
 
+    // SMS notification settings
+    sms_phone: {
+      type: String,
+      trim: true,
+      match: [/^\d{10}$/, 'SMS phone must be a 10-digit number'],
+    },
+    sms_carrier: {
+      type: String,
+      enum: ['verizon', 'att', 'tmobile', 'sprint', 'us_cellular', 'boost', 'cricket', 'metro_pcs', 'other'],
+    },
+
     // Global role for system-wide permissions
     global_role: {
       type: String,
-      enum: ['avitar_staff', 'avitar_admin', 'municipal_user', 'citizen'],
+      enum: ['avitar_staff', 'avitar_admin', 'avitar_assessor', 'municipal_user', 'citizen', 'contractor'],
       default: 'citizen',
+    },
+
+    // Contractor reference (for global_role: 'contractor')
+    contractor_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Contractor',
+      index: true,
+      sparse: true, // Only contractors will have this
     },
 
     // Municipality-specific permissions
@@ -96,8 +115,40 @@ const userSchema = new mongoose.Schema(
         default: 'light',
       },
       notifications: {
+        // Legacy global toggles (deprecated, use specific types below)
         email: { type: Boolean, default: true },
         browser: { type: Boolean, default: true },
+
+        // Granular notification preferences per type
+        permit_status_changes: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        inspection_notifications: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        team_member_changes: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        license_expiration: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        payment_confirmations: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        subscription_updates: {
+          email: { type: Boolean, default: true },
+          sms: { type: Boolean, default: false },
+        },
+        marketing: {
+          product_updates: { type: Boolean, default: true },
+          tips_and_best_practices: { type: Boolean, default: false },
+          promotional_offers: { type: Boolean, default: false },
+        },
       },
     },
 
@@ -337,6 +388,19 @@ userSchema.methods.resetLoginAttempts = function () {
   });
 };
 
+// Contractor-specific methods
+userSchema.methods.isContractor = function () {
+  return this.global_role === 'contractor' && !!this.contractor_id;
+};
+
+userSchema.methods.isCitizen = function () {
+  return this.global_role === 'citizen';
+};
+
+userSchema.methods.isContractorOrCitizen = function () {
+  return this.global_role === 'contractor' || this.global_role === 'citizen';
+};
+
 // Legacy compatibility methods for existing code
 userSchema.virtual('name').get(function () {
   return this.fullName;
@@ -349,6 +413,8 @@ userSchema.virtual('userType').get(function () {
       return 'system';
     case 'municipal_user':
       return 'municipal';
+    case 'contractor':
+      return 'contractor';
     default:
       return 'citizen';
   }
@@ -362,6 +428,8 @@ userSchema.virtual('permissionLevel').get(function () {
       return 800;
     case 'municipal_user':
       return 400;
+    case 'contractor':
+      return 200;
     case 'citizen':
       return 100;
     default:

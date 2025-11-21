@@ -19,7 +19,7 @@ const waterBodyLadderSchema = new mongoose.Schema({
     min: 0,
     max: 10000,
   },
-  value: {
+  factor: {
     type: Number,
     required: true,
     min: 0,

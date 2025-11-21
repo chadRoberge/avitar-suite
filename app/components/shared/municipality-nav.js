@@ -14,6 +14,7 @@ export default class MunicipalityNavComponent extends Component {
   @tracked activeModuleKey = null;
   @tracked assessmentYear = null;
   @tracked isPrintModalOpen = false;
+  @tracked openDropdownIndex = null;
 
   get navigationItems() {
     // Access propertySelection to make this reactive to property changes
@@ -123,6 +124,26 @@ export default class MunicipalityNavComponent extends Component {
   @action
   closePrintModal() {
     this.isPrintModalOpen = false;
+  }
+
+  @action
+  toggleDropdown(index) {
+    this.openDropdownIndex = this.openDropdownIndex === index ? null : index;
+  }
+
+  @action
+  closeDropdown() {
+    this.openDropdownIndex = null;
+  }
+
+  @action
+  isDropdownOpen(index) {
+    return this.openDropdownIndex === index;
+  }
+
+  @action
+  stopPropagation(event) {
+    event.stopPropagation();
   }
 
   @action

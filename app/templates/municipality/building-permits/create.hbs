@@ -1,0 +1,896 @@
+{{page-title "Create New Permit"}}
+
+<div class="avitar-page-header">
+  <div class="avitar-page-header__content">
+    <h1 class="avitar-page-header__title">
+      <i class="fas fa-plus-circle avitar-mr-2"></i>
+      Create New Permit
+    </h1>
+    <p class="avitar-page-header__subtitle">
+      {{this.stepTitle}}
+    </p>
+  </div>
+
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--secondary"
+      {{on "click" this.cancel}}
+      disabled={{or this.isSaving this.isSubmitting}}
+    >
+      <i class="fas fa-times avitar-mr-2"></i>
+      Cancel
+    </button>
+  </div>
+</div>
+
+<div class="avitar-card">
+  {{! Header with Step Progress }}
+  <div class="avitar-card__header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+    <h2 class="avitar-card__title">
+      {{#if this.selectedPermitType}}
+        {{this.selectedPermitType.name}} - {{this.stepTitle}}
+      {{else}}
+        {{this.stepTitle}}
+      {{/if}}
+    </h2>
+
+    {{! Step Progress }}
+    <div class="avitar-step-progress" style="flex: 1; margin: 0; max-width: 40rem;">
+      {{#each (array 1 2 3 4 5) as |stepNum|}}
+        <div
+          class="avitar-step-progress__step
+            {{if (eq this.currentStep stepNum) 'avitar-step-progress__step--active'}}
+            {{if (lt stepNum this.currentStep) 'avitar-step-progress__step--completed'}}"
+        >
+          <div class="avitar-step-progress__number">
+            {{#if (lt stepNum this.currentStep)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              {{stepNum}}
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">
+            {{#if (eq stepNum 1)}}Type{{/if}}
+            {{#if (eq stepNum 2)}}Details{{/if}}
+            {{#if (eq stepNum 3)}}Applicant{{/if}}
+            {{#if (eq stepNum 4)}}Documents{{/if}}
+            {{#if (eq stepNum 5)}}Review{{/if}}
+          </div>
+        </div>
+
+        {{#unless (eq stepNum 5)}}
+          <div class="avitar-step-progress__connector
+            {{if (lt stepNum this.currentStep) 'avitar-step-progress__connector--completed'}}
+            {{if (eq stepNum this.currentStep) 'avitar-step-progress__connector--active'}}">
+          </div>
+        {{/unless}}
+      {{/each}}
+    </div>
+  </div>
+
+  <div class="avitar-card__body">
+    {{! Check if property is selected }}
+    {{#unless this.selectedProperty}}
+      <div class="avitar-alert avitar-alert--warning">
+        <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+        <div>
+          <h4 class="avitar-font-medium avitar-mb-2">No Property Selected</h4>
+          <p>Please select a property from the property tree on the left before creating a permit application.</p>
+        </div>
+      </div>
+    {{else}}
+      {{! Step 1: Select Permit Type }}
+      {{#if (eq this.currentStep 1)}}
+      <div class="avitar-mb-4">
+        <p class="avitar-text-muted avitar-mb-4">
+          Select the type of permit you need to apply for. Each permit type has specific requirements and fees.
+        </p>
+
+        {{#if this.isLoadingPermitTypes}}
+          <div class="avitar-text-center avitar-py-8">
+            <i class="fas fa-spinner fa-spin fa-2x avitar-mb-3"></i>
+            <p class="avitar-text-muted">Loading permit types...</p>
+          </div>
+        {{else if this.permitTypes.length}}
+          <div class="avitar-grid avitar-grid--3">
+            {{#each this.permitTypes as |permitType|}}
+              <button
+                type="button"
+                class="avitar-card avitar-card--interactive {{if (eq this.selectedPermitType._id permitType._id) 'avitar-card--selected'}}"
+                {{on "click" (fn this.selectPermitType permitType)}}
+              >
+                <div class="avitar-card__body avitar-text-center">
+                  <i class="fas fa-{{permitType.icon}} fa-3x avitar-mb-3 avitar-text-primary"></i>
+                  <h4 class="avitar-font-medium avitar-mb-2">{{permitType.name}}</h4>
+                  <p class="avitar-text-sm avitar-text-muted avitar-mb-3">
+                    {{permitType.description}}
+                  </p>
+                  {{#if permitType.feeSchedule}}
+                    <div class="avitar-badge avitar-badge--info">
+                      {{#if (eq permitType.feeSchedule.calculationType "flat")}}
+                        ${{permitType.feeSchedule.baseAmount}} flat fee
+                      {{else if (eq permitType.feeSchedule.calculationType "per_sqft")}}
+                        ${{permitType.feeSchedule.baseAmount}} + ${{permitType.feeSchedule.perSqftRate}}/sq ft
+                      {{else if (eq permitType.feeSchedule.calculationType "percentage")}}
+                        {{permitType.feeSchedule.baseAmount}}% of project value
+                      {{else}}
+                        Custom fee calculation
+                      {{/if}}
+                    </div>
+                  {{/if}}
+                </div>
+              </button>
+            {{/each}}
+          </div>
+
+          {{#if this.errors.permitType}}
+            <p class="avitar-error-text avitar-mt-3">{{this.errors.permitType}}</p>
+          {{/if}}
+        {{else}}
+          <div class="avitar-alert avitar-alert--warning">
+            <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+            No active permit types are configured. Please contact your municipality administrator.
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+
+    {{! Step 2: Project Details }}
+    {{#if (eq this.currentStep 2)}}
+      <div class="avitar-mb-4">
+        <div class="avitar-form-group">
+          <label class="avitar-label">
+            Project Description
+            {{#if this.errors.description}}
+              <span class="avitar-text-danger">*</span>
+            {{/if}}
+          </label>
+          <textarea
+            class="avitar-textarea {{if this.errors.description 'avitar-textarea--error'}}"
+            rows="3"
+            placeholder="Brief description of the work to be performed"
+            {{on "input" this.updateDescription}}
+          >{{this.permit.description}}</textarea>
+          {{#if this.errors.description}}
+            <p class="avitar-error-text">{{this.errors.description}}</p>
+          {{/if}}
+          <p class="avitar-help-text">
+            Provide a clear description of the work that will be performed
+          </p>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Detailed Scope of Work <span class="avitar-text-muted">(Optional)</span></label>
+          <textarea
+            class="avitar-textarea"
+            rows="4"
+            placeholder="Detailed scope of work including materials, methods, and timeline"
+            {{on "input" this.updateScopeOfWork}}
+          >{{this.permit.scopeOfWork}}</textarea>
+          <p class="avitar-help-text">
+            Include any additional details that may be helpful for reviewing your application
+          </p>
+        </div>
+
+        <div class="avitar-grid avitar-grid--2">
+          <div class="avitar-form-group">
+            <label class="avitar-label">
+              Estimated Project Value ($)
+              {{#if this.errors.estimatedValue}}
+                <span class="avitar-text-danger">*</span>
+              {{/if}}
+            </label>
+            <input
+              type="number"
+              class="avitar-input {{if this.errors.estimatedValue 'avitar-input--error'}}"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              value={{this.permit.estimatedValue}}
+              {{on "input" this.updateEstimatedValue}}
+            />
+            {{#if this.errors.estimatedValue}}
+              <p class="avitar-error-text">{{this.errors.estimatedValue}}</p>
+            {{/if}}
+            <p class="avitar-help-text">
+              Total estimated cost of the project including labor and materials
+            </p>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">
+              Square Footage <span class="avitar-text-muted">(Optional)</span>
+            </label>
+            <input
+              type="number"
+              class="avitar-input"
+              placeholder="0"
+              min="0"
+              value={{this.permit.squareFootage}}
+              {{on "input" this.updateSquareFootage}}
+            />
+            <p class="avitar-help-text">
+              Area affected or being constructed (if applicable)
+            </p>
+          </div>
+        </div>
+
+        {{! Custom Form Fields (if configured for this permit type) }}
+        {{#if this.selectedPermitType.customFormFields}}
+          {{#if this.selectedPermitType.customFormFields.length}}
+            <hr class="avitar-divider avitar-my-4" />
+
+            <h4 class="avitar-font-medium avitar-mb-3">
+              <i class="fas fa-list-check avitar-mr-2"></i>
+              Additional Information
+            </h4>
+
+            {{#each this.selectedPermitType.customFormFields as |field|}}
+            <div class="avitar-form-group">
+              <label class="avitar-label">
+                {{field.label}}
+                {{#if field.required}}
+                  <span class="avitar-text-danger">*</span>
+                {{/if}}
+              </label>
+
+              {{#if (eq field.type "text")}}
+                <input
+                  type="text"
+                  class="avitar-input {{if (get this.errors (concat 'customField_' field.id)) 'avitar-input--error'}}"
+                  placeholder={{field.placeholder}}
+                  value={{get this.permit.customFields field.id}}
+                  {{on "input" (fn this.updateCustomField field.id)}}
+                />
+              {{else if (eq field.type "textarea")}}
+                <textarea
+                  class="avitar-textarea {{if (get this.errors (concat 'customField_' field.id)) 'avitar-textarea--error'}}"
+                  rows="3"
+                  placeholder={{field.placeholder}}
+                  {{on "input" (fn this.updateCustomField field.id)}}
+                >{{get this.permit.customFields field.id}}</textarea>
+              {{else if (eq field.type "number")}}
+                <input
+                  type="number"
+                  class="avitar-input {{if (get this.errors (concat 'customField_' field.id)) 'avitar-input--error'}}"
+                  placeholder={{field.placeholder}}
+                  value={{get this.permit.customFields field.id}}
+                  {{on "input" (fn this.updateCustomField field.id)}}
+                />
+              {{else if (eq field.type "currency")}}
+                <input
+                  type="number"
+                  class="avitar-input {{if (get this.errors (concat 'customField_' field.id)) 'avitar-input--error'}}"
+                  placeholder={{field.placeholder}}
+                  min="0"
+                  step="0.01"
+                  value={{get this.permit.customFields field.id}}
+                  {{on "input" (fn this.updateCustomField field.id)}}
+                />
+              {{else if (eq field.type "date")}}
+                <input
+                  type="date"
+                  class="avitar-input {{if (get this.errors (concat 'customField_' field.id)) 'avitar-input--error'}}"
+                  value={{get this.permit.customFields field.id}}
+                  {{on "input" (fn this.updateCustomField field.id)}}
+                />
+              {{else if (eq field.type "select")}}
+                <select
+                  class="avitar-select {{if (get this.errors (concat 'customField_' field.id)) 'avitar-select--error'}}"
+                  {{on "change" (fn this.updateCustomField field.id)}}
+                >
+                  <option value="">Select...</option>
+                  {{#each field.options as |option|}}
+                    <option
+                      value={{option}}
+                      selected={{eq (get this.permit.customFields field.id) option}}
+                    >
+                      {{option}}
+                    </option>
+                  {{/each}}
+                </select>
+              {{else if (eq field.type "checkbox")}}
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                  {{#each field.options as |option|}}
+                    <label class="avitar-checkbox-label">
+                      <input
+                        type="checkbox"
+                        class="avitar-checkbox"
+                        value={{option}}
+                        checked={{includes (get this.permit.customFields field.id) option}}
+                        {{on "change" (fn this.updateCustomFieldCheckbox field.id option)}}
+                      />
+                      <span>{{option}}</span>
+                    </label>
+                  {{/each}}
+                </div>
+              {{/if}}
+
+              {{#if (get this.errors (concat 'customField_' field.id))}}
+                <p class="avitar-error-text">{{get this.errors (concat 'customField_' field.id)}}</p>
+              {{/if}}
+
+              {{#if field.helpText}}
+                <p class="avitar-help-text">{{field.helpText}}</p>
+              {{/if}}
+            </div>
+            {{/each}}
+          {{/if}}
+        {{/if}}
+
+        {{#if this.selectedPermitType.feeSchedule}}
+          <div class="avitar-alert avitar-alert--info avitar-mt-4">
+            <i class="fas fa-info-circle avitar-mr-2"></i>
+            <div>
+              <strong>Estimated Application Fee:</strong> ${{this.calculatedFee}}
+              <p class="avitar-text-sm avitar-mt-1">
+                Based on {{this.selectedPermitType.name}} fee schedule
+              </p>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+
+    {{! Step 3: Applicant Information }}
+    {{#if (eq this.currentStep 3)}}
+      <div class="avitar-mb-4">
+        <p class="avitar-text-muted avitar-mb-4">
+          Provide information about the person applying for this permit.
+        </p>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">
+            Applicant Name
+            {{#if this.errors.applicantName}}
+              <span class="avitar-text-danger">*</span>
+            {{/if}}
+          </label>
+          <input
+            type="text"
+            class="avitar-input {{if this.errors.applicantName 'avitar-input--error'}}"
+            placeholder="Full name"
+            value={{this.permit.applicant.name}}
+            {{on "input" (fn this.updateApplicantField "name")}}
+          />
+          {{#if this.errors.applicantName}}
+            <p class="avitar-error-text">{{this.errors.applicantName}}</p>
+          {{/if}}
+        </div>
+
+        <div class="avitar-grid avitar-grid--2">
+          <div class="avitar-form-group">
+            <label class="avitar-label">
+              Email Address
+              {{#if this.errors.applicantEmail}}
+                <span class="avitar-text-danger">*</span>
+              {{/if}}
+            </label>
+            <input
+              type="email"
+              class="avitar-input {{if this.errors.applicantEmail 'avitar-input--error'}}"
+              placeholder="email@example.com"
+              value={{this.permit.applicant.email}}
+              {{on "input" (fn this.updateApplicantField "email")}}
+            />
+            {{#if this.errors.applicantEmail}}
+              <p class="avitar-error-text">{{this.errors.applicantEmail}}</p>
+            {{/if}}
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">Phone Number</label>
+            <input
+              type="tel"
+              class="avitar-input"
+              placeholder="(555) 555-5555"
+              value={{this.permit.applicant.phone}}
+              {{on "input" (fn this.updateApplicantField "phone")}}
+            />
+          </div>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Relationship to Property</label>
+          <select
+            class="avitar-select"
+            {{on "change" (fn this.updateApplicantField "relationshipToProperty")}}
+          >
+            <option value="">Select...</option>
+            {{#each this.relationshipOptions as |relationshipOption|}}
+              <option
+                value={{relationshipOption.value}}
+                selected={{eq this.permit.applicant.relationshipToProperty relationshipOption.value}}
+              >
+                {{relationshipOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Mailing Address</label>
+          <textarea
+            class="avitar-textarea"
+            rows="2"
+            placeholder="Street address, city, state, zip"
+            {{on "input" (fn this.updateApplicantField "address")}}
+          >{{this.permit.applicant.address}}</textarea>
+        </div>
+
+        <hr class="avitar-divider avitar-my-4" />
+
+        <h4 class="avitar-font-medium avitar-mb-3">
+          <i class="fas fa-hard-hat avitar-mr-2"></i>
+          Contractor Information <span class="avitar-text-muted avitar-text-sm">(Optional)</span>
+        </h4>
+
+        <div class="avitar-grid avitar-grid--2">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Company Name</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="Company name"
+              value={{this.permit.contractor.companyName}}
+              {{on "input" (fn this.updateContractorField "companyName")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">License Number</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="License #"
+              value={{this.permit.contractor.licenseNumber}}
+              {{on "input" (fn this.updateContractorField "licenseNumber")}}
+            />
+          </div>
+        </div>
+
+        <div class="avitar-grid avitar-grid--2">
+          <div class="avitar-form-group">
+            <label class="avitar-label">Contact Name</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="Contact person"
+              value={{this.permit.contractor.contactName}}
+              {{on "input" (fn this.updateContractorField "contactName")}}
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label">Contact Email</label>
+            <input
+              type="email"
+              class="avitar-input"
+              placeholder="email@example.com"
+              value={{this.permit.contractor.email}}
+              {{on "input" (fn this.updateContractorField "email")}}
+            />
+          </div>
+        </div>
+
+        <div class="avitar-form-group">
+          <label class="avitar-label">Contact Phone</label>
+          <input
+            type="tel"
+            class="avitar-input"
+            placeholder="(555) 555-5555"
+            value={{this.permit.contractor.phone}}
+            {{on "input" (fn this.updateContractorField "phone")}}
+          />
+        </div>
+      </div>
+    {{/if}}
+
+    {{! Step 4: Document Upload }}
+    {{#if (eq this.currentStep 4)}}
+      <div class="avitar-mb-4">
+        <p class="avitar-text-muted avitar-mb-4">
+          Upload the required documents for your {{this.selectedPermitType.name}} application.
+        </p>
+
+        {{#if this.selectedPermitType.requiredDocuments.length}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-font-medium avitar-mb-3">
+              <i class="fas fa-asterisk avitar-text-danger avitar-mr-2"></i>
+              Required Documents
+            </h4>
+
+            {{#each this.selectedPermitType.requiredDocuments as |doc|}}
+              <div class="avitar-card avitar-mb-3">
+                <div class="avitar-card__body">
+                  <div style="display: flex; align-items: start; gap: 1rem;">
+                    <i class="fas fa-file-alt fa-2x avitar-text-muted"></i>
+                    <div style="flex: 1;">
+                      <h5 class="avitar-font-medium avitar-mb-1">{{doc.name}}</h5>
+                      {{#if doc.description}}
+                        <p class="avitar-text-sm avitar-text-muted avitar-mb-2">
+                          {{doc.description}}
+                        </p>
+                      {{/if}}
+                      {{#if doc.fileTypes}}
+                        <p class="avitar-text-xs avitar-text-muted">
+                          Accepted formats: {{join ", " doc.fileTypes}}
+                        </p>
+                      {{/if}}
+                    </div>
+                    <input
+                      type="file"
+                      class="avitar-input"
+                      accept={{this.formatFileTypes doc.fileTypes}}
+                      {{on "change" (fn this.handleFileUpload doc.name)}}
+                    />
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{/if}}
+
+        {{#if this.selectedPermitType.suggestedDocuments.length}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-font-medium avitar-mb-3">
+              <i class="fas fa-info-circle avitar-text-info avitar-mr-2"></i>
+              Suggested Documents <span class="avitar-text-muted avitar-text-sm">(Optional)</span>
+            </h4>
+
+            {{#each this.selectedPermitType.suggestedDocuments as |doc|}}
+              <div class="avitar-card avitar-mb-3">
+                <div class="avitar-card__body">
+                  <div style="display: flex; align-items: start; gap: 1rem;">
+                    <i class="fas fa-file-alt fa-2x avitar-text-muted"></i>
+                    <div style="flex: 1;">
+                      <h5 class="avitar-font-medium avitar-mb-1">{{doc.name}}</h5>
+                      {{#if doc.description}}
+                        <p class="avitar-text-sm avitar-text-muted avitar-mb-2">
+                          {{doc.description}}
+                        </p>
+                      {{/if}}
+                      {{#if doc.fileTypes}}
+                        <p class="avitar-text-xs avitar-text-muted">
+                          Accepted formats: {{join ", " doc.fileTypes}}
+                        </p>
+                      {{/if}}
+                    </div>
+                    <input
+                      type="file"
+                      class="avitar-input"
+                      accept={{this.formatFileTypes doc.fileTypes}}
+                      {{on "change" (fn this.handleFileUpload doc.name)}}
+                    />
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{/if}}
+
+        {{#if this.selectedPermitType.templateFiles.length}}
+          <div class="avitar-alert avitar-alert--info">
+            <i class="fas fa-download avitar-mr-2"></i>
+            <div>
+              <strong>Template Files Available</strong>
+              <p class="avitar-text-sm avitar-mt-2">
+                Download these templates to help with your application:
+              </p>
+              <ul class="avitar-list avitar-mt-2">
+                {{#each this.selectedPermitType.templateFiles as |template|}}
+                  <li>
+                    <a href={{template.fileUrl}} download class="avitar-link">
+                      <i class="fas fa-file-download avitar-mr-1"></i>
+                      {{template.displayName}}
+                    </a>
+                  </li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+
+        {{! Existing Property Documents }}
+        {{#if this.selectedProperty}}
+          <div class="avitar-mb-4">
+            <h4 class="avitar-font-medium avitar-mb-3">
+              <i class="fas fa-folder avitar-text-primary avitar-mr-2"></i>
+              Existing Property Documents
+            </h4>
+
+            {{#if this.isLoadingPropertyDocuments}}
+              <div class="avitar-card avitar-text-center avitar-py-4">
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Loading property documents...
+              </div>
+            {{else if this.propertyDocuments.length}}
+              <div class="avitar-card">
+                <div class="avitar-card__body">
+                  <div class="avitar-table-responsive">
+                    <table class="avitar-table">
+                      <thead>
+                        <tr>
+                          <th>File Name</th>
+                          <th>Department</th>
+                          <th>Category</th>
+                          <th>Size</th>
+                          <th>Uploaded</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {{#each this.propertyDocuments as |doc|}}
+                          <tr>
+                            <td>
+                              <i class="fas fa-file avitar-mr-2 avitar-text-muted"></i>
+                              {{doc.displayName}}
+                            </td>
+                            <td>
+                              <span class="avitar-badge avitar-badge--info">
+                                {{doc.department}}
+                              </span>
+                            </td>
+                            <td>{{doc.category}}</td>
+                            <td>{{this.formatFileSize doc.fileSize}}</td>
+                            <td>{{this.formatDate doc.uploadedAt}}</td>
+                            <td>
+                              <button
+                                type="button"
+                                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                                {{on "click" (fn this.downloadDocument doc._id)}}
+                              >
+                                <i class="fas fa-download"></i>
+                                Download
+                              </button>
+                            </td>
+                          </tr>
+                        {{/each}}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            {{else}}
+              <div class="avitar-alert avitar-alert--info">
+                <i class="fas fa-info-circle avitar-mr-2"></i>
+                No existing documents found for this property.
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{#if this.errors.documents}}
+          <p class="avitar-error-text avitar-mt-3">{{this.errors.documents}}</p>
+        {{/if}}
+      </div>
+    {{/if}}
+
+    {{! Step 5: Review & Submit }}
+    {{#if (eq this.currentStep 5)}}
+      <div class="avitar-mb-4">
+        <p class="avitar-text-muted avitar-mb-4">
+          Please review your permit application before submitting.
+        </p>
+
+        {{! Permit Type Summary }}
+        <div class="avitar-card avitar-mb-3">
+          <div class="avitar-card__header">
+            <h4 class="avitar-card__title">
+              <i class="fas fa-file-alt avitar-mr-2"></i>
+              Permit Type
+            </h4>
+          </div>
+          <div class="avitar-card__body">
+            <p><strong>{{this.selectedPermitType.name}}</strong></p>
+            <p class="avitar-text-sm avitar-text-muted">{{this.selectedPermitType.description}}</p>
+          </div>
+        </div>
+
+        {{! Property Summary }}
+        <div class="avitar-card avitar-mb-3">
+          <div class="avitar-card__header">
+            <h4 class="avitar-card__title">
+              <i class="fas fa-map-marker-alt avitar-mr-2"></i>
+              Property Information
+            </h4>
+          </div>
+          <div class="avitar-card__body">
+            <p><strong>PID:</strong> {{this.selectedProperty.pid_formatted}}</p>
+            <p><strong>Address:</strong> {{this.selectedProperty.location.address}}</p>
+            {{#if this.selectedCard}}
+              <p><strong>Card:</strong> {{this.selectedCard}}</p>
+            {{/if}}
+          </div>
+        </div>
+
+        {{! Project Details Summary }}
+        <div class="avitar-card avitar-mb-3">
+          <div class="avitar-card__header">
+            <h4 class="avitar-card__title">
+              <i class="fas fa-clipboard-list avitar-mr-2"></i>
+              Project Details
+            </h4>
+          </div>
+          <div class="avitar-card__body">
+            <p><strong>Description:</strong></p>
+            <p class="avitar-mb-2">{{this.permit.description}}</p>
+
+            {{#if this.permit.scopeOfWork}}
+              <p><strong>Scope of Work:</strong></p>
+              <p class="avitar-mb-2">{{this.permit.scopeOfWork}}</p>
+            {{/if}}
+
+            <p><strong>Estimated Value:</strong> ${{this.permit.estimatedValue}}</p>
+            {{#if this.permit.squareFootage}}
+              <p><strong>Square Footage:</strong> {{this.permit.squareFootage}} sq ft</p>
+            {{/if}}
+
+            {{! Custom Field Responses }}
+            {{#if this.selectedPermitType.customFormFields.length}}
+              <hr class="avitar-divider avitar-my-3" />
+              <p class="avitar-font-medium avitar-mb-2">Additional Information</p>
+              {{#each this.selectedPermitType.customFormFields as |field|}}
+                {{#let (get this.permit.customFields field.id) as |value|}}
+                  {{#if (or value (eq value 0) (eq value false))}}
+                    <p>
+                      <strong>{{field.label}}:</strong>
+                      {{#if (eq field.type "checkbox")}}
+                        {{join ", " value}}
+                      {{else if (eq field.type "currency")}}
+                        ${{value}}
+                      {{else}}
+                        {{value}}
+                      {{/if}}
+                    </p>
+                  {{/if}}
+                {{/let}}
+              {{/each}}
+            {{/if}}
+          </div>
+        </div>
+
+        {{! Applicant Summary }}
+        <div class="avitar-card avitar-mb-3">
+          <div class="avitar-card__header">
+            <h4 class="avitar-card__title">
+              <i class="fas fa-user avitar-mr-2"></i>
+              Applicant Information
+            </h4>
+          </div>
+          <div class="avitar-card__body">
+            <p><strong>Name:</strong> {{this.permit.applicant.name}}</p>
+            <p><strong>Email:</strong> {{this.permit.applicant.email}}</p>
+            {{#if this.permit.applicant.phone}}
+              <p><strong>Phone:</strong> {{this.permit.applicant.phone}}</p>
+            {{/if}}
+            {{#if this.permit.applicant.relationshipToProperty}}
+              <p><strong>Relationship:</strong> {{this.permit.applicant.relationshipToProperty}}</p>
+            {{/if}}
+
+            {{#if this.permit.contractor.companyName}}
+              <hr class="avitar-divider avitar-my-3" />
+              <p class="avitar-font-medium avitar-mb-2">Contractor</p>
+              <p><strong>Company:</strong> {{this.permit.contractor.companyName}}</p>
+              {{#if this.permit.contractor.licenseNumber}}
+                <p><strong>License:</strong> {{this.permit.contractor.licenseNumber}}</p>
+              {{/if}}
+              {{#if this.permit.contractor.contactName}}
+                <p><strong>Contact:</strong> {{this.permit.contractor.contactName}}</p>
+              {{/if}}
+            {{/if}}
+          </div>
+        </div>
+
+        {{! Fee Summary }}
+        <div class="avitar-card avitar-mb-3">
+          <div class="avitar-card__header">
+            <h4 class="avitar-card__title">
+              <i class="fas fa-dollar-sign avitar-mr-2"></i>
+              Fees
+            </h4>
+          </div>
+          <div class="avitar-card__body">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p class="avitar-font-medium">Application Fee</p>
+                <p class="avitar-text-sm avitar-text-muted">
+                  {{this.selectedPermitType.name}}
+                </p>
+              </div>
+              <p class="avitar-text-xl avitar-font-bold avitar-text-primary">
+                ${{this.calculatedFee}}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {{! Documents Summary }}
+        {{#if this.uploadedDocuments.length}}
+          <div class="avitar-card avitar-mb-3">
+            <div class="avitar-card__header">
+              <h4 class="avitar-card__title">
+                <i class="fas fa-paperclip avitar-mr-2"></i>
+                Uploaded Documents
+              </h4>
+            </div>
+            <div class="avitar-card__body">
+              <ul class="avitar-list">
+                {{#each this.uploadedDocuments as |doc|}}
+                  <li>{{doc.type}} - {{doc.fileName}}</li>
+                {{/each}}
+              </ul>
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+    {{/unless}}
+
+    {{! Navigation Buttons }}
+    {{#if this.selectedProperty}}
+      <div class="avitar-form-actions" style="justify-content: space-between;">
+        <div>
+          {{#if this.canGoBack}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.previousStep}}
+              disabled={{or this.isSaving this.isSubmitting}}
+            >
+              <i class="fas fa-arrow-left avitar-mr-2"></i>
+              Back
+            </button>
+          {{/if}}
+        </div>
+
+        <div style="display: flex; gap: 0.75rem;">
+          {{#if (not this.isLastStep)}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.saveDraft}}
+              disabled={{or this.isSaving this.isSubmitting}}
+            >
+              {{#if this.isSaving}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Saving...
+              {{else}}
+                <i class="fas fa-save avitar-mr-2"></i>
+                Save Draft
+              {{/if}}
+            </button>
+          {{/if}}
+
+          {{#if this.isLastStep}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.submitPermit}}
+              disabled={{or this.isSaving this.isSubmitting (not this.canSubmit)}}
+            >
+              {{#if this.isSubmitting}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Submitting...
+              {{else}}
+                <i class="fas fa-paper-plane avitar-mr-2"></i>
+                Submit Permit
+              {{/if}}
+            </button>
+          {{else}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.nextStep}}
+              disabled={{or this.isSaving this.isSubmitting}}
+            >
+              Next
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>

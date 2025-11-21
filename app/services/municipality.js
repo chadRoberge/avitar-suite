@@ -206,26 +206,42 @@ export default class MunicipalityService extends Service {
         children: assessingChildren,
       });
 
-      // Add AI Review if feature is available
+      // Add Advanced dropdown with Reports, Revaluation, and AI Review
+      const advancedItems = [
+        {
+          title: 'Reports',
+          route: 'municipality.assessing.reports',
+          icon: 'file-alt',
+        },
+        {
+          title: 'Revaluation',
+          route: 'municipality.assessing.revaluation',
+          icon: 'chart-line',
+        },
+      ];
+
+      // Add AI Review to Advanced dropdown if feature is available
       if (this.hasFeature('assessing', 'aiAbatementReview')) {
-        nav[nav.length - 1].children.push({
+        advancedItems.push({
           title: 'AI Review',
           route: 'municipality.assessing.ai-review',
+          icon: 'robot',
         });
       }
 
-      // Add Reports tab
       nav[nav.length - 1].children.push({
-        title: 'Reports',
-        route: 'municipality.assessing.reports',
-        icon: 'file-chart-line',
+        title: 'Advanced',
+        icon: 'flask',
+        dropdown: true,
+        items: advancedItems,
       });
 
-      // Add Settings at the far right
+      // Add Settings at the far right (icon only)
       nav[nav.length - 1].children.push({
         title: 'Settings',
         route: 'municipality.assessing.settings',
         icon: 'cog',
+        iconOnly: true,
       });
     }
 
@@ -260,13 +276,49 @@ export default class MunicipalityService extends Service {
         icon: 'tool',
         children: [
           {
-            title: 'Applications',
-            route: 'municipality.building-permits.applications',
+            title: 'Queue',
+            route: 'municipality.building-permits.queue',
+            icon: 'clipboard-list',
           },
-          { title: 'Permits', route: 'municipality.building-permits.permits' },
+          {
+            title: 'All Permits',
+            route: 'municipality.building-permits.permits',
+            icon: 'file-alt',
+          },
+          {
+            title: 'New Permit',
+            route: 'municipality.building-permits.create',
+            icon: 'plus-circle',
+          },
           {
             title: 'Inspections',
             route: 'municipality.building-permits.inspections',
+            icon: 'clipboard-check',
+          },
+          {
+            title: 'Applications',
+            route: 'municipality.building-permits.applications',
+            icon: 'inbox',
+          },
+          {
+            title: 'Documents',
+            route: 'municipality.building-permits.documents',
+            icon: 'folder-open',
+          },
+          {
+            title: 'Certificates',
+            route: 'municipality.building-permits.certificates',
+            icon: 'certificate',
+          },
+          {
+            title: 'Reports',
+            route: 'municipality.building-permits.reports',
+            icon: 'chart-bar',
+          },
+          {
+            title: 'Settings',
+            route: 'municipality.building-permits.settings',
+            icon: 'cog',
           },
         ],
       });

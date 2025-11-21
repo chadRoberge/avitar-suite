@@ -1,0 +1,109 @@
+---
+subject: Permit Rejected - {{permitNumber}}
+---
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: {{statusColor 'rejected'}}; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">
+                Permit Application Rejected
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                Dear {{applicantName}},
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                After reviewing your permit application, {{municipalityName}} has determined that the application cannot be approved at this time.
+              </p>
+
+              <!-- Permit Details -->
+              <table width="100%" cellpadding="12" cellspacing="0" style="background-color: #f9fafb; border-radius: 6px; margin: 20px 0;">
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Permit Number:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{permitNumber}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Permit Type:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{permitType}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Property Address:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{propertyAddress}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: #6b7280; font-size: 14px;">
+                    <strong>Rejected Date:</strong>
+                  </td>
+                  <td style="color: #111827; font-size: 14px;">
+                    {{formatDate rejectedDate 'long'}}
+                  </td>
+                </tr>
+              </table>
+
+              {{#if rejectionReason}}
+              <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #991b1b;">
+                  <strong>Reason for Rejection:</strong>
+                </p>
+                <p style="margin: 10px 0 0 0; font-size: 14px; color: #991b1b;">
+                  {{rejectionReason}}
+                </p>
+              </div>
+              {{/if}}
+
+              <p style="margin: 20px 0; font-size: 16px; color: #374151;">
+                You may submit a new application addressing the issues outlined above. If you have questions or need clarification, please contact {{municipalityName}}.
+              </p>
+
+              <!-- Call to Action -->
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="#" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                  Submit New Application
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                This is an automated notification from the Avitar Platform<br>
+                © 2025 Avitar. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

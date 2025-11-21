@@ -1,0 +1,80 @@
+{{!-- Contractor Management Menu Component using Avitar Sidebar Classes --}}
+<nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar">
+  <div class="avitar-sidebar__header">
+    <h2 class="avitar-sidebar__title">Contractor Management</h2>
+    <div class="avitar-sidebar__subtitle">Manage your business</div>
+  </div>
+
+  <div class="avitar-sidebar__nav">
+    <ul class="avitar-sidebar__nav-list">
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.general"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-building avitar-sidebar__nav-icon"></i>
+          <span>General</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.team"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-users avitar-sidebar__nav-icon"></i>
+          <span>Team Members</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.payment-methods"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-wallet avitar-sidebar__nav-icon"></i>
+          <span>Payment Options</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.subscription"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-credit-card avitar-sidebar__nav-icon"></i>
+          <span>Subscriptions</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.notifications"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-bell avitar-sidebar__nav-icon"></i>
+          <span>Notifications</span>
+        </LinkTo>
+      </li>
+
+      {{! Divider }}
+      <li class="avitar-sidebar__divider"></li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="contractor-management.verification"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-certificate avitar-sidebar__nav-icon"></i>
+          <span>Platform Verification</span>
+        </LinkTo>
+      </li>
+    </ul>
+  </div>
+</nav>

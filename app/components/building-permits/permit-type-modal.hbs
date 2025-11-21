@@ -1,0 +1,934 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
+    <div class="avitar-modal avitar-modal--xl" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+        <h2 class="avitar-modal__title">{{this.modalTitle}}</h2>
+
+        {{! Step Progress }}
+        <div class="avitar-step-progress" style="flex: 1; margin: 0;">
+        {{! Step 1: Basic Info }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 1) 'avitar-step-progress__step--active' (if (gt this.currentSection 1) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}" role="button" {{on "click" (fn this.goToSection 1)}}>
+          <div class="avitar-step-progress__number">
+            {{#if (gt this.currentSection 1)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              1
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">Basic Info</div>
+        </div>
+
+        {{! Connector 1-2 }}
+        <div class="avitar-step-progress__connector {{if (gt this.currentSection 1) 'avitar-step-progress__connector--completed' (if (eq this.currentSection 1) 'avitar-step-progress__connector--active')}}"></div>
+
+        {{! Step 2: Fee Schedule }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 2) 'avitar-step-progress__step--active' (if (gt this.currentSection 2) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}" role="button" {{on "click" (fn this.goToSection 2)}}>
+          <div class="avitar-step-progress__number">
+            {{#if (gt this.currentSection 2)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              2
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">Fee Schedule</div>
+        </div>
+
+        {{! Connector 2-3 }}
+        <div class="avitar-step-progress__connector {{if (gt this.currentSection 2) 'avitar-step-progress__connector--completed' (if (eq this.currentSection 2) 'avitar-step-progress__connector--active')}}"></div>
+
+        {{! Step 3: Form Fields }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 3) 'avitar-step-progress__step--active' (if (gt this.currentSection 3) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}" role="button" {{on "click" (fn this.goToSection 3)}}>
+          <div class="avitar-step-progress__number">
+            {{#if (gt this.currentSection 3)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              3
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">Form Fields</div>
+        </div>
+
+        {{! Connector 3-4 }}
+        <div class="avitar-step-progress__connector {{if (gt this.currentSection 3) 'avitar-step-progress__connector--completed' (if (eq this.currentSection 3) 'avitar-step-progress__connector--active')}}"></div>
+
+        {{! Step 4: Documents }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 4) 'avitar-step-progress__step--active' (if (gt this.currentSection 4) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}" role="button" {{on "click" (fn this.goToSection 4)}}>
+          <div class="avitar-step-progress__number">
+            {{#if (gt this.currentSection 4)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              4
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">Documents</div>
+        </div>
+
+        {{! Connector 4-5 }}
+        <div class="avitar-step-progress__connector {{if (gt this.currentSection 4) 'avitar-step-progress__connector--completed' (if (eq this.currentSection 4) 'avitar-step-progress__connector--active')}}"></div>
+
+        {{! Step 5: Review Req. }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 5) 'avitar-step-progress__step--active' (if (gt this.currentSection 5) 'avitar-step-progress__step--completed' 'avitar-step-progress__step--pending')}}" role="button" {{on "click" (fn this.goToSection 5)}}>
+          <div class="avitar-step-progress__number">
+            {{#if (gt this.currentSection 5)}}
+              <i class="fas fa-check avitar-step-progress__icon"></i>
+            {{else}}
+              5
+            {{/if}}
+          </div>
+          <div class="avitar-step-progress__label">Review Req.</div>
+        </div>
+
+        {{! Connector 5-6 }}
+        <div class="avitar-step-progress__connector {{if (gt this.currentSection 5) 'avitar-step-progress__connector--completed' (if (eq this.currentSection 5) 'avitar-step-progress__connector--active')}}"></div>
+
+        {{! Step 6: Templates }}
+        <div class="avitar-step-progress__step {{if (eq this.currentSection 6) 'avitar-step-progress__step--active' 'avitar-step-progress__step--pending'}}" role="button" {{on "click" (fn this.goToSection 6)}}>
+          <div class="avitar-step-progress__number">6</div>
+          <div class="avitar-step-progress__label">Templates</div>
+        </div>
+        </div>
+
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.close}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{! Section 1: Basic Information }}
+        {{#if (eq this.currentSection 1)}}
+          <div class="avitar-form">
+            <div class="avitar-form-row">
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required">Name</label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  placeholder="e.g., Building Permit, Electrical Permit"
+                  value={{this.name}}
+                  {{on "input" (fn this.updateField "name")}}
+                />
+              </div>
+            </div>
+
+            <div class="avitar-form-row">
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required">Description</label>
+                <textarea
+                  class="avitar-textarea"
+                  rows="3"
+                  placeholder="Describe when this permit type should be used..."
+                  {{on "input" (fn this.updateField "description")}}
+                >{{this.description}}</textarea>
+              </div>
+            </div>
+
+            <div class="avitar-form-row">
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required">Permit Categories</label>
+                <p class="avitar-text-muted avitar-text-sm avitar-mb-3">
+                  Select one or more categories. Multiple categories will create a project permit.
+                  {{#if this.isProject}}
+                    <span class="avitar-badge avitar-badge--success avitar-ml-2">
+                      <i class="fas fa-folder avitar-mr-1"></i>
+                      Project Permit ({{this.categories.length}} categories)
+                    </span>
+                  {{/if}}
+                </p>
+
+                <div class="avitar-category-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">
+                  {{#each this.categoryOptions as |cat|}}
+                    <button
+                      type="button"
+                      class="avitar-btn {{if (includes this.categories cat.value) 'avitar-btn--success' 'avitar-btn--secondary'}}"
+                      {{on "click" (fn this.toggleCategory cat.value)}}
+                      style="justify-content: center;"
+                    >
+                      <i class="fas fa-{{if (includes this.categories cat.value) 'check-circle' 'circle'}} avitar-mr-2"></i>
+                      {{cat.label}}
+                    </button>
+                  {{/each}}
+                </div>
+
+                {{#if this.categories.length}}
+                  <div class="avitar-mt-3">
+                    <p class="avitar-text-sm avitar-font-semibold avitar-mb-2">Selected Categories:</p>
+                    <div class="avitar-flex avitar-flex-wrap avitar-gap-2">
+                      {{#each this.categories as |selectedCat|}}
+                        {{#each this.categoryOptions as |cat|}}
+                          {{#if (eq cat.value selectedCat)}}
+                            <span class="avitar-badge avitar-badge--success avitar-badge--lg">
+                              {{cat.label}}
+                              <button
+                                type="button"
+                                class="avitar-ml-2"
+                                {{on "click" (fn this.toggleCategory cat.value)}}
+                                style="background: none; border: none; color: inherit; cursor: pointer; padding: 0;"
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </span>
+                          {{/if}}
+                        {{/each}}
+                      {{/each}}
+                    </div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+
+            <div class="avitar-form-row avitar-form-row--2">
+              <div class="avitar-form-group">
+                <label class="avitar-label">Icon</label>
+                <select
+                  class="avitar-select"
+                  {{on "change" (fn this.updateField "icon")}}
+                >
+                  {{#each this.iconOptions as |iconOpt|}}
+                    <option value={{iconOpt}} selected={{eq this.icon iconOpt}}>
+                      {{iconOpt}}
+                    </option>
+                  {{/each}}
+                </select>
+                <div class="avitar-mt-2">
+                  <div class="avitar-icon-wrapper avitar-icon-wrapper--lg avitar-bg-primary-light">
+                    <i class="fas fa-{{this.icon}}"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label">Status</label>
+                <label class="avitar-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={{this.isActive}}
+                    {{on "change" (fn this.updateCheckbox "isActive")}}
+                  />
+                  <span>Active (can be used for new permits)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+        {{! Section 2: Fee Schedule }}
+        {{#if (eq this.currentSection 2)}}
+          <div class="avitar-form">
+            <div class="avitar-form-row avitar-form-row--2">
+              <div class="avitar-form-group">
+                <label class="avitar-label">Base Amount</label>
+                <div class="avitar-input-group">
+                  <span class="avitar-input-group__addon">$</span>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={{this.baseAmount}}
+                    {{on "input" (fn this.updateFeeField "baseAmount")}}
+                  />
+                </div>
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label">Calculation Type</label>
+                <select
+                  class="avitar-select"
+                  {{on "change" (fn this.updateFeeField "calculationType")}}
+                >
+                  {{#each this.calculationTypes as |calcType|}}
+                    <option
+                      value={{calcType.value}}
+                      selected={{eq this.calculationType calcType.value}}
+                    >
+                      {{calcType.label}}
+                    </option>
+                  {{/each}}
+                </select>
+              </div>
+            </div>
+
+            {{#if (eq this.calculationType "per_sqft")}}
+              <div class="avitar-form-row">
+                <div class="avitar-form-group">
+                  <label class="avitar-label">Rate per Square Foot</label>
+                  <div class="avitar-input-group">
+                    <span class="avitar-input-group__addon">$</span>
+                    <input
+                      type="number"
+                      class="avitar-input"
+                      placeholder="0.50"
+                      step="0.01"
+                      min="0"
+                      value={{this.perSqftRate}}
+                      {{on "input" (fn this.updateFeeField "perSqftRate")}}
+                    />
+                    <span class="avitar-input-group__addon">/ sq ft</span>
+                  </div>
+                  <p class="avitar-text-muted avitar-text-sm avitar-mt-2">
+                    This amount will be multiplied by the square footage and added to the base amount.
+                  </p>
+                </div>
+              </div>
+            {{/if}}
+
+            {{#if (eq this.calculationType "custom")}}
+              <div class="avitar-form-row">
+                <div class="avitar-form-group">
+                  <label class="avitar-label">Custom Formula</label>
+                  <p class="avitar-text-muted avitar-text-sm avitar-mb-2">
+                    Available variables: baseAmount, squareFootage, estimatedValue
+                  </p>
+                  <textarea
+                    class="avitar-textarea avitar-font-mono"
+                    rows="3"
+                    placeholder="baseAmount + (squareFootage * 0.50)"
+                    {{on "input" (fn this.updateFeeField "formula")}}
+                  >{{this.formula}}</textarea>
+                </div>
+              </div>
+            {{/if}}
+
+            <div class="avitar-alert avitar-alert--info avitar-mb-4">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Fee Calculation:</strong>
+                {{#if (eq this.calculationType "flat")}}
+                  A flat fee of ${{this.baseAmount}} will be charged.
+                {{else if (eq this.calculationType "per_sqft")}}
+                  Base fee of ${{this.baseAmount}} plus ${{this.perSqftRate}} per square foot.
+                {{else if (eq this.calculationType "percentage")}}
+                  Percentage of the estimated project value.
+                {{else if (eq this.calculationType "custom")}}
+                  Custom formula will be evaluated at permit creation.
+                {{/if}}
+              </div>
+            </div>
+
+            {{! Fee Examples }}
+            {{#if this.feeExamples.length}}
+              <div class="avitar-card">
+                <div class="avitar-card__header">
+                  <h4 class="avitar-card__title">Fee Examples</h4>
+                </div>
+                <div class="avitar-card__body">
+                  <table class="avitar-table avitar-table--sm">
+                    <thead>
+                      <tr>
+                        <th>Scenario</th>
+                        <th>Square Footage</th>
+                        <th class="avitar-text-right">Calculated Fee</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {{#each this.feeExamples as |example|}}
+                        <tr>
+                          <td>{{example.description}}</td>
+                          <td>{{example.sqft}}</td>
+                          <td class="avitar-text-right avitar-font-semibold">
+                            {{#if (eq example.fee "Calculated")}}
+                              {{example.fee}}
+                            {{else}}
+                              ${{example.fee}}
+                            {{/if}}
+                          </td>
+                        </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{! Section 3: Application Form Fields }}
+        {{#if (eq this.currentSection 3)}}
+          <div class="avitar-form">
+            <p class="avitar-text-muted avitar-text-sm avitar-mb-4">
+              Add custom form fields that applicants will fill out when applying for this permit type. These fields will appear in the Project Details step.
+            </p>
+
+            {{! Custom Form Fields List }}
+            {{#if this.customFormFields.length}}
+              <div class="avitar-mb-4">
+                <h4 class="avitar-mb-3">Current Form Fields</h4>
+                <div class="avitar-list">
+                  {{#each this.customFormFields as |field index|}}
+                    <div class="avitar-list-item">
+                      <div style="flex: 1;">
+                        <div class="avitar-font-medium">
+                          {{field.label}}
+                          {{#if field.required}}
+                            <span class="avitar-badge avitar-badge--sm avitar-badge--danger avitar-ml-2">Required</span>
+                          {{/if}}
+                        </div>
+                        <div class="avitar-text-sm avitar-text-muted">
+                          Type: {{field.type}}
+                          {{#if field.placeholder}}
+                            | Placeholder: "{{field.placeholder}}"
+                          {{/if}}
+                        </div>
+                        {{#if field.helpText}}
+                          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                            Help: {{field.helpText}}
+                          </div>
+                        {{/if}}
+                        {{#if field.options.length}}
+                          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                            Options: {{join ", " field.options}}
+                          </div>
+                        {{/if}}
+                      </div>
+                      <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                          {{on "click" (fn this.moveFieldUp index)}}
+                          disabled={{eq index 0}}
+                          title="Move up"
+                        >
+                          <i class="fas fa-arrow-up"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                          {{on "click" (fn this.moveFieldDown index)}}
+                          disabled={{eq index (sub this.customFormFields.length 1)}}
+                          title="Move down"
+                        >
+                          <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                          {{on "click" (fn this.removeFormField index)}}
+                          title="Remove"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+
+            {{! Add New Form Field }}
+            <div class="avitar-card">
+              <div class="avitar-card__header">
+                <h4 class="avitar-card__title">Add New Form Field</h4>
+              </div>
+              <div class="avitar-card__body">
+                <form {{on "submit" this.addFormField}}>
+                  <div class="avitar-grid avitar-grid--2">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label avitar-label--required">Field Label</label>
+                      <input
+                        type="text"
+                        class="avitar-input"
+                        placeholder="e.g., Number of Bedrooms"
+                        value={{this.newFormField.label}}
+                        {{on "input" (fn this.updateNewFormField "label")}}
+                        required
+                      />
+                    </div>
+
+                    <div class="avitar-form-group">
+                      <label class="avitar-label">Field Type</label>
+                      <select
+                        class="avitar-select"
+                        value={{this.newFormField.type}}
+                        {{on "change" (fn this.updateNewFormField "type")}}
+                      >
+                        <option value="text">Text Input</option>
+                        <option value="textarea">Text Area</option>
+                        <option value="number">Number</option>
+                        <option value="currency">Currency ($)</option>
+                        <option value="date">Date</option>
+                        <option value="select">Dropdown Select</option>
+                        <option value="checkbox">Checkboxes</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="avitar-grid avitar-grid--2">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label">Placeholder Text</label>
+                      <input
+                        type="text"
+                        class="avitar-input"
+                        placeholder="e.g., Enter number of bedrooms"
+                        value={{this.newFormField.placeholder}}
+                        {{on "input" (fn this.updateNewFormField "placeholder")}}
+                      />
+                    </div>
+
+                    <div class="avitar-form-group">
+                      <label class="avitar-label">Help Text</label>
+                      <input
+                        type="text"
+                        class="avitar-input"
+                        placeholder="Additional guidance for users"
+                        value={{this.newFormField.helpText}}
+                        {{on "input" (fn this.updateNewFormField "helpText")}}
+                      />
+                    </div>
+                  </div>
+
+                  <div class="avitar-form-group">
+                    <label class="avitar-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={{this.newFormField.required}}
+                        {{on "change" (fn this.updateNewFormField "required")}}
+                      />
+                      <span>Required field</span>
+                    </label>
+                  </div>
+
+                  {{! Options for select and checkbox types }}
+                  {{#if (or (eq this.newFormField.type "select") (eq this.newFormField.type "checkbox"))}}
+                    <div class="avitar-form-group">
+                      <label class="avitar-label">Options</label>
+                      <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <input
+                          type="text"
+                          class="avitar-input"
+                          placeholder="Enter an option"
+                          value={{this.newFieldOption}}
+                          {{on "input" this.updateFieldOption}}
+                        />
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--secondary"
+                          {{on "click" this.addFieldOption}}
+                        >
+                          <i class="fas fa-plus"></i> Add
+                        </button>
+                      </div>
+                      {{#if this.newFormField.options.length}}
+                        <div class="avitar-list avitar-list--sm">
+                          {{#each this.newFormField.options as |option optIndex|}}
+                            <div class="avitar-list-item">
+                              <span>{{option}}</span>
+                              <button
+                                type="button"
+                                class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                                {{on "click" (fn this.removeFieldOption optIndex)}}
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </div>
+                          {{/each}}
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/if}}
+
+                  <button type="submit" class="avitar-btn avitar-btn--primary">
+                    <i class="fas fa-plus avitar-mr-2"></i>
+                    Add Form Field
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+        {{! Section 4: Document Requirements }}
+        {{#if (eq this.currentSection 4)}}
+          <div class="avitar-form">
+            {{! Required Documents }}
+            <div class="avitar-mb-6">
+              <h4 class="avitar-mb-3">Required Documents</h4>
+              <p class="avitar-text-muted avitar-text-sm avitar-mb-3">
+                Documents that applicants must upload to submit a permit application.
+              </p>
+
+              <div class="avitar-card avitar-mb-3">
+                <div class="avitar-card__body">
+                  <div class="avitar-form-row">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label avitar-label--sm">Document Name</label>
+                      <input
+                        type="text"
+                        class="avitar-input avitar-input--sm"
+                        placeholder="e.g., Site Plan, Proof of Ownership"
+                        value={{this.newRequiredDocument.name}}
+                        {{on "input" (fn this.updateNewRequiredDocument "name")}}
+                      />
+                    </div>
+                  </div>
+                  <div class="avitar-form-row">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label avitar-label--sm">Description</label>
+                      <input
+                        type="text"
+                        class="avitar-input avitar-input--sm"
+                        placeholder="Brief description of what's needed"
+                        value={{this.newRequiredDocument.description}}
+                        {{on "input" (fn this.updateNewRequiredDocument "description")}}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--primary avitar-btn--sm"
+                    {{on "click" this.addRequiredDocument}}
+                  >
+                    <i class="fas fa-plus avitar-mr-1"></i>
+                    Add Required Document
+                  </button>
+                </div>
+              </div>
+
+              {{#if this.requiredDocuments.length}}
+                <div class="avitar-list avitar-list--sm">
+                  {{#each this.requiredDocuments as |doc docIndex|}}
+                    <div class="avitar-list-item">
+                      <div class="avitar-flex avitar-justify-between avitar-items-start">
+                        <div>
+                          <div class="avitar-font-semibold">{{doc.name}}</div>
+                          {{#if doc.description}}
+                            <p class="avitar-text-muted avitar-text-sm">{{doc.description}}</p>
+                          {{/if}}
+                        </div>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          {{on "click" (fn this.removeRequiredDocument docIndex)}}
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              {{/if}}
+            </div>
+
+            {{! Suggested Documents }}
+            <div>
+              <h4 class="avitar-mb-3">Suggested Documents</h4>
+              <p class="avitar-text-muted avitar-text-sm avitar-mb-3">
+                Optional documents that may help expedite the review process.
+              </p>
+
+              <div class="avitar-card avitar-mb-3">
+                <div class="avitar-card__body">
+                  <div class="avitar-form-row">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label avitar-label--sm">Document Name</label>
+                      <input
+                        type="text"
+                        class="avitar-input avitar-input--sm"
+                        placeholder="e.g., Photos, Survey"
+                        value={{this.newSuggestedDocument.name}}
+                        {{on "input" (fn this.updateNewSuggestedDocument "name")}}
+                      />
+                    </div>
+                  </div>
+                  <div class="avitar-form-row">
+                    <div class="avitar-form-group">
+                      <label class="avitar-label avitar-label--sm">Description</label>
+                      <input
+                        type="text"
+                        class="avitar-input avitar-input--sm"
+                        placeholder="Why this document is helpful"
+                        value={{this.newSuggestedDocument.description}}
+                        {{on "input" (fn this.updateNewSuggestedDocument "description")}}
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                    {{on "click" this.addSuggestedDocument}}
+                  >
+                    <i class="fas fa-plus avitar-mr-1"></i>
+                    Add Suggested Document
+                  </button>
+                </div>
+              </div>
+
+              {{#if this.suggestedDocuments.length}}
+                <div class="avitar-list avitar-list--sm">
+                  {{#each this.suggestedDocuments as |doc docIndex|}}
+                    <div class="avitar-list-item">
+                      <div class="avitar-flex avitar-justify-between avitar-items-start">
+                        <div>
+                          <div class="avitar-font-semibold">{{doc.name}}</div>
+                          {{#if doc.description}}
+                            <p class="avitar-text-muted avitar-text-sm">{{doc.description}}</p>
+                          {{/if}}
+                        </div>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          {{on "click" (fn this.removeSuggestedDocument docIndex)}}
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
+
+        {{! Section 5: Review Requirements }}
+        {{#if (eq this.currentSection 5)}}
+          <div class="avitar-form">
+            <div class="avitar-card avitar-mb-4">
+              <div class="avitar-card__header">
+                <h4 class="avitar-card__title">Add Review Department</h4>
+              </div>
+              <div class="avitar-card__body">
+                <div class="avitar-form-row avitar-form-row--2">
+                  <div class="avitar-form-group">
+                    <label class="avitar-label">Department</label>
+                    <select
+                      class="avitar-select"
+                      {{on "change" (fn this.updateNewDepartment "departmentName")}}
+                    >
+                      <option value="">Select department...</option>
+                      {{#each this.departmentOptions as |deptOpt|}}
+                        <option value={{deptOpt}}>{{deptOpt}}</option>
+                      {{/each}}
+                    </select>
+                  </div>
+
+                  <div class="avitar-form-group">
+                    <label class="avitar-label">Review Order</label>
+                    <input
+                      type="number"
+                      class="avitar-input"
+                      min="1"
+                      value={{this.newDepartment.reviewOrder}}
+                      {{on "input" (fn this.updateNewDepartment "reviewOrder")}}
+                    />
+                  </div>
+                </div>
+
+                <div class="avitar-form-row">
+                  <label class="avitar-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={{this.newDepartment.isRequired}}
+                      {{on "change" (fn this.updateNewDepartment "isRequired")}}
+                    />
+                    <span>Required for permit approval</span>
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.addDepartment}}
+                >
+                  <i class="fas fa-plus avitar-mr-2"></i>
+                  Add Department
+                </button>
+              </div>
+            </div>
+
+            {{#if this.departmentReviews.length}}
+              <div class="avitar-list">
+                {{#each this.departmentReviews as |dept deptIndex|}}
+                  <div class="avitar-list-item">
+                    <div class="avitar-flex avitar-flex-col avitar-gap-3">
+                      {{! Department Header }}
+                      <div class="avitar-flex avitar-justify-between avitar-items-center">
+                        <div class="avitar-flex avitar-items-center avitar-gap-3">
+                          <div class="avitar-badge avitar-badge--lg">
+                            {{dept.reviewOrder}}
+                          </div>
+                          <div>
+                            <div class="avitar-font-semibold">
+                              {{dept.departmentName}}
+                              {{#if dept.isRequired}}
+                                <span class="avitar-badge avitar-badge--danger avitar-ml-2">Required</span>
+                              {{/if}}
+                            </div>
+                            {{#if dept.requiredDocuments.length}}
+                              <p class="avitar-text-muted avitar-text-sm">
+                                Reviews {{dept.requiredDocuments.length}} document(s)
+                              </p>
+                            {{/if}}
+                          </div>
+                        </div>
+                        <div class="avitar-btn-group">
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                            disabled={{eq deptIndex 0}}
+                            {{on "click" (fn this.moveDepartmentUp deptIndex)}}
+                            title="Move up"
+                          >
+                            <i class="fas fa-arrow-up"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                            disabled={{eq deptIndex (subtract this.departmentReviews.length 1)}}
+                            {{on "click" (fn this.moveDepartmentDown deptIndex)}}
+                            title="Move down"
+                          >
+                            <i class="fas fa-arrow-down"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                            {{on "click" (fn this.removeDepartment deptIndex)}}
+                            title="Remove"
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      {{! Document Selection }}
+                      {{#if this.requiredDocuments.length}}
+                        <div class="avitar-pl-12">
+                          <p class="avitar-text-sm avitar-font-semibold avitar-mb-2">Documents to Review:</p>
+                          <div class="avitar-flex avitar-flex-wrap avitar-gap-2">
+                            {{#each this.requiredDocuments as |doc|}}
+                              <label class="avitar-checkbox avitar-checkbox--sm">
+                                <input
+                                  type="checkbox"
+                                  checked={{includes dept.requiredDocuments doc.name}}
+                                  {{on "change" (fn this.toggleDepartmentDocument deptIndex doc.name)}}
+                                />
+                                <span>{{doc.name}}</span>
+                              </label>
+                            {{/each}}
+                          </div>
+                        </div>
+                      {{/if}}
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-empty-state avitar-empty-state--sm">
+                <i class="fas fa-users fa-2x avitar-text-muted avitar-mb-2"></i>
+                <p class="avitar-text-muted">No review departments added yet</p>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{! Section 6: Template Files }}
+        {{#if (eq this.currentSection 6)}}
+          <div class="avitar-form">
+            <p class="avitar-text-muted avitar-mb-4">
+              Upload template files, forms, and checklists that applicants can download.
+            </p>
+
+            <div class="avitar-alert avitar-alert--info avitar-mb-4">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Coming Soon:</strong> File upload functionality will be available in the next update.
+                For now, you can add links to existing documents.
+              </div>
+            </div>
+
+            {{#if this.templateFiles.length}}
+              <div class="avitar-list">
+                {{#each this.templateFiles as |file fileIndex|}}
+                  <div class="avitar-list-item">
+                    <div class="avitar-flex avitar-justify-between avitar-items-center">
+                      <div class="avitar-flex avitar-items-center avitar-gap-3">
+                        <i class="fas fa-file-pdf fa-2x avitar-text-primary"></i>
+                        <div>
+                          <div class="avitar-font-semibold">{{file.displayName}}</div>
+                          <p class="avitar-text-muted avitar-text-sm">{{file.description}}</p>
+                        </div>
+                      </div>
+                      <div class="avitar-btn-group">
+                        <a
+                          href={{file.fileUrl}}
+                          target="_blank"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                        >
+                          <i class="fas fa-download"></i>
+                        </a>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-empty-state">
+                <i class="fas fa-folder-open fa-3x avitar-text-muted avitar-mb-3"></i>
+                <h4 class="avitar-mb-2">No Template Files</h4>
+                <p class="avitar-text-muted">
+                  Template file upload will be available soon.
+                </p>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <div class="avitar-flex avitar-justify-between">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.close}}
+          >
+            Cancel
+          </button>
+
+          <div class="avitar-btn-group">
+            {{#if this.canGoBack}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--secondary"
+                {{on "click" this.previousSection}}
+              >
+                <i class="fas fa-arrow-left avitar-mr-2"></i>
+                Previous
+              </button>
+            {{/if}}
+
+            {{#if this.canGoNext}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.nextSection}}
+              >
+                Next
+                <i class="fas fa-arrow-right avitar-ml-2"></i>
+              </button>
+            {{else}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.save}}
+              >
+                <i class="fas fa-save avitar-mr-2"></i>
+                {{if @isEditMode "Update" "Create"}} Permit Type
+              </button>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}

@@ -18,6 +18,7 @@ module.exports = function (environment) {
       // Here you can pass flags/options to your application instance
       // when it is created
       API_HOST: process.env.API_HOST || 'http://localhost:3000',
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY_DEV || 'pk_test_51Ry0pQPwDwYyKZRmjUN3pTiFmiXqJTDmzYMR1aOMRI3LFAsrdNPAkZematdPddSbISDYBMW8INyGj3PzSXeqx6l300MfWguBil',
     },
   };
 
@@ -48,6 +49,9 @@ module.exports = function (environment) {
     // Production API configuration
     ENV.APP.API_HOST =
       process.env.API_HOST || 'https://avitar-suite.vercel.app';
+
+    // Use production Stripe key
+    ENV.APP.STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY_PROD;
 
     // Production Performance Optimizations
     ENV.APP.PRODUCTION_CONFIG = {

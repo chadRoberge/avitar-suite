@@ -321,7 +321,12 @@ export default class MunicipalityAssessingLandPropertyController extends Control
       const municipalityId = this.municipality.currentMunicipality?.id;
       if (municipalityId) {
         const waterBodies = await this.assessing.getWaterBodies(municipalityId);
-        this.waterBodies = waterBodies;
+        // Transform MongoDB _id to id and normalize field names for frontend compatibility
+        this.waterBodies = waterBodies.map(wb => ({
+          ...wb,
+          id: wb._id || wb.id,
+          base_value: wb.baseWaterValue ?? wb.base_value ?? 0,
+        }));
       }
     } catch (error) {
       console.error('Failed to load waterfront data:', error);

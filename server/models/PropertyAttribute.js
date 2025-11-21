@@ -3,6 +3,12 @@ const mongoose = require('mongoose');
 // Base schema for property attributes
 const propertyAttributeSchema = new mongoose.Schema(
   {
+    code: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 10,
+    },
     description: {
       type: String,
       required: true,
@@ -11,7 +17,7 @@ const propertyAttributeSchema = new mongoose.Schema(
     displayText: {
       type: String,
       required: true,
-      maxlength: 10,
+      maxlength: 50, // Increased to accommodate longer descriptions
       trim: true,
     },
     rate: {
@@ -40,6 +46,13 @@ propertyAttributeSchema.index({
   attributeType: 1,
   isActive: 1,
 });
+
+// Index for code lookup
+propertyAttributeSchema.index({
+  code: 1,
+  attributeType: 1,
+  municipalityId: 1,
+}, { unique: true });
 
 // Static method to find all attributes for a municipality by type
 propertyAttributeSchema.statics.findByMunicipalityAndType = function (

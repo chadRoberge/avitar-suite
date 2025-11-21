@@ -86,15 +86,17 @@
                 +{{this.additionalOwnersCount}}
               </button>
             {{/if}}
-            <button 
-              type="button" 
-              class="avitar-button avitar-button--sm avitar-button--primary"
-              {{on "click" this.editOwner}}
-              title="Edit Owner Information"
-            >
-              <i class="fas fa-edit"></i>
-              Edit
-            </button>
+            {{#if this.canEdit}}
+              <button
+                type="button"
+                class="avitar-button avitar-button--sm avitar-button--primary"
+                {{on "click" this.editOwner}}
+                title="Edit Owner Information"
+              >
+                <i class="fas fa-edit"></i>
+                Edit
+              </button>
+            {{/if}}
           </div>
         </div>
         {{#if this.primaryOwnerAddress}}

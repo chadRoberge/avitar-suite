@@ -1,0 +1,190 @@
+{{! Building Rate Print Component - Matches PDF Structure }}
+<div class="building-rate-print">
+  {{#if this.isLoading}}
+    <div class="avitar-flex avitar-justify-center avitar-items-center avitar-py-8">
+      <i class="fas fa-spinner fa-spin avitar-text-primary avitar-mr-2"></i>
+      <span>Loading sales data...</span>
+    </div>
+  {{else}}
+    {{#each this.paginatedSales as |page|}}
+      <div class="print-page">
+        {{! Header - Every Page }}
+        <div class="print-header">
+        <h1 class="municipality-name">{{@municipality.name}}</h1>
+        <h2 class="report-title">{{@sheet.name}}</h2>
+      </div>
+
+      {{! Settings Box - First Page Only }}
+      {{#if (eq page.pageNumber 1)}}
+        <div class="print-settings-box">
+          <div class="avitar-flex avitar-flex-row avitar-gap-3 avitar-mb-1">
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Annual Trend:</span>
+              <span class="value">{{this.annualTrendDisplay}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Site Acreage:</span>
+              <span class="value">{{this.siteAcreage}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Acreage Discount Minimum Acreage:</span>
+              <span class="value">{{this.minAcreage}}</span>
+            </div>
+          </div>
+          <div class="avitar-flex avitar-flex-row avitar-gap-3 avitar-mb-1">
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Building Base Year/Depreciation:</span>
+              <span class="value">{{this.baseYear}}/{{this.depreciationRate}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Est. Excess Acreage Value:</span>
+              <span class="value">{{format-currency this.excessAcreageValue}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Acreage Discount Maximum Acreage:</span>
+              <span class="value">{{this.maxAcreage}}</span>
+            </div>
+          </div>
+          <div class="avitar-flex avitar-flex-row avitar-gap-3">
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Excess Foot Frontage:</span>
+              <span class="value">{{format-currency this.excessFootFrontage}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Buildable Site Value:</span>
+              <span class="value">{{format-currency this.buildableSiteValue}}</span>
+            </div>
+            <div class="avitar-flex-1 avitar-flex avitar-items-baseline avitar-gap-1">
+              <span class="label">Acreage Discount Maximum Percentage:</span>
+              <span class="value">{{this.maxDiscountPercent}}%</span>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
+      {{! Sales Table - Every Page with Headers - Flex Layout }}
+      <div class="print-flex-table avitar-text-xxs">
+        {{! Header Row }}
+        <div class="print-flex-table__header avitar-flex avitar-items-end avitar-border-b">
+          <div class="print-flex-table__cell avitar-text-left avitar-flex-8">Location<br/>PID/Custom</div>
+
+          {{! Sale section - spans 2 columns (flex-2 + flex-2 = flex-4) }}
+          <div class="avitar-flex-7 avitar-flex avitar-flex-col">
+            {{! Row 1: Sale header }}
+            <div class="avitar-border-b avitar-text-center avitar-font-bold avitar-pb-1 avitar-mb-1">Sale</div>
+
+            {{! Row 2 & 3: Date/Days and Price/Adjusted columns }}
+            <div class="avitar-flex avitar-flex-1">
+              <div class="print-flex-table__cell avitar-flex-1 avitar-flex avitar-flex-col avitar-items-center avitar-justify-end avitar-text-center">
+                <div>Date</div>
+                <div>Days</div>
+              </div>
+              <div class="print-flex-table__cell avitar-flex-1 avitar-flex avitar-flex-col avitar-items-center avitar-justify-end avitar-text-center">
+                <div>Price</div>
+                <div>Adjusted</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Zn</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Nhbd</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Site</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Dway</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Road</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Topo</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Cond</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-3">Adj Site<br/>Value</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-3">Features<br/>Value</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Excess Ac<br/>Value</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Excess FF<br/>Value</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-3">Bldg Residual<br/>Value</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Bldg<br/>Rate</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Year<br/>Built</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Cond*</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Age</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Other</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Bldg<br/>Sq Ft</div>
+          <div class="print-flex-table__cell avitar-text-center avitar-flex-2">Indicated<br/>Sq Ft Value</div>
+        </div>
+
+        {{! Data Rows }}
+        {{#each page.sales as |sale|}}
+          <div class="print-flex-table__row avitar-flex avitar-border-b">
+            <div class="print-flex-table__cell avitar-text-left avitar-flex-8">
+              {{sale.property_address}}<br/>
+              {{sale.pid}}
+            </div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-3">
+              {{date-format sale.sale_date "MM/DD/YY"}}<br/>
+              {{sale.daysFromBaseDate}}
+            </div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-4">
+              {{format-currency sale.sale_price}}<br/>
+              {{format-currency sale.adjustedPrice}}
+            </div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-1">{{number-format sale.zone 0}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.neighborhood}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.siteAdjustment}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.drivewayAdjustment}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.roadAdjustment}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.topoAdjustment}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.condAdjustment}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-3">{{format-currency sale.adjSiteValue}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-3">{{format-currency sale.featuresValue}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{format-currency sale.excessAcValue}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{format-currency sale.excessFFValue}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-3">{{format-currency sale.buildingResidualValue}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.buildingRate}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.building_year_built}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.buildingCond}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.age}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.otherDepreciation}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{sale.building_sf}}</div>
+            <div class="print-flex-table__cell avitar-text-right avitar-flex-2">{{format-currency sale.indicatedSqFtValue}}</div>
+          </div>
+        {{/each}}
+      </div>
+
+      {{! Summary Stats - Last Page Only }}
+      {{#if (eq page.pageNumber this.totalPages)}}
+        <div class="print-summary">
+          <div class="summary-row">
+            <span class="label">Average Indicated Square Foot Value:</span>
+            <span class="value">{{format-currency this.averageRate}}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Median Indicated Square Foot Value:</span>
+            <span class="value">{{format-currency this.medianRate}}</span>
+          </div>
+        </div>
+
+        {{! Analysis Text }}
+        <div class="print-analysis">
+          <p>
+            ANALYSIS INDICATES AN AVERAGE OF {{format-currency this.averageRate precision=0}} (ROUNDED) OR A MEDIAN OF {{format-currency this.medianRate precision=0}} (ROUNDED) FOR A RESIDENTIAL BASE RATE.
+          </p>
+        </div>
+      {{/if}}
+
+      {{! Formulas Section - Every Page }}
+      <div class="print-formulas avitar-text-sm">
+        <h4>Values:</h4>
+        <p><strong>Adjusted Sale Price</strong> = Sale Price * (1 + (Days * Annual Trend% / 365))</p>
+        <p><strong>Adj Site Value</strong> = Buildable Site Value * Nhbd * Site * Dway * Road * Cond</p>
+        <p><strong>Excess FF Value</strong> = Parcel Excess FF * Excess Foot Frontage Value</p>
+        <p><strong>Excess Ac Value</strong> = (Acres - Site Acreage) * Est. Excess Acreage Value * Parcel Acreage Size Adjustment * (Parcel Backland Acreage Cond / 100) * (Parcel Backland Topo / 100)</p>
+        <p><strong>Bldg Residual Value</strong> = Adjusted Sale Price - Adj Site Value - Features Value - Excess Ac Value - Excess FF Value</p>
+        <p><strong>Indicated Sq Ft Value</strong> = Bldg Residual Value / Bldg Rate / (1 - (Total Depreciation / 100)) / Bldg Sq Ft</p>
+        <p><strong>*Building Cond Values:</strong> 1.00 = EXCELLENT  1.50 = VERY GOOD  2.00 = GOOD  2.50 = AVERAGE  3.00 = FAIR  4.00 = POOR  5.00 = VERY POOR</p>
+      </div>
+
+        {{! Footer - Every Page }}
+        <div class="print-footer">
+          <div class="footer-left">{{@sheet.name}}</div>
+          <div class="footer-center">Printed: {{this.printDate}}</div>
+          <div class="footer-right">Page {{page.pageNumber}} of {{this.totalPages}}</div>
+        </div>
+      </div>
+    {{/each}}
+  {{/if}}
+</div>

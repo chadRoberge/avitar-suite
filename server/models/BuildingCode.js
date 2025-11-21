@@ -11,8 +11,8 @@ const buildingCodeSchema = new mongoose.Schema(
       type: String,
       required: true,
       uppercase: true,
-      minlength: 3,
-      maxlength: 3,
+      minlength: 1,
+      maxlength: 4,
       trim: true,
     },
     rate: {

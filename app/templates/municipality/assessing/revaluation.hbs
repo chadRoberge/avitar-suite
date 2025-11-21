@@ -1,0 +1,12 @@
+{{page-title "Revaluation Analysis"}}
+
+{{! Left Sidebar - Fixed }}
+<Assessing::Revaluations::Sidebar
+  @revaluation={{this.model.revaluation}}
+  @sheets={{this.model.sheets}}
+  @currentSheetId={{this.currentSheetId}} />
+
+{{! Main Content Area - With margin for fixed sidebar }}
+<div style="margin-left: 300px; min-height: calc(100vh - 60px);">
+  {{outlet}}
+</div>

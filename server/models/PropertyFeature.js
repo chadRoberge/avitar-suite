@@ -8,6 +8,12 @@ const propertyFeatureSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  municipality_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Municipality',
+    required: true,
+    index: true,
+  },
   card_number: {
     type: Number,
     required: true,

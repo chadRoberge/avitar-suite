@@ -6,6 +6,7 @@ export default class MunicipalityRoute extends AuthenticatedRoute {
   @service municipality;
   @service session;
   @service router;
+  @service('current-user') currentUser;
 
   async model(params) {
     try {
@@ -18,6 +19,10 @@ export default class MunicipalityRoute extends AuthenticatedRoute {
         this.router.transitionTo('municipality-select');
         return;
       }
+
+      // CRITICAL: Update current user permissions for this municipality
+      // This ensures permissions are loaded BEFORE the UI renders
+      this.currentUser._updateCurrentPermissions();
 
       return municipality;
     } catch (error) {

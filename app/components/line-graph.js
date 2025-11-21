@@ -22,6 +22,26 @@ export default class LineGraphComponent extends Component {
 
     if (!data.length) return;
 
+    // Filter out invalid data points (missing or non-numeric values)
+    const validData = data.filter((d) => {
+      const xValue = Number(d[xField]);
+      const yValue = Number(d[yField]);
+      return (
+        !isNaN(xValue) &&
+        !isNaN(yValue) &&
+        isFinite(xValue) &&
+        isFinite(yValue) &&
+        d[xField] != null &&
+        d[yField] != null
+      );
+    });
+
+    // If no valid data points, don't render graph
+    if (!validData.length) {
+      console.warn('LineGraph: No valid data points to render');
+      return;
+    }
+
     // Get container dimensions and make graph responsive
     const containerRect = container.getBoundingClientRect();
     const containerWidth = containerRect.width;
@@ -35,18 +55,18 @@ export default class LineGraphComponent extends Component {
     // Auto height based on width (maintain aspect ratio, minimum 200px)
     const height = Math.max(200, width * 0.6);
 
-    // Sort data by x field
-    const sortedData = [...data].sort((a, b) => a[xField] - b[xField]);
+    // Sort data by x field (ensuring numeric comparison)
+    const sortedData = [...validData].sort((a, b) => Number(a[xField]) - Number(b[xField]));
 
-    // Create scales
+    // Create scales (explicitly convert to numbers to ensure valid domains)
     const xScale = d3
       .scaleLinear()
-      .domain(d3.extent(sortedData, (d) => d[xField]))
+      .domain(d3.extent(sortedData, (d) => Number(d[xField])))
       .range([0, width]);
 
     const yScale = d3
       .scaleLinear()
-      .domain(d3.extent(sortedData, (d) => d[yField]))
+      .domain(d3.extent(sortedData, (d) => Number(d[yField])))
       .range([height, 0]);
 
     // Create SVG
@@ -91,11 +111,11 @@ export default class LineGraphComponent extends Component {
       .attr('stroke', '#e5e7eb')
       .attr('stroke-width', 1);
 
-    // Create line generator
+    // Create line generator (explicitly convert to numbers)
     const line = d3
       .line()
-      .x((d) => xScale(d[xField]))
-      .y((d) => yScale(d[yField]))
+      .x((d) => xScale(Number(d[xField])))
+      .y((d) => yScale(Number(d[yField])))
       .curve(d3.curveMonotoneX);
 
     // Add the line
@@ -107,14 +127,14 @@ export default class LineGraphComponent extends Component {
       .attr('stroke-width', 3)
       .attr('d', line);
 
-    // Add data points
+    // Add data points (explicitly convert to numbers)
     g.selectAll('.data-point')
       .data(sortedData)
       .enter()
       .append('circle')
       .attr('class', 'data-point')
-      .attr('cx', (d) => xScale(d[xField]))
-      .attr('cy', (d) => yScale(d[yField]))
+      .attr('cx', (d) => xScale(Number(d[xField])))
+      .attr('cy', (d) => yScale(Number(d[yField])))
       .attr('r', 4)
       .attr('fill', lineColor);
 

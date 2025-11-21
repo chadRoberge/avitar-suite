@@ -14,7 +14,13 @@ export default class MunicipalityController extends Controller {
       this.router.currentRouteName?.startsWith(
         'municipality.assessing.settings',
       ) ||
-      this.router.currentRouteName?.startsWith('municipality.assessing.reports')
+      this.router.currentRouteName?.startsWith('municipality.assessing.reports') ||
+      this.router.currentRouteName?.startsWith(
+        'municipality.assessing.revaluation',
+      ) ||
+      this.router.currentRouteName?.startsWith(
+        'municipality.building-permits.settings',
+      )
     );
   }
 }

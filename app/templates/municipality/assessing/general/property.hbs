@@ -252,60 +252,65 @@
       </div>
     </div>
     
-    <div class="avitar-card__body">
+    <div class="avitar-card__body avitar-p-0">
       {{#if this.salesEntries}}
-        <div class="avitar-table-wrapper">
-          <table class="avitar-table">
-            <thead>
-              <tr>
-                <th>Sale Date</th>
-                <th>Sale Price</th>
-                <th>Sale Type</th>
-                <th>Buyer</th>
-                <th>Seller</th>
-                <th>Verified</th>
-                <th>Notes</th>
-                <th>Added By</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{#each this.salesEntries as |entry|}}
-                <tr>
-                  <td>{{date-format entry.saleDate "MMM DD, YYYY"}}</td>
-                  <td>${{format-currency entry.salePrice}}</td>
-                  <td>
-                    {{#if entry.saleType}}
-                      <span class="avitar-badge">{{format-land-use-type entry.saleType}}</span>
-                    {{else}}
-                      —
-                    {{/if}}
-                  </td>
-                  <td>{{or entry.buyer "—"}}</td>
-                  <td>{{or entry.seller "—"}}</td>
-                  <td>
-                    {{#if entry.verified}}
-                      <span class="avitar-badge avitar-badge--success">
-                        <i class="fas fa-check avitar-mr-1"></i>Verified
-                      </span>
-                    {{else}}
-                      <span class="avitar-badge avitar-badge--warning">Unverified</span>
-                    {{/if}}
-                  </td>
-                  <td>{{or entry.notes "—"}}</td>
-                  <td>
-                    {{#if entry.createdBy}}
-                      <div class="avitar-text-sm">
-                        <div>{{entry.createdBy.firstName}} {{entry.createdBy.lastName}}</div>
-                        <div class="avitar-text-muted">{{date-format entry.createdAt "MMM DD, YYYY"}}</div>
-                      </div>
-                    {{else}}
-                      <span class="avitar-text-muted">—</span>
-                    {{/if}}
-                  </td>
-                </tr>
-              {{/each}}
-            </tbody>
-          </table>
+        <div class="avitar-space-y-2">
+          {{! Header }}
+          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-px-3 avitar-py-2 avitar-bg-gray-100 avitar-text-sm avitar-font-semibold avitar-text-gray-700">
+            <div class="avitar-flex-1 avitar-p-1">Date</div>
+            <div class="avitar-flex-2 avitar-p-1 avitar-text-right">Price</div>
+            <div class="avitar-flex-1 avitar-p-1">Book</div>
+            <div class="avitar-flex-1 avitar-p-1">Page</div>
+            <div class="avitar-flex-4 avitar-p-1">Owner</div>
+            <div class="avitar-flex-1 avitar-p-1 avitar-text-center">Sale<br/>Code</div>
+            <div class="avitar-flex-1 avitar-p-1">Qual</div>
+            <div class="avitar-flex-1 avitar-p-1">Improv</div>
+          </div>
+
+          {{! Entries }}
+          {{#each this.salesEntries as |entry|}}
+            <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-px-3 avitar-py-2 avitar-border-b avitar-border-gray-200 hover:avitar-bg-gray-50">
+              <div class="avitar-flex-1 avitar-text-sm avitar-p-1">
+                {{date-format entry.sale_date "MM/DD/YY"}}
+              </div>
+              <div class="avitar-flex-2 avitar-text-sm avitar-font-semibold avitar-text-right avitar-p-1">
+                {{format-currency entry.sale_price}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-sm avitar-text-gray-600 avitar-p-1">
+                {{#if entry.book}}{{entry.book}}{{else}}—{{/if}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-sm avitar-text-gray-600 avitar-p-1">
+                {{#if entry.page}}{{entry.page}}{{else}}—{{/if}}
+              </div>
+              <div class="avitar-flex-4 avitar-text-sm avitar-p-1">
+                <div class="avitar-font-medium">{{#if entry.buyer_name}}{{entry.buyer_name}}{{else}}—{{/if}}</div>
+                {{#if entry.seller_name}}
+                  <div class="avitar-text-xs avitar-text-gray-500">from: {{entry.seller_name}}</div>
+                {{/if}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-sm avitar-text-center avitar-p-1">
+                {{#if entry.sale_code}}{{entry.sale_code}}{{else}}00{{/if}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-sm avitar-p-1">
+                {{#if entry.is_valid_sale}}
+                  <span class="avitar-badge avitar-badge--success avitar-badge--sm">
+                    Yes
+                  </span>
+                {{else}}
+                  <span class="avitar-badge avitar-badge--warning avitar-badge--sm">
+                    No
+                  </span>
+                {{/if}}
+              </div>
+              <div class="avitar-flex-1 avitar-text-sm avitar-text-center avitar-p-1">
+                {{#if entry.is_vacant}}
+                  <span class="avitar-text-gray-500">No</span>
+                {{else}}
+                  <span class="avitar-text-green-600">Yes</span>
+                {{/if}}
+              </div>
+            </div>
+          {{/each}}
         </div>
       {{else}}
         <div class="avitar-text-center avitar-text-muted avitar-py-8">

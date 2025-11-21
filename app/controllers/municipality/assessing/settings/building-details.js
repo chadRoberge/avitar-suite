@@ -6,6 +6,7 @@ import BuildingAssessmentCalculator from 'avitar-suite/utils/building-assessment
 
 export default class BuildingDetailsController extends Controller {
   @service api;
+  @service router;
 
   // Building rate code tracking
   @tracked isAddingBuildingCode = false;
@@ -211,6 +212,12 @@ export default class BuildingDetailsController extends Controller {
   get frameCodes() {
     return this.reactiveFeatureCodes.filter(
       (code) => code.featureType === 'frame',
+    );
+  }
+
+  get ceilingHeightCodes() {
+    return this.reactiveFeatureCodes.filter(
+      (code) => code.featureType === 'ceiling_height',
     );
   }
 
@@ -1061,6 +1068,12 @@ export default class BuildingDetailsController extends Controller {
   @action
   async refreshRecalculationStatus() {
     try {
+      // Check if model and municipality are available
+      if (!this.model || !this.model.municipality || !this.model.municipality.id) {
+        console.warn('Municipality not available yet, skipping recalculation status check');
+        return;
+      }
+
       const municipalityId = this.model.municipality.id;
       const response = await this.api.get(
         `/municipalities/${municipalityId}/building-assessments/recalculation-status?year=${this.massRecalcYear}`,
@@ -1069,7 +1082,11 @@ export default class BuildingDetailsController extends Controller {
       this.recalculationStatus = response.status;
     } catch (error) {
       console.error('Error fetching recalculation status:', error);
-      alert('Error fetching recalculation status. Please try again.');
+      console.error('Error details:', error.message, error.stack);
+      // Don't show alert for initial load errors, just log them
+      if (this.recalculationStatus !== null) {
+        alert('Error fetching recalculation status. Please try again.');
+      }
     }
   }
 
@@ -1100,6 +1117,9 @@ export default class BuildingDetailsController extends Controller {
 
       // Refresh status after completion
       await this.refreshRecalculationStatus();
+
+      // Refresh router to reload all cached property data
+      this.router.refresh();
     } catch (error) {
       console.error('Error during mass recalculation:', error);
       this.recalculationResult = {
@@ -1147,6 +1167,9 @@ export default class BuildingDetailsController extends Controller {
 
       // Refresh status after completion
       await this.refreshRecalculationStatus();
+
+      // Refresh router to reload all cached property data
+      this.router.refresh();
     } catch (error) {
       console.error('Error during filtered recalculation:', error);
       this.recalculationResult = {

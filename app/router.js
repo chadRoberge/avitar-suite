@@ -15,6 +15,24 @@ Router.map(function () {
   // Municipality selection
   this.route('municipality-select');
 
+  // User's permits dashboard (for contractors and citizens)
+  this.route('my-permits', function() {
+    this.route('active');    // Active permits
+    this.route('history');   // Past permits
+    this.route('permit', { path: '/:permit_id' }); // Permit detail
+    this.route('create');    // Create new permit (multi-step wizard)
+  });
+
+  // Contractor management (team, subscription, payment methods)
+  this.route('contractor-management', function() {
+    this.route('general');         // General company info
+    this.route('team');            // Team member management
+    this.route('payment-methods'); // Stored payment methods
+    this.route('subscription');    // Subscription & billing
+    this.route('notifications');   // Notification preferences
+    this.route('verification');    // Platform verification application
+  });
+
   // Municipality-specific routes using slug
   this.route('municipality', { path: '/m/:municipality_slug' }, function () {
     // Dashboard - main landing page for municipality
@@ -46,7 +64,9 @@ Router.map(function () {
       this.route('ai-review'); // Enterprise feature
       this.route('reports'); // Professional+ feature
       this.route('gis'); // Enterprise feature
-      this.route('revaluation');
+      this.route('revaluation', function () {
+        this.route('sheet', { path: '/sheet/:sheet_id' });
+      });
       this.route('settings', function () {
         this.route('general');
         this.route('current-use');
@@ -57,6 +77,7 @@ Router.map(function () {
         this.route('view');
         this.route('waterfront');
         this.route('exemptions-credits');
+        this.route('import');
       });
     });
 
@@ -73,14 +94,42 @@ Router.map(function () {
 
     // Building Permits Module
     this.route('building-permits', function () {
-      this.route('permits');
-      this.route('permit', { path: '/permit/:permit_id' });
-      this.route('property', { path: '/property/:property_id' });
-      this.route('applications');
-      this.route('inspections');
+      // Non-property routes (queue/list views)
+      this.route('queue'); // Work queue for municipal staff
+      this.route('permits'); // All permits list
+      this.route('applications'); // All applications list
+
+      // Property-specific routes with implicit index
+      this.route('property-permits', function () {
+        this.route('property', { path: '/:property_id' });
+      });
+      this.route('inspections', function () {
+        this.route('property', { path: '/:property_id' });
+      });
+      this.route('documents', function () {
+        this.route('property', { path: '/:property_id' });
+      });
+      this.route('certificates', function () {
+        this.route('property', { path: '/:property_id' });
+      });
+
+      // Action routes
+      this.route('create'); // Create new permit
+      this.route('edit', { path: '/edit/:permit_id' }); // Edit permit
+      this.route('permit', { path: '/permit/:permit_id' }); // Permit detail
+
+      // Advanced features
       this.route('plan-review'); // Professional+ feature
       this.route('workflow'); // Enterprise feature
-      this.route('certificates');
+      this.route('reports'); // Reports dashboard
+      this.route('analytics'); // Analytics (Professional+)
+
+      // Settings
+      this.route('settings', function () {
+        this.route('permit-types'); // Permit types configuration
+        this.route('inspections'); // Inspection types and workflows
+        this.route('users'); // Users and inspectors management
+      });
     });
 
     // Town Clerk Module
@@ -130,6 +179,7 @@ Router.map(function () {
       this.route('system');
       this.route('modules');
       this.route('features');
+      this.route('email-templates');
     });
 
     // User settings

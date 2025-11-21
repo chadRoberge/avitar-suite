@@ -102,6 +102,78 @@ export default class ApiService extends Service {
     });
   }
 
+  async upload(url, formData) {
+    const token = localStorage.getItem('authToken');
+    const fullUrl = `${this.baseURL}${url}`;
+
+    const response = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let browser set it with boundary for multipart/form-data
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || `Upload failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async uploadFile(url, formData, options = {}) {
+    const token = localStorage.getItem('authToken');
+    const fullUrl = `${this.baseURL}${url}`;
+
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Track progress
+      if (options.onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            options.onProgress(percentComplete);
+          }
+        });
+      }
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch (error) {
+            reject(new Error('Invalid JSON response'));
+          }
+        } else {
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`));
+          } catch {
+            reject(new Error(`Upload failed: ${xhr.statusText}`));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed: Network error'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload cancelled'));
+      });
+
+      xhr.open('POST', fullUrl);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      // Don't set Content-Type - let browser set it with boundary for multipart/form-data
+
+      xhr.send(formData);
+    });
+  }
+
   // Unauthenticated requests (login, signup)
   async postUnauth(url, data = {}) {
     return this.request(url, {

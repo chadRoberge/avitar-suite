@@ -1,0 +1,413 @@
+{
+  "filename": "00000400000300001001.vdf",
+  "totalShapes": 11,
+  "shapes": [
+    {
+      "shapeNumber": 1,
+      "type": "rectangle",
+      "descriptions": [
+        "CTH",
+        "EPF"
+      ],
+      "area": 165,
+      "coordinates": [
+        {
+          "x": 868,
+          "y": 868
+        },
+        {
+          "x": 853,
+          "y": 868
+        },
+        {
+          "x": 853,
+          "y": 857
+        },
+        {
+          "x": 868,
+          "y": 857
+        }
+      ],
+      "boundingBox": {
+        "minX": 853,
+        "maxX": 868,
+        "minY": 857,
+        "maxY": 868,
+        "width": 15,
+        "height": 11
+      }
+    },
+    {
+      "shapeNumber": 2,
+      "type": "rectangle",
+      "descriptions": [
+        "FFF",
+        "BMU"
+      ],
+      "area": 874,
+      "coordinates": [
+        {
+          "x": 1690,
+          "y": 857
+        },
+        {
+          "x": 1690,
+          "y": 838
+        },
+        {
+          "x": 1736,
+          "y": 838
+        },
+        {
+          "x": 1736,
+          "y": 857
+        }
+      ],
+      "boundingBox": {
+        "minX": 1690,
+        "maxX": 1736,
+        "minY": 838,
+        "maxY": 857,
+        "width": 46,
+        "height": 19
+      }
+    },
+    {
+      "shapeNumber": 3,
+      "type": "rectangle",
+      "descriptions": [
+        "TQF",
+        "FFF",
+        "BMU"
+      ],
+      "area": 1564,
+      "coordinates": [
+        {
+          "x": 1736,
+          "y": 870
+        },
+        {
+          "x": 1804,
+          "y": 870
+        },
+        {
+          "x": 1804,
+          "y": 847
+        },
+        {
+          "x": 1736,
+          "y": 847
+        }
+      ],
+      "boundingBox": {
+        "minX": 1736,
+        "maxX": 1804,
+        "minY": 847,
+        "maxY": 870,
+        "width": 68,
+        "height": 23
+      }
+    },
+    {
+      "shapeNumber": 4,
+      "type": "rectangle",
+      "descriptions": [
+        "ENT"
+      ],
+      "area": 56,
+      "coordinates": [
+        {
+          "x": 1752,
+          "y": 841
+        },
+        {
+          "x": 1752,
+          "y": 837
+        },
+        {
+          "x": 1766,
+          "y": 837
+        },
+        {
+          "x": 1766,
+          "y": 841
+        }
+      ],
+      "boundingBox": {
+        "minX": 1752,
+        "maxX": 1766,
+        "minY": 837,
+        "maxY": 841,
+        "width": 14,
+        "height": 4
+      }
+    },
+    {
+      "shapeNumber": 5,
+      "type": "rectangle",
+      "descriptions": [
+        "CTH",
+        "FFF",
+        "BMU"
+      ],
+      "area": 264,
+      "coordinates": [
+        {
+          "x": 1804,
+          "y": 847
+        },
+        {
+          "x": 1782,
+          "y": 847
+        },
+        {
+          "x": 1782,
+          "y": 835
+        },
+        {
+          "x": 1804,
+          "y": 835
+        }
+      ],
+      "boundingBox": {
+        "minX": 1782,
+        "maxX": 1804,
+        "minY": 835,
+        "maxY": 847,
+        "width": 22,
+        "height": 12
+      }
+    },
+    {
+      "shapeNumber": 6,
+      "type": "rectangle",
+      "descriptions": [
+        "FFF",
+        "BMU"
+      ],
+      "area": 20,
+      "coordinates": [
+        {
+          "x": 1800,
+          "y": 835
+        },
+        {
+          "x": 1800,
+          "y": 833
+        },
+        {
+          "x": 1790,
+          "y": 833
+        },
+        {
+          "x": 1790,
+          "y": 835
+        }
+      ],
+      "boundingBox": {
+        "minX": 1790,
+        "maxX": 1800,
+        "minY": 833,
+        "maxY": 835,
+        "width": 10,
+        "height": 2
+      }
+    },
+    {
+      "shapeNumber": 7,
+      "type": "rectangle",
+      "descriptions": [
+        "GAR"
+      ],
+      "area": 576,
+      "coordinates": [
+        {
+          "x": 1804,
+          "y": 841
+        },
+        {
+          "x": 1828,
+          "y": 841
+        },
+        {
+          "x": 1828,
+          "y": 865
+        },
+        {
+          "x": 1804,
+          "y": 865
+        }
+      ],
+      "boundingBox": {
+        "minX": 1804,
+        "maxX": 1828,
+        "minY": 841,
+        "maxY": 865,
+        "width": 24,
+        "height": 24
+      }
+    },
+    {
+      "shapeNumber": 8,
+      "type": "rectangle",
+      "descriptions": [
+        "ENT"
+      ],
+      "area": 21,
+      "coordinates": [
+        {
+          "x": 1799,
+          "y": 870
+        },
+        {
+          "x": 1799,
+          "y": 873
+        },
+        {
+          "x": 1792,
+          "y": 873
+        },
+        {
+          "x": 1792,
+          "y": 870
+        }
+      ],
+      "boundingBox": {
+        "minX": 1792,
+        "maxX": 1799,
+        "minY": 870,
+        "maxY": 873,
+        "width": 7,
+        "height": 3
+      }
+    },
+    {
+      "shapeNumber": 9,
+      "type": "polygon",
+      "descriptions": [
+        "PAT"
+      ],
+      "area": 252,
+      "coordinates": [
+        {
+          "x": 1792,
+          "y": 873
+        },
+        {
+          "x": 1799,
+          "y": 873
+        },
+        {
+          "x": 1799,
+          "y": 882
+        },
+        {
+          "x": 1792,
+          "y": 884
+        },
+        {
+          "x": 1778,
+          "y": 882
+        },
+        {
+          "x": 1778,
+          "y": 870
+        },
+        {
+          "x": 1792,
+          "y": 870
+        }
+      ],
+      "boundingBox": {
+        "minX": 1778,
+        "maxX": 1799,
+        "minY": 870,
+        "maxY": 884,
+        "width": 21,
+        "height": 14
+      }
+    },
+    {
+      "shapeNumber": 10,
+      "type": "rectangle",
+      "descriptions": [
+        "CTH",
+        "FFF",
+        "BMU"
+      ],
+      "area": 276,
+      "coordinates": [
+        {
+          "x": 1782,
+          "y": 847
+        },
+        {
+          "x": 1782,
+          "y": 841
+        },
+        {
+          "x": 1736,
+          "y": 841
+        },
+        {
+          "x": 1736,
+          "y": 847
+        }
+      ],
+      "boundingBox": {
+        "minX": 1736,
+        "maxX": 1782,
+        "minY": 841,
+        "maxY": 847,
+        "width": 46,
+        "height": 6
+      }
+    },
+    {
+      "shapeNumber": 11,
+      "type": "polygon",
+      "descriptions": [
+        "PAT"
+      ],
+      "area": 248,
+      "coordinates": [
+        {
+          "x": 1752,
+          "y": 837
+        },
+        {
+          "x": 1766,
+          "y": 837
+        },
+        {
+          "x": 1768,
+          "y": 833
+        },
+        {
+          "x": 1768,
+          "y": 824
+        },
+        {
+          "x": 1748,
+          "y": 824
+        },
+        {
+          "x": 1748,
+          "y": 833
+        },
+        {
+          "x": 1752,
+          "y": 837
+        }
+      ],
+      "boundingBox": {
+        "minX": 1748,
+        "maxX": 1768,
+        "minY": 824,
+        "maxY": 837,
+        "width": 20,
+        "height": 13
+      }
+    }
+  ]
+}

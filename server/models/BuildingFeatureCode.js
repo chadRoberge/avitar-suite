@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 
 const buildingFeatureCodeSchema = new mongoose.Schema(
   {
+    code: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 20,
+    },
     description: {
       type: String,
       required: true,
@@ -11,7 +17,7 @@ const buildingFeatureCodeSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 15,
+      maxlength: 20,
     },
     points: {
       type: Number,
@@ -33,6 +39,7 @@ const buildingFeatureCodeSchema = new mongoose.Schema(
         'quality',
         'story_height',
         'frame',
+        'ceiling_height',
       ],
       lowercase: true,
     },
@@ -51,9 +58,9 @@ const buildingFeatureCodeSchema = new mongoose.Schema(
   },
 );
 
-// Compound index to ensure unique display text per feature type per municipality
+// Compound index to ensure unique code per feature type per municipality
 buildingFeatureCodeSchema.index(
-  { displayText: 1, featureType: 1, municipalityId: 1 },
+  { code: 1, featureType: 1, municipalityId: 1 },
   { unique: true },
 );
 

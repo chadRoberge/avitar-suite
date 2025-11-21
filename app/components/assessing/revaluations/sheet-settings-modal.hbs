@@ -1,0 +1,184 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-cog avitar-mr-2"></i>
+          Sheet Settings
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-6">
+          {{! Sheet Name }}
+          <div>
+            <label class="avitar-label">Sheet Name <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="Enter sheet name"
+              value={{@sheetName}}
+              {{on "input" @onUpdateSheetName}} />
+          </div>
+
+          {{! Building Rate Analysis Settings }}
+          {{#if (eq @sheetType "building_rate")}}
+            <div class="avitar-border avitar-p-4 avitar-rounded">
+              <h3 class="avitar-font-semibold avitar-mb-4">Building Rate Analysis Settings</h3>
+
+              <div class="avitar-space-y-4">
+                {{! Depreciation Rate }}
+                <div>
+                  <label class="avitar-label">Depreciation Rate (%)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="1.25"
+                    value={{@depreciationRate}}
+                    {{on "input" @onUpdateDepreciationRate}}
+                    step="0.01"
+                    min="0" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Base depreciation rate used in age depreciation calculation
+                  </p>
+                </div>
+
+                {{! Buildable Site Value }}
+                <div>
+                  <label class="avitar-label">Buildable Site Value ($)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="290000"
+                    value={{@buildableSiteValue}}
+                    {{on "input" @onUpdateBuildableSiteValue}}
+                    step="1000"
+                    min="0" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Base value for a buildable site
+                  </p>
+                </div>
+
+                {{! Site Acreage }}
+                <div>
+                  <label class="avitar-label">Site Acreage</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="2.0"
+                    value={{@siteAcreage}}
+                    {{on "input" @onUpdateSiteAcreage}}
+                    step="0.1"
+                    min="0" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Standard site acreage for this analysis
+                  </p>
+                </div>
+
+                {{! Excess Foot Frontage Value }}
+                <div>
+                  <label class="avitar-label">Excess Foot Frontage Value ($)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="160"
+                    value={{@excessFootFrontage}}
+                    {{on "input" @onUpdateExcessFootFrontage}}
+                    step="10"
+                    min="0" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Value per foot of excess frontage
+                  </p>
+                </div>
+
+                {{! Excess Acreage Value }}
+                <div>
+                  <label class="avitar-label">Excess Acreage Value ($/acre)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="10000"
+                    value={{@excessAcreageValue}}
+                    {{on "input" @onUpdateExcessAcreageValue}}
+                    step="1000"
+                    min="0" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Value per acre of excess acreage beyond site acreage
+                  </p>
+                </div>
+
+                {{! Base Date }}
+                <div>
+                  <label class="avitar-label">Base Date</label>
+                  <input
+                    type="date"
+                    class="avitar-input"
+                    value={{@baseDate}}
+                    {{on "input" @onUpdateBaseDate}} />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Base date for time adjustments
+                  </p>
+                </div>
+
+                {{! Annual Trend }}
+                <div>
+                  <label class="avitar-label">Annual Trend (%)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    placeholder="14.4"
+                    value={{@annualTrend}}
+                    {{on "input" @onUpdateAnnualTrend}}
+                    step="0.1"
+                    min="-100"
+                    max="100" />
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Annual market trend percentage for time adjustments
+                  </p>
+                </div>
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Warning Box }}
+          <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-p-4">
+            <div class="avitar-flex avitar-gap-3">
+              <i class="fas fa-exclamation-triangle avitar-text-warning"></i>
+              <div>
+                <h4 class="avitar-font-semibold avitar-mb-1">Important</h4>
+                <p class="avitar-text-sm">
+                  Changing sheet settings will recalculate all sales data for this analysis sheet.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" @onSave}}
+          disabled={{not this.canSave}}>
+          {{#if @isSaving}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving & Recalculating...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Settings
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

@@ -1,0 +1,69 @@
+<div class="excess-acreage-analysis">
+  {{! Settings Summary }}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h4 class="avitar-font-semibold">Analysis Settings</h4>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+        <div>
+          <label class="avitar-label">Minimum Acreage</label>
+          <p class="avitar-text-lg avitar-font-semibold">{{this.minAcreage}} acres</p>
+        </div>
+        <div>
+          <label class="avitar-label">Average Excess Rate</label>
+          <p class="avitar-text-lg avitar-font-semibold">{{format-currency this.averageExcessRate}}/acre</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Sales Analysis Table }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h4 class="avitar-font-semibold">Sales Analysis</h4>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.salesData.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--striped">
+            <thead>
+              <tr>
+                <th>Property Address</th>
+                <th>Sale Date</th>
+                <th>Sale Price</th>
+                <th>Total Acreage</th>
+                <th>Excess Acreage</th>
+                <th>Excess Value</th>
+                <th>Rate/Acre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.salesData as |sale|}}
+                <tr>
+                  <td>{{sale.property_address}}</td>
+                  <td>{{date-format sale.sale_date "MM/DD/YYYY"}}</td>
+                  <td>{{format-currency sale.sale_price}}</td>
+                  <td>{{sale.acreage}}</td>
+                  <td>{{sale.excessAcreage}}</td>
+                  <td>{{format-currency sale.excessValue}}</td>
+                  <td>
+                    {{#if (gt sale.excessAcreage 0)}}
+                      {{format-currency (div sale.excessValue sale.excessAcreage)}}
+                    {{else}}
+                      -
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-6">
+          <p class="avitar-text-muted">No sales data available for this analysis</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

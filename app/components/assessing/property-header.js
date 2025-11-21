@@ -9,9 +9,19 @@ export default class PropertyHeaderComponent extends Component {
   @service router;
   @service('property-selection') propertySelection;
   @service('card-navigation') cardNavigation;
+  @service('current-user') currentUser;
 
   @tracked _currentAcreage = null;
   @tracked showOwnerModal = false;
+
+  // Check if user can edit - this getter will re-evaluate when permissions change
+  get canEdit() {
+    // Access _permissionsLoadedAt to ensure this getter updates when permissions load
+    if (!this.currentUser.permissionsReady) {
+      return false;
+    }
+    return this.currentUser.hasModulePermission('assessing', 'update');
+  }
 
   // Use property from card navigation service (which handles router sync)
   get property() {

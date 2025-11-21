@@ -7,9 +7,22 @@ export default class LoginController extends Controller {
   @service router;
   @service session;
   @service api;
+  @service('current-user') currentUser;
   @tracked showLogin = true;
   @tracked isLoading = false;
   @tracked errorMessage = '';
+
+  // Track form data directly in controller for reactivity
+  @tracked loginEmail = '';
+  @tracked loginPassword = '';
+  @tracked signupFirstName = '';
+  @tracked signupLastName = '';
+  @tracked signupEmail = '';
+  @tracked signupPassword = '';
+  @tracked signupConfirmPassword = '';
+  @tracked signupUserType = 'residential';
+  @tracked signupBusinessName = '';
+  @tracked signupBusinessType = '';
 
   @action
   toggleForm() {
@@ -23,22 +36,20 @@ export default class LoginController extends Controller {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const { email, password } = this.model.loginForm;
-
     try {
       // Client-side validation
-      if (!email || !password) {
+      if (!this.loginEmail || !this.loginPassword) {
         throw new Error('Please fill in all fields');
       }
 
-      if (!email.includes('@')) {
+      if (!this.loginEmail.includes('@')) {
         throw new Error('Please enter a valid email address');
       }
 
       // Call API
       const data = await this.api.postUnauth('/auth/login', {
-        email: email.toLowerCase(),
-        password,
+        email: this.loginEmail.toLowerCase(),
+        password: this.loginPassword,
       });
 
       if (!data.success) {
@@ -53,14 +64,22 @@ export default class LoginController extends Controller {
 
       console.log('Login successful for:', data.user.fullName);
 
-      // Reset form
-      this.model.loginForm = {
-        email: '',
-        password: '',
-      };
+      // Load current user data and permissions
+      await this.currentUser.load();
+      console.log('Current user loaded with permissions');
 
-      // Redirect to municipality selection
-      this.router.transitionTo('municipality-select');
+      // Reset form
+      this.loginEmail = '';
+      this.loginPassword = '';
+
+      // Redirect based on user role
+      if (this.currentUser.isContractorOrCitizen) {
+        // Contractors and citizens go to their personal dashboard
+        this.router.transitionTo('my-permits');
+      } else {
+        // Municipal staff and Avitar staff go to municipality selection
+        this.router.transitionTo('municipality-select');
+      }
     } catch (error) {
       this.errorMessage = error.message || 'Login failed. Please try again.';
     } finally {
@@ -74,35 +93,45 @@ export default class LoginController extends Controller {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const { firstName, lastName, email, password, confirmPassword, userType } =
-      this.model.signupForm;
-
     try {
       // Client-side validation
-      if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      if (!this.signupFirstName || !this.signupLastName || !this.signupEmail || !this.signupPassword || !this.signupConfirmPassword) {
         throw new Error('Please fill in all fields');
       }
 
-      if (!email.includes('@')) {
+      // Additional validation for commercial accounts
+      if (this.signupUserType === 'commercial') {
+        if (!this.signupBusinessName || !this.signupBusinessType) {
+          throw new Error('Business name and type are required for commercial accounts');
+        }
+      }
+
+      if (!this.signupEmail.includes('@')) {
         throw new Error('Please enter a valid email address');
       }
 
-      if (password.length < 8) {
+      if (this.signupPassword.length < 8) {
         throw new Error('Password must be at least 8 characters long');
       }
 
-      if (password !== confirmPassword) {
+      if (this.signupPassword !== this.signupConfirmPassword) {
         throw new Error('Passwords do not match');
       }
 
       // Prepare API request data
       const signupData = {
-        firstName: firstName.toUpperCase(),
-        lastName: lastName.toUpperCase(),
-        email: email.toLowerCase(),
-        password,
-        userType,
+        firstName: this.signupFirstName.toUpperCase(),
+        lastName: this.signupLastName.toUpperCase(),
+        email: this.signupEmail.toLowerCase(),
+        password: this.signupPassword,
+        userType: this.signupUserType,
       };
+
+      // Add business fields for commercial accounts
+      if (this.signupUserType === 'commercial') {
+        signupData.businessName = this.signupBusinessName;
+        signupData.businessType = this.signupBusinessType;
+      }
 
       // Call API
       const data = await this.api.postUnauth('/auth/register', signupData);
@@ -119,18 +148,28 @@ export default class LoginController extends Controller {
 
       console.log('Signup successful for:', data.user.fullName);
 
-      // Reset signup form
-      this.model.signupForm = {
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        userType: 'residential',
-      };
+      // Load current user data and permissions
+      await this.currentUser.load();
+      console.log('Current user loaded with permissions');
 
-      // Redirect to municipality selection
-      this.router.transitionTo('municipality-select');
+      // Reset signup form
+      this.signupFirstName = '';
+      this.signupLastName = '';
+      this.signupEmail = '';
+      this.signupPassword = '';
+      this.signupConfirmPassword = '';
+      this.signupUserType = 'residential';
+      this.signupBusinessName = '';
+      this.signupBusinessType = '';
+
+      // Redirect based on user role
+      if (this.currentUser.isContractorOrCitizen) {
+        // Contractors and citizens go to their personal dashboard
+        this.router.transitionTo('my-permits');
+      } else {
+        // Municipal staff and Avitar staff go to municipality selection
+        this.router.transitionTo('municipality-select');
+      }
     } catch (error) {
       this.errorMessage = error.message || 'Signup failed. Please try again.';
     } finally {
@@ -140,16 +179,42 @@ export default class LoginController extends Controller {
 
   @action
   updateLoginField(field, event) {
-    this.model.loginForm[field] = event.target.value;
+    if (field === 'email') {
+      this.loginEmail = event.target.value;
+    } else if (field === 'password') {
+      this.loginPassword = event.target.value;
+    }
   }
 
   @action
   updateSignupField(field, event) {
-    this.model.signupForm[field] = event.target.value;
+    switch (field) {
+      case 'firstName':
+        this.signupFirstName = event.target.value;
+        break;
+      case 'lastName':
+        this.signupLastName = event.target.value;
+        break;
+      case 'email':
+        this.signupEmail = event.target.value;
+        break;
+      case 'password':
+        this.signupPassword = event.target.value;
+        break;
+      case 'confirmPassword':
+        this.signupConfirmPassword = event.target.value;
+        break;
+      case 'businessName':
+        this.signupBusinessName = event.target.value;
+        break;
+      case 'businessType':
+        this.signupBusinessType = event.target.value;
+        break;
+    }
   }
 
   @action
   selectUserType(userType) {
-    this.model.signupForm.userType = userType;
+    this.signupUserType = userType;
   }
 }

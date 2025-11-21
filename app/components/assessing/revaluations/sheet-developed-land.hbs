@@ -1,0 +1,43 @@
+<div class="developed-land-analysis">
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h4 class="avitar-font-semibold">Developed Land Analysis</h4>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.salesData.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--striped">
+            <thead>
+              <tr>
+                <th>Property Address</th>
+                <th>Sale Date</th>
+                <th>Sale Price</th>
+                <th>Land Assessment</th>
+                <th>Building Assessment</th>
+                <th>Total Assessment</th>
+                <th>Land Ratio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.salesData as |sale|}}
+                <tr>
+                  <td>{{sale.property_address}}</td>
+                  <td>{{date-format sale.sale_date "MM/DD/YYYY"}}</td>
+                  <td>{{format-currency sale.sale_price}}</td>
+                  <td>{{format-currency sale.landValue}}</td>
+                  <td>{{format-currency sale.buildingValue}}</td>
+                  <td>{{format-currency sale.totalAssessment}}</td>
+                  <td>{{format-number sale.landRatio style="percent" maximumFractionDigits=2}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-6">
+          <p class="avitar-text-muted">No sales data available for this analysis</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

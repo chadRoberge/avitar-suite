@@ -1,0 +1,16 @@
+{{page-title "Building Permits Settings"}}
+
+{{!-- Building Permits Settings Layout --}}
+<div class="avitar-layout avitar-layout--with-sidebar">
+  {{!-- Settings Sidebar --}}
+  <div class="avitar-layout__sidebar">
+    <BuildingPermits::SettingsMenu />
+  </div>
+
+  {{!-- Main Content --}}
+  <div class="avitar-layout__main" style="margin-left: 280px;">
+    <div class="avitar-content">
+      {{outlet}}
+    </div>
+  </div>
+</div>

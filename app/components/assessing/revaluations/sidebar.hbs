@@ -1,0 +1,85 @@
+<div class="avitar-sidebar avitar-bg-white avitar-border-r avitar-flex avitar-flex-col" style="width: 300px; position: fixed; left: 0; top: 60px; bottom: 0; z-index: 100;">
+  {{! Revaluation Info }}
+  <div class="avitar-p-4 avitar-border-b avitar-bg-gray-50 avitar-flex-shrink-0">
+    <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-2">
+      <i class="fas fa-chart-line avitar-text-primary"></i>
+      <h2 class="avitar-text-lg avitar-font-bold">Revaluation</h2>
+    </div>
+    {{#if @revaluation}}
+      <div class="avitar-space-y-1 avitar-text-sm">
+        <div class="avitar-flex avitar-justify-between">
+          <span class="avitar-text-muted">Year:</span>
+          <span class="avitar-font-semibold">{{@revaluation.effective_year}}</span>
+        </div>
+        <div class="avitar-flex avitar-justify-between">
+          <span class="avitar-text-muted">Status:</span>
+          <span class="avitar-badge avitar-badge--sm {{if (eq @revaluation.status 'active') 'avitar-badge--success' 'avitar-badge--secondary'}}">
+            {{@revaluation.status}}
+          </span>
+        </div>
+        {{#if @revaluation.progress}}
+          <div class="avitar-flex avitar-justify-between">
+            <span class="avitar-text-muted">Progress:</span>
+            <span class="avitar-font-semibold">{{@revaluation.progress}}%</span>
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
+
+  {{! View Sales Button }}
+  <div class="avitar-p-4 avitar-border-b avitar-flex-shrink-0">
+    <LinkTo
+      @route="municipality.assessing.revaluation.index"
+      class="avitar-btn avitar-btn--primary avitar-w-full avitar-justify-center">
+      <i class="fas fa-list avitar-mr-2"></i>
+      View Sales
+    </LinkTo>
+  </div>
+
+  {{! Analysis Sheets - Scrollable }}
+  <div class="avitar-flex-1 avitar-overflow-y-auto">
+    <div class="avitar-p-4">
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3">
+        <h3 class="avitar-text-sm avitar-font-semibold avitar-text-muted avitar-uppercase">Analysis Sheets</h3>
+        <span class="avitar-badge avitar-badge--sm avitar-badge--secondary">{{@sheets.length}}</span>
+      </div>
+
+      {{#if @sheets.length}}
+        <div class="avitar-space-y-2">
+          {{#each @sheets as |sheet|}}
+            <LinkTo
+              @route="municipality.assessing.revaluation.sheet"
+              @model={{sheet._id}}
+              class="avitar-block avitar-p-3 avitar-rounded avitar-border avitar-transition-colors hover:avitar-bg-gray-50 hover:avitar-border-primary {{if (eq @currentSheetId sheet._id) 'avitar-bg-primary-light avitar-border-primary'}}">
+              <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-1">
+                <h4 class="avitar-text-sm avitar-font-semibold avitar-truncate avitar-pr-2">
+                  {{sheet.name}}
+                </h4>
+                <span class="avitar-badge avitar-badge--sm avitar-badge--info avitar-flex-shrink-0">
+                  {{sheet.sheet_type}}
+                </span>
+              </div>
+              {{#if sheet.building_code}}
+                <p class="avitar-text-xs avitar-text-muted">
+                  <i class="fas fa-building avitar-mr-1"></i>
+                  {{sheet.building_code.code}}
+                </p>
+              {{/if}}
+              <p class="avitar-text-xs avitar-text-muted">
+                <i class="fas fa-chart-bar avitar-mr-1"></i>
+                {{sheet.sales_count}} sales
+              </p>
+            </LinkTo>
+          {{/each}}
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-8 avitar-text-center">
+          <i class="fas fa-file-alt fa-2x avitar-text-muted avitar-mb-2"></i>
+          <p class="avitar-text-sm avitar-text-muted">No sheets created</p>
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-1">Create a sheet from sales</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

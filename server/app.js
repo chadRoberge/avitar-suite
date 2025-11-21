@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-require('dotenv').config({ path: __dirname + '/.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const connectDB = require('./config/database');
 
@@ -33,7 +34,18 @@ const assessingReportsRoutes = require('./routes/assessingReports');
 const landTaxationCategoryRoutes = require('./routes/landTaxationCategories');
 const landAssessmentCalculationRoutes = require('./routes/landAssessmentCalculations');
 const listingHistoryRoutes = require('./routes/listingHistory');
+const salesHistoryRoutes = require('./routes/salesHistory');
+const revaluationRoutes = require('./routes/revaluation');
 const ownerRoutes = require('./routes/owners');
+const importRoutes = require('./routes/import');
+const permitRoutes = require('./routes/permits');
+const permitTypeRoutes = require('./routes/permitTypes');
+const contractorRoutes = require('./routes/contractors');
+const contractorVerificationRoutes = require('./routes/contractorVerification');
+const subscriptionRoutes = require('./routes/subscriptions');
+const fileRoutes = require('./routes/files');
+const emailTemplateRoutes = require('./routes/emailTemplates');
+const notificationPreferencesRoutes = require('./routes/notificationPreferences');
 const {
   router: changeStreamRoutes,
   initializeChangeStreams,
@@ -46,8 +58,22 @@ const PORT = process.env.PORT || 3000;
 // Connect to MongoDB
 connectDB();
 
-// Security middleware
-app.use(helmet());
+// Security middleware with custom configuration
+app.use(
+  helmet({
+    frameguard: false, // Disable frameguard to allow cross-origin iframes from our frontend
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        frameSrc: ["'self'", 'http://localhost:4200', 'https://avitar-suite.vercel.app'], // Allow iframes from frontend
+        frameAncestors: ["'self'", 'http://localhost:4200', 'https://avitar-suite.vercel.app'], // Allow being embedded in frontend
+        imgSrc: ["'self'", 'data:', 'https:'],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+  })
+);
 
 // CORS configuration
 app.use(
@@ -103,7 +129,18 @@ app.use('/api', assessingReportsRoutes);
 app.use('/api', landTaxationCategoryRoutes);
 app.use('/api', landAssessmentCalculationRoutes);
 app.use('/api', listingHistoryRoutes);
+app.use('/api', salesHistoryRoutes);
+app.use('/api', revaluationRoutes);
 app.use('/api', ownerRoutes);
+app.use('/api', importRoutes);
+app.use('/api', permitRoutes);
+app.use('/api', permitTypeRoutes);
+app.use('/api/contractors', contractorRoutes);
+app.use('/api/contractor-verification', contractorVerificationRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api', fileRoutes);
+app.use('/api', emailTemplateRoutes);
+app.use('/api', notificationPreferencesRoutes);
 app.use('/api', changeStreamRoutes);
 
 // 404 handler

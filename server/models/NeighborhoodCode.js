@@ -12,7 +12,7 @@ const neighborhoodCodeSchema = new mongoose.Schema(
       required: true,
       uppercase: true,
       minlength: 1,
-      maxlength: 2,
+      maxlength: 10,
       trim: true,
     },
     rate: {

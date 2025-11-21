@@ -11,6 +11,7 @@ export default class CurrentUserService extends Service {
 
   @tracked user = null;
   @tracked currentMunicipalPermissions = null;
+  @tracked _permissionsLoadedAt = null; // Track when permissions were last updated
 
   async load() {
     if (this.session.isAuthenticated) {
@@ -23,13 +24,25 @@ export default class CurrentUserService extends Service {
   _updateCurrentPermissions() {
     if (!this.user || !this.municipality.currentMunicipality) {
       this.currentMunicipalPermissions = null;
+      this._permissionsLoadedAt = null;
       return;
     }
 
-    this.currentMunicipalPermissions = this.user.municipal_permissions?.find(
+    const foundPermissions = this.user.municipal_permissions?.find(
       (perm) =>
         perm.municipality_id === this.municipality.currentMunicipality.id,
     );
+
+    // Always create a new object reference to trigger reactivity
+    this.currentMunicipalPermissions = foundPermissions ? { ...foundPermissions } : null;
+    this._permissionsLoadedAt = new Date();
+
+    console.log('Permissions updated:', {
+      municipalityId: this.municipality.currentMunicipality.id,
+      hasPermissions: !!this.currentMunicipalPermissions,
+      isAvitarStaff: this.isAvitarStaff,
+      timestamp: this._permissionsLoadedAt
+    });
   }
 
   // Observer to update permissions when municipality changes
@@ -39,6 +52,16 @@ export default class CurrentUserService extends Service {
       this._updateCurrentPermissions();
     },
   );
+
+  // Permission readiness check
+  get permissionsReady() {
+    // For Avitar staff, permissions are always ready once user is loaded
+    if (this.isAvitarStaff) {
+      return !!this.user;
+    }
+    // For municipal users, wait for currentMunicipalPermissions to be loaded
+    return !!this.user && !!this._permissionsLoadedAt;
+  }
 
   // Global role checks
   get isAvitarStaff() {
@@ -51,6 +74,23 @@ export default class CurrentUserService extends Service {
 
   get isMunicipalUser() {
     return this.user?.global_role === 'municipal_user';
+  }
+
+  // Contractor and citizen checks
+  get isContractor() {
+    return this.user?.global_role === 'contractor';
+  }
+
+  get isCitizen() {
+    return this.user?.global_role === 'citizen';
+  }
+
+  get isContractorOrCitizen() {
+    return this.isContractor || this.isCitizen;
+  }
+
+  get isMunicipalStaff() {
+    return this.isMunicipalUser || this.isAvitarStaff;
   }
 
   // Legacy compatibility getters

@@ -1,0 +1,59 @@
+<div class="file-upload">
+  {{#if this.hasFile}}
+    {{! Uploaded file display }}
+    <div class="file-upload__current">
+      <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-p-3 avitar-bg-gray-50 avitar-rounded avitar-border">
+        <i class="fas fa-file-alt avitar-text-primary fa-2x"></i>
+        <div class="avitar-flex-1">
+          <div class="avitar-font-medium">{{@currentFile.displayName}}</div>
+          <div class="avitar-text-sm avitar-text-muted">
+            Uploaded {{date-format @currentFile.uploadedAt "MMM DD, YYYY"}}
+          </div>
+        </div>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--sm avitar-btn--danger"
+          {{on "click" this.removeFile}}
+        >
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  {{else}}
+    {{! Upload button }}
+    <div class="file-upload__button">
+      <label class="avitar-btn avitar-btn--outline-primary avitar-w-full avitar-cursor-pointer">
+        <i class="fas fa-upload avitar-mr-2"></i>
+        {{#if this.isUploading}}
+          Uploading... {{this.uploadProgress}}%
+        {{else}}
+          {{@label}}
+        {{/if}}
+        <input
+          type="file"
+          accept={{@accept}}
+          class="avitar-hidden"
+          {{on "change" this.handleFileSelect}}
+          disabled={{this.isUploading}}
+        />
+      </label>
+      {{#if @required}}
+        <p class="avitar-text-sm avitar-text-danger avitar-mt-1">* Required</p>
+      {{/if}}
+      <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+        Max file size: {{or @maxSize 10}}MB
+      </p>
+    </div>
+
+    {{#if this.isUploading}}
+      <div class="avitar-mt-2">
+        <div class="avitar-w-full avitar-bg-gray-200 avitar-rounded-full avitar-h-2">
+          <div
+            class="avitar-bg-primary avitar-h-2 avitar-rounded-full"
+            style="width: {{this.uploadProgress}}%"
+          ></div>
+        </div>
+      </div>
+    {{/if}}
+  {{/if}}
+</div>

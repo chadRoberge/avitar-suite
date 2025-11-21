@@ -327,9 +327,41 @@ export default class AssessingService extends Service {
     if (assessmentYear) {
       params.append('assessment_year', assessmentYear);
     }
-    return this.localApi.get(
+    const response = await this.localApi.get(
       `/properties/${propertyId}/assessment/land?${params.toString()}`,
     );
+
+    // Normalize response format - handle API vs IndexedDB responses
+    if (!response) {
+      return { assessment: null, history: [], comparables: [], views: [], viewAttributes: [], zones: [] };
+    }
+
+    // Check if it's already in the API wrapper format
+    if (response.assessment !== undefined || response.history !== undefined) {
+      return response;
+    }
+
+    // Handle IndexedDB array format
+    if (Array.isArray(response)) {
+      return {
+        assessment: response[0] || null,
+        history: [],
+        comparables: [],
+        views: [],
+        viewAttributes: [],
+        zones: [],
+      };
+    }
+
+    // Handle direct LandAssessment object
+    return {
+      assessment: response,
+      history: [],
+      comparables: [],
+      views: [],
+      viewAttributes: [],
+      zones: [],
+    };
   }
 
   async getBuildingAssessment(propertyId, cardNumber = 1) {
@@ -347,9 +379,37 @@ export default class AssessingService extends Service {
     if (assessmentYear) {
       params.append('assessment_year', assessmentYear);
     }
-    return this.localApi.get(
+    const response = await this.localApi.get(
       `/properties/${propertyId}/assessment/building?${params.toString()}`,
     );
+
+    // Normalize response format - handle API vs IndexedDB responses
+    if (!response) {
+      return { assessment: null, history: [], depreciation: {}, improvements: [] };
+    }
+
+    // Check if it's already in the API wrapper format
+    if (response.assessment !== undefined || response.history !== undefined) {
+      return response;
+    }
+
+    // Handle IndexedDB array format
+    if (Array.isArray(response)) {
+      return {
+        assessment: response[0] || null,
+        history: [],
+        depreciation: response[0]?.depreciation || {},
+        improvements: [],
+      };
+    }
+
+    // Handle direct BuildingAssessment object
+    return {
+      assessment: response,
+      history: [],
+      depreciation: response?.depreciation || {},
+      improvements: [],
+    };
   }
 
   async updateBuildingAssessment(propertyId, cardNumber = 1, data) {
@@ -925,12 +985,9 @@ export default class AssessingService extends Service {
   async getWaterBodies(municipalityId = null) {
     const muniId = municipalityId || this.municipality.currentMunicipality.id;
 
-    // Use specific collection name to avoid cache collision
-    const response = await this.localApi.get(
+    // Use hybridApi for better error handling and network fallback
+    const response = await this.hybridApi.get(
       `/municipalities/${muniId}/water-bodies`,
-      {
-        collection: `water-bodies-${muniId}`,
-      },
     );
 
     // Handle different response formats - could be array directly or object with waterBodies property

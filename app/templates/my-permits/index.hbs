@@ -1,0 +1,462 @@
+{{page-title "My Permits Dashboard"}}
+
+{{! Action Buttons }}
+<div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+  <div>
+    <h2 class="avitar-text-xl avitar-font-semibold avitar-text-gray-900">
+      {{#if this.isContractor}}
+        Company Permits
+      {{else}}
+        My Permit Applications
+      {{/if}}
+    </h2>
+    <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+      View and manage your building permit applications across all municipalities
+    </p>
+  </div>
+
+  <div class="avitar-flex avitar-gap-3">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--secondary"
+      {{on "click" this.refreshPermits}}
+    >
+      <i class="fas fa-sync-alt avitar-mr-2"></i>
+      Refresh
+    </button>
+
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.createNewPermit}}
+    >
+      <i class="fas fa-plus avitar-mr-2"></i>
+      New Application
+    </button>
+  </div>
+</div>
+
+{{! Dashboard Stats Overview }}
+<div class="avitar-flex avitar-gap-6 avitar-mb-6">
+  {{! All Permits }}
+  <div
+    class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover"
+    {{on "click" (fn this.selectTab "all")}}
+  >
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
+        <div class="avitar-stat__icon avitar-bg-primary-light avitar-text-primary">
+          <i class="fas fa-list"></i>
+        </div>
+      </div>
+      <div class="avitar-stat">
+        <div class="avitar-stat__value avitar-text-primary avitar-mb-1">
+          {{or this.stats.total 0}}
+        </div>
+        <div class="avitar-stat__label">Total Permits</div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+          All your applications
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Active Permits }}
+  <div
+    class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover"
+    {{on "click" (fn this.selectTab "active")}}
+  >
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
+        <div class="avitar-stat__icon avitar-bg-info-light avitar-text-info">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <span class="avitar-badge avitar-badge--info">Active</span>
+      </div>
+      <div class="avitar-stat">
+        <div class="avitar-stat__value avitar-text-info avitar-mb-1">
+          {{or this.tabStats.active 0}}
+        </div>
+        <div class="avitar-stat__label">In Progress</div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+          Submitted or under review
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Draft Permits }}
+  <div
+    class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover"
+    {{on "click" (fn this.selectTab "draft")}}
+  >
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
+        <div class="avitar-stat__icon avitar-bg-warning-light avitar-text-warning">
+          <i class="fas fa-edit"></i>
+        </div>
+        <span class="avitar-badge avitar-badge--warning">Draft</span>
+      </div>
+      <div class="avitar-stat">
+        <div class="avitar-stat__value avitar-text-warning avitar-mb-1">
+          {{or this.tabStats.draft 0}}
+        </div>
+        <div class="avitar-stat__label">Drafts</div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+          Not yet submitted
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Completed Permits }}
+  <div
+    class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover"
+    {{on "click" (fn this.selectTab "completed")}}
+  >
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
+        <div class="avitar-stat__icon avitar-bg-success-light avitar-text-success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <span class="avitar-badge avitar-badge--success">Closed</span>
+      </div>
+      <div class="avitar-stat">
+        <div class="avitar-stat__value avitar-text-success avitar-mb-1">
+          {{or this.tabStats.completed 0}}
+        </div>
+        <div class="avitar-stat__label">Completed</div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+          Closed permits
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Permits Management Section }}
+<div class="avitar-card">
+  <div class="avitar-card__header avitar-bg-gray-50">
+    <div class="avitar-tabs">
+      <button
+        type="button"
+        class="avitar-tab {{if (eq this.selectedTab 'all') 'avitar-tab--active'}}"
+        {{on "click" (fn this.selectTab "all")}}
+      >
+        <i class="fas fa-list avitar-mr-1"></i>
+        All Permits
+        <span class="avitar-badge avitar-badge--secondary avitar-ml-2">
+          {{this.tabStats.all}}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="avitar-tab {{if (eq this.selectedTab 'active') 'avitar-tab--active'}}"
+        {{on "click" (fn this.selectTab "active")}}
+      >
+        <i class="fas fa-tasks avitar-mr-1"></i>
+        Active
+        <span class="avitar-badge avitar-badge--info avitar-ml-2">
+          {{this.tabStats.active}}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="avitar-tab {{if (eq this.selectedTab 'draft') 'avitar-tab--active'}}"
+        {{on "click" (fn this.selectTab "draft")}}
+      >
+        <i class="fas fa-edit avitar-mr-1"></i>
+        Drafts
+        <span class="avitar-badge avitar-badge--warning avitar-ml-2">
+          {{this.tabStats.draft}}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="avitar-tab {{if (eq this.selectedTab 'completed') 'avitar-tab--active'}}"
+        {{on "click" (fn this.selectTab "completed")}}
+      >
+        <i class="fas fa-check-circle avitar-mr-1"></i>
+        Completed
+        <span class="avitar-badge avitar-badge--success avitar-ml-2">
+          {{this.tabStats.completed}}
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <div class="avitar-card__body">
+    {{! Search and Filter Bar }}
+    <div class="avitar-mb-4">
+      <div class="avitar-flex avitar-gap-3 avitar-items-end">
+        {{! Search Input }}
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            <i class="fas fa-search avitar-mr-1"></i>
+            Search Permits
+          </label>
+          <input
+            type="text"
+            class="avitar-input"
+            placeholder="Search by permit #, address, or description..."
+            value={{this.searchText}}
+            {{on "input" this.updateSearch}}
+          />
+        </div>
+
+        {{! Municipality Filter }}
+        <div style="min-width: 200px;">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            Municipality
+          </label>
+          <select class="avitar-select" {{on "change" this.setFilterMunicipality}}>
+            {{#each this.municipalityOptions as |munOption|}}
+              <option
+                value={{munOption.value}}
+                selected={{eq this.filterMunicipality munOption.value}}
+              >
+                {{munOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        {{! Status Filter }}
+        <div style="min-width: 180px;">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            Status
+          </label>
+          <select class="avitar-select" {{on "change" this.setFilterStatus}}>
+            {{#each this.statusOptions as |statusOption|}}
+              <option
+                value={{statusOption.value}}
+                selected={{eq this.filterStatus statusOption.value}}
+              >
+                {{statusOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        {{! Sort By }}
+        <div style="min-width: 160px;">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            Sort By
+          </label>
+          <select class="avitar-select" {{on "change" this.setSortBy}}>
+            {{#each this.sortOptions as |sortOption|}}
+              <option value={{sortOption.value}} selected={{eq this.sortBy sortOption.value}}>
+                {{sortOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        {{! Clear Filters Button }}
+        {{#if this.hasFiltersApplied}}
+          <div>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--ghost avitar-btn--secondary"
+              {{on "click" this.clearFilters}}
+              title="Clear all filters"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        {{/if}}
+      </div>
+
+      {{! Active Filters Display }}
+      {{#if this.hasFiltersApplied}}
+        <div class="avitar-flex avitar-gap-2 avitar-mt-3">
+          <span class="avitar-text-sm avitar-text-muted">Active filters:</span>
+          {{#if this.searchText}}
+            <span class="avitar-badge avitar-badge--secondary">
+              Search: "{{this.searchText}}"
+              <button
+                type="button"
+                class="avitar-ml-1"
+                {{on "click" (fn this.updateSearch (hash target (hash value "")))}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          {{/if}}
+          {{#if (ne this.filterMunicipality "all")}}
+            <span class="avitar-badge avitar-badge--secondary">
+              Municipality
+              <button
+                type="button"
+                class="avitar-ml-1"
+                {{on "click" (fn this.setFilterMunicipality (hash target (hash value "all")))}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          {{/if}}
+          {{#if (ne this.filterStatus "all")}}
+            <span class="avitar-badge avitar-badge--secondary">
+              Status: {{this.filterStatus}}
+              <button
+                type="button"
+                class="avitar-ml-1"
+                {{on "click" (fn this.setFilterStatus (hash target (hash value "all")))}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+
+    {{! Results Summary }}
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3 avitar-pb-3 avitar-border-b">
+      <div class="avitar-text-sm avitar-text-muted">
+        <i class="fas fa-list-ul avitar-mr-1"></i>
+        Showing
+        <strong>{{this.displayedPermits.length}}</strong>
+        {{#if (eq this.displayedPermits.length 1)}}
+          permit
+        {{else}}
+          permits
+        {{/if}}
+      </div>
+    </div>
+
+    {{! Permits Table }}
+    {{#if this.displayedPermits.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table avitar-table--hover avitar-table--striped">
+          <thead>
+            <tr>
+              <th style="width: 100px;">Permit #</th>
+              <th style="width: auto;">Municipality</th>
+              <th style="width: 110px;">Type</th>
+              <th style="width: auto;">Property</th>
+              <th style="width: auto;">Description</th>
+              <th style="width: 100px;">Status</th>
+              <th style="width: 90px;">Applied</th>
+              <th style="width: 100px;" class="avitar-text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.displayedPermits as |permit|}}
+              <tr class="avitar-cursor-pointer" {{on "click" (fn this.viewPermit permit)}}>
+                <td>
+                  <div class="avitar-font-medium avitar-text-primary">
+                    {{permit.permitNumber}}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm avitar-font-medium">
+                    {{permit.municipalityId.name}}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm">
+                    {{permit.type}}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm">
+                    <div class="avitar-font-medium avitar-text-gray-900 avitar-truncate">
+                      {{permit.pidFormatted}}
+                    </div>
+                    <div class="avitar-text-muted avitar-truncate">
+                      {{permit.propertyAddress}}
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm avitar-truncate" style="max-width: 300px;">
+                    {{permit.description}}
+                  </div>
+                </td>
+
+                <td>
+                  <span class={{permit.statusBadge.class}}>
+                    {{permit.statusBadge.text}}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm avitar-text-muted">
+                    {{date-format permit.applicationDate "MMM DD, YYYY"}}
+                  </div>
+                </td>
+
+                <td {{on "click" this.stopPropagation}}>
+                  <div class="avitar-flex avitar-justify-center avitar-gap-1">
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                      {{on "click" (fn this.viewPermit permit)}}
+                      title="View Details"
+                    >
+                      {{{lnr-icon "eye"}}}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="avitar-empty-state avitar-py-6">
+        <div class="avitar-flex avitar-flex-col avitar-items-center avitar-justify-center">
+          {{#if this.hasFiltersApplied}}
+            <div class="avitar-mb-4 avitar-text-center">
+              <i class="fas fa-filter fa-3x avitar-text-muted"></i>
+            </div>
+            <h3 class="avitar-text-xl avitar-font-semibold avitar-mb-2">
+              No Permits Match Your Filters
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4 avitar-text-center" style="max-width: 400px;">
+              We couldn't find any permits matching your current search criteria. Try adjusting
+              your filters to see more results.
+            </p>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.clearFilters}}
+            >
+              <i class="fas fa-times-circle avitar-mr-2"></i>
+              Clear All Filters
+            </button>
+          {{else}}
+            <div class="avitar-mb-4 avitar-text-center">
+              <div class="avitar-flex avitar-items-center avitar-justify-center avitar-mb-3">
+                <div class="avitar-stat__icon avitar-stat__icon--lg avitar-bg-primary-light avitar-text-primary">
+                  <i class="fas fa-clipboard-list"></i>
+                </div>
+              </div>
+            </div>
+            <h3 class="avitar-text-xl avitar-font-semibold avitar-mb-2">No Permits Yet</h3>
+            <p class="avitar-text-muted avitar-mb-4 avitar-text-center" style="max-width: 450px;">
+              Get started by creating your first permit application. Our streamlined process makes
+              it easy to submit and track building permits.
+            </p>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary avitar-btn--lg"
+              {{on "click" this.createNewPermit}}
+            >
+              <i class="fas fa-plus-circle avitar-mr-2"></i>
+              Create First Application
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>

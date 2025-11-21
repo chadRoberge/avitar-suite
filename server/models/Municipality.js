@@ -240,6 +240,27 @@ const municipalitySchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+      // Building Permits Settings
+      buildingPermits: {
+        allowUnverifiedContractors: {
+          type: Boolean,
+          default: false,
+          description:
+            'Allow contractors to submit permit applications without platform verification',
+        },
+        requireContractorLicense: {
+          type: Boolean,
+          default: true,
+          description:
+            'Require contractors to provide license information (even if unverified)',
+        },
+        autoApproveVerifiedContractors: {
+          type: Boolean,
+          default: false,
+          description:
+            'Automatically approve permit applications from platform-verified contractors',
+        },
+      },
     },
 
     // PID Format Configuration

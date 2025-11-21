@@ -1,0 +1,61 @@
+<div class="view-base-rate-analysis">
+  {{! Statistics }}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h4 class="avitar-font-semibold">View Premium Statistics</h4>
+    </div>
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+        <div class="avitar-stat">
+          <div class="avitar-stat__value">{{this.salesData.length}}</div>
+          <div class="avitar-stat__label">Sales with View</div>
+        </div>
+        <div class="avitar-stat">
+          <div class="avitar-stat__value">{{format-currency this.averageViewPremium}}</div>
+          <div class="avitar-stat__label">Avg View Premium</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Sales Table }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h4 class="avitar-font-semibold">Sales Analysis</h4>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.salesData.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--striped">
+            <thead>
+              <tr>
+                <th>Property Address</th>
+                <th>Sale Date</th>
+                <th>Sale Price</th>
+                <th>View Type</th>
+                <th>View Premium</th>
+                <th>Adjusted Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.salesData as |sale|}}
+                <tr>
+                  <td>{{sale.property_address}}</td>
+                  <td>{{date-format sale.sale_date "MM/DD/YYYY"}}</td>
+                  <td>{{format-currency sale.sale_price}}</td>
+                  <td>{{sale.view_type}}</td>
+                  <td>{{format-currency sale.viewPremium}}</td>
+                  <td>{{format-currency sale.adjustedPrice}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-6">
+          <p class="avitar-text-muted">No sales data available for this analysis</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

@@ -143,6 +143,7 @@ export default class IndexedDbService extends Service {
         changeLog: '++id, collection, documentId, operation, timestamp, userId',
       });
 
+
       // Define schema version 5 - Add dedicated collections for municipality attribute endpoints
       this.db.version(5).stores({
         // Core data stores (same as v4)
@@ -268,6 +269,74 @@ export default class IndexedDbService extends Service {
         changeLog: '++id, collection, documentId, operation, timestamp, userId',
       });
 
+      // Define schema version 7 - Add separate collections for building and land assessments
+      this.db.version(7).stores({
+        // Core data stores (same as v6)
+        municipalities: '++id, name, code, _lastSynced, _syncState',
+        properties:
+          '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+        assessments:
+          '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+        views:
+          '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+        sketches:
+          '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+        features:
+          '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+
+        // NEW: Separate collections for building and land assessments
+        building_assessments:
+          '++id, propertyId, property_id, municipalityId, card_number, effective_year, [property_id+card_number], [property_id+effective_year], _lastSynced, _syncState',
+        land_assessments:
+          '++id, propertyId, property_id, municipalityId, card_number, effective_year, [property_id+card_number], [property_id+effective_year], _lastSynced, _syncState',
+
+        // Exemption data stores (same as v6)
+        exemptions:
+          '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+        exemptionTypes:
+          '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+
+        // Support data stores (same as v6)
+        viewAttributes:
+          '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+        zoneBaseValues:
+          '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+
+        // Municipality attribute endpoint collections (same as v6)
+        topology_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        site_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        driveway_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        road_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        land_use_details:
+          '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+        land_taxation_categories:
+          '++id, municipalityId, name, _lastSynced, _syncState',
+        land_ladders:
+          '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings:
+          '++id, municipalityId, _lastSynced, _syncState',
+        acreage_discount_settings:
+          '++id, municipalityId, _lastSynced, _syncState',
+        sketch_sub_area_factors:
+          '++id, municipalityId, _lastSynced, _syncState',
+
+        // Sync management stores (same as v6)
+        syncQueue:
+          '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+        metadata: '++key, value, lastUpdated',
+
+        // Delta sync stores (same as v6)
+        deltas:
+          '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+        conflicts:
+          '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+        changeLog: '++id, collection, documentId, operation, timestamp, userId',
+      });
+
       // Add hooks for automatic sync metadata
       this.db.properties.hook('creating', (primKey, obj, trans) => {
         obj._lastSynced = new Date().toISOString();
@@ -309,6 +378,67 @@ export default class IndexedDbService extends Service {
             modifications._conflictVersion = (obj._conflictVersion || 1) + 1;
           },
         );
+      });
+
+      // Define schema version 8 - Force clear properties cache to fix stale ObjectIds after import
+      this.db.version(8).stores({
+        // Same schema as v7
+        municipalities: '++id, name, code, _lastSynced, _syncState',
+        properties:
+          '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+        assessments:
+          '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+        land_assessments:
+          '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+        views:
+          '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+        sketches:
+          '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+        features:
+          '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+        exemptions:
+          '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+        exemptionTypes:
+          '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+        viewAttributes:
+          '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+        zoneBaseValues:
+          '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+        topology_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        site_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        driveway_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        road_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        land_use_details:
+          '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+        land_taxation_categories:
+          '++id, municipalityId, name, _lastSynced, _syncState',
+        land_ladders:
+          '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings:
+          '++id, municipalityId, _lastSynced, _syncState',
+        acreage_discount_settings:
+          '++id, municipalityId, _lastSynced, _syncState',
+        sketch_sub_area_factors:
+          '++id, municipalityId, _lastSynced, _syncState',
+        syncQueue:
+          '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+        metadata: '++key, value, lastUpdated',
+        deltas:
+          '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+        conflicts:
+          '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+        changeLog: '++id, collection, documentId, operation, timestamp, userId',
+      }).upgrade(async (trans) => {
+        // Clear all properties to force fresh fetch with correct ObjectIds
+        console.log('🔄 Version 8 upgrade: Clearing all properties cache to fix stale ObjectIds');
+        await trans.table('properties').clear();
+        await trans.table('assessments').clear();
+        await trans.table('land_assessments').clear();
+        console.log('✅ Properties cache cleared - will fetch fresh data from server');
       });
 
       await this.db.open();
@@ -642,28 +772,75 @@ export default class IndexedDbService extends Service {
 
   // === UTILITY METHODS ===
 
+  async clearCollection(collection) {
+    if (!this.isReady) {
+      throw new Error('IndexedDB not ready');
+    }
+
+    if (!this.db[collection]) {
+      console.warn(`Collection "${collection}" does not exist in IndexedDB`);
+      return;
+    }
+
+    await this.db[collection].clear();
+    console.log(`IndexedDB collection "${collection}" cleared`);
+  }
+
   async clearAll() {
     if (!this.isReady) {
       throw new Error('IndexedDB not ready');
     }
 
     const tables = [
+      // Core data stores
       'municipalities',
       'properties',
       'assessments',
       'views',
       'sketches',
       'features',
+
+      // Separate building and land assessment stores (v7+)
+      'building_assessments',
+      'land_assessments',
+
+      // Exemption stores
+      'exemptions',
+      'exemptionTypes',
+
+      // Support data stores
       'viewAttributes',
       'zoneBaseValues',
+
+      // Municipality attribute stores
+      'topology_attributes',
+      'site_attributes',
+      'driveway_attributes',
+      'road_attributes',
+      'land_use_details',
+      'land_taxation_categories',
+      'land_ladders',
+      'current_use_settings',
+      'acreage_discount_settings',
+      'sketch_sub_area_factors',
+
+      // Sync management stores
       'syncQueue',
+      'metadata',
+
+      // Delta sync stores
+      'deltas',
+      'conflicts',
+      'changeLog',
     ];
 
     for (const table of tables) {
-      await this.db[table].clear();
+      if (this.db[table]) {
+        await this.db[table].clear();
+      }
     }
 
-    console.log('IndexedDB cleared');
+    console.log('IndexedDB cleared - all stores cleared');
   }
 
   async getStorageStats() {
@@ -922,5 +1099,14 @@ export default class IndexedDbService extends Service {
       value,
       lastUpdated: new Date().toISOString(),
     });
+  }
+
+  // Convenience aliases for metadata operations
+  async getMetadata(key) {
+    return await this.getValue(key);
+  }
+
+  async setMetadata(key, value) {
+    return await this.setValue(key, value);
   }
 }

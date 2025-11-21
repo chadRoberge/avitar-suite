@@ -41,6 +41,31 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
     this.resetNewSalesEntry();
   }
 
+  // Update tracked properties when tier data loads in background
+  @action
+  updateTierData(tier, data) {
+    console.log(`🔄 Controller updating ${tier} data`, data);
+
+    if (tier === 'tier3') {
+      // Update sales history when it loads
+      if (data.salesHistory) {
+        this.salesEntries = [...data.salesHistory];
+      }
+
+      // Update listing history when it loads
+      if (data.listingHistory) {
+        this.listingEntries = [...data.listingHistory];
+      }
+
+      // Update property notes when they load
+      if (data.propertyNotes) {
+        this.propertyNotes = { ...data.propertyNotes };
+      }
+    }
+
+    // We can handle tier2 and tier4 updates here if needed in the future
+  }
+
   @action
   resetNewListingEntry() {
     this.newListingEntry = {

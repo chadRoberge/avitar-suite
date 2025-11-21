@@ -4,6 +4,7 @@ import { tracked } from '@glimmer/tracking';
 export default class LoadingService extends Service {
   @tracked isLoading = false;
   @tracked loadingMessage = '';
+  @tracked progressData = null;
 
   activeRequests = new Set();
   showDelayTimer = null;
@@ -92,6 +93,18 @@ export default class LoadingService extends Service {
     }
   }
 
+  setProgress(progressData) {
+    this.progressData = progressData;
+  }
+
+  clearProgress() {
+    this.progressData = null;
+  }
+
+  setMessage(message) {
+    this.loadingMessage = message;
+  }
+
   stopAllLoading() {
     this.activeRequests.clear();
 
@@ -108,6 +121,7 @@ export default class LoadingService extends Service {
 
     this.isLoading = false;
     this.loadingMessage = '';
+    this.progressData = null;
     this.loadingStartTime = null;
   }
 }

@@ -103,7 +103,12 @@ export default class WaterfrontController extends Controller {
             entries: [],
           };
         }
-        ladders[waterBodyId].entries.push(entry);
+        // Normalize field names: ensure 'factor' field exists (for backward compatibility with 'value')
+        const normalizedEntry = {
+          ...entry,
+          factor: entry.factor ?? entry.value,
+        };
+        ladders[waterBodyId].entries.push(normalizedEntry);
       });
 
       // Sort entries by frontage for each water body
@@ -310,7 +315,7 @@ export default class WaterfrontController extends Controller {
   async saveLadderEntry(entryData) {
     try {
       const municipalityId = this.model.municipality.id;
-      const waterBodyId = this.editingEntryWaterBody.id;
+      const waterBodyId = this.editingEntryWaterBody.id || this.editingEntryWaterBody._id || this.editingEntryWaterBody.stringId;
 
       let savedEntry;
       if (entryData.id) {
@@ -321,8 +326,9 @@ export default class WaterfrontController extends Controller {
         );
         savedEntry = response.ladderEntry;
 
+        // Find and update the entry (check both id and _id)
         const entryIndex = this.model.waterBodyLadders.findIndex(
-          (entry) => entry.id === entryData.id,
+          (entry) => (entry.id || entry._id) === entryData.id,
         );
         if (entryIndex !== -1) {
           this.model.waterBodyLadders[entryIndex] = savedEntry;
@@ -354,13 +360,17 @@ export default class WaterfrontController extends Controller {
     if (confirm('Are you sure you want to delete this ladder entry?')) {
       try {
         const municipalityId = this.model.municipality.id;
+        // Handle different ID field names
+        const waterBodyId = waterBody.id || waterBody._id || waterBody.stringId;
+        const entryId = entry.id || entry._id;
+
         await this.api.delete(
-          `/municipalities/${municipalityId}/water-bodies/${waterBody.id}/ladder/${entry.id}`,
+          `/municipalities/${municipalityId}/water-bodies/${waterBodyId}/ladder/${entryId}`,
         );
 
         // Remove from local model
         const entryIndex = this.model.waterBodyLadders.findIndex(
-          (e) => e.id === entry.id,
+          (e) => (e.id || e._id) === entryId,
         );
         if (entryIndex !== -1) {
           this.model.waterBodyLadders.splice(entryIndex, 1);

@@ -3,8 +3,10 @@ const mongoose = require('mongoose');
 const propertyNotesSchema = new mongoose.Schema(
   {
     propertyId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PropertyTreeNode',
       required: true,
+      index: true,
     },
     municipalityId: {
       type: mongoose.Schema.Types.ObjectId,

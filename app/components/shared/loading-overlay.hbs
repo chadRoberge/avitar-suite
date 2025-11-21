@@ -8,6 +8,26 @@
       {{#if @message}}
         <div class="loading-overlay__message">{{@message}}</div>
       {{/if}}
+      {{#if @progress}}
+        <div class="loading-overlay__progress">
+          {{#if @progress.currentPhase}}
+            <div class="loading-overlay__phase">{{@progress.currentPhase}}</div>
+          {{/if}}
+          {{#if @progress.percentage}}
+            <div class="loading-overlay__progress-bar">
+              <div class="loading-overlay__progress-fill" style="width: {{@progress.percentage}}%"></div>
+            </div>
+            <div class="loading-overlay__progress-text">
+              {{@progress.processedItems}} / {{@progress.totalItems}} ({{@progress.percentage}}%)
+            </div>
+          {{/if}}
+          {{#if @progress.estimatedTimeRemaining}}
+            <div class="loading-overlay__time-remaining">
+              Estimated time remaining: {{this.formatTime @progress.estimatedTimeRemaining}}
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
     </div>
   </div>
 {{/if}}

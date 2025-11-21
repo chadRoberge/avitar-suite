@@ -1,0 +1,1044 @@
+{{!-- MS-1 Summary Inventory of Valuation Report --}}
+<div class="ms1-report {{if this.reportData 'ms1-report--with-data' ''}}">
+  {{#if this.reportData}}
+    {{!-- Print-optimized layout --}}
+    <div class="ms1-pages">
+
+      {{!-- PAGE 1: Cover Page --}}
+      <div class="ms1-page ms1-page--cover">
+        <div class="ms1-header">
+          <h1 class="ms1-title">SUMMARY INVENTORY OF VALUATION</h1>
+          <h2 class="ms1-subtitle">MS-1</h2>
+          <p class="ms1-description">New Hampshire Department of Revenue Administration</p>
+        </div>
+
+        <div class="ms1-cover-info">
+          <div class="ms1-info-row">
+            <label>Municipality:</label>
+            <span class="ms1-value">{{this.municipalityInfo.name}}</span>
+          </div>
+          <div class="ms1-info-row">
+            <label>County:</label>
+            <span class="ms1-value">{{this.municipalityInfo.county}}</span>
+          </div>
+          <div class="ms1-info-row">
+            <label>Assessment Year:</label>
+            <span class="ms1-value">{{this.reportData.assessmentYear}}</span>
+          </div>
+        </div>
+
+        <div class="ms1-signatures">
+          <div class="ms1-signature-block">
+            <div class="ms1-signature-line"></div>
+            <label>Assessor / Assessing Official</label>
+            <span class="ms1-signature-name">{{this.municipalityInfo.assessor}}</span>
+          </div>
+
+          <div class="ms1-signature-block">
+            <div class="ms1-signature-line"></div>
+            <label>Prepared By</label>
+            <span class="ms1-signature-name">{{this.municipalityInfo.preparedBy}}</span>
+          </div>
+
+          <div class="ms1-signature-block">
+            <div class="ms1-signature-line"></div>
+            <label>Date Prepared</label>
+            <span class="ms1-signature-name">{{this.municipalityInfo.preparedDate}}</span>
+          </div>
+        </div>
+
+        <div class="ms1-footer-note">
+          <p>This form must be filed with the NH Department of Revenue Administration on or before September 1st annually.</p>
+        </div>
+      </div>
+
+      {{!-- PAGE 2: Main Valuation Summary --}}
+      <div class="ms1-page ms1-page--valuation">
+        <div class="ms1-page-header">
+          <h3>Summary Inventory of Valuation - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}, {{this.municipalityInfo.county}} County</p>
+        </div>
+
+        <table class="ms1-table">
+          <thead>
+            <tr>
+              <th class="ms1-table__header ms1-table__header--ref"></th>
+              <th class="ms1-table__header">Description</th>
+              <th class="ms1-table__header ms1-table__header--number">Acres</th>
+              <th class="ms1-table__header ms1-table__header--number">Valuation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{!-- LAND VALUATION --}}
+            <tr class="ms1-table__section-header">
+              <td colspan="4"><strong>Land Value Only</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1A</td>
+              <td class="ms1-table__label">Current Use RSA 79-A</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.currentUse.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.currentUse.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1B</td>
+              <td class="ms1-table__label">Conservation Restriction Assessment RSA 79-B</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.conservationRestriction.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.conservationRestriction.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1C</td>
+              <td class="ms1-table__label">Discretionary Easements RSA 79-C</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.discretionaryEasements.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.discretionaryEasements.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1D</td>
+              <td class="ms1-table__label">Discretionary Preservation Easements RSA 79-D</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.discretionaryPreservation.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.discretionaryPreservation.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1E</td>
+              <td class="ms1-table__label">Taxation of Land Under Farm Structures RSA 79-F</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.farmStructures.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.farmStructures.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1F</td>
+              <td class="ms1-table__label">Residential Land</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.residentialLand.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.residentialLand.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1G</td>
+              <td class="ms1-table__label">Commercial/Industrial Land</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.commercialIndustrialLand.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.commercialIndustrialLand.value}}</td>
+            </tr>
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__ref">1H</td>
+              <td class="ms1-table__label"><strong>Total of Taxable Land</strong></td>
+              <td class="ms1-table__number"><strong>{{number-format this.landValuationSummary.totalLand.acres decimals=2}}</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.landValuationSummary.totalLand.value}}</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">1I</td>
+              <td class="ms1-table__label">Tax Exempt and Non-Taxable Land</td>
+              <td class="ms1-table__number">{{number-format this.landValuationSummary.exemptLand.acres decimals=2}}</td>
+              <td class="ms1-table__number">${{number-format this.landValuationSummary.exemptLand.value}}</td>
+            </tr>
+
+            {{!-- BUILDING VALUATION --}}
+            <tr class="ms1-table__section-header">
+              <td colspan="4"><strong>Buildings Value Only</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2A</td>
+              <td class="ms1-table__label">Residential</td>
+              <td class="ms1-table__number">Structures</td>
+              <td class="ms1-table__number">${{number-format this.buildingValuationSummary.residential}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2B</td>
+              <td class="ms1-table__label">Manufactured Housing RSA 674:31</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">${{number-format this.buildingValuationSummary.manufacturedHousing}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2C</td>
+              <td class="ms1-table__label">Commercial/Industrial</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">${{number-format this.buildingValuationSummary.commercialIndustrial}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2D</td>
+              <td class="ms1-table__label">Discretionary Preservation Easements RSA 79-D</td>
+              <td class="ms1-table__number">—</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2E</td>
+              <td class="ms1-table__label">Taxation of Farm Structures RSA 79-F</td>
+              <td class="ms1-table__number">—</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__ref">2F</td>
+              <td class="ms1-table__label"><strong>Total of Taxable Buildings</strong></td>
+              <td class="ms1-table__number"><strong>0</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.buildingValuationSummary.totalBuildings}}</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">2G</td>
+              <td class="ms1-table__label">Tax Exempt and Non-Taxable Buildings</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">${{number-format this.buildingValuationSummary.exemptBuildings}}</td>
+            </tr>
+
+            {{!-- UTILITIES & TIMBER --}}
+            <tr class="ms1-table__section-header">
+              <td colspan="4"><strong>Utilities & Timber</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">3A</td>
+              <td class="ms1-table__label">Utilities</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">${{number-format this.utilitiesValuation.totalUtilities}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">3B</td>
+              <td class="ms1-table__label">Other Utilities</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">4</td>
+              <td class="ms1-table__label">Mature Wood and Timber RSA 79:5</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            {{!-- VALUATION BEFORE EXEMPTIONS --}}
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">5</td>
+              <td class="ms1-table__label"><strong>Valuation before Exemption</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format this.valuationBeforeExemptions}}</strong></td>
+            </tr>
+
+            {{!-- EXEMPTIONS --}}
+            <tr class="ms1-table__section-header">
+              <td colspan="4"><strong>Exemptions</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">6</td>
+              <td class="ms1-table__label">Certain Disabled Veterans RSA 72:36-a</td>
+              <td class="ms1-table__number">Total Granted: 0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">7</td>
+              <td class="ms1-table__label">Improvements to Assist the Deaf RSA 72:38-b V</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">8</td>
+              <td class="ms1-table__label">Improvements to Assist Persons with Disabilities RSA 72:37-a</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">9</td>
+              <td class="ms1-table__label">School Dining/Dormitory/Kitchen Exemption RSA 72:23-IV</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">10A</td>
+              <td class="ms1-table__label">Non-Utility Water & Air Pollution Control Exemption RSA 72:12</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">10B</td>
+              <td class="ms1-table__label">Utility Water & Air Pollution Control Exemption RSA 72:12-a</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__ref">11</td>
+              <td class="ms1-table__label"><strong>Modified Assessed Value of All Properties</strong></td>
+              <td class="ms1-table__number"><strong>0</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.valuationBeforeExemptions}}</strong></td>
+            </tr>
+
+            {{!-- OPTIONAL EXEMPTIONS --}}
+            <tr class="ms1-table__section-header">
+              <td colspan="4"><strong>Optional Exemptions</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">12</td>
+              <td class="ms1-table__label">Blind Exemption RSA 72:37</td>
+              <td class="ms1-table__number">Amount Per: $50,000 | Total Granted: {{this.exemptionsSummary.blind.count}}</td>
+              <td class="ms1-table__number">${{number-format this.exemptionsSummary.blind.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">13</td>
+              <td class="ms1-table__label">Elderly Exemption RSA 72:39-a,b</td>
+              <td class="ms1-table__number">{{this.exemptionsSummary.elderly.count}}</td>
+              <td class="ms1-table__number">${{number-format this.exemptionsSummary.elderly.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">14</td>
+              <td class="ms1-table__label">Deaf Exemption RSA 72:38-b</td>
+              <td class="ms1-table__number">$50,000 | 0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">15</td>
+              <td class="ms1-table__label">Disabled Exemption RSA 72:37-b</td>
+              <td class="ms1-table__number">$75,000 | {{this.exemptionsSummary.disabled.count}}</td>
+              <td class="ms1-table__number">${{number-format this.exemptionsSummary.disabled.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">16</td>
+              <td class="ms1-table__label">Wood Heating Energy Systems Exemption RSA 72:70</td>
+              <td class="ms1-table__number">{{this.exemptionsSummary.woodHeating.count}}</td>
+              <td class="ms1-table__number">${{number-format this.exemptionsSummary.woodHeating.value}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">17</td>
+              <td class="ms1-table__label">Solar Energy Systems Exemption RSA 72:62</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">18</td>
+              <td class="ms1-table__label">Wind Powered Energy Systems Exemption RSA 72:66</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">19</td>
+              <td class="ms1-table__label">Additional School Dining/Dorm/Kitchen Exemptions RSA 72:23</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">19A</td>
+              <td class="ms1-table__label">Electric Energy Storage Systems RSA 72:85</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">19B</td>
+              <td class="ms1-table__label">Renewable Generation Facilities & Electric Energy Systems</td>
+              <td class="ms1-table__number">0</td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__ref">20</td>
+              <td class="ms1-table__label"><strong>Total Dollar Amount of Exemptions</strong></td>
+              <td class="ms1-table__number"><strong>—</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.exemptionsSummary.totalExemptions}}</strong></td>
+            </tr>
+
+            {{!-- NET VALUATION CALCULATIONS --}}
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">21A</td>
+              <td class="ms1-table__label"><strong>Net Valuation</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format this.netValuation}}</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">21B</td>
+              <td class="ms1-table__label">Less TIF Retained Value</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">21C</td>
+              <td class="ms1-table__label"><strong>Net Valuation Adjusted to Remove TIF Retained Value</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format this.netValuation}}</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">21D</td>
+              <td class="ms1-table__label">Less Commercial/Industrial Construction Exemption</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">$0</td>
+            </tr>
+
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">21E</td>
+              <td class="ms1-table__label"><strong>Net Valuation Adjusted to Remove TIF Retained Value and Comm/Ind Construction</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format this.netValuation}}</strong></td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__ref">22</td>
+              <td class="ms1-table__label">Less Utilities</td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number">${{number-format this.utilitiesValuation.totalUtilities}}</td>
+            </tr>
+
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">23A</td>
+              <td class="ms1-table__label"><strong>Net Valuation without Utilities</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format (subtract this.netValuation this.utilitiesValuation.totalUtilities)}}</strong></td>
+            </tr>
+
+            <tr class="ms1-table__grand-total">
+              <td class="ms1-table__ref">23B</td>
+              <td class="ms1-table__label"><strong>Net Valuation without Utilities, Adjusted to Remove TIF Retained Value</strong></td>
+              <td class="ms1-table__number"></td>
+              <td class="ms1-table__number"><strong>${{number-format (subtract this.netValuation this.utilitiesValuation.totalUtilities)}}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {{!-- PAGE 3: Utility Breakdown --}}
+      <div class="ms1-page ms1-page--utilities">
+        <div class="ms1-page-header">
+          <h3>Public Utility Value Breakdown - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}</p>
+        </div>
+
+        <table class="ms1-table">
+          <thead>
+            <tr>
+              <th class="ms1-table__header">Utility Company / Appraiser</th>
+              <th class="ms1-table__header ms1-table__header--number">Assessed Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#if this.utilitiesValuation.electricCompanies.length}}
+              {{#each this.utilitiesValuation.electricCompanies as |company|}}
+                <tr>
+                  <td class="ms1-table__label">{{company.name}}</td>
+                  <td class="ms1-table__number">${{number-format company.value}}</td>
+                </tr>
+              {{/each}}
+            {{else}}
+              <tr>
+                <td class="ms1-table__label avitar-text-muted" colspan="2">No utility values reported</td>
+              </tr>
+            {{/if}}
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__label"><strong>Total Utilities Value</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.utilitiesValuation.totalUtilities}}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ms1-notes avitar-mt-6">
+          <p class="avitar-text-sm avitar-text-muted">
+            Values are determined by the NH Department of Revenue Administration under RSA 72:8 and RSA 72:8-a.
+          </p>
+        </div>
+      </div>
+
+      {{!-- PAGE 4: Veterans Credits & Other Exemptions --}}
+      <div class="ms1-page ms1-page--credits">
+        <div class="ms1-page-header">
+          <h3>Veteran's Tax Credits and Additional Exemptions - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}</p>
+        </div>
+
+        <h4 class="ms1-section-title">VETERAN'S TAX CREDITS (RSA 72:28 & 72:35)</h4>
+        <table class="ms1-table avitar-mb-6">
+          <thead>
+            <tr>
+              <th class="ms1-table__header">Credit Type</th>
+              <th class="ms1-table__header ms1-table__header--number">Number of Recipients</th>
+              <th class="ms1-table__header ms1-table__header--number">Credit Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Standard Veteran's Credit (RSA 72:28)</td>
+              <td class="ms1-table__number">{{this.veteransCreditsSummary.standard.count}}</td>
+              <td class="ms1-table__number">${{number-format this.veteransCreditsSummary.standard.amount}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Service-Connected Disability (RSA 72:35)</td>
+              <td class="ms1-table__number">{{this.veteransCreditsSummary.serviceConnectedDisability.count}}</td>
+              <td class="ms1-table__number">${{number-format this.veteransCreditsSummary.serviceConnectedDisability.amount}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">All Veterans Tax Credit (RSA 72:28-b)</td>
+              <td class="ms1-table__number">{{this.veteransCreditsSummary.allVeterans.count}}</td>
+              <td class="ms1-table__number">${{number-format this.veteransCreditsSummary.allVeterans.amount}}</td>
+            </tr>
+
+            <tr class="ms1-table__total">
+              <td class="ms1-table__label"><strong>Total Veteran's Credits</strong></td>
+              <td class="ms1-table__number"><strong>{{this.veteransCreditsSummary.total.count}}</strong></td>
+              <td class="ms1-table__number"><strong>${{number-format this.veteransCreditsSummary.total.amount}}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 class="ms1-section-title">MUNICIPAL ADOPTIONS</h4>
+        <div class="ms1-questions">
+          <div class="ms1-question">
+            <label>Has your municipality adopted the optional deaf or disabled exemption (RSA 72:37-a)?</label>
+            <span class="ms1-answer">{{if this.municipalAdoptionQuestions.deafDisabledExemption "Yes" "No"}}</span>
+          </div>
+
+          <div class="ms1-question">
+            <label>Has your municipality adopted the optional elderly exemption (RSA 72:39-a)?</label>
+            <span class="ms1-answer">{{if this.municipalAdoptionQuestions.elderlyExemption "Yes" "No"}}</span>
+          </div>
+
+          <div class="ms1-question">
+            <label>Has your municipality adopted the optional commercial/industrial construction exemption (RSA 72:76-78)?</label>
+            <span class="ms1-answer">{{if this.municipalAdoptionQuestions.commercialConstructionExemption "Yes" "No"}}</span>
+          </div>
+
+          <div class="ms1-question">
+            <label>Has your municipality adopted community revitalization tax relief incentives (RSA 79-E)?</label>
+            <span class="ms1-answer">{{if this.municipalAdoptionQuestions.communityRevitalizationIncentive "Yes" "No"}}</span>
+          </div>
+        </div>
+      </div>
+
+      {{!-- PAGE 5: Current Use (RSA 79-A) Details --}}
+      <div class="ms1-page ms1-page--current-use">
+        <div class="ms1-page-header">
+          <h3>Current Use Assessment (RSA 79-A) - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}</p>
+        </div>
+
+        <table class="ms1-table">
+          <thead>
+            <tr>
+              <th class="ms1-table__header">Category</th>
+              <th class="ms1-table__header ms1-table__header--number">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Number of Parcels in Current Use</td>
+              <td class="ms1-table__number">{{this.currentUseDetails.parcelsInCurrentUse}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Total Acres in Current Use</td>
+              <td class="ms1-table__number">{{number-format this.currentUseDetails.acresInCurrentUse decimals=2}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Total Acres in Municipality</td>
+              <td class="ms1-table__number">{{number-format this.currentUseDetails.totalAcres decimals=2}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Acres Removed from Current Use This Year</td>
+              <td class="ms1-table__number">{{number-format this.currentUseDetails.removedFromCurrentUse decimals=2}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Land Use Change Tax Collected (RSA 79-A:7)</td>
+              <td class="ms1-table__number">${{number-format this.currentUseDetails.landUseChangeTax}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ms1-notes avitar-mt-6">
+          <p class="avitar-text-sm">
+            <strong>Current Use Assessment:</strong> RSA 79-A allows municipalities to assess qualifying farm, forest, and open space land at its current use value rather than at its highest and best use value.
+          </p>
+        </div>
+      </div>
+
+      {{!-- PAGE 6: Conservation Restriction Assessment --}}
+      <div class="ms1-page ms1-page--conservation">
+        <div class="ms1-page-header">
+          <h3>Conservation Restriction Assessment (RSA 79-B) - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}</p>
+        </div>
+
+        <table class="ms1-table">
+          <thead>
+            <tr>
+              <th class="ms1-table__header">Category</th>
+              <th class="ms1-table__header ms1-table__header--number">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Number of Parcels with Conservation Restrictions</td>
+              <td class="ms1-table__number">{{this.conservationRestrictionDetails.parcels}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Total Acres Under Conservation Restriction</td>
+              <td class="ms1-table__number">{{number-format this.conservationRestrictionDetails.acres decimals=2}}</td>
+            </tr>
+
+            <tr>
+              <td class="ms1-table__label">Total Assessed Value</td>
+              <td class="ms1-table__number">${{number-format this.conservationRestrictionDetails.assessedValue}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ms1-notes avitar-mt-6">
+          <p class="avitar-text-sm">
+            <strong>Conservation Restriction Assessment:</strong> RSA 79-B provides for the assessment of land subject to a qualifying conservation restriction based on the restriction's impact on value.
+          </p>
+        </div>
+      </div>
+
+      {{!-- PAGE 7: Discretionary Easements & Additional Information --}}
+      <div class="ms1-page ms1-page--additional">
+        <div class="ms1-page-header">
+          <h3>Discretionary Easements and Additional Information - {{this.reportData.assessmentYear}}</h3>
+          <p class="ms1-municipality-name">{{this.municipalityInfo.name}}</p>
+        </div>
+
+        <h4 class="ms1-section-title">DISCRETIONARY PRESERVATION EASEMENTS (RSA 79-D)</h4>
+        <table class="ms1-table avitar-mb-6">
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Has your municipality adopted RSA 79-D (Discretionary Preservation Easements)?</td>
+              <td class="ms1-table__answer">{{if this.reportData.discretionaryEasements.adopted "Yes" "No"}}</td>
+            </tr>
+            {{#if this.reportData.discretionaryEasements.adopted}}
+              <tr>
+                <td class="ms1-table__label">Number of properties with discretionary easements</td>
+                <td class="ms1-table__number">{{this.reportData.discretionaryEasements.count}}</td>
+              </tr>
+            {{/if}}
+          </tbody>
+        </table>
+
+        <h4 class="ms1-section-title">FARM STRUCTURES EXEMPTION (RSA 72:13-a)</h4>
+        <table class="ms1-table avitar-mb-6">
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Has your municipality adopted the farm structures exemption?</td>
+              <td class="ms1-table__answer">{{if this.reportData.farmStructures.adopted "Yes" "No"}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 class="ms1-section-title">PAYMENTS IN LIEU OF TAX (PILOT)</h4>
+        <table class="ms1-table">
+          <tbody>
+            <tr>
+              <td class="ms1-table__label">Total PILOT payments received this year</td>
+              <td class="ms1-table__number">${{number-format this.reportData.pilotPayments}}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ms1-certification avitar-mt-8">
+          <p class="avitar-text-sm avitar-font-medium">
+            I hereby certify that the information provided in this MS-1 Summary Inventory of Valuation is true and accurate to the best of my knowledge.
+          </p>
+
+          <div class="ms1-signature-block avitar-mt-6">
+            <div class="ms1-signature-line"></div>
+            <label>Signature of Assessor or Assessing Official</label>
+            <span class="ms1-signature-date">Date: _______________________</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {{!-- Print Button (hidden when printing) --}}
+    <div class="ms1-actions no-print avitar-mt-6 avitar-flex avitar-justify-center avitar-gap-4">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.printReport}}
+      >
+        <i class="fas fa-print avitar-mr-2"></i>
+        Print Report
+      </button>
+
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" (fn this.exportReport "pdf")}}
+      >
+        <i class="fas fa-file-pdf avitar-mr-2"></i>
+        Export as PDF
+      </button>
+    </div>
+
+  {{else}}
+    {{!-- Preview State (no data generated yet) --}}
+    <div class="report-preview">
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h5 class="avitar-card__title">MS-1 Summary Inventory of Valuation</h5>
+          <div class="avitar-card__subtitle">New Hampshire DRA Form</div>
+        </div>
+
+        <div class="avitar-card__body">
+          {{#if @parameters.assessment_year}}
+            <div class="preview-section avitar-mb-4">
+              <h6 class="avitar-mb-2">Assessment Year: {{@parameters.assessment_year}}</h6>
+
+              <p class="avitar-text-sm avitar-text-muted avitar-mt-4">
+                This report will generate the NH DRA MS-1 form including:
+              </p>
+
+              <ul class="avitar-text-sm avitar-text-muted avitar-mt-2 avitar-ml-6">
+                <li>Land valuation by category (Current Use, Conservation Restriction, Residential, Commercial)</li>
+                <li>Building valuation by type</li>
+                <li>Public utilities assessment</li>
+                <li>Exemptions breakdown (Elderly, Disabled, Blind, etc.)</li>
+                <li>Veteran's tax credits summary</li>
+                <li>Current use details and land use change tax</li>
+                <li>Conservation restriction details</li>
+                <li>Municipal adoption questions</li>
+              </ul>
+
+              <p class="avitar-text-sm avitar-font-medium avitar-mt-4">
+                The report will be formatted for printing and can be exported as a PDF for submission to the NH DRA.
+              </p>
+            </div>
+          {{else}}
+            <div class="avitar-text-center avitar-py-4">
+              <p class="avitar-text-muted">Please select an assessment year to generate this report.</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>
+
+{{!-- Print-specific styles --}}
+<style>
+  @media print {
+    /* Hide non-print elements */
+    .no-print,
+    .avitar-sidebar,
+    .avitar-topbar,
+    .avitar-layout__sidebar,
+    .municipal-navigation {
+      display: none !important;
+    }
+
+    /* Optimize for print */
+    .ms1-report {
+      width: 100%;
+      max-width: none;
+    }
+
+    .ms1-page {
+      page-break-after: always;
+      page-break-inside: avoid;
+      margin: 0;
+      padding: 1in;
+      background: white;
+    }
+
+    .ms1-page:last-child {
+      page-break-after: auto;
+    }
+
+    .ms1-table {
+      page-break-inside: avoid;
+    }
+
+    .ms1-table tr {
+      page-break-inside: avoid;
+    }
+  }
+
+  /* MS-1 Report Specific Styles */
+  .ms1-report {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000;
+  }
+
+  .ms1-pages {
+    background: #f5f5f5;
+  }
+
+  .ms1-page {
+    background: white;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 11in;
+  }
+
+  .ms1-header {
+    text-align: center;
+    padding: 2rem 0;
+    border-bottom: 3px solid #2d5a27;
+    margin-bottom: 2rem;
+  }
+
+  .ms1-title {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #2d5a27;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .ms1-subtitle {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1e4d59;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .ms1-description {
+    font-size: 12pt;
+    color: #666;
+    margin: 0;
+  }
+
+  .ms1-cover-info {
+    margin: 3rem 0;
+  }
+
+  .ms1-info-row {
+    display: flex;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .ms1-info-row label {
+    font-weight: bold;
+    width: 200px;
+    color: #2d5a27;
+  }
+
+  .ms1-value {
+    flex: 1;
+    font-size: 14pt;
+  }
+
+  .ms1-signatures {
+    margin: 4rem 0 2rem;
+  }
+
+  .ms1-signature-block {
+    margin: 2rem 0;
+  }
+
+  .ms1-signature-line {
+    border-bottom: 2px solid #000;
+    width: 100%;
+    height: 50px;
+  }
+
+  .ms1-signature-block label {
+    display: block;
+    font-size: 10pt;
+    color: #666;
+    margin-top: 0.5rem;
+  }
+
+  .ms1-signature-name {
+    display: block;
+    font-size: 11pt;
+    margin-top: 0.25rem;
+  }
+
+  .ms1-signature-date {
+    display: block;
+    font-size: 10pt;
+    margin-top: 0.5rem;
+  }
+
+  .ms1-footer-note {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1rem;
+    background: #fef9e7;
+    border: 1px solid #f4c430;
+    border-radius: 4px;
+  }
+
+  .ms1-footer-note p {
+    margin: 0;
+    font-size: 10pt;
+    font-style: italic;
+  }
+
+  .ms1-page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #2d5a27;
+  }
+
+  .ms1-page-header h3 {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #2d5a27;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .ms1-municipality-name {
+    font-size: 12pt;
+    color: #666;
+    margin: 0;
+  }
+
+  .ms1-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 11pt;
+  }
+
+  .ms1-table__header {
+    background: #2d5a27;
+    color: white;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: bold;
+    border: 1px solid #1e3d1b;
+  }
+
+  .ms1-table__header--number {
+    text-align: right;
+    width: 150px;
+  }
+
+  .ms1-table__header--ref {
+    width: 50px;
+    text-align: center;
+  }
+
+  .ms1-table__ref {
+    padding: 0.5rem;
+    text-align: center;
+    border: 1px solid #d0d0d0;
+    font-weight: bold;
+    font-size: 10pt;
+    vertical-align: middle;
+  }
+
+  .ms1-table__section-header td {
+    background: #e8f4e6;
+    padding: 0.5rem 0.75rem;
+    font-weight: bold;
+    border: 1px solid #d0d0d0;
+    color: #2d5a27;
+  }
+
+  .ms1-table__label {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d0d0d0;
+  }
+
+  .ms1-table__number {
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+    border: 1px solid #d0d0d0;
+    font-family: 'Courier New', monospace;
+  }
+
+  .ms1-table__answer {
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+    border: 1px solid #d0d0d0;
+    font-weight: bold;
+  }
+
+  .ms1-table__total td {
+    background: #f0f0f0;
+    font-weight: bold;
+    border: 2px solid #999;
+  }
+
+  .ms1-table__grand-total td {
+    background: #2d5a27;
+    color: white;
+    font-weight: bold;
+    font-size: 12pt;
+    padding: 0.75rem;
+    border: 2px solid #1e3d1b;
+  }
+
+  .ms1-section-title {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #2d5a27;
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #2d5a27;
+  }
+
+  .ms1-questions {
+    margin: 1rem 0;
+  }
+
+  .ms1-question {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e0e0e0;
+    align-items: center;
+  }
+
+  .ms1-question label {
+    flex: 1;
+    font-size: 11pt;
+  }
+
+  .ms1-answer {
+    font-weight: bold;
+    color: #2d5a27;
+    width: 80px;
+    text-align: center;
+    padding: 0.25rem 1rem;
+    background: #e8f4e6;
+    border-radius: 4px;
+  }
+
+  .ms1-notes {
+    padding: 1rem;
+    background: #f9fafb;
+    border-left: 4px solid #1e4d59;
+    margin: 1rem 0;
+  }
+
+  .ms1-certification {
+    padding: 1.5rem;
+    border: 2px solid #2d5a27;
+    background: #fafafa;
+  }
+</style>

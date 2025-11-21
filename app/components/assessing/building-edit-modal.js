@@ -15,26 +15,42 @@ export default class BuildingEditModalComponent extends Component {
 
   constructor() {
     super(...arguments);
+
+    console.log('🔍 Building Assessment received:', this.args.buildingAssessment);
+
     // Initialize local building data from args
     if (this.args.buildingAssessment) {
       // Convert snake_case from API to camelCase for component
+      // Extract ObjectIds from fields (they might be populated objects or ObjectId strings)
+      console.log('🔍 Frame value (raw):', this.args.buildingAssessment.frame);
+      console.log('🔍 Frame type:', typeof this.args.buildingAssessment.frame);
+      console.log('🔍 Base Type value (raw):', this.args.buildingAssessment.base_type);
+      console.log('🔍 Base Type type:', typeof this.args.buildingAssessment.base_type);
+
+      const frameId = this.extractObjectId(this.args.buildingAssessment.frame);
+      const baseTypeId = this.extractObjectId(this.args.buildingAssessment.base_type);
+
+      console.log('🔍 Extracted Frame ID:', frameId);
+      console.log('🔍 Extracted Base Type ID:', baseTypeId);
+
       this.buildingData = {
         buildingModel: this.args.buildingAssessment.building_model || '',
-        frame: this.args.buildingAssessment.frame || '',
+        frame: frameId || '',
+        ceilingHeight: this.extractObjectId(this.args.buildingAssessment.ceiling_height) || '',
         yearBuilt: this.args.buildingAssessment.year_built || '',
-        baseType: this.args.buildingAssessment.base_type || '',
-        qualityGrade: this.args.buildingAssessment.quality_grade || '',
-        storyHeight: this.args.buildingAssessment.story_height || '',
-        roofStyle: this.args.buildingAssessment.roof_style || '',
-        roofCover: this.args.buildingAssessment.roof_cover || '',
-        exteriorWall1: this.args.buildingAssessment.exterior_wall_1 || '',
-        exteriorWall2: this.args.buildingAssessment.exterior_wall_2 || '',
-        interiorWall1: this.args.buildingAssessment.interior_wall_1 || '',
-        interiorWall2: this.args.buildingAssessment.interior_wall_2 || '',
-        flooring1: this.args.buildingAssessment.flooring_1 || '',
-        flooring2: this.args.buildingAssessment.flooring_2 || '',
-        heatingFuel: this.args.buildingAssessment.heating_fuel || '',
-        heatingType: this.args.buildingAssessment.heating_type || '',
+        baseType: baseTypeId || '',
+        qualityGrade: this.extractObjectId(this.args.buildingAssessment.quality_grade) || '',
+        storyHeight: this.extractObjectId(this.args.buildingAssessment.story_height) || '',
+        roofStyle: this.extractObjectId(this.args.buildingAssessment.roof_style) || '',
+        roofCover: this.extractObjectId(this.args.buildingAssessment.roof_cover) || '',
+        exteriorWall1: this.extractObjectId(this.args.buildingAssessment.exterior_wall_1) || '',
+        exteriorWall2: this.extractObjectId(this.args.buildingAssessment.exterior_wall_2) || '',
+        interiorWall1: this.extractObjectId(this.args.buildingAssessment.interior_wall_1) || '',
+        interiorWall2: this.extractObjectId(this.args.buildingAssessment.interior_wall_2) || '',
+        flooring1: this.extractObjectId(this.args.buildingAssessment.flooring_1) || '',
+        flooring2: this.extractObjectId(this.args.buildingAssessment.flooring_2) || '',
+        heatingFuel: this.extractObjectId(this.args.buildingAssessment.heating_fuel) || '',
+        heatingType: this.extractObjectId(this.args.buildingAssessment.heating_type) || '',
         bedrooms: this.args.buildingAssessment.bedrooms || 0,
         fullBaths: this.args.buildingAssessment.full_baths || 0,
         halfBaths: this.args.buildingAssessment.half_baths || 0,
@@ -42,11 +58,14 @@ export default class BuildingEditModalComponent extends Component {
         airConditioning: this.args.buildingAssessment.air_conditioning || '',
         generator: this.args.buildingAssessment.generator || '',
       };
+
+      console.log('🔍 Processed buildingData:', this.buildingData);
     } else {
       // Initialize with empty data if no building assessment exists
       this.buildingData = {
         buildingModel: '',
         frame: '',
+        ceilingHeight: '',
         yearBuilt: '',
         baseType: '',
         qualityGrade: '',
@@ -71,8 +90,36 @@ export default class BuildingEditModalComponent extends Component {
     }
 
     // Load building feature codes and building codes
+    // Note: Backend now sends populated objects with _id, so no need to convert
     this.loadFeatureCodes();
     this.loadBuildingCodes();
+  }
+
+  /**
+   * Extract ObjectId from a field that might be an ObjectId string or a populated object
+   * Returns empty string if the value is not a valid ObjectId (e.g., it's a code string like "RESIDENTIAL")
+   */
+  extractObjectId(field) {
+    if (!field) return '';
+
+    // If it's an object with an _id, return the _id
+    if (typeof field === 'object' && field._id) {
+      return String(field._id);
+    }
+
+    // If it's a string, validate it's a proper ObjectId (24 hex characters)
+    if (typeof field === 'string') {
+      // ObjectIds are 24 character hex strings
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(field);
+      if (isValidObjectId) {
+        return field;
+      }
+      // If it's not a valid ObjectId, it's probably a code string from old cached data
+      console.warn('⚠️ Invalid ObjectId format, ignoring:', field);
+      return '';
+    }
+
+    return '';
   }
 
   async loadFeatureCodes() {
@@ -91,6 +138,7 @@ export default class BuildingEditModalComponent extends Component {
         'quality',
         'story_height',
         'frame',
+        'ceiling_height',
       ];
 
       const codePromises = featureTypes.map(async (type) => {
@@ -109,11 +157,15 @@ export default class BuildingEditModalComponent extends Component {
 
       const results = await Promise.all(codePromises);
 
-      // Organize codes by type
+      // Organize codes by type and ensure _id is a string for comparison
       this.featureCodes = {};
       results.forEach(({ type, codes }) => {
         // API returns codes directly as an array
-        this.featureCodes[type] = codes || [];
+        // Ensure _id is a string for comparison in templates
+        this.featureCodes[type] = (codes || []).map(code => ({
+          ...code,
+          _id: String(code._id)
+        }));
       });
 
       console.log('Loaded feature codes:', this.featureCodes);
@@ -137,7 +189,11 @@ export default class BuildingEditModalComponent extends Component {
       const response = await this.assessing.api.get(
         `/municipalities/${this.municipality.currentMunicipality.id}/building-codes`,
       );
-      this.buildingCodes = response.buildingCodes || [];
+      // Ensure _id is a string for comparison in templates
+      this.buildingCodes = (response.buildingCodes || []).map(code => ({
+        ...code,
+        _id: String(code._id)
+      }));
       console.log('Loaded building codes:', this.buildingCodes);
     } catch (error) {
       console.error('Error loading building codes:', error);
@@ -185,31 +241,32 @@ export default class BuildingEditModalComponent extends Component {
         throw new Error('Property ID is required to save building assessment');
       }
 
-      // Convert camelCase to snake_case for API and format text fields
+      // Convert camelCase to snake_case for API
+      // Send ObjectIds directly (or empty string which will be converted to null by backend)
       const apiData = {
         building_model: this.buildingData.buildingModel?.toUpperCase() || '',
-        frame: this.buildingData.frame?.toUpperCase() || '',
+        frame: this.buildingData.frame || '',
+        ceiling_height: this.buildingData.ceilingHeight || '',
         year_built: this.buildingData.yearBuilt,
-        base_type: this.buildingData.baseType?.toUpperCase() || '',
-        quality_grade: this.buildingData.qualityGrade?.toUpperCase() || '',
-        story_height: this.buildingData.storyHeight?.toUpperCase() || '',
-        roof_style: this.buildingData.roofStyle?.toUpperCase() || '',
-        roof_cover: this.buildingData.roofCover?.toUpperCase() || '',
-        exterior_wall_1: this.buildingData.exteriorWall1?.toUpperCase() || '',
-        exterior_wall_2: this.buildingData.exteriorWall2?.toUpperCase() || '',
-        interior_wall_1: this.buildingData.interiorWall1?.toUpperCase() || '',
-        interior_wall_2: this.buildingData.interiorWall2?.toUpperCase() || '',
-        flooring_1: this.buildingData.flooring1?.toUpperCase() || '',
-        flooring_2: this.buildingData.flooring2?.toUpperCase() || '',
-        heating_fuel: this.buildingData.heatingFuel?.toUpperCase() || '',
-        heating_type: this.buildingData.heatingType?.toUpperCase() || '',
+        base_type: this.buildingData.baseType || '',
+        quality_grade: this.buildingData.qualityGrade || '',
+        story_height: this.buildingData.storyHeight || '',
+        roof_style: this.buildingData.roofStyle || '',
+        roof_cover: this.buildingData.roofCover || '',
+        exterior_wall_1: this.buildingData.exteriorWall1 || '',
+        exterior_wall_2: this.buildingData.exteriorWall2 || '',
+        interior_wall_1: this.buildingData.interiorWall1 || '',
+        interior_wall_2: this.buildingData.interiorWall2 || '',
+        flooring_1: this.buildingData.flooring1 || '',
+        flooring_2: this.buildingData.flooring2 || '',
+        heating_fuel: this.buildingData.heatingFuel || '',
+        heating_type: this.buildingData.heatingType || '',
         bedrooms: this.buildingData.bedrooms,
         full_baths: this.buildingData.fullBaths,
         half_baths: this.buildingData.halfBaths,
         extra_kitchen: this.buildingData.extraKitchen,
-        air_conditioning:
-          this.buildingData.airConditioning?.toUpperCase() || '',
-        generator: this.buildingData.generator?.toUpperCase() || '',
+        air_conditioning: this.buildingData.airConditioning || '',
+        generator: this.buildingData.generator || '',
       };
 
       // Get current card number to ensure we're updating the correct card

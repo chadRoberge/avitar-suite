@@ -19,6 +19,7 @@ function roundToNearestHundred(value) {
  * @param {number} components.buildingValue - Building assessment value
  * @param {number} components.featuresValue - Features/outbuildings value
  * @param {number} components.sketchValue - Sketch value (if applicable)
+ * @param {boolean} components.hasCurrentUse - Whether land is in current use (don't round if true)
  * @returns {number} - Total assessed value rounded to nearest hundred
  */
 function calculateTotalAssessedValue({
@@ -26,16 +27,18 @@ function calculateTotalAssessedValue({
   buildingValue = 0,
   featuresValue = 0,
   sketchValue = 0,
+  hasCurrentUse = false,
 }) {
   // Round each component to nearest hundred first
-  const roundedLand = roundToNearestHundred(landValue);
+  // EXCEPT land value if it has current use assessment (must be exact)
+  const roundedLand = hasCurrentUse ? landValue : roundToNearestHundred(landValue);
   const roundedBuilding = roundToNearestHundred(buildingValue);
   const roundedFeatures = roundToNearestHundred(featuresValue);
   const roundedSketch = roundToNearestHundred(sketchValue);
 
-  // Calculate total and round again
+  // Calculate total - if land has current use, don't round the final total
   const total = roundedLand + roundedBuilding + roundedFeatures + roundedSketch;
-  return roundToNearestHundred(total);
+  return hasCurrentUse ? total : roundToNearestHundred(total);
 }
 
 /**
@@ -59,10 +62,17 @@ async function getPropertyAssessmentComponents(
 
   try {
     // Get land assessment (most recent up to currentYear) - property-level
+    // Populate zone and neighborhood references to get full data
     const landAssessment = await LandAssessment.findOne({
       property_id: propertyId,
       effective_year: { $lte: currentYear },
-    }).sort({ effective_year: -1 });
+    })
+      .sort({ effective_year: -1 })
+      .populate('zone', 'name description')
+      .populate('neighborhood', 'code description rate')
+      .populate('site_conditions', 'name description factor')
+      .populate('driveway_type', 'name description factor')
+      .populate('road_type', 'name description factor');
 
     // Get building assessments - filter by card number if provided
     const buildingQuery = {
@@ -74,7 +84,26 @@ async function getPropertyAssessmentComponents(
     }
     const buildingAssessments = await BuildingAssessment.find(
       buildingQuery,
-    ).sort({ effective_year: -1 });
+    )
+      .sort({ effective_year: -1 })
+      .populate('base_type', 'code description rate depreciation buildingType')
+      .populate('frame', 'displayText points featureType')
+      .populate('ceiling_height', 'displayText points featureType')
+      .populate('quality_grade', 'displayText points featureType')
+      .populate('story_height', 'displayText points featureType')
+      .populate('roof_style', 'displayText points featureType')
+      .populate('roof_cover', 'displayText points featureType')
+      .populate('exterior_wall_1', 'displayText points featureType')
+      .populate('exterior_wall_2', 'displayText points featureType')
+      .populate('interior_wall_1', 'displayText points featureType')
+      .populate('interior_wall_2', 'displayText points featureType')
+      .populate('flooring_1', 'displayText points featureType')
+      .populate('flooring_2', 'displayText points featureType')
+      .populate('heating_fuel', 'displayText points featureType')
+      .populate('heating_type', 'displayText points featureType')
+      .populate('air_conditioning', 'displayText points featureType')
+      .populate('generator', 'displayText points featureType')
+      .populate('condition', 'displayText points featureType');
 
     // Get property features - filter by card number if provided
     const featureQuery = { property_id: propertyId };
@@ -209,11 +238,32 @@ async function getPropertyAssessmentComponents(
     // TODO: Add sketch value calculation when sketch model is implemented
     const sketchValue = 0;
 
+    // Check if land has current use assessment (don't round if it does)
+    // Check both top-level credit AND individual land lines
+    const topLevelCredit = (landAssessment?.current_use_credit || 0) > 0;
+    const landLineCredits = (landAssessment?.land_use_details || []).some(
+      (line) => (line.currentUseCredit || 0) > 0
+    );
+    const hasCurrentUse = topLevelCredit || landLineCredits;
+
+    console.log(`🌾 Current Use Detection:`, {
+      hasCurrentUse,
+      topLevelCredit,
+      landLineCredits,
+      currentUseCredit: landAssessment?.current_use_credit || 0,
+      landLinesWithCredit: (landAssessment?.land_use_details || [])
+        .filter((line) => (line.currentUseCredit || 0) > 0)
+        .length,
+      propertyId,
+      cardNumber: cardNumber || 'all cards',
+    });
+
     return {
       landValue,
       buildingValue,
       featuresValue,
       sketchValue,
+      hasCurrentUse, // Add flag for current use
       components: {
         land: landAssessment,
         landComponents: landComponents, // Detailed land breakdown
@@ -296,7 +346,10 @@ async function updatePropertyTotalAssessment(
       propertyId,
       currentYear,
     );
-    const roundedLandValue = roundToNearestHundred(components.landValue);
+    // Don't round land value if it has current use
+    const roundedLandValue = components.hasCurrentUse
+      ? components.landValue
+      : roundToNearestHundred(components.landValue);
     const roundedBuildingValue = roundToNearestHundred(
       components.buildingValue,
     );
@@ -311,6 +364,7 @@ async function updatePropertyTotalAssessment(
       buildingValue: components.buildingValue,
       featuresValue: components.featuresValue,
       sketchValue: components.sketchValue,
+      hasCurrentUse: components.hasCurrentUse,
     });
 
     // Find or create assessment record for current year
@@ -511,7 +565,10 @@ async function massRevaluation(
         propertyId,
         assessmentYear,
       );
-      const beforeTotal = calculateTotalAssessedValue(beforeComponents);
+      const beforeTotal = calculateTotalAssessedValue({
+        ...beforeComponents,
+        hasCurrentUse: beforeComponents.hasCurrentUse,
+      });
 
       // Apply revaluation factors to building assessments
       if (revaluationFactors.buildingRates) {
@@ -591,7 +648,10 @@ async function updateCardAssessment(
       cardNumber, // ← Pass card number to filter components
     );
 
-    const cardTotal = calculateTotalAssessedValue(components);
+    const cardTotal = calculateTotalAssessedValue({
+      ...components,
+      hasCurrentUse: components.hasCurrentUse,
+    });
 
     // Get building assessment ID for reference
     let buildingAssessmentId = null;
@@ -599,15 +659,19 @@ async function updateCardAssessment(
       buildingAssessmentId = components.components.buildings[0]._id;
     }
 
-    const roundedLandValue = roundToNearestHundred(components.landValue);
+    // Don't round land if it has current use
+    const roundedLandValue = components.hasCurrentUse ? components.landValue : roundToNearestHundred(components.landValue);
     const roundedBuildingValue = roundToNearestHundred(components.buildingValue);
     const roundedFeaturesValue = roundToNearestHundred(components.featuresValue);
 
     console.log(`  📊 Card ${cardNumber} Final Assessment:`, {
+      hasCurrentUse: components.hasCurrentUse,
       land: `$${roundedLandValue.toLocaleString()}`,
+      landRaw: components.landValue,
       building: `$${roundedBuildingValue.toLocaleString()}`,
       improvements: `$${roundedFeaturesValue.toLocaleString()}`,
       total: `$${cardTotal.toLocaleString()}`,
+      totalShouldBeRounded: !components.hasCurrentUse,
       landComponents: components.components.landComponents,
     });
 
@@ -705,11 +769,17 @@ async function updateParcelAssessment(
       parcelTotals.total_assessed_value += cardData.card_total;
     }
 
-    // Get land allocation details
+    // Get land allocation details with populated references
     const landAssessment = await LandAssessment.findOne({
       property_id: propertyObjectId,
       effective_year: { $lte: currentYear },
-    }).sort({ effective_year: -1 });
+    })
+      .sort({ effective_year: -1 })
+      .populate('zone', 'name description')
+      .populate('neighborhood', 'code description rate')
+      .populate('site_conditions', 'name description factor')
+      .populate('driveway_type', 'name description factor')
+      .populate('road_type', 'name description factor');
 
     const baseLandValue =
       landAssessment?.calculated_totals?.totalAssessedValue || 0;

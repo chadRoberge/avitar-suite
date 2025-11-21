@@ -280,13 +280,13 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      const { frontage, value, order } = req.body;
+      const { frontage, factor, order } = req.body;
 
       // Validation
-      if (frontage === undefined || value === undefined) {
+      if (frontage === undefined || factor === undefined) {
         return res.status(400).json({
           success: false,
-          message: 'Frontage and value are required',
+          message: 'Frontage and factor are required',
         });
       }
 
@@ -294,7 +294,7 @@ router.post(
         municipalityId,
         waterBodyId,
         frontage,
-        value,
+        factor,
         order: order || 0,
       });
 
@@ -347,12 +347,12 @@ router.put(
       // Create new entries
       const newEntries = [];
       for (const entry of entries) {
-        const { frontage, value, order } = entry;
+        const { frontage, factor, order } = entry;
 
-        if (frontage === undefined || value === undefined) {
+        if (frontage === undefined || factor === undefined) {
           return res.status(400).json({
             success: false,
-            message: 'Each entry must have frontage and value',
+            message: 'Each entry must have frontage and factor',
           });
         }
 
@@ -360,7 +360,7 @@ router.put(
           municipalityId,
           waterBodyId,
           frontage,
-          value,
+          factor,
           order: order || 0,
         });
 
@@ -388,7 +388,7 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId, ladderEntryId } = req.params;
-      const { frontage, value, order } = req.body;
+      const { frontage, factor, order } = req.body;
 
       const ladderEntry = await WaterBodyLadder.findOne({
         _id: ladderEntryId,
@@ -405,7 +405,7 @@ router.put(
       }
 
       if (frontage !== undefined) ladderEntry.frontage = frontage;
-      if (value !== undefined) ladderEntry.value = value;
+      if (factor !== undefined) ladderEntry.factor = factor;
       if (order !== undefined) ladderEntry.order = order;
 
       await ladderEntry.save();

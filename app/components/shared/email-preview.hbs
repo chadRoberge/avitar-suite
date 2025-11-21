@@ -1,0 +1,164 @@
+{{! Email Preview Modal }}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.handleClose}}>
+  <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+    {{! Header }}
+    <div class="avitar-modal__header">
+      <h2 class="avitar-modal__title">
+        <i class="fas fa-eye avitar-mr-2"></i>
+        Email Preview: {{@template.name}}
+      </h2>
+      <button type="button" class="avitar-modal__close" {{on "click" this.handleClose}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    {{! Body }}
+    <div class="avitar-modal__body">
+      <div class="avitar-space-y-6">
+        {{! Info Message }}
+        <div class="avitar-bg-primary-light avitar-p-3 avitar-rounded avitar-border avitar-border-primary">
+          <div class="avitar-flex avitar-items-start avitar-gap-2">
+            <div class="avitar-flex-shrink-0 avitar-mt-1">
+              <i class="fas fa-info-circle avitar-text-primary"></i>
+            </div>
+            <div class="avitar-text-sm">
+              This is a preview with sample data. Actual emails will use real data based on the specific notification context.
+            </div>
+          </div>
+        </div>
+
+        {{! Email Preview Container }}
+        <div class="avitar-border avitar-rounded avitar-bg-white avitar-shadow-md">
+          {{! Email Header }}
+          <div class="avitar-bg-gray-100 avitar-border-b avitar-p-4">
+            <div class="avitar-flex avitar-items-start avitar-gap-3">
+              <div class="avitar-flex-shrink-0">
+                <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                  <i class="fas fa-envelope"></i>
+                </div>
+              </div>
+              <div class="avitar-flex-1">
+                <div class="avitar-mb-2">
+                  <span class="avitar-text-xs avitar-text-muted avitar-font-semibold avitar-uppercase">From:</span>
+                  <span class="avitar-text-sm avitar-ml-2">{{"{{"}}municipality_name{{"}}"}}</span>
+                  <span class="avitar-text-xs avitar-text-muted avitar-ml-1">&lt;noreply@municipality.gov&gt;</span>
+                </div>
+                <div class="avitar-mb-2">
+                  <span class="avitar-text-xs avitar-text-muted avitar-font-semibold avitar-uppercase">To:</span>
+                  <span class="avitar-text-sm avitar-ml-2">{{"{{"}}user_name{{"}}"}}</span>
+                  <span class="avitar-text-xs avitar-text-muted avitar-ml-1">&lt;{{"{{"}}user_email{{"}}"}}&gt;</span>
+                </div>
+                <div>
+                  <span class="avitar-text-xs avitar-text-muted avitar-font-semibold avitar-uppercase">Subject:</span>
+                  <span class="avitar-text-sm avitar-ml-2 avitar-font-semibold">{{this.previewSubject}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{! Email Body }}
+          <div class="avitar-p-6">
+            <div class="email-content">
+              {{{this.previewBody}}}
+            </div>
+          </div>
+
+          {{! Email Footer }}
+          <div class="avitar-bg-gray-50 avitar-border-t avitar-p-4 avitar-text-center">
+            <p class="avitar-text-xs avitar-text-muted">
+              This is an automated notification from {{"{{"}}municipality_name{{"}}"}}.
+              <br />
+              Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+
+        {{! Template Info }}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded">
+          <h4 class="avitar-font-semibold avitar-mb-2">Template Information</h4>
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-3">
+            <div>
+              <span class="avitar-text-xs avitar-text-muted">Category:</span>
+              <span class="avitar-text-sm avitar-ml-2">{{@template.category}}</span>
+            </div>
+            <div>
+              <span class="avitar-text-xs avitar-text-muted">Status:</span>
+              <span class="avitar-badge avitar-badge--sm avitar-ml-2
+                {{if @template.is_active 'avitar-badge--success' 'avitar-badge--secondary'}}">
+                {{if @template.is_active "Active" "Inactive"}}
+              </span>
+            </div>
+            <div class="avitar-col-span-2">
+              <span class="avitar-text-xs avitar-text-muted">Description:</span>
+              <span class="avitar-text-sm avitar-ml-2">{{@template.description}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Footer }}
+    <div class="avitar-modal__footer">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" this.handleClose}}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Email content styling */
+  .email-content {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #374151;
+  }
+
+  .email-content h1,
+  .email-content h2,
+  .email-content h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+  }
+
+  .email-content h1 {
+    font-size: 1.5em;
+  }
+
+  .email-content h2 {
+    font-size: 1.25em;
+  }
+
+  .email-content h3 {
+    font-size: 1.1em;
+  }
+
+  .email-content p {
+    margin-bottom: 1em;
+  }
+
+  .email-content a {
+    color: #2d5a27;
+    text-decoration: underline;
+  }
+
+  .email-content ul,
+  .email-content ol {
+    margin-bottom: 1em;
+    padding-left: 2em;
+  }
+
+  .email-content li {
+    margin-bottom: 0.5em;
+  }
+
+  .email-content strong {
+    font-weight: 600;
+  }
+</style>

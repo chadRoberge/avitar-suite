@@ -1,0 +1,43 @@
+{{page-title "Contractor Management"}}
+
+<div class="avitar-layout">
+  {{! Top Navigation Bar }}
+  <header class="avitar-topbar avitar-bg-primary">
+    <div class="avitar-container">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-py-3">
+        <div class="avitar-flex avitar-items-center avitar-gap-4">
+          <LinkTo @route="my-permits" class="avitar-btn avitar-btn--ghost avitar-btn--light avitar-btn--sm">
+            <i class="fas fa-arrow-left"></i>
+          </LinkTo>
+          <div>
+            <h1 class="avitar-text-lg avitar-font-bold avitar-text-white">
+              {{@model.contractor.company_name}}
+            </h1>
+            <p class="avitar-text-xs avitar-text-white avitar-opacity-80">
+              Contractor Management
+            </p>
+          </div>
+        </div>
+
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <span class="avitar-badge
+            {{if (eq @model.contractor.subscription.plan 'enterprise') 'avitar-badge--primary'
+              (if (eq @model.contractor.subscription.plan 'professional') 'avitar-badge--success'
+                (if (eq @model.contractor.subscription.plan 'basic') 'avitar-badge--info' 'avitar-badge--secondary'))}}">
+            {{@model.contractor.subscriptionDisplay}}
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{! Left Sidebar Menu }}
+  <Contractor::ManagementMenu />
+
+  {{! Main Content Area }}
+  <main class="avitar-main avitar-main--with-sidebar avitar-main--with-topbar">
+    <div class="avitar-container avitar-py-6">
+      {{outlet}}
+    </div>
+  </main>
+</div>

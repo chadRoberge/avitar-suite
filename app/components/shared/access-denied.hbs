@@ -1,0 +1,77 @@
+{{!-- Access Denied Component --}}
+<div class="avitar-empty-state">
+  <div class="avitar-empty-state__icon avitar-empty-state__icon--warning">
+    <i class="fas fa-lock fa-3x"></i>
+  </div>
+
+  <h2 class="avitar-empty-state__title">
+    {{#if @title}}
+      {{@title}}
+    {{else}}
+      Access Denied
+    {{/if}}
+  </h2>
+
+  <p class="avitar-empty-state__description">
+    {{#if @message}}
+      {{@message}}
+    {{else}}
+      You do not have permission to access this module. Please contact your administrator to request access.
+    {{/if}}
+  </p>
+
+  {{#if @moduleName}}
+    <div class="avitar-alert avitar-alert--info avitar-mt-4" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+      <i class="fas fa-info-circle avitar-mr-2"></i>
+      <div>
+        <strong>Module:</strong> {{@moduleName}}
+        <br />
+        <strong>Required Permission:</strong> {{@requiredPermission}}
+      </div>
+    </div>
+  {{/if}}
+
+  <div class="avitar-empty-state__actions avitar-mt-4">
+    {{#if @canRequestAccess}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.requestAccess}}
+      >
+        <i class="fas fa-envelope avitar-mr-2"></i>
+        Request Access
+      </button>
+    {{/if}}
+
+    {{#if @onGoBack}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" @onGoBack}}
+      >
+        <i class="fas fa-arrow-left avitar-mr-2"></i>
+        Go Back
+      </button>
+    {{else}}
+      <LinkTo @route="municipality.dashboard" class="avitar-btn avitar-btn--secondary">
+        <i class="fas fa-arrow-left avitar-mr-2"></i>
+        Back to Dashboard
+      </LinkTo>
+    {{/if}}
+  </div>
+
+  {{#if @showContactInfo}}
+    <div class="avitar-card avitar-mt-6" style="max-width: 600px; margin-left: auto; margin-right: auto;">
+      <div class="avitar-card__body">
+        <h3 class="avitar-font-medium avitar-mb-2">
+          <i class="fas fa-question-circle avitar-mr-2"></i>
+          Need Help?
+        </h3>
+        <p class="avitar-text-sm avitar-text-muted">
+          Contact your system administrator or municipality manager to request access to this module.
+          They can grant you the necessary permissions from the Settings > Users section.
+        </p>
+      </div>
+    </div>
+  {{/if}}
+</div>
