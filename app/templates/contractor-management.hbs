@@ -5,15 +5,15 @@
   <header class="avitar-topbar avitar-bg-primary">
     <div class="avitar-container">
       <div class="avitar-flex avitar-items-center avitar-justify-between avitar-py-3">
-        <div class="avitar-flex avitar-items-center avitar-gap-4">
-          <LinkTo @route="my-permits" class="avitar-btn avitar-btn--ghost avitar-btn--light avitar-btn--sm">
-            <i class="fas fa-arrow-left"></i>
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <LinkTo @route="my-permits" class="avitar-text-white hover:avitar-opacity-80 avitar-pr-5 avitar-transition avitar-no-underline">
+            {{lnr-icon "arrow-left" size="24"}}
           </LinkTo>
           <div>
-            <h1 class="avitar-text-lg avitar-font-bold avitar-text-white">
+            <h1 class="avitar-m-0 avitar-pr-5 avitar-text-lg avitar-font-bold avitar-text-white">
               {{@model.contractor.company_name}}
             </h1>
-            <p class="avitar-text-xs avitar-text-white avitar-opacity-80">
+            <p class="avitar-m-0 avitar-text-xs avitar-text-white avitar-opacity-80">
               Contractor Management
             </p>
           </div>
@@ -21,10 +21,11 @@
 
         <div class="avitar-flex avitar-items-center avitar-gap-3">
           <span class="avitar-badge
-            {{if (eq @model.contractor.subscription.plan 'enterprise') 'avitar-badge--primary'
-              (if (eq @model.contractor.subscription.plan 'professional') 'avitar-badge--success'
-                (if (eq @model.contractor.subscription.plan 'basic') 'avitar-badge--info' 'avitar-badge--secondary'))}}">
-            {{@model.contractor.subscriptionDisplay}}
+            {{if (eq @model.contractor.subscription.plan 'enterprise') 'avitar-badge--success'
+              (if (eq @model.contractor.subscription.plan 'pro') 'avitar-badge--primary'
+                (if (eq @model.contractor.subscription.plan 'premium') 'avitar-badge--warning'
+                  (if (eq @model.contractor.subscription.plan 'free') 'avitar-badge--info' 'avitar-badge--secondary')))}}">
+            {{@model.contractor.subscriptionDisplay}} Plan
           </span>
         </div>
       </div>
@@ -36,7 +37,7 @@
 
   {{! Main Content Area }}
   <main class="avitar-main avitar-main--with-sidebar avitar-main--with-topbar">
-    <div class="avitar-container avitar-py-6">
+    <div class="avitar-container avitar-p-6">
       {{outlet}}
     </div>
   </main>

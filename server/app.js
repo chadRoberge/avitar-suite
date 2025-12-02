@@ -1,3 +1,13 @@
+// Suppress punycode deprecation warning (used by mongoose/mongodb dependencies)
+// This will be fixed in future versions of mongoose
+process.removeAllListeners('warning');
+process.on('warning', (warning) => {
+  if (warning.name === 'DeprecationWarning' && warning.message.includes('punycode')) {
+    return; // Suppress punycode deprecation warnings
+  }
+  console.warn(warning.name, warning.message);
+});
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -10,6 +20,9 @@ const connectDB = require('./config/database');
 // Import routes
 const authRoutes = require('./routes/auth');
 const municipalityRoutes = require('./routes/municipalities');
+const municipalitySubscriptionRoutes = require('./routes/municipalitySubscriptions');
+const municipalityConnectedAccountsRoutes = require('./routes/municipalityConnectedAccounts');
+const webhookRoutes = require('./routes/webhooks');
 const moduleRoutes = require('./routes/modules');
 const propertyRoutes = require('./routes/properties');
 const pidFormatRoutes = require('./routes/pid-formats');
@@ -28,6 +41,7 @@ const viewAttributeRoutes = require('./routes/viewAttributes');
 const propertyViewRoutes = require('./routes/propertyViews');
 const waterBodyRoutes = require('./routes/waterBodies');
 const waterfrontAttributeRoutes = require('./routes/waterfrontAttributes');
+const propertyWaterfrontRoutes = require('./routes/propertyWaterfront');
 const exemptionsCreditsSettingsRoutes = require('./routes/exemptionsCreditsSettings');
 const exemptionTypesRoutes = require('./routes/exemptionTypes');
 const assessingReportsRoutes = require('./routes/assessingReports');
@@ -65,14 +79,22 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        frameSrc: ["'self'", 'http://localhost:4200', 'https://avitar-suite.vercel.app'], // Allow iframes from frontend
-        frameAncestors: ["'self'", 'http://localhost:4200', 'https://avitar-suite.vercel.app'], // Allow being embedded in frontend
+        frameSrc: [
+          "'self'",
+          'http://localhost:4200',
+          'https://avitar-suite.vercel.app',
+        ], // Allow iframes from frontend
+        frameAncestors: [
+          "'self'",
+          'http://localhost:4200',
+          'https://avitar-suite.vercel.app',
+        ], // Allow being embedded in frontend
         imgSrc: ["'self'", 'data:', 'https:'],
         scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
       },
     },
-  })
+  }),
 );
 
 // CORS configuration
@@ -88,7 +110,15 @@ app.use(
 // Logging middleware
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// Body parsing middleware
+// Stripe webhook route (MUST be registered before express.json() for signature verification)
+// Uses express.raw() to preserve raw body for signature verification
+app.use(
+  '/api/webhooks',
+  express.raw({ type: 'application/json' }),
+  webhookRoutes,
+);
+
+// Body parsing middleware (for all other routes)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -107,6 +137,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', waterfrontAttributeRoutes); // Move before municipalities to avoid conflicts
 app.use('/api', waterBodyRoutes);
 app.use('/api/municipalities', municipalityRoutes);
+app.use('/api/municipalities', municipalitySubscriptionRoutes); // Module subscription management
+app.use('/api/municipalities', municipalityConnectedAccountsRoutes); // Stripe Connect account management
 app.use('/api/modules', moduleRoutes);
 app.use('/api', propertyRoutes);
 app.use('/api', pidFormatRoutes);
@@ -114,6 +146,7 @@ app.use('/api', zoneRoutes);
 app.use('/api', neighborhoodCodeRoutes);
 app.use('/api', viewAttributeRoutes); // Move before propertyAttributeRoutes to avoid route conflicts
 app.use('/api', propertyViewRoutes);
+app.use('/api', propertyWaterfrontRoutes);
 app.use('/api', propertyAttributeRoutes);
 app.use('/api', buildingCodeRoutes);
 app.use('/api', buildingFeatureCodeRoutes);

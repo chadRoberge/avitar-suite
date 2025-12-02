@@ -16,21 +16,22 @@ Router.map(function () {
   this.route('municipality-select');
 
   // User's permits dashboard (for contractors and citizens)
-  this.route('my-permits', function() {
-    this.route('active');    // Active permits
-    this.route('history');   // Past permits
+  this.route('my-permits', function () {
+    this.route('active'); // Active permits
+    this.route('history'); // Past permits
     this.route('permit', { path: '/:permit_id' }); // Permit detail
-    this.route('create');    // Create new permit (multi-step wizard)
+    this.route('create'); // Create new permit (multi-step wizard)
   });
 
   // Contractor management (team, subscription, payment methods)
-  this.route('contractor-management', function() {
-    this.route('general');         // General company info
-    this.route('team');            // Team member management
+  this.route('contractor-management', function () {
+    this.route('general'); // General company info
+    this.route('team'); // Team member management
     this.route('payment-methods'); // Stored payment methods
-    this.route('subscription');    // Subscription & billing
-    this.route('notifications');   // Notification preferences
-    this.route('verification');    // Platform verification application
+    this.route('subscription'); // Subscription & billing
+    this.route('notifications'); // Notification preferences
+    this.route('verification'); // Platform verification application
+    this.route('documents'); // Document library management
   });
 
   // Municipality-specific routes using slug
@@ -129,6 +130,7 @@ Router.map(function () {
         this.route('permit-types'); // Permit types configuration
         this.route('inspections'); // Inspection types and workflows
         this.route('users'); // Users and inspectors management
+        this.route('documents'); // Document library management
       });
     });
 
@@ -180,6 +182,8 @@ Router.map(function () {
       this.route('modules');
       this.route('features');
       this.route('email-templates');
+      this.route('documents'); // General municipal documents
+      this.route('payment-setup'); // Stripe Connect onboarding
     });
 
     // User settings

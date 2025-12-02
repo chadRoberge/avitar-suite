@@ -1,0 +1,227 @@
+{{page-title "Payment Setup"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-mb-6">
+    <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+      Payment Setup
+    </h1>
+    <p class="avitar-text-muted">
+      Set up your Stripe Connected Account to receive payments from building permits and tax payments
+    </p>
+  </div>
+
+  {{! Status Card }}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h2 class="avitar-card__title">
+        <i class="fas fa-credit-card avitar-mr-2"></i>
+        Account Status
+      </h2>
+    </div>
+
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-items-start avitar-gap-6">
+        {{! Status Icon }}
+        <div class="avitar-flex-shrink-0">
+          <div class="avitar-w-16 avitar-h-16 avitar-rounded-full
+            {{if this.isOnboardingComplete 'avitar-bg-success'
+              (if this.hasAccount 'avitar-bg-warning' 'avitar-bg-gray-200')}}
+            avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+            {{#if this.isOnboardingComplete}}
+              <i class="fas fa-check fa-2x"></i>
+            {{else if this.hasAccount}}
+              <i class="fas fa-clock fa-2x"></i>
+            {{else}}
+              <i class="fas fa-credit-card fa-2x"></i>
+            {{/if}}
+          </div>
+        </div>
+
+        {{! Status Details }}
+        <div class="avitar-flex-1">
+          <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-3">
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-m-0">
+              {{#if this.isOnboardingComplete}}
+                Payment Setup Complete
+              {{else if this.hasAccount}}
+                Onboarding In Progress
+              {{else}}
+                Payment Setup Required
+              {{/if}}
+            </h3>
+            <span class={{this.statusBadgeClass}}>
+              {{this.statusText}}
+            </span>
+          </div>
+
+          <p class="avitar-text-muted avitar-mb-4">
+            {{#if this.isOnboardingComplete}}
+              Your Stripe account is active and ready to receive payments.
+            {{else if this.hasAccount}}
+              Complete your Stripe account setup to start receiving payments.
+            {{else}}
+              Start the onboarding process to set up your payment account.
+            {{/if}}
+          </p>
+
+          {{! Capabilities }}
+          {{#if this.hasAccount}}
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4 avitar-mb-4">
+              <div class="avitar-flex avitar-items-center avitar-gap-2">
+                <i class="fas
+                  {{if this.account.stripe_charges_enabled 'fa-check-circle avitar-text-success'
+                    'fa-times-circle avitar-text-danger'}}"></i>
+                <span class="avitar-text-sm">
+                  {{#if this.account.stripe_charges_enabled}}
+                    Charges Enabled
+                  {{else}}
+                    Charges Not Enabled
+                  {{/if}}
+                </span>
+              </div>
+
+              <div class="avitar-flex avitar-items-center avitar-gap-2">
+                <i class="fas
+                  {{if this.account.stripe_payouts_enabled 'fa-check-circle avitar-text-success'
+                    'fa-times-circle avitar-text-danger'}}"></i>
+                <span class="avitar-text-sm">
+                  {{#if this.account.stripe_payouts_enabled}}
+                    Payouts Enabled
+                  {{else}}
+                    Payouts Not Enabled
+                  {{/if}}
+                </span>
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Account ID (for debugging) }}
+          {{#if this.account.stripe_account_id}}
+            <div class="avitar-text-xs avitar-text-muted avitar-mb-4">
+              Account ID: {{this.account.stripe_account_id}}
+            </div>
+          {{/if}}
+
+          {{! Actions }}
+          <div class="avitar-flex avitar-gap-3">
+            {{#if this.isOnboardingComplete}}
+              {{! Account is complete - just show refresh status button }}
+              <button type="button" class="avitar-btn avitar-btn--secondary"
+                {{on "click" this.checkStatus}}
+                disabled={{this.isLoading}}>
+                {{#if this.isLoading}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Checking...
+                {{else}}
+                  <i class="fas fa-sync avitar-mr-2"></i>
+                  Refresh Status
+                {{/if}}
+              </button>
+            {{else if this.hasAccount}}
+              {{! Account exists but onboarding incomplete }}
+              {{#if this.isLinkExpired}}
+                <button type="button" class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.refreshLink}}
+                  disabled={{this.isRefreshing}}>
+                  {{#if this.isRefreshing}}
+                    <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                    Generating Link...
+                  {{else}}
+                    <i class="fas fa-redo avitar-mr-2"></i>
+                    Refresh Onboarding Link
+                  {{/if}}
+                </button>
+              {{else}}
+                <button type="button" class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.refreshLink}}
+                  disabled={{this.isRefreshing}}>
+                  {{#if this.isRefreshing}}
+                    <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                    Generating Link...
+                  {{else}}
+                    <i class="fas fa-external-link-alt avitar-mr-2"></i>
+                    Continue Onboarding
+                  {{/if}}
+                </button>
+              {{/if}}
+
+              <button type="button" class="avitar-btn avitar-btn--secondary"
+                {{on "click" this.checkStatus}}
+                disabled={{this.isLoading}}>
+                {{#if this.isLoading}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Checking...
+                {{else}}
+                  <i class="fas fa-sync avitar-mr-2"></i>
+                  Check Status
+                {{/if}}
+              </button>
+            {{else}}
+              {{! No account - start onboarding }}
+              <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--lg"
+                {{on "click" this.startOnboarding}}
+                disabled={{this.isLoading}}>
+                {{#if this.isLoading}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Starting...
+                {{else}}
+                  <i class="fas fa-rocket avitar-mr-2"></i>
+                  Start Payment Setup
+                {{/if}}
+              </button>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Information Card }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h2 class="avitar-card__title">
+        <i class="fas fa-info-circle avitar-mr-2"></i>
+        About Payment Setup
+      </h2>
+    </div>
+
+    <div class="avitar-card__body">
+      <div class="avitar-space-y-4">
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">What is this?</h3>
+          <p class="avitar-text-muted">
+            Payment setup connects your municipality to Stripe, allowing you to receive payments from citizens and contractors for building permits and tax payments. This is a secure, industry-standard payment processing system.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">What information is required?</h3>
+          <p class="avitar-text-muted avitar-mb-2">
+            Stripe requires the following information to set up your account:
+          </p>
+          <ul class="avitar-list-disc avitar-pl-5 avitar-text-muted avitar-space-y-1">
+            <li>Business information (name, address, EIN)</li>
+            <li>Representative information (name, date of birth, SSN last 4)</li>
+            <li>Bank account for receiving funds</li>
+            <li>Contact information</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">How long does it take?</h3>
+          <p class="avitar-text-muted">
+            The initial setup takes about 5-10 minutes. Stripe may require additional verification, which can take 1-2 business days. You'll be notified when your account is fully activated.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">Is this secure?</h3>
+          <p class="avitar-text-muted">
+            Yes! Stripe is a PCI-compliant payment processor trusted by millions of businesses worldwide. Your information is encrypted and secure.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

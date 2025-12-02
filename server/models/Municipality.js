@@ -172,6 +172,27 @@ const municipalitySchema = new mongoose.Schema(
             enum: ['basic', 'professional', 'enterprise'],
             default: 'basic',
           },
+          // Stripe Subscription Fields (per module)
+          stripe_subscription_id: { type: String },
+          subscription_status: {
+            type: String,
+            enum: [
+              'none',
+              'trialing',
+              'active',
+              'past_due',
+              'cancelled',
+              'unpaid',
+            ],
+            default: 'none',
+          },
+          trial_start: { type: Date },
+          trial_end: { type: Date },
+          current_period_start: { type: Date },
+          current_period_end: { type: Date },
+          parcel_count_at_purchase: { type: Number },
+          stripe_price_id: { type: String },
+          // Existing Fields
           features: {
             type: Map,
             of: {
@@ -192,7 +213,55 @@ const municipalitySchema = new mongoose.Schema(
       },
     },
 
-    // Subscription Management
+    // Stripe Integration (one customer, multiple module subscriptions)
+    stripe_customer_id: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+    billing_email: {
+      type: String,
+      lowercase: true,
+      trim: true,
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        'Please enter a valid billing email address',
+      ],
+    },
+
+    // Stripe Connected Account (for receiving payments from permits/taxes)
+    stripe_account_id: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+    stripe_account_status: {
+      type: String,
+      enum: ['pending', 'onboarding', 'active', 'restricted', 'disabled'],
+      default: 'pending',
+    },
+    stripe_account_type: {
+      type: String,
+      enum: ['standard', 'express'],
+      default: 'standard',
+    },
+    stripe_onboarding_completed: {
+      type: Boolean,
+      default: false,
+    },
+    stripe_charges_enabled: {
+      type: Boolean,
+      default: false,
+    },
+    stripe_payouts_enabled: {
+      type: Boolean,
+      default: false,
+    },
+    stripe_account_link_expires: Date,
+    stripe_onboarding_started: Date,
+    stripe_onboarding_completed_date: Date,
+
+    // Subscription Management (legacy - keeping for backward compatibility)
     subscription: {
       start_date: {
         type: Date,
@@ -363,6 +432,14 @@ const municipalitySchema = new mongoose.Schema(
       ],
       default: new Map(),
     },
+    // Cache invalidation tracking
+    lastModified: {
+      type: Date,
+      default: Date.now,
+      index: true,
+      description:
+        'Timestamp of last configuration change. Updated when zones, land-ladders, neighborhoods, or other config data changes.',
+    },
   },
   {
     timestamps: true,
@@ -390,6 +467,16 @@ municipalitySchema.virtual('fullAddress').get(function () {
 // Virtual for display name
 municipalitySchema.virtual('displayName').get(function () {
   return `${this.type.charAt(0).toUpperCase() + this.type.slice(1)} of ${this.name}`;
+});
+
+// Virtual for checking if Stripe Connect payment setup is complete
+municipalitySchema.virtual('isPaymentSetupComplete').get(function () {
+  return (
+    this.stripe_onboarding_completed === true &&
+    this.stripe_charges_enabled === true &&
+    this.stripe_payouts_enabled === true &&
+    this.stripe_account_status === 'active'
+  );
 });
 
 // Static method to find active municipalities
@@ -555,6 +642,91 @@ municipalitySchema.methods.addModuleFeature = function (
 municipalitySchema.methods.updateStats = function (newStats) {
   this.stats = { ...this.stats, ...newStats, lastStatsUpdate: new Date() };
   return this.save();
+};
+
+// Subscription-related methods
+
+// Get current parcel count for pricing calculations
+municipalitySchema.methods.getParcelCount = async function () {
+  try {
+    const PropertyTreeNode = require('./PropertyTreeNode');
+    const count = await PropertyTreeNode.countDocuments({
+      municipality_id: this._id,
+    });
+    return count;
+  } catch (error) {
+    console.error('Error getting parcel count:', error);
+    // Fallback to stats if available
+    return this.stats?.totalProperties || 0;
+  }
+};
+
+// Check if module is currently in trial period
+municipalitySchema.methods.isModuleInTrial = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module || !module.trial_end) return false;
+
+  const now = new Date();
+  const trialEnd = new Date(module.trial_end);
+
+  return now < trialEnd && module.subscription_status === 'trialing';
+};
+
+// Check if module has active paid subscription
+municipalitySchema.methods.hasActiveModuleSubscription = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module) return false;
+
+  return ['active', 'trialing'].includes(module.subscription_status);
+};
+
+// Get module access level (none, trial, full, read-only)
+municipalitySchema.methods.getModuleAccessLevel = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+
+  // Module not configured or not enabled
+  if (!module || !module.enabled) {
+    return 'none';
+  }
+
+  // Currently in trial period
+  if (this.isModuleInTrial(moduleName)) {
+    return 'trial';
+  }
+
+  // Has active paid subscription
+  if (module.subscription_status === 'active') {
+    return 'full';
+  }
+
+  // Trial expired but no active subscription = read-only
+  if (module.trial_end && new Date() > new Date(module.trial_end)) {
+    if (!['active', 'trialing'].includes(module.subscription_status)) {
+      return 'read-only';
+    }
+  }
+
+  // Module enabled but no subscription info
+  return 'none';
+};
+
+// Check if module can perform write operations
+municipalitySchema.methods.canModifyModuleData = function (moduleName) {
+  const accessLevel = this.getModuleAccessLevel(moduleName);
+  return ['trial', 'full'].includes(accessLevel);
+};
+
+// Get days remaining in trial
+municipalitySchema.methods.getTrialDaysRemaining = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module || !module.trial_end) return 0;
+
+  const now = new Date();
+  const trialEnd = new Date(module.trial_end);
+  const diffTime = trialEnd - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays > 0 ? diffDays : 0;
 };
 
 // Pre-save hook to generate slug

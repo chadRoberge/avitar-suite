@@ -61,22 +61,23 @@ router.get('/my-subscription', authenticateToken, async (req, res) => {
     if (contractor.subscription?.stripe_subscription_id) {
       try {
         stripeSubscription = await stripeService.getSubscription(
-          contractor.subscription.stripe_subscription_id
+          contractor.subscription.stripe_subscription_id,
         );
 
-        upcomingInvoice = await stripeService.getUpcomingInvoice(
-          contractor.subscription.stripe_customer_id,
-          contractor.subscription.stripe_subscription_id
-        );
+        // Temporarily disabled - method name issues with Stripe v20
+        // upcomingInvoice = await stripeService.getUpcomingInvoice(
+        //   contractor.subscription.stripe_customer_id,
+        //   contractor.subscription.stripe_subscription_id,
+        // );
       } catch (error) {
-        console.warn('Could not fetch Stripe subscription:', error.message);
+        console.warn('Could not fetch Stripe data:', error.message);
       }
     }
 
     if (contractor.subscription?.stripe_customer_id) {
       try {
         stripeCustomer = await stripeService.getCustomer(
-          contractor.subscription.stripe_customer_id
+          contractor.subscription.stripe_customer_id,
         );
       } catch (error) {
         console.warn('Could not fetch Stripe customer:', error.message);
@@ -132,7 +133,7 @@ router.post('/create-setup-intent', authenticateToken, async (req, res) => {
 
     // Create setup intent
     const setupIntent = await stripeService.createSetupIntent(
-      contractor.subscription.stripe_customer_id
+      contractor.subscription.stripe_customer_id,
     );
 
     res.json({
@@ -155,12 +156,31 @@ router.post('/create-setup-intent', authenticateToken, async (req, res) => {
  */
 router.post('/subscribe', authenticateToken, async (req, res) => {
   try {
-    const { plan_id, payment_method_id } = req.body;
+    const {
+      plan_id,
+      plan_key,
+      stripe_price_id,
+      stripe_product_id,
+      features,
+      payment_method_id,
+    } = req.body;
 
-    if (!plan_id) {
+    // Accept either plan_id (legacy) or stripe_price_id (new)
+    const priceId = stripe_price_id || null;
+    const planKey = plan_key || plan_id;
+    const productId = stripe_product_id || null;
+
+    if (!priceId) {
       return res.status(400).json({
         success: false,
-        message: 'Plan ID is required',
+        message: 'Stripe price ID is required',
+      });
+    }
+
+    if (!planKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Plan key is required',
       });
     }
 
@@ -174,19 +194,10 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
     }
 
     // Can't subscribe to free plan via API
-    if (plan_id === 'free') {
+    if (planKey === 'free') {
       return res.status(400).json({
         success: false,
         message: 'Cannot subscribe to free plan',
-      });
-    }
-
-    // Get plan details
-    const plan = getPlan(plan_id);
-    if (!plan || !plan.stripe_price_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid plan',
       });
     }
 
@@ -202,35 +213,56 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
     if (payment_method_id) {
       await stripeService.attachPaymentMethod(
         payment_method_id,
-        contractor.subscription.stripe_customer_id
+        contractor.subscription.stripe_customer_id,
       );
 
       await stripeService.setDefaultPaymentMethod(
         contractor.subscription.stripe_customer_id,
-        payment_method_id
+        payment_method_id,
       );
     }
 
-    // Create subscription
+    // Create subscription using Stripe price ID
     const subscription = await stripeService.createSubscription(
       contractor.subscription.stripe_customer_id,
-      plan.stripe_price_id,
-      payment_method_id
+      priceId,
+      payment_method_id,
     );
 
-    // Update contractor subscription
+    console.log('🟢 [ROUTE] Stripe subscription created:', {
+      id: subscription.id,
+      status: subscription.status,
+      current_period_start: subscription.current_period_start,
+      current_period_end: subscription.current_period_end,
+      latest_invoice_type: typeof subscription.latest_invoice,
+      latest_invoice_id: subscription.latest_invoice?.id,
+      payment_intent_id: subscription.latest_invoice?.payment_intent?.id,
+      client_secret: subscription.latest_invoice?.payment_intent?.client_secret ? '✅ present' : '❌ missing',
+    });
+
+    // Update contractor subscription with data from Stripe
     contractor.subscription.stripe_subscription_id = subscription.id;
-    contractor.subscription.plan = plan_id;
+    contractor.subscription.stripe_product_id = productId;
+    contractor.subscription.plan = planKey;
     contractor.subscription.status = stripeService.mapSubscriptionStatus(
-      subscription.status
+      subscription.status,
     );
-    contractor.subscription.current_period_start = new Date(
-      subscription.current_period_start * 1000
-    );
-    contractor.subscription.current_period_end = new Date(
-      subscription.current_period_end * 1000
-    );
-    contractor.subscription.features = plan.features;
+
+    // Only set dates if they exist (Stripe returns Unix timestamps in seconds)
+    if (subscription.current_period_start) {
+      contractor.subscription.current_period_start = new Date(
+        subscription.current_period_start * 1000,
+      );
+    }
+    if (subscription.current_period_end) {
+      contractor.subscription.current_period_end = new Date(
+        subscription.current_period_end * 1000,
+      );
+    }
+
+    // Use features from Stripe product metadata (passed from frontend)
+    contractor.subscription.features = features || {};
+
     await contractor.save();
 
     res.json({
@@ -253,16 +285,36 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
 
 /**
  * POST /subscriptions/change-plan
- * Change subscription plan
+ * Change subscription plan (including Free <-> Paid transitions)
+ * Now ALL plans use subscriptions, so we always update the subscription
  */
 router.post('/change-plan', authenticateToken, async (req, res) => {
   try {
-    const { new_plan_id } = req.body;
+    const {
+      new_plan_id,
+      plan_key,
+      stripe_price_id,
+      stripe_product_id,
+      features,
+      payment_method_id,
+    } = req.body;
 
-    if (!new_plan_id) {
+    const priceId = stripe_price_id || null;
+    const planKey = plan_key || new_plan_id;
+    const productId = stripe_product_id || null;
+
+    console.log('🔵 [CHANGE_PLAN] Request:', {
+      planKey,
+      priceId,
+      productId,
+      hasPaymentMethod: !!payment_method_id,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!planKey || !priceId) {
       return res.status(400).json({
         success: false,
-        message: 'New plan ID is required',
+        message: 'Plan key and Stripe price ID are required',
       });
     }
 
@@ -275,38 +327,78 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
       });
     }
 
+    // Check if contractor has an existing subscription
     if (!contractor.subscription?.stripe_subscription_id) {
       return res.status(400).json({
         success: false,
-        message: 'No active subscription found',
+        message: 'No active subscription found. Please create a subscription first.',
       });
     }
 
-    // Get new plan details
-    const newPlan = getPlan(new_plan_id);
-    if (!newPlan || !newPlan.stripe_price_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid plan',
-      });
+    // If payment method provided, attach it to customer (for Free → Paid upgrades)
+    if (payment_method_id && contractor.subscription?.stripe_customer_id) {
+      console.log('🔵 [CHANGE_PLAN] Attaching payment method:', payment_method_id);
+
+      await stripeService.attachPaymentMethod(
+        payment_method_id,
+        contractor.subscription.stripe_customer_id,
+      );
+
+      await stripeService.setDefaultPaymentMethod(
+        contractor.subscription.stripe_customer_id,
+        payment_method_id,
+      );
+
+      console.log('🟢 [CHANGE_PLAN] Payment method attached and set as default');
     }
 
-    // Update Stripe subscription
+    console.log('🔵 [CHANGE_PLAN] Updating subscription:', {
+      subscriptionId: contractor.subscription.stripe_subscription_id,
+      fromPlan: contractor.subscription.plan,
+      toPlan: planKey,
+      newPriceId: priceId,
+    });
+
+    // Update Stripe subscription with new price ID (handles proration automatically)
     const subscription = await stripeService.updateSubscription(
       contractor.subscription.stripe_subscription_id,
-      newPlan.stripe_price_id
+      priceId,
     );
 
-    // Update contractor subscription
-    contractor.subscription.plan = new_plan_id;
+    console.log('🟢 [CHANGE_PLAN] Stripe subscription updated:', {
+      id: subscription.id,
+      status: subscription.status,
+      current_period_end: subscription.current_period_end,
+    });
+
+    // Update contractor subscription with data from Stripe
+    contractor.subscription.stripe_product_id = productId;
+    contractor.subscription.plan = planKey;
     contractor.subscription.status = stripeService.mapSubscriptionStatus(
-      subscription.status
+      subscription.status,
     );
-    contractor.subscription.current_period_end = new Date(
-      subscription.current_period_end * 1000
-    );
-    contractor.subscription.features = newPlan.features;
+
+    // Only set dates if they exist (Stripe returns Unix timestamps in seconds)
+    if (subscription.current_period_start) {
+      contractor.subscription.current_period_start = new Date(
+        subscription.current_period_start * 1000,
+      );
+    }
+    if (subscription.current_period_end) {
+      contractor.subscription.current_period_end = new Date(
+        subscription.current_period_end * 1000,
+      );
+    }
+
+    // Use features from Stripe product metadata (passed from frontend)
+    contractor.subscription.features = features || {};
+
     await contractor.save();
+
+    console.log('🟢 [CHANGE_PLAN] Plan changed successfully:', {
+      newPlan: planKey,
+      status: contractor.subscription.status,
+    });
 
     res.json({
       success: true,
@@ -314,7 +406,7 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
       stripe_subscription: subscription,
     });
   } catch (error) {
-    console.error('Error changing plan:', error);
+    console.error('❌ [CHANGE_PLAN] Error changing plan:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to change plan',
@@ -350,7 +442,7 @@ router.post('/cancel', authenticateToken, async (req, res) => {
     // Cancel Stripe subscription
     const subscription = await stripeService.cancelSubscription(
       contractor.subscription.stripe_subscription_id,
-      cancel_immediately
+      cancel_immediately,
     );
 
     // Update contractor subscription status
@@ -404,12 +496,12 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
 
     // Reactivate Stripe subscription
     const subscription = await stripeService.reactivateSubscription(
-      contractor.subscription.stripe_subscription_id
+      contractor.subscription.stripe_subscription_id,
     );
 
     // Update contractor subscription status
     contractor.subscription.status = stripeService.mapSubscriptionStatus(
-      subscription.status
+      subscription.status,
     );
 
     await contractor.save();
@@ -433,61 +525,68 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
  * GET /subscriptions/upgrade-preview
  * Get preview of upgrading to a new plan
  */
-router.get('/upgrade-preview/:new_plan_id', authenticateToken, async (req, res) => {
-  try {
-    const { new_plan_id } = req.params;
+router.get(
+  '/upgrade-preview/:new_plan_id',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { new_plan_id } = req.params;
 
-    const contractor = await Contractor.findById(req.user.contractor_id);
+      const contractor = await Contractor.findById(req.user.contractor_id);
 
-    if (!contractor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contractor not found',
-      });
-    }
-
-    const currentPlanId = contractor.subscription?.plan || 'free';
-    const currentPlan = getPlan(currentPlanId);
-    const newPlan = getPlan(new_plan_id);
-
-    if (!newPlan) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid plan',
-      });
-    }
-
-    // Get upgrade benefits
-    const benefits = getUpgradeBenefits(currentPlanId, new_plan_id);
-
-    // Calculate pro-rated amount if applicable
-    let proratedAmount = null;
-    if (contractor.subscription?.stripe_customer_id && newPlan.stripe_price_id) {
-      try {
-        const upcomingInvoice = await stripeService.getUpcomingInvoice(
-          contractor.subscription.stripe_customer_id
-        );
-        proratedAmount = upcomingInvoice.amount_due / 100; // Convert cents to dollars
-      } catch (error) {
-        console.warn('Could not calculate prorated amount:', error.message);
+      if (!contractor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Contractor not found',
+        });
       }
-    }
 
-    res.json({
-      success: true,
-      current_plan: currentPlan,
-      new_plan: newPlan,
-      benefits,
-      prorated_amount: proratedAmount,
-    });
-  } catch (error) {
-    console.error('Error generating upgrade preview:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to generate upgrade preview',
-      error: error.message,
-    });
-  }
-});
+      const currentPlanId = contractor.subscription?.plan || 'free';
+      const currentPlan = getPlan(currentPlanId);
+      const newPlan = getPlan(new_plan_id);
+
+      if (!newPlan) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid plan',
+        });
+      }
+
+      // Get upgrade benefits
+      const benefits = getUpgradeBenefits(currentPlanId, new_plan_id);
+
+      // Calculate pro-rated amount if applicable
+      let proratedAmount = null;
+      if (
+        contractor.subscription?.stripe_customer_id &&
+        newPlan.stripe_price_id
+      ) {
+        try {
+          const upcomingInvoice = await stripeService.getUpcomingInvoice(
+            contractor.subscription.stripe_customer_id,
+          );
+          proratedAmount = upcomingInvoice.amount_due / 100; // Convert cents to dollars
+        } catch (error) {
+          console.warn('Could not calculate prorated amount:', error.message);
+        }
+      }
+
+      res.json({
+        success: true,
+        current_plan: currentPlan,
+        new_plan: newPlan,
+        benefits,
+        prorated_amount: proratedAmount,
+      });
+    } catch (error) {
+      console.error('Error generating upgrade preview:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate upgrade preview',
+        error: error.message,
+      });
+    }
+  },
+);
 
 module.exports = router;

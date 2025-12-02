@@ -1,0 +1,96 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.handleClose}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-credit-card avitar-mr-2"></i>
+          {{@title}}
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.handleClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}}>
+        <div class="avitar-modal__body" {{did-insert this.initializePaymentElements}}>
+          {{#if @description}}
+            <p class="avitar-text-muted avitar-mb-4">{{@description}}</p>
+          {{/if}}
+
+          {{#if @amount}}
+            <div class="avitar-bg-primary-light avitar-p-4 avitar-rounded avitar-mb-4">
+              <div class="avitar-text-center">
+                <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Amount to charge</div>
+                <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
+                  {{this.formattedAmount}}
+                </div>
+              </div>
+            </div>
+          {{/if}}
+
+          <div class="avitar-space-y-4">
+            {{! Apple Pay / Google Pay Button }}
+            {{#if this.canMakePayment}}
+              <div>
+                <div id="payment-request-button"></div>
+              </div>
+
+              <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-my-4">
+                <div class="avitar-flex-1 avitar-border-t avitar-border-gray-300"></div>
+                <span class="avitar-text-sm avitar-text-muted">Or pay with card</span>
+                <div class="avitar-flex-1 avitar-border-t avitar-border-gray-300"></div>
+              </div>
+            {{/if}}
+
+            <div>
+              <label class="avitar-label">Card Information</label>
+              <div id="card-element" class="avitar-input avitar-p-3" style="height: auto; min-height: 40px;"></div>
+            </div>
+
+            {{#if this.errorMessage}}
+              <div class="avitar-bg-danger-light avitar-p-3 avitar-rounded avitar-border avitar-border-danger">
+                <div class="avitar-flex avitar-items-start avitar-gap-2">
+                  <i class="fas fa-exclamation-circle avitar-text-danger avitar-mt-1"></i>
+                  <span class="avitar-text-sm avitar-text-danger">{{this.errorMessage}}</span>
+                </div>
+              </div>
+            {{/if}}
+
+            <div class="avitar-bg-gray-50 avitar-p-3 avitar-rounded">
+              <div class="avitar-flex avitar-items-start avitar-gap-2">
+                <i class="fas fa-lock avitar-text-muted avitar-mt-1"></i>
+                <p class="avitar-text-xs avitar-text-muted">
+                  Your payment information is encrypted and secure. We never store your card details.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.handleClose}}
+            disabled={{this.isProcessing}}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="avitar-btn avitar-btn--primary"
+            disabled={{this.isProcessing}}
+          >
+            {{#if this.isProcessing}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Processing...
+            {{else}}
+              <i class="fas fa-lock avitar-mr-2"></i>
+              Pay {{this.formattedAmount}}
+            {{/if}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

@@ -14,21 +14,18 @@ const contractorSchema = new mongoose.Schema(
     // Licensing Information
     license_number: {
       type: String,
-      required: [true, 'License number is required'],
       trim: true,
       index: true,
-      unique: true,
+      sparse: true,
     },
     license_state: {
       type: String,
-      required: true,
       trim: true,
       uppercase: true,
       maxlength: 2,
     },
     license_expiration: {
       type: Date,
-      required: true,
       index: true,
     },
     license_type: {
@@ -45,9 +42,8 @@ const contractorSchema = new mongoose.Schema(
         'landscaping',
         'demolition',
         'specialty',
-        'other'
+        'other',
       ],
-      required: true,
     },
 
     // Business Contact Information
@@ -74,12 +70,12 @@ const contractorSchema = new mongoose.Schema(
       },
       phone: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
       },
       email: {
         type: String,
-        required: true,
+        required: false,
         lowercase: true,
         trim: true,
       },
@@ -272,7 +268,7 @@ const contractorSchema = new mongoose.Schema(
     subscription: {
       plan: {
         type: String,
-        enum: ['free', 'basic', 'professional', 'enterprise'],
+        enum: ['free', 'pro', 'enterprise'],
         default: 'free',
       },
       status: {
@@ -388,16 +384,35 @@ const contractorSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'contractors',
-  }
+  },
 );
 
 // Indexes
 contractorSchema.index({ company_name: 'text' });
-contractorSchema.index({ license_number: 1, license_state: 1 }, { unique: true });
+contractorSchema.index(
+  { license_number: 1, license_state: 1 },
+  { unique: true, sparse: true }, // sparse allows null/undefined values
+);
 contractorSchema.index({ 'municipality_approvals.municipality_id': 1 });
 contractorSchema.index({ owner_user_id: 1 });
 contractorSchema.index({ 'members.user_id': 1 });
 contractorSchema.index({ is_active: 1, is_verified: 1 });
+
+// Pre-save validation: Require license info for electrical, plumbing, mechanical
+contractorSchema.pre('save', function (next) {
+  const licensedTypes = ['electrical', 'plumbing', 'mechanical'];
+
+  if (licensedTypes.includes(this.license_type)) {
+    if (!this.license_number) {
+      return next(new Error(`License number is required for ${this.license_type} contractors`));
+    }
+    if (!this.license_expiration) {
+      return next(new Error(`License expiration is required for ${this.license_type} contractors`));
+    }
+  }
+
+  next();
+});
 
 // Virtual for license status
 contractorSchema.virtual('isLicenseExpired').get(function () {
@@ -417,7 +432,7 @@ contractorSchema.virtual('daysUntilLicenseExpiration').get(function () {
   if (!this.license_expiration) return null;
   const now = new Date();
   const days = Math.floor(
-    (this.license_expiration - now) / (1000 * 60 * 60 * 24)
+    (this.license_expiration - now) / (1000 * 60 * 60 * 24),
   );
   return days;
 });
@@ -430,7 +445,7 @@ contractorSchema.set('toObject', { virtuals: true });
 contractorSchema.methods.isMember = function (userId) {
   return this.members.some(
     (member) =>
-      member.user_id.toString() === userId.toString() && member.is_active
+      member.user_id.toString() === userId.toString() && member.is_active,
   );
 };
 
@@ -442,7 +457,7 @@ contractorSchema.methods.isOwner = function (userId) {
 // Method to get user's role in contractor
 contractorSchema.methods.getMemberRole = function (userId) {
   const member = this.members.find(
-    (m) => m.user_id.toString() === userId.toString() && m.is_active
+    (m) => m.user_id.toString() === userId.toString() && m.is_active,
   );
   return member?.role || null;
 };
@@ -453,7 +468,7 @@ contractorSchema.methods.userHasPermission = function (userId, permission) {
   if (this.isOwner(userId)) return true;
 
   const member = this.members.find(
-    (m) => m.user_id.toString() === userId.toString() && m.is_active
+    (m) => m.user_id.toString() === userId.toString() && m.is_active,
   );
   return member?.permissions?.includes(permission) || false;
 };
@@ -464,11 +479,11 @@ contractorSchema.methods.addMember = function (
   role,
   permissions,
   addedBy,
-  title = null
+  title = null,
 ) {
   // Check if already a member
   const existingIndex = this.members.findIndex(
-    (m) => m.user_id.toString() === userId.toString()
+    (m) => m.user_id.toString() === userId.toString(),
   );
 
   const memberData = {
@@ -494,7 +509,7 @@ contractorSchema.methods.addMember = function (
 // Method to remove member
 contractorSchema.methods.removeMember = function (userId) {
   const member = this.members.find(
-    (m) => m.user_id.toString() === userId.toString()
+    (m) => m.user_id.toString() === userId.toString(),
   );
   if (member) {
     member.is_active = false;
@@ -507,10 +522,10 @@ contractorSchema.methods.addMunicipalityApproval = function (
   municipalityId,
   municipalityName,
   approvedBy = null,
-  registrationNumber = null
+  registrationNumber = null,
 ) {
   const existingIndex = this.municipality_approvals.findIndex(
-    (a) => a.municipality_id.toString() === municipalityId.toString()
+    (a) => a.municipality_id.toString() === municipalityId.toString(),
   );
 
   const approvalData = {
@@ -537,7 +552,7 @@ contractorSchema.methods.addMunicipalityApproval = function (
 // Method to check municipality approval status
 contractorSchema.methods.isApprovedForMunicipality = function (municipalityId) {
   const approval = this.municipality_approvals.find(
-    (a) => a.municipality_id.toString() === municipalityId.toString()
+    (a) => a.municipality_id.toString() === municipalityId.toString(),
   );
   return approval?.status === 'approved';
 };
@@ -568,10 +583,10 @@ contractorSchema.methods.getDefaultPaymentMethod = function () {
 
 contractorSchema.methods.canUserUsePaymentMethod = function (
   userId,
-  paymentMethodId
+  paymentMethodId,
 ) {
   const paymentMethod = this.payment_methods.find(
-    (pm) => pm._id.toString() === paymentMethodId.toString()
+    (pm) => pm._id.toString() === paymentMethodId.toString(),
   );
   if (!paymentMethod) return false;
 
@@ -580,7 +595,7 @@ contractorSchema.methods.canUserUsePaymentMethod = function (
 
   // Check if user is in authorized_users
   return paymentMethod.authorized_users.some(
-    (authUserId) => authUserId.toString() === userId.toString()
+    (authUserId) => authUserId.toString() === userId.toString(),
   );
 };
 
@@ -588,8 +603,8 @@ contractorSchema.methods.canUserUsePaymentMethod = function (
 contractorSchema.virtual('subscriptionDisplay').get(function () {
   const planNames = {
     free: 'Free',
-    basic: 'Basic',
-    professional: 'Professional',
+    pro: 'Pro',
+    premium: 'Premium',
     enterprise: 'Enterprise',
   };
   return planNames[this.subscription?.plan] || 'Free';
@@ -612,7 +627,11 @@ contractorSchema.methods.addInternalNote = function (userId, userName, note) {
 };
 
 // Method to blacklist contractor
-contractorSchema.methods.blacklist = function (reason, adminUserId, notes = null) {
+contractorSchema.methods.blacklist = function (
+  reason,
+  adminUserId,
+  notes = null,
+) {
   this.is_blacklisted = true;
   this.blacklisted_reason = reason;
   this.blacklisted_at = new Date();
@@ -637,7 +656,7 @@ contractorSchema.methods.removeBlacklist = function (adminUserId) {
 // Static method to find contractors by municipality
 contractorSchema.statics.findByMunicipality = function (
   municipalityId,
-  approvedOnly = true
+  approvedOnly = true,
 ) {
   const query = {
     'municipality_approvals.municipality_id': municipalityId,
@@ -648,7 +667,10 @@ contractorSchema.statics.findByMunicipality = function (
     query['municipality_approvals.status'] = 'approved';
   }
 
-  return this.find(query).populate('owner_user_id', 'first_name last_name email');
+  return this.find(query).populate(
+    'owner_user_id',
+    'first_name last_name email',
+  );
 };
 
 // Static method to find contractors with expiring licenses
