@@ -1,0 +1,136 @@
+---
+subject: Inspection Passed - {{permitNumber}}
+---
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          {{!-- Header --}}
+          <tr>
+            <td style="background-color: #10b981; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">
+                ✓ Inspection Passed
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">
+                Permit {{permitNumber}}
+              </p>
+            </td>
+          </tr>
+
+          {{!-- Content --}}
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                Dear {{applicantName}},
+              </p>
+
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                Great news! Your {{inspectionType}} inspection has passed.
+              </p>
+
+              {{!-- Success Badge --}}
+              <div style="text-align: center; margin: 30px 0;">
+                <div style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-size: 18px; font-weight: 600;">
+                  PASSED
+                </div>
+              </div>
+
+              {{!-- Inspection Details --}}
+              <table width="100%" cellpadding="12" cellspacing="0" style="background-color: #f9fafb; border-radius: 6px; margin: 20px 0;">
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; width: 40%;">
+                    <strong>Inspection Type:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{inspectionType}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Property Address:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{propertyAddress}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Completed:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{formatDate completedDate 'long'}}
+                  </td>
+                </tr>
+                {{#if inspectorName}}
+                <tr>
+                  <td style="color: #6b7280; font-size: 14px;">
+                    <strong>Inspector:</strong>
+                  </td>
+                  <td style="color: #111827; font-size: 14px;">
+                    {{inspectorName}}
+                  </td>
+                </tr>
+                {{/if}}
+              </table>
+
+              {{#if comments}}
+              <div style="background-color: #fefce8; border-left: 4px solid #eab308; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #854d0e; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <strong>Inspector Notes:</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #713f12; white-space: pre-wrap;">
+                  {{comments}}
+                </p>
+              </div>
+              {{/if}}
+
+              {{!-- Success Message --}}
+              <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0; font-size: 16px; color: #166534;">
+                  <strong>✓ Inspection Passed</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #15803d; line-height: 1.6;">
+                  Congratulations! Your inspection has passed. You may proceed with the next phase of your project according to your permit requirements.
+                </p>
+              </div>
+
+              {{!-- Next Steps --}}
+              <div style="margin: 30px 0; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">
+                  <strong>Next Steps:</strong>
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 1.8;">
+                  <li>Proceed to the next phase of your project</li>
+                  <li>Schedule your next required inspection if applicable</li>
+                  <li>Keep all inspection records for your permit file</li>
+                </ul>
+              </div>
+
+              <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">
+                If you have any questions, please contact {{municipalityName}}.
+              </p>
+            </td>
+          </tr>
+
+          {{!-- Footer --}}
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                This is an automated notification from the Building Permits System<br>
+                Please do not reply to this email
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

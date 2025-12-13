@@ -268,28 +268,40 @@ const contractorSchema = new mongoose.Schema(
     subscription: {
       plan: {
         type: String,
-        enum: ['free', 'pro', 'enterprise'],
+        enum: ['free', 'basic', 'pro', 'enterprise'],
         default: 'free',
       },
       status: {
         type: String,
-        enum: ['active', 'trial', 'past_due', 'cancelled', 'inactive'],
+        enum: [
+          'active',
+          'trialing',
+          'past_due',
+          'canceled',
+          'paused',
+          'incomplete',
+          'incomplete_expired',
+          'inactive',
+        ],
         default: 'inactive',
       },
       trial_ends_at: Date,
       current_period_start: Date,
       current_period_end: Date,
+      paused_at: Date,
+      canceled_at: Date,
       stripe_customer_id: String,
       stripe_subscription_id: String,
+      stripe_product_id: String,
+      stripe_price_id: String,
+      // Features from Stripe Product Features API
       features: {
-        team_management: { type: Boolean, default: false },
-        stored_payment_methods: { type: Boolean, default: false },
-        advanced_reporting: { type: Boolean, default: false },
-        priority_support: { type: Boolean, default: false },
-        api_access: { type: Boolean, default: false },
-        custom_branding: { type: Boolean, default: false },
-        max_team_members: { type: Number, default: 1 }, // Owner only for free
+        type: [String],
+        default: [],
       },
+      features_last_synced: Date,
+      // Legacy max team members (can be deprecated once migrated to features array)
+      max_team_members: { type: Number, default: 1 }, // Owner only for free
     },
 
     // Payment Methods (for paid subscriptions with stored card feature)
@@ -404,10 +416,18 @@ contractorSchema.pre('save', function (next) {
 
   if (licensedTypes.includes(this.license_type)) {
     if (!this.license_number) {
-      return next(new Error(`License number is required for ${this.license_type} contractors`));
+      return next(
+        new Error(
+          `License number is required for ${this.license_type} contractors`,
+        ),
+      );
     }
     if (!this.license_expiration) {
-      return next(new Error(`License expiration is required for ${this.license_type} contractors`));
+      return next(
+        new Error(
+          `License expiration is required for ${this.license_type} contractors`,
+        ),
+      );
     }
   }
 
@@ -557,18 +577,16 @@ contractorSchema.methods.isApprovedForMunicipality = function (municipalityId) {
   return approval?.status === 'approved';
 };
 
-// Subscription feature checks
+// Subscription feature checks (Array-based, from Stripe)
 contractorSchema.methods.hasFeature = function (featureName) {
   // Check if subscription is active
-  if (
-    this.subscription?.status !== 'active' &&
-    this.subscription?.status !== 'trial'
-  ) {
+  const activeStatuses = ['active', 'trialing'];
+  if (!activeStatuses.includes(this.subscription?.status)) {
     return false;
   }
 
-  // Check if feature is enabled
-  return this.subscription?.features?.[featureName] === true;
+  // Check if feature exists in features array
+  return this.subscription?.features?.includes(featureName) || false;
 };
 
 contractorSchema.methods.canAddTeamMember = function () {
@@ -612,7 +630,7 @@ contractorSchema.virtual('subscriptionDisplay').get(function () {
 
 // Virtual for active team member count
 contractorSchema.virtual('activeTeamMemberCount').get(function () {
-  return this.members.filter((m) => m.is_active).length;
+  return this.members ? this.members.filter((m) => m.is_active).length : 0;
 });
 
 // Method to add internal note
@@ -651,6 +669,83 @@ contractorSchema.methods.removeBlacklist = function (adminUserId) {
   this.blacklist_notes = null;
   this.updated_by = adminUserId;
   return this.save();
+};
+
+// ===== Stripe Subscription Helper Methods =====
+
+// Check if subscription is active (not paused)
+contractorSchema.methods.isSubscriptionActive = function () {
+  const activeStatuses = ['active', 'trialing'];
+  return activeStatuses.includes(this.subscription?.status);
+};
+
+// Check if subscription is paused (read-only access)
+contractorSchema.methods.isSubscriptionPaused = function () {
+  return this.subscription?.status === 'paused';
+};
+
+// Update subscription data from Stripe webhook
+contractorSchema.methods.updateSubscription = async function (subscriptionData) {
+  if (!this.subscription) {
+    this.subscription = {};
+  }
+
+  // Update subscription fields
+  if (subscriptionData.stripe_subscription_id !== undefined) {
+    this.subscription.stripe_subscription_id =
+      subscriptionData.stripe_subscription_id;
+  }
+  if (subscriptionData.stripe_product_id !== undefined) {
+    this.subscription.stripe_product_id = subscriptionData.stripe_product_id;
+  }
+  if (subscriptionData.stripe_price_id !== undefined) {
+    this.subscription.stripe_price_id = subscriptionData.stripe_price_id;
+  }
+  if (subscriptionData.status !== undefined) {
+    this.subscription.status = subscriptionData.status;
+  }
+  if (subscriptionData.plan !== undefined) {
+    this.subscription.plan = subscriptionData.plan;
+  }
+  if (subscriptionData.features !== undefined) {
+    this.subscription.features = subscriptionData.features;
+    this.subscription.features_last_synced = new Date();
+  }
+  if (subscriptionData.paused_at !== undefined) {
+    this.subscription.paused_at = subscriptionData.paused_at;
+  }
+  if (subscriptionData.canceled_at !== undefined) {
+    this.subscription.canceled_at = subscriptionData.canceled_at;
+  }
+  if (subscriptionData.current_period_start !== undefined) {
+    this.subscription.current_period_start =
+      subscriptionData.current_period_start;
+  }
+  if (subscriptionData.current_period_end !== undefined) {
+    this.subscription.current_period_end = subscriptionData.current_period_end;
+  }
+  if (subscriptionData.trial_ends_at !== undefined) {
+    this.subscription.trial_ends_at = subscriptionData.trial_ends_at;
+  }
+
+  await this.save();
+};
+
+// Update features from Stripe Product Features API
+contractorSchema.methods.updateFeatures = async function (featuresArray) {
+  if (!this.subscription) {
+    this.subscription = {};
+  }
+
+  this.subscription.features = featuresArray;
+  this.subscription.features_last_synced = new Date();
+
+  await this.save();
+};
+
+// Get all features for contractor
+contractorSchema.methods.getFeatures = function () {
+  return this.subscription?.features || [];
 };
 
 // Static method to find contractors by municipality

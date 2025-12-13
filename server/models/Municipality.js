@@ -169,41 +169,41 @@ const municipalitySchema = new mongoose.Schema(
           version: { type: String, default: '1.0.0' },
           tier: {
             type: String,
-            enum: ['basic', 'professional', 'enterprise'],
+            enum: ['basic', 'advanced', 'premium'],
             default: 'basic',
           },
           // Stripe Subscription Fields (per module)
           stripe_subscription_id: { type: String },
+          stripe_product_id: { type: String },
+          stripe_price_id: { type: String },
           subscription_status: {
             type: String,
             enum: [
-              'none',
-              'trialing',
               'active',
+              'trialing',
               'past_due',
-              'cancelled',
-              'unpaid',
+              'canceled',
+              'paused',
+              'incomplete',
+              'incomplete_expired',
+              'inactive',
             ],
-            default: 'none',
+            default: 'inactive',
           },
           trial_start: { type: Date },
           trial_end: { type: Date },
           current_period_start: { type: Date },
           current_period_end: { type: Date },
+          canceled_at: { type: Date },
+          paused_at: { type: Date },
           parcel_count_at_purchase: { type: Number },
-          stripe_price_id: { type: String },
-          // Existing Fields
+          // Features array from Stripe Product Features API
           features: {
-            type: Map,
-            of: {
-              enabled: { type: Boolean, default: false },
-              tier_required: {
-                type: String,
-                enum: ['basic', 'professional', 'enterprise'],
-              },
-              config: { type: mongoose.Schema.Types.Mixed },
-            },
+            type: [String],
+            default: [],
           },
+          features_last_synced: { type: Date },
+          // Legacy fields for backward compatibility
           permissions: { type: Map, of: [String] },
           settings: { type: Map, of: mongoose.Schema.Types.Mixed },
           disabled_reason: String,
@@ -432,6 +432,55 @@ const municipalitySchema = new mongoose.Schema(
       ],
       default: new Map(),
     },
+    // Inspection scheduling settings
+    inspectionSettings: {
+      availableTimeSlots: [
+        {
+          dayOfWeek: {
+            type: Number,
+            min: 0,
+            max: 6, // 0=Sunday, 6=Saturday
+          },
+          startTime: {
+            type: String,
+            match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, // HH:MM format
+          },
+          endTime: {
+            type: String,
+            match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+          },
+          slotDuration: {
+            type: Number,
+            default: 60, // minutes per slot
+            min: 15,
+            max: 480,
+          },
+        },
+      ],
+      inspectors: [
+        {
+          userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+          },
+          inspectionTypes: {
+            type: [String],
+            default: [],
+          },
+          maxPerDay: {
+            type: Number,
+            default: 8,
+            min: 1,
+            max: 20,
+          },
+          isActive: {
+            type: Boolean,
+            default: true,
+          },
+        },
+      ],
+    },
+
     // Cache invalidation tracking
     lastModified: {
       type: Date,
@@ -446,6 +495,9 @@ const municipalitySchema = new mongoose.Schema(
     toJSON: {
       transform: function (doc, ret) {
         // Don't expose sensitive settings in API responses
+        // Manually add isPaymentSetupComplete since we don't want all virtuals
+        const isComplete = doc.isPaymentSetupComplete;
+        ret.isPaymentSetupComplete = isComplete;
         return ret;
       },
     },
@@ -461,11 +513,22 @@ municipalitySchema.index({ 'subscription.payment_status': 1 });
 
 // Virtual for full address
 municipalitySchema.virtual('fullAddress').get(function () {
+  if (
+    !this.contact_info?.address?.street ||
+    !this.contact_info?.address?.city ||
+    !this.state ||
+    !this.contact_info?.address?.zipCode
+  ) {
+    return '';
+  }
   return `${this.contact_info.address.street}, ${this.contact_info.address.city}, ${this.state} ${this.contact_info.address.zipCode}`;
 });
 
 // Virtual for display name
 municipalitySchema.virtual('displayName').get(function () {
+  if (!this.type || !this.name) {
+    return this.name || '';
+  }
   return `${this.type.charAt(0).toUpperCase() + this.type.slice(1)} of ${this.name}`;
 });
 
@@ -497,13 +560,17 @@ municipalitySchema.methods.hasModule = function (moduleName) {
   return module?.enabled === true && !this.isModuleExpired(moduleName);
 };
 
-// Method to check if module feature is enabled (Map-based)
+// Method to check if module feature is enabled (Array-based, from Stripe)
 municipalitySchema.methods.hasFeature = function (moduleName, featureName) {
   const module = this.module_config.modules.get(moduleName);
   if (!module?.enabled) return false;
 
-  const feature = module.features?.get(featureName);
-  return feature?.enabled === true;
+  // Check if subscription is active
+  const activeStatuses = ['active', 'trialing'];
+  if (!activeStatuses.includes(module.subscription_status)) return false;
+
+  // Check if feature exists in features array
+  return module.features?.includes(featureName) || false;
 };
 
 // Method to get module tier
@@ -727,6 +794,96 @@ municipalitySchema.methods.getTrialDaysRemaining = function (moduleName) {
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   return diffDays > 0 ? diffDays : 0;
+};
+
+// ===== Stripe Subscription Helper Methods =====
+
+// Check if module has active subscription (not paused)
+municipalitySchema.methods.isModuleActive = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module || !module.enabled) return false;
+
+  const activeStatuses = ['active', 'trialing'];
+  return activeStatuses.includes(module.subscription_status);
+};
+
+// Check if module subscription is paused (read-only access)
+municipalitySchema.methods.isModulePaused = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  return module?.subscription_status === 'paused';
+};
+
+// Check if module has specific feature (for notification permissions)
+municipalitySchema.methods.hasModuleFeature = function (moduleName, featureName) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module || !module.enabled) return false;
+
+  // Must have active subscription
+  if (!this.isModuleActive(moduleName)) return false;
+
+  // Check if feature exists in Stripe features array
+  return module.features?.includes(featureName) || false;
+};
+
+// Update module subscription data from Stripe webhook
+municipalitySchema.methods.updateModuleSubscription = async function (
+  moduleName,
+  subscriptionData
+) {
+  const module = this.module_config.modules.get(moduleName) || {};
+
+  // Update subscription fields
+  if (subscriptionData.stripe_subscription_id !== undefined) {
+    module.stripe_subscription_id = subscriptionData.stripe_subscription_id;
+  }
+  if (subscriptionData.stripe_product_id !== undefined) {
+    module.stripe_product_id = subscriptionData.stripe_product_id;
+  }
+  if (subscriptionData.stripe_price_id !== undefined) {
+    module.stripe_price_id = subscriptionData.stripe_price_id;
+  }
+  if (subscriptionData.subscription_status !== undefined) {
+    module.subscription_status = subscriptionData.subscription_status;
+  }
+  if (subscriptionData.tier !== undefined) {
+    module.tier = subscriptionData.tier;
+  }
+  if (subscriptionData.features !== undefined) {
+    module.features = subscriptionData.features;
+    module.features_last_synced = new Date();
+  }
+  if (subscriptionData.paused_at !== undefined) {
+    module.paused_at = subscriptionData.paused_at;
+  }
+  if (subscriptionData.canceled_at !== undefined) {
+    module.canceled_at = subscriptionData.canceled_at;
+  }
+
+  this.module_config.modules.set(moduleName, module);
+  await this.save();
+};
+
+// Update module features from Stripe Product Features API
+municipalitySchema.methods.updateModuleFeatures = async function (
+  moduleName,
+  featuresArray
+) {
+  const module = this.module_config.modules.get(moduleName);
+  if (!module) {
+    throw new Error(`Module ${moduleName} not found`);
+  }
+
+  module.features = featuresArray;
+  module.features_last_synced = new Date();
+
+  this.module_config.modules.set(moduleName, module);
+  await this.save();
+};
+
+// Get all features for a module
+municipalitySchema.methods.getModuleFeatures = function (moduleName) {
+  const module = this.module_config.modules.get(moduleName);
+  return module?.features || [];
 };
 
 // Pre-save hook to generate slug

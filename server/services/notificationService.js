@@ -1,6 +1,7 @@
 const emailService = require('./emailService');
 const smsGatewayService = require('./smsGatewayService');
 const templateService = require('./templateService');
+const notificationPermissionService = require('./notificationPermissionService');
 const User = require('../models/User');
 
 /**
@@ -38,18 +39,30 @@ class NotificationService {
         throw new Error(`User not found: ${userId}`);
       }
 
-      // Check user preferences for this notification type
-      const preferences = this.getUserPreferences(user, notificationType);
+      // Check notification permissions (includes user preferences + subscription features)
+      const permission = await notificationPermissionService.canUserReceiveNotification(
+        userId,
+        notificationType,
+        { municipalityId, moduleName: data?.moduleName }
+      );
 
-      if (!preferences.email && !preferences.sms) {
+      if (!permission.allowed) {
         console.log(
-          `User ${userId} has disabled ${notificationType} notifications`
+          `Notification blocked for user ${userId} (${notificationType}): ${permission.reason}`,
         );
         return {
           success: true,
           skipped: true,
-          reason: 'User preferences disabled',
+          reason: permission.reason,
+          userOptOut: permission.userOptOut,
         };
+      }
+
+      // Log which subscriptions granted permission
+      if (permission.payingSources.length > 0) {
+        console.log(
+          `Notification permission granted by: ${permission.payingSources.map(s => s.name).join(', ')}`,
+        );
       }
 
       const results = {
@@ -57,8 +70,8 @@ class NotificationService {
         sms: null,
       };
 
-      // Send email if enabled
-      if (preferences.email && user.email) {
+      // Send email if permitted by subscription
+      if (permission.channels.email && user.email) {
         try {
           const emailContent = await templateService.renderEmailTemplate({
             municipalityId,
@@ -75,7 +88,7 @@ class NotificationService {
           });
 
           console.log(
-            `Email notification sent to ${user.email} (${notificationType})`
+            `Email notification sent to ${user.email} (${notificationType})`,
           );
         } catch (error) {
           console.error('Email notification failed:', error);
@@ -86,8 +99,8 @@ class NotificationService {
         }
       }
 
-      // Send SMS if enabled and user has SMS configured
-      if (preferences.sms && user.sms_phone && user.sms_carrier) {
+      // Send SMS if permitted by subscription and user has SMS configured
+      if (permission.channels.sms && user.sms_phone && user.sms_carrier) {
         try {
           // Use provided SMS message or generate from template
           const message =
@@ -104,7 +117,7 @@ class NotificationService {
           });
 
           console.log(
-            `SMS notification sent to ${user.sms_phone} (${notificationType})`
+            `SMS notification sent to ${user.sms_phone} (${notificationType})`,
           );
         } catch (error) {
           console.error('SMS notification failed:', error);
@@ -134,9 +147,7 @@ class NotificationService {
    */
   async sendBulkNotifications(notifications) {
     const results = await Promise.allSettled(
-      notifications.map((notification) =>
-        this.sendNotification(notification)
-      )
+      notifications.map((notification) => this.sendNotification(notification)),
     );
 
     return results.map((result, index) => {
@@ -305,11 +316,7 @@ class NotificationService {
   /**
    * Send team member added notification
    */
-  async sendTeamMemberNotification({
-    userId,
-    municipalityId,
-    teamMemberData,
-  }) {
+  async sendTeamMemberNotification({ userId, municipalityId, teamMemberData }) {
     const smsMessage = `${teamMemberData.teamMemberName} has been added to your team at ${teamMemberData.companyName}.`;
 
     return await this.sendNotification({
@@ -320,6 +327,149 @@ class NotificationService {
       data: teamMemberData,
       smsMessage,
     });
+  }
+
+  /**
+   * Send department review assignment notification
+   */
+  async sendDepartmentReviewAssignment({
+    userId,
+    municipalityId,
+    permitNumber,
+    permitType,
+    department,
+    propertyAddress,
+    applicantName,
+    permitId,
+  }) {
+    const smsMessage = `New permit ${permitNumber} assigned for ${department} review.`;
+
+    return await this.sendNotification({
+      userId,
+      notificationType: 'permit_review_assignment',
+      templateType: 'department_review_assignment',
+      municipalityId,
+      data: {
+        permitNumber,
+        permitType,
+        department,
+        propertyAddress,
+        applicantName,
+        permitId,
+      },
+      subject: `New Permit Review Assignment - ${permitNumber}`,
+      smsMessage,
+    });
+  }
+
+  /**
+   * Send department review completion notification
+   */
+  async sendDepartmentReviewCompleted({
+    userId,
+    municipalityId,
+    permitNumber,
+    department,
+    reviewStatus,
+    reviewedBy,
+    conditions,
+  }) {
+    const statusText =
+      reviewStatus === 'approved'
+        ? 'approved'
+        : reviewStatus === 'rejected'
+          ? 'rejected'
+          : 'completed with revisions requested';
+
+    const smsMessage = `${department} review ${statusText} for permit ${permitNumber}.`;
+
+    return await this.sendNotification({
+      userId,
+      notificationType: 'permit_review_completed',
+      templateType: 'department_review_completed',
+      municipalityId,
+      data: {
+        permitNumber,
+        department,
+        reviewStatus,
+        reviewedBy,
+        conditions,
+      },
+      subject: `${department} Review ${statusText.charAt(0).toUpperCase() + statusText.slice(1)} - ${permitNumber}`,
+      smsMessage,
+    });
+  }
+
+  /**
+   * Send new comment in department review notification
+   */
+  async sendDepartmentCommentNotification({
+    userId,
+    municipalityId,
+    permitNumber,
+    department,
+    commentAuthor,
+    commentPreview,
+    permitId,
+  }) {
+    const smsMessage = `New comment on permit ${permitNumber} in ${department} review.`;
+
+    return await this.sendNotification({
+      userId,
+      notificationType: 'permit_comment',
+      templateType: 'department_comment',
+      municipalityId,
+      data: {
+        permitNumber,
+        department,
+        commentAuthor,
+        commentPreview,
+        permitId,
+      },
+      subject: `New Comment on Permit ${permitNumber}`,
+      smsMessage,
+    });
+  }
+
+  /**
+   * Send notifications to all reviewers in a department
+   */
+  async notifyDepartmentReviewers({
+    municipalityId,
+    department,
+    notificationData,
+    notificationType,
+  }) {
+    // Find all users in this department for this municipality
+    const users = await User.find({
+      municipal_permissions: {
+        $elemMatch: {
+          municipality_id: municipalityId,
+          department: department,
+        },
+      },
+    });
+
+    // Send notifications to all department members
+    const notifications = users.map((user) => ({
+      userId: user._id.toString(),
+      municipalityId,
+      ...notificationData,
+    }));
+
+    if (notificationType === 'assignment') {
+      return await Promise.all(
+        notifications.map((notification) =>
+          this.sendDepartmentReviewAssignment(notification),
+        ),
+      );
+    } else if (notificationType === 'comment') {
+      return await Promise.all(
+        notifications.map((notification) =>
+          this.sendDepartmentCommentNotification(notification),
+        ),
+      );
+    }
   }
 }
 

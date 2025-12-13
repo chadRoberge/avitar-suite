@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Municipality = require('../models/Municipality');
 const stripeService = require('../services/stripeService');
+const stripeWebhookHandler = require('../services/stripeWebhookHandler');
 
 /**
  * Stripe Webhook Handler
@@ -44,28 +45,67 @@ router.post('/stripe', async (req, res) => {
   // Handle the event
   try {
     switch (event.type) {
+      // Connected Account events
       case 'account.updated':
         await handleAccountUpdated(event.data.object);
         break;
 
       case 'account.application.authorized':
-        console.log('🔵 [WEBHOOK] Account application authorized:', event.data.object.id);
+        console.log(
+          '🔵 [WEBHOOK] Account application authorized:',
+          event.data.object.id,
+        );
         // Could log or notify here if needed
         break;
 
       case 'account.application.deauthorized':
-        console.log('🔵 [WEBHOOK] Account application deauthorized:', event.data.object.id);
+        console.log(
+          '🔵 [WEBHOOK] Account application deauthorized:',
+          event.data.object.id,
+        );
         // Handle account disconnection if needed
         break;
 
+      // Subscription lifecycle events (handled by stripeWebhookHandler)
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+      case 'customer.subscription.paused':
+      case 'customer.subscription.resumed':
+      case 'product.updated':
+      case 'customer.updated':
+        await stripeWebhookHandler.handleEvent(event);
+        break;
+
+      // Payment events (informational logging)
       case 'invoice.payment_succeeded':
-        console.log('🔵 [WEBHOOK] Invoice payment succeeded:', event.data.object.id);
+        console.log(
+          '🔵 [WEBHOOK] Invoice payment succeeded:',
+          event.data.object.id,
+        );
         // Future: Log successful payments
         break;
 
       case 'invoice.payment_failed':
-        console.log('🔵 [WEBHOOK] Invoice payment failed:', event.data.object.id);
+        console.log(
+          '🔵 [WEBHOOK] Invoice payment failed:',
+          event.data.object.id,
+        );
         // Future: Handle failed payments
+        break;
+
+      case 'payment_intent.succeeded':
+        console.log(
+          '🔵 [WEBHOOK] Payment intent succeeded:',
+          event.data.object.id,
+        );
+        break;
+
+      case 'payment_intent.payment_failed':
+        console.log(
+          '🔵 [WEBHOOK] Payment intent failed:',
+          event.data.object.id,
+        );
         break;
 
       default:
@@ -102,7 +142,10 @@ async function handleAccountUpdated(account) {
     });
 
     if (!municipality) {
-      console.warn('⚠️  [WEBHOOK] No municipality found for account:', account.id);
+      console.warn(
+        '⚠️  [WEBHOOK] No municipality found for account:',
+        account.id,
+      );
       return;
     }
 
