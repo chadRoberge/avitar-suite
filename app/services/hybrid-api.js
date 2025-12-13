@@ -19,7 +19,7 @@ export default class HybridApiService extends Service.extend(Evented) {
   @tracked syncInProgress = false;
 
   // Cache version - increment when cache structure changes
-  CACHE_VERSION = 2;
+  CACHE_VERSION = 3; // v3: Added building permits collections
 
   constructor() {
     super(...arguments);
@@ -91,6 +91,10 @@ export default class HybridApiService extends Service.extend(Evented) {
           'water_bodies',
           'waterfront_attributes',
           'water_body_ladders',
+          'permits',
+          'permit_inspections',
+          'permit_documents',
+          'permit_comments',
         ];
 
         for (const collection of collections) {
@@ -1236,6 +1240,7 @@ export default class HybridApiService extends Service.extend(Evented) {
         'water-bodies': 'water_bodies',
         'waterfront-attributes': 'waterfront_attributes',
         'water-body-ladders': 'water_body_ladders',
+        permits: 'permits', // Building permits module
       };
 
       if (municipalityResourceMap[resourceName]) {
@@ -1284,6 +1289,21 @@ export default class HybridApiService extends Service.extend(Evented) {
       }
     }
 
+    // Handle permit-scoped endpoints like /permits/{id}/inspections
+    if (parts.length >= 3 && parts[0] === 'permits' && parts[2]) {
+      const resourceName = parts[2];
+      const resourceMap = {
+        inspections: 'permit_inspections',
+        files: 'permit_documents',
+        comments: 'permit_comments',
+      };
+
+      if (resourceMap[resourceName]) {
+        console.log(`🎯 Mapping ${endpoint} -> ${resourceMap[resourceName]} collection`);
+        return resourceMap[resourceName];
+      }
+    }
+
     // Handle direct endpoints like /properties, /sketches
     const collection = parts[0];
 
@@ -1297,6 +1317,7 @@ export default class HybridApiService extends Service.extend(Evented) {
       'view-attributes': 'viewAttributes',
       exemptions: 'exemptions',
       'exemption-types': 'exemptionTypes',
+      permits: 'permits', // Building permits
     };
 
     return collectionMap[collection] || collection;

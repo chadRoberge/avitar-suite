@@ -567,6 +567,76 @@ export default class IndexedDbService extends Service {
           await trans.table('land_assessments').clear();
         });
 
+      // Define schema version 11 - Add Building Permits collections
+      this.db.version(11).stores({
+        // All previous collections (same as v10)
+        municipalities: '++id, name, code, _lastSynced, _syncState',
+        properties:
+          '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+        assessments:
+          '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+        land_assessments:
+          '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+        views:
+          '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+        sketches:
+          '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+        features:
+          '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+        exemptions:
+          '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+        exemptionTypes:
+          '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+        viewAttributes:
+          '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+        zoneBaseValues:
+          '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+        topology_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        site_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        driveway_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        road_attributes:
+          '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+        land_use_details:
+          '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+        land_taxation_categories:
+          '++id, municipalityId, name, _lastSynced, _syncState',
+        land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
+        acreage_discount_settings:
+          '++id, municipalityId, _lastSynced, _syncState',
+        sketch_sub_area_factors:
+          '++id, municipalityId, _lastSynced, _syncState',
+        water_bodies:
+          '++id, municipalityId, name, waterBodyType, _lastSynced, _syncState',
+        waterfront_attributes:
+          '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+        water_body_ladders:
+          '++id, municipalityId, waterBodyId, frontage, [municipalityId+waterBodyId], _lastSynced, _syncState',
+
+        // NEW: Building Permits module collections
+        permits:
+          '++id, _id, municipalityId, permitNumber, status, submitted_by, [municipalityId+status], [submitted_by], _lastSynced, _syncState',
+        permit_inspections:
+          '++id, permitId, municipalityId, inspectionType, status, scheduledDate, [permitId+status], _lastSynced, _syncState',
+        permit_documents:
+          '++id, permitId, municipalityId, fileName, fileType, [permitId], _lastSynced, _syncState',
+        permit_comments:
+          '++id, permitId, municipalityId, author, timestamp, [permitId+timestamp], _lastSynced, _syncState',
+
+        syncQueue:
+          '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+        metadata: '++key, value, lastUpdated',
+        deltas:
+          '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+        conflicts:
+          '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+        changeLog:
+          '++id, collection, documentId, operation, timestamp, userId',
+      });
+
       await this.db.open();
       this.isReady = true;
 

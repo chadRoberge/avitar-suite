@@ -5,13 +5,45 @@ const crypto = require('crypto');
 
 class StorageService {
   constructor() {
-    this.storageType = process.env.STORAGE_TYPE || 'local';
+    // Auto-detect storage type based on environment
+    // In Vercel serverless, prefer vercel-blob if configured, otherwise gcs
+    if (process.env.VERCEL && !process.env.STORAGE_TYPE) {
+      // Auto-detect for Vercel
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        this.storageType = 'vercel-blob';
+      } else if (process.env.GCS_PROJECT_ID) {
+        this.storageType = 'gcs';
+      } else {
+        console.warn(
+          '⚠️  Running on Vercel but no cloud storage configured. File uploads will NOT persist!',
+        );
+        this.storageType = 'local';
+      }
+    } else {
+      this.storageType = process.env.STORAGE_TYPE || 'local';
+    }
+
     this.localStoragePath = path.join(__dirname, '../../uploads');
 
-    // Initialize Google Cloud Storage if configured
+    // Initialize storage based on type
     if (this.storageType === 'gcs') {
       this.initializeGCS();
+    } else if (this.storageType === 'vercel-blob') {
+      this.initializeVercelBlob();
     } else {
+      this.ensureLocalStorage();
+    }
+  }
+
+  initializeVercelBlob() {
+    try {
+      const VercelBlobStorageService = require('./vercelBlobStorage');
+      this.blobStorage = new VercelBlobStorageService();
+      console.log('✅ Vercel Blob Storage configured');
+    } catch (error) {
+      console.error('Failed to initialize Vercel Blob Storage:', error);
+      console.warn('Falling back to local storage');
+      this.storageType = 'local';
       this.ensureLocalStorage();
     }
   }
@@ -127,6 +159,10 @@ class StorageService {
    * @returns {Promise<Object>} Upload result with URL and metadata
    */
   async uploadFile(fileBuffer, storagePath, metadata = {}) {
+    if (this.storageType === 'vercel-blob') {
+      return this.blobStorage.uploadFile(fileBuffer, storagePath, metadata);
+    }
+
     // Calculate file hashes
     const md5Hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
     const sha256Hash = crypto
@@ -218,7 +254,9 @@ class StorageService {
    * @returns {Promise<Buffer>} File buffer
    */
   async downloadFile(storagePath) {
-    if (this.storageType === 'gcs') {
+    if (this.storageType === 'vercel-blob') {
+      return this.blobStorage.downloadFile(storagePath);
+    } else if (this.storageType === 'gcs') {
       return this.downloadFromGCS(storagePath);
     } else {
       return this.downloadFromLocal(storagePath);
@@ -256,7 +294,9 @@ class StorageService {
    * @returns {Promise<void>}
    */
   async deleteFile(storagePath) {
-    if (this.storageType === 'gcs') {
+    if (this.storageType === 'vercel-blob') {
+      return this.blobStorage.deleteFile(storagePath);
+    } else if (this.storageType === 'gcs') {
       return this.deleteFromGCS(storagePath);
     } else {
       return this.deleteFromLocal(storagePath);
@@ -296,9 +336,13 @@ class StorageService {
    * @returns {Promise<string>} Signed URL
    */
   async getSignedUrl(storagePath, expiresIn = 60 * 60 * 1000) {
+    if (this.storageType === 'vercel-blob') {
+      return this.blobStorage.getSignedUrl(storagePath, expiresIn);
+    }
+
     if (this.storageType !== 'gcs') {
       throw new Error(
-        'Signed URLs are only available for Google Cloud Storage',
+        'Signed URLs are only available for Google Cloud Storage and Vercel Blob',
       );
     }
 
@@ -321,7 +365,9 @@ class StorageService {
    * @returns {Promise<boolean>}
    */
   async fileExists(storagePath) {
-    if (this.storageType === 'gcs') {
+    if (this.storageType === 'vercel-blob') {
+      return this.blobStorage.fileExists(storagePath);
+    } else if (this.storageType === 'gcs') {
       const file = this.bucket.file(storagePath);
       const [exists] = await file.exists();
       return exists;

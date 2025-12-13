@@ -3,7 +3,7 @@ import { inject as service } from '@ember/service';
 
 export default class MyPermitsPermitRoute extends Route {
   @service('current-user') currentUser;
-  @service api;
+  @service('hybrid-api') hybridApi;
   @service notifications;
   @service router;
 
@@ -11,44 +11,38 @@ export default class MyPermitsPermitRoute extends Route {
     try {
       const permitId = params.permit_id;
 
-      // Load permit details
-      const permitResponse = await this.api.get(`/permits/${permitId}`);
+      // Load permit details using local-first strategy
+      const permitResponse = await this.hybridApi.get(`/permits/${permitId}`);
       const permit = permitResponse;
 
       // Extract municipalityId - handle both string and ObjectId
       const municipalityId =
         permit.municipalityId?._id || permit.municipalityId;
 
-      // Load inspections if any
-      let inspections = [];
-      try {
-        const inspectionsResponse = await this.api.get(
-          `/municipalities/${municipalityId}/permits/${permitId}/inspections`,
-        );
-        inspections = inspectionsResponse.inspections || [];
-      } catch (error) {
-        console.log('No inspections found or error loading:', error.message);
-      }
+      // Load all permit data in parallel using local-first strategy
+      const [inspectionsResponse, filesResponse, commentsResponse] =
+        await Promise.allSettled([
+          this.hybridApi.get(`/permits/${permitId}/inspections`),
+          this.hybridApi.get(`/permits/${permitId}/files`),
+          this.hybridApi.get(
+            `/municipalities/${municipalityId}/permits/${permitId}/comments`,
+          ),
+        ]);
 
-      // Load documents/files
-      let files = [];
-      try {
-        const filesResponse = await this.api.get(`/permits/${permitId}/files`);
-        files = filesResponse.files || [];
-      } catch (error) {
-        console.log('No files found or error loading:', error.message);
-      }
+      const inspections =
+        inspectionsResponse.status === 'fulfilled'
+          ? inspectionsResponse.value?.inspections || []
+          : [];
 
-      // Load comments/communications
-      let comments = [];
-      try {
-        const commentsResponse = await this.api.get(
-          `/municipalities/${municipalityId}/permits/${permitId}/comments`,
-        );
-        comments = commentsResponse.comments || [];
-      } catch (error) {
-        console.log('No comments found or error loading:', error.message);
-      }
+      const files =
+        filesResponse.status === 'fulfilled'
+          ? filesResponse.value?.files || []
+          : [];
+
+      const comments =
+        commentsResponse.status === 'fulfilled'
+          ? commentsResponse.value?.comments || []
+          : [];
 
       return {
         permit,
