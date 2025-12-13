@@ -17,19 +17,11 @@ export function initialize(application) {
 }
 
 function addSecurityHeaders() {
+  // Note: X-Frame-Options, X-Content-Type-Options, and X-XSS-Protection
+  // can only be set as HTTP headers by the server, not via meta tags.
+  // These should be configured in your server (Express.js) instead.
+
   const headers = [
-    {
-      name: 'X-Content-Type-Options',
-      content: 'nosniff',
-    },
-    {
-      name: 'X-Frame-Options',
-      content: 'SAMEORIGIN',
-    },
-    {
-      name: 'X-XSS-Protection',
-      content: '1; mode=block',
-    },
     {
       name: 'Referrer-Policy',
       content: 'strict-origin-when-cross-origin',
@@ -37,7 +29,7 @@ function addSecurityHeaders() {
     {
       name: 'Content-Security-Policy',
       content:
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.quilljs.com; connect-src 'self' ws: wss: http://localhost:3000 https://avitar-suite.vercel.app https://api.stripe.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' http://localhost:3000 https://avitar-suite.vercel.app https://js.stripe.com https://hooks.stripe.com",
+        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.quilljs.com; connect-src 'self' ws: wss: http://localhost:3000 https://avitar-suite.vercel.app https://nhbuildingpermits.com https://api.stripe.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' http://localhost:3000 https://avitar-suite.vercel.app https://js.stripe.com https://hooks.stripe.com",
     },
   ];
 

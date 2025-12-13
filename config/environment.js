@@ -49,8 +49,10 @@ module.exports = function (environment) {
 
   if (environment === 'production') {
     // Production API configuration
+    // IMPORTANT: This should point to your backend server (Railway/Render/etc)
+    // NOT to Vercel (which only hosts the frontend)
     ENV.APP.API_HOST =
-      process.env.API_HOST || 'https://avitar-suite.vercel.app';
+      process.env.API_HOST || 'https://YOUR-BACKEND-URL-HERE.railway.app';
 
     // Use production Stripe key
     ENV.APP.STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY_PROD;

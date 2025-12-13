@@ -102,10 +102,27 @@ app.use(
   }),
 );
 
-// CORS configuration
+// CORS configuration - allow multiple frontend origins
+const allowedOrigins = [
+  'http://localhost:4202',
+  'http://localhost:4200',
+  'https://avitar-suite.vercel.app',
+  'https://nhbuildingpermits.com',
+  'https://www.nhbuildingpermits.com',
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:4202',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || process.env.CLIENT_URL === origin) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
