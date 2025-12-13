@@ -53,14 +53,24 @@ CLIENT_URL=https://nhbuildingpermits.com
 
 Set these in Vercel Dashboard → Settings → Environment Variables:
 
+**IMPORTANT**: When adding each variable, check **Preview** and **Development** scopes!
+
 ```env
-# Required
+# Required - Database
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/avitar-suite-test
+
+# Required - Authentication
 JWT_SECRET=your_testing_secret_different_from_prod
+
+# Required - Stripe TEST Keys
 STRIPE_SECRET_KEY=sk_test_xxxxx
+
 STRIPE_PUBLISHABLE_KEY_DEV=pk_test_51Ry0pQPwDwYyKZRmjUN3pTiFmiXqJTDmzYMR1aOMRI3LFAsrdNPAkZematdPddSbISDYBMW8INyGj3PzSXeqx6l300MfWguBil
-STRIPE_PUBLISHABLE_KEY=pk_test_xxxxx
+
+# Optional - Only needed if using webhooks
 STRIPE_WEBHOOK_SECRET=whsec_test_xxxxx
+
+# Required - Environment settings
 NODE_ENV=development
 EMBER_ENV=development
 VERCEL=1
@@ -68,6 +78,13 @@ CLIENT_URL=https://ninjatesting.nhbuildingpermits.com
 ```
 
 **CRITICAL**: Use separate MongoDB databases for testing and production!
+
+**Minimum Required to Fix 500 Error:**
+The preview deployment needs at least these 4 variables:
+1. `MONGODB_URI` - Your MongoDB connection string
+2. `JWT_SECRET` - Any random 32+ character string
+3. `STRIPE_SECRET_KEY` - Your test key starting with `sk_test_`
+4. `VERCEL=1` - Tells the app it's running on Vercel
 
 ### 3. Configure Custom Domains in Vercel
 

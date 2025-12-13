@@ -5,13 +5,19 @@ const {
 } = require('../config/subscriptionPlans');
 
 // Initialize Stripe with secret key
-// Use DEV keys in development, PROD keys in production
+// Priority: env-specific key > fallback to generic key
 const stripeSecretKey =
   process.env.NODE_ENV === 'production'
-    ? process.env.STRIPE_SECRET_KEY_PROD
-    : process.env.STRIPE_SECRET_KEY_DEV;
+    ? process.env.STRIPE_SECRET_KEY_PROD || process.env.STRIPE_SECRET_KEY
+    : process.env.STRIPE_SECRET_KEY_DEV || process.env.STRIPE_SECRET_KEY;
 
-const stripe = new Stripe(stripeSecretKey);
+if (!stripeSecretKey) {
+  console.error(
+    '❌ STRIPE_SECRET_KEY not found in environment variables. Stripe features will not work.',
+  );
+}
+
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 
 /**
  * Stripe Service
@@ -20,9 +26,21 @@ const stripe = new Stripe(stripeSecretKey);
  */
 
 /**
+ * Check if Stripe is initialized
+ */
+function ensureStripeInitialized() {
+  if (!stripe) {
+    throw new Error(
+      'Stripe is not initialized. Please set STRIPE_SECRET_KEY environment variable.',
+    );
+  }
+}
+
+/**
  * Create a Stripe customer for a contractor
  */
 async function createCustomer(contractor, user) {
+  ensureStripeInitialized();
   try {
     const customer = await stripe.customers.create({
       email: user.email,
@@ -44,6 +62,7 @@ async function createCustomer(contractor, user) {
  * Create a Setup Intent for adding payment methods
  */
 async function createSetupIntent(customerId) {
+  ensureStripeInitialized();
   try {
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
@@ -61,6 +80,7 @@ async function createSetupIntent(customerId) {
  * Attach a payment method to a customer
  */
 async function attachPaymentMethod(paymentMethodId, customerId) {
+  ensureStripeInitialized();
   try {
     const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
       customer: customerId,
@@ -459,10 +479,21 @@ async function listInvoices(customerId, limit = 10) {
  * Handle Stripe webhook events
  */
 function constructWebhookEvent(payload, signature) {
+  ensureStripeInitialized();
+
+  // Priority: env-specific secret > fallback to generic secret
   const webhookSecret =
     process.env.NODE_ENV === 'production'
-      ? process.env.STRIPE_WEBHOOK_SECRET_PROD
-      : process.env.STRIPE_WEBHOOK_SECRET_DEV;
+      ? process.env.STRIPE_WEBHOOK_SECRET_PROD ||
+        process.env.STRIPE_WEBHOOK_SECRET
+      : process.env.STRIPE_WEBHOOK_SECRET_DEV ||
+        process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    throw new Error(
+      'STRIPE_WEBHOOK_SECRET not configured. Cannot verify webhook signatures.',
+    );
+  }
 
   try {
     const event = stripe.webhooks.constructEvent(
