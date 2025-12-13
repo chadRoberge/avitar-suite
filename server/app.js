@@ -109,6 +109,7 @@ const allowedOrigins = [
   'https://avitar-suite.vercel.app',
   'https://nhbuildingpermits.com',
   'https://www.nhbuildingpermits.com',
+  'https://ninjatesting.nhbuildingpermits.com', // Testing environment
 ];
 
 app.use(

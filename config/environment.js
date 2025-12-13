@@ -30,9 +30,15 @@ module.exports = function (environment) {
     // ENV.APP.LOG_TRANSITIONS = true;
     // ENV.APP.LOG_TRANSITIONS_INTERNAL = true;
     // ENV.APP.LOG_VIEW_LOOKUPS = true;
+
     // Development API configuration
-    // Use relative URLs for Vercel, localhost for local development
+    // Use relative URLs for Vercel (serverless), localhost for local development
     ENV.APP.API_HOST = process.env.VERCEL ? '' : 'http://localhost:3000';
+
+    // Use test Stripe key for development deployments
+    ENV.APP.STRIPE_PUBLISHABLE_KEY =
+      process.env.STRIPE_PUBLISHABLE_KEY_DEV ||
+      'pk_test_51Ry0pQPwDwYyKZRmjUN3pTiFmiXqJTDmzYMR1aOMRI3LFAsrdNPAkZematdPddSbISDYBMW8INyGj3PzSXeqx6l300MfWguBil';
   }
 
   if (environment === 'test') {
@@ -49,13 +55,14 @@ module.exports = function (environment) {
 
   if (environment === 'production') {
     // Production API configuration
-    // IMPORTANT: This should point to your backend server (Railway/Render/etc)
-    // NOT to Vercel (which only hosts the frontend)
-    ENV.APP.API_HOST =
-      process.env.API_HOST || 'https://YOUR-BACKEND-URL-HERE.railway.app';
+    // Use relative URLs for Vercel serverless (API served from same domain)
+    // Or specify custom backend URL via API_HOST env var
+    ENV.APP.API_HOST = process.env.API_HOST || '';
 
     // Use production Stripe key
-    ENV.APP.STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY_PROD;
+    ENV.APP.STRIPE_PUBLISHABLE_KEY =
+      process.env.STRIPE_PUBLISHABLE_KEY_PROD ||
+      process.env.STRIPE_PUBLISHABLE_KEY;
 
     // Production Performance Optimizations
     ENV.APP.PRODUCTION_CONFIG = {

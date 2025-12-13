@@ -26,7 +26,13 @@
       "dest": "/dist/$1"
     }
   ],
+  "build": {
+    "env": {
+      "NODE_ENV": "development",
+      "EMBER_ENV": "development"
+    }
+  },
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "development"
   }
 }
