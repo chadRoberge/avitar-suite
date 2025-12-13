@@ -2,7 +2,10 @@
 // This will be fixed in future versions of mongoose
 process.removeAllListeners('warning');
 process.on('warning', (warning) => {
-  if (warning.name === 'DeprecationWarning' && warning.message.includes('punycode')) {
+  if (
+    warning.name === 'DeprecationWarning' &&
+    warning.message.includes('punycode')
+  ) {
     return; // Suppress punycode deprecation warnings
   }
   console.warn(warning.name, warning.message);
@@ -19,6 +22,7 @@ const connectDB = require('./config/database');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 const municipalityRoutes = require('./routes/municipalities');
 const municipalitySubscriptionRoutes = require('./routes/municipalitySubscriptions');
 const municipalityConnectedAccountsRoutes = require('./routes/municipalityConnectedAccounts');
@@ -54,6 +58,7 @@ const ownerRoutes = require('./routes/owners');
 const importRoutes = require('./routes/import');
 const permitRoutes = require('./routes/permits');
 const permitTypeRoutes = require('./routes/permitTypes');
+const projectTypeRoutes = require('./routes/projectTypes');
 const contractorRoutes = require('./routes/contractors');
 const contractorVerificationRoutes = require('./routes/contractorVerification');
 const subscriptionRoutes = require('./routes/subscriptions');
@@ -134,6 +139,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api', userRoutes);
 app.use('/api', waterfrontAttributeRoutes); // Move before municipalities to avoid conflicts
 app.use('/api', waterBodyRoutes);
 app.use('/api/municipalities', municipalityRoutes);
@@ -168,6 +174,7 @@ app.use('/api', ownerRoutes);
 app.use('/api', importRoutes);
 app.use('/api', permitRoutes);
 app.use('/api', permitTypeRoutes);
+app.use('/api', projectTypeRoutes);
 app.use('/api/contractors', contractorRoutes);
 app.use('/api/contractor-verification', contractorVerificationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);

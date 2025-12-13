@@ -472,17 +472,19 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
       if (sketchId && existingSketch) {
         // Update existing sketch
         // Strip temporary IDs from shapes before updating
-        const cleanedShapes = (editedSketch.shapes || []).map(shape => {
+        const cleanedShapes = (editedSketch.shapes || []).map((shape) => {
           const { _id: shapeId, ...shapeWithoutId } = shape;
 
           // Also clean description _ids if they exist
-          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(desc => {
-            if (desc._id && desc._id.toString().startsWith('temp-')) {
-              const { _id, ...descWithoutId } = desc;
-              return descWithoutId;
-            }
-            return desc;
-          });
+          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(
+            (desc) => {
+              if (desc._id && desc._id.toString().startsWith('temp-')) {
+                const { _id, ...descWithoutId } = desc;
+                return descWithoutId;
+              }
+              return desc;
+            },
+          );
 
           // Only include _id if it's a real MongoDB ObjectId (not a temp ID)
           if (shapeId && !shapeId.toString().startsWith('temp-')) {
@@ -505,17 +507,24 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
         // After successful save, fetch fresh property data and update cache
         try {
-          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+          const freshProperty = await this.api.get(
+            `/properties/${this.model.property.id}`,
+          );
 
           if (freshProperty && freshProperty.property) {
             // Update local storage cache
             const cacheKey = `_properties_${this.model.property.id}`;
-            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+            this.assessing.localApi.localStorage.set(
+              `item_${cacheKey}`,
+              freshProperty,
+            );
 
             // Also update in-memory property cache
             this.propertyCache.set(this.model.property.id, freshProperty);
 
-            console.log('✅ Updated cache with fresh property data after sketch update');
+            console.log(
+              '✅ Updated cache with fresh property data after sketch update',
+            );
           }
         } catch (error) {
           console.warn('Could not update cache after sketch save:', error);
@@ -544,17 +553,19 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
         const { _id, ...sketchWithoutId } = editedSketch;
 
         // Strip temporary IDs from shapes (they start with "temp-")
-        const cleanedShapes = (sketchWithoutId.shapes || []).map(shape => {
+        const cleanedShapes = (sketchWithoutId.shapes || []).map((shape) => {
           const { _id: shapeId, ...shapeWithoutId } = shape;
 
           // Also clean description _ids if they exist
-          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(desc => {
-            if (desc._id && desc._id.toString().startsWith('temp-')) {
-              const { _id, ...descWithoutId } = desc;
-              return descWithoutId;
-            }
-            return desc;
-          });
+          const cleanedDescriptions = (shapeWithoutId.descriptions || []).map(
+            (desc) => {
+              if (desc._id && desc._id.toString().startsWith('temp-')) {
+                const { _id, ...descWithoutId } = desc;
+                return descWithoutId;
+              }
+              return desc;
+            },
+          );
 
           // Only include _id if it's a real MongoDB ObjectId (not a temp ID)
           if (shapeId && !shapeId.toString().startsWith('temp-')) {
@@ -579,17 +590,24 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
         // After successful save, fetch fresh property data and update cache
         try {
-          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+          const freshProperty = await this.api.get(
+            `/properties/${this.model.property.id}`,
+          );
 
           if (freshProperty && freshProperty.property) {
             // Update local storage cache
             const cacheKey = `_properties_${this.model.property.id}`;
-            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+            this.assessing.localApi.localStorage.set(
+              `item_${cacheKey}`,
+              freshProperty,
+            );
 
             // Also update in-memory property cache
             this.propertyCache.set(this.model.property.id, freshProperty);
 
-            console.log('✅ Updated cache with fresh property data after sketch creation');
+            console.log(
+              '✅ Updated cache with fresh property data after sketch creation',
+            );
           }
         } catch (error) {
           console.warn('Could not update cache after sketch save:', error);
@@ -750,17 +768,24 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
         // After successful delete, fetch fresh property data and update cache
         try {
-          const freshProperty = await this.api.get(`/properties/${this.model.property.id}`);
+          const freshProperty = await this.api.get(
+            `/properties/${this.model.property.id}`,
+          );
 
           if (freshProperty && freshProperty.property) {
             // Update local storage cache
             const cacheKey = `_properties_${this.model.property.id}`;
-            this.assessing.localApi.localStorage.set(`item_${cacheKey}`, freshProperty);
+            this.assessing.localApi.localStorage.set(
+              `item_${cacheKey}`,
+              freshProperty,
+            );
 
             // Also update in-memory property cache
             this.propertyCache.set(this.model.property.id, freshProperty);
 
-            console.log('✅ Updated cache with fresh property data after sketch deletion');
+            console.log(
+              '✅ Updated cache with fresh property data after sketch deletion',
+            );
           }
         } catch (error) {
           console.warn('Could not update cache after sketch delete:', error);

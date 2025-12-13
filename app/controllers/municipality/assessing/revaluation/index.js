@@ -123,17 +123,23 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
 
     // Filter by property use category (RES, COM, IND, etc.)
     if (this.landUseCategoryFilter !== 'all') {
-      sales = sales.filter((s) => s.property_use_category === this.landUseCategoryFilter);
+      sales = sales.filter(
+        (s) => s.property_use_category === this.landUseCategoryFilter,
+      );
     }
 
     // Filter by specific land use code (R1, R1A, R2, CI, etc.)
     if (this.landUseCodeFilter !== 'all') {
-      sales = sales.filter((s) => s.property_use_code === this.landUseCodeFilter);
+      sales = sales.filter(
+        (s) => s.property_use_code === this.landUseCodeFilter,
+      );
     }
 
     // Filter by building rate (base type code)
     if (this.buildingRateFilter !== 'all') {
-      sales = sales.filter((s) => s.base_type?.code === this.buildingRateFilter);
+      sales = sales.filter(
+        (s) => s.base_type?.code === this.buildingRateFilter,
+      );
     }
 
     return sales;
@@ -231,10 +237,10 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
     const landCodes = this.model.landCodes;
     return [
       { value: 'all', label: 'All Land Use Codes' },
-      ...landCodes.map(land => ({
+      ...landCodes.map((land) => ({
         value: land.code,
-        label: `${land.code} - ${land.displayText || land.landUseType || ''}`
-      }))
+        label: `${land.code} - ${land.displayText || land.landUseType || ''}`,
+      })),
     ];
   }
 
@@ -245,10 +251,10 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
     const buildingCodes = this.model.buildingCodes;
     return [
       { value: 'all', label: 'All Building Codes' },
-      ...buildingCodes.map(building => ({
+      ...buildingCodes.map((building) => ({
         value: building.code,
-        label: `${building.code} - ${building.description || ''}`
-      }))
+        label: `${building.code} - ${building.description || ''}`,
+      })),
     ];
   }
 
@@ -333,7 +339,10 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
         this.propertySelection.setSelectedProperty(property);
 
         // Navigate to the general tab for this property
-        this.router.transitionTo('municipality.assessing.general.property', sale.property_id);
+        this.router.transitionTo(
+          'municipality.assessing.general.property',
+          sale.property_id,
+        );
       } catch (error) {
         console.error('Error loading property:', error);
         this.notifications.error('Failed to load property details');
@@ -355,9 +364,7 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
   toggleSaleSelection(sale) {
     const index = this.selectedSales.findIndex((s) => s._id === sale._id);
     if (index > -1) {
-      this.selectedSales = this.selectedSales.filter(
-        (s) => s._id !== sale._id,
-      );
+      this.selectedSales = this.selectedSales.filter((s) => s._id !== sale._id);
     } else {
       this.selectedSales = [...this.selectedSales, sale];
     }
@@ -389,9 +396,7 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
 
   @action
   exportToSpreadsheet() {
-    this.notifications.info(
-      'Spreadsheet export functionality coming soon',
-    );
+    this.notifications.info('Spreadsheet export functionality coming soon');
   }
 
   @action
@@ -610,8 +615,9 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
         );
       }
       if (this.newSheetMinAcreage) {
-        sheetData.sheet_settings.min_acreage =
-          parseFloat(this.newSheetMinAcreage);
+        sheetData.sheet_settings.min_acreage = parseFloat(
+          this.newSheetMinAcreage,
+        );
       }
       if (this.newSheetBuildingCodeId) {
         sheetData.sheet_settings.building_code_id = this.newSheetBuildingCodeId;
@@ -691,9 +697,7 @@ export default class MunicipalityAssessingRevaluationIndexController extends Con
 
   @action
   removeTimeTrendEntry(index) {
-    this.timeTrendEntries = this.timeTrendEntries.filter(
-      (_, i) => i !== index,
-    );
+    this.timeTrendEntries = this.timeTrendEntries.filter((_, i) => i !== index);
   }
 
   @action

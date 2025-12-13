@@ -18,7 +18,9 @@ module.exports = function (environment) {
       // Here you can pass flags/options to your application instance
       // when it is created
       API_HOST: process.env.API_HOST || 'http://localhost:3000',
-      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY_DEV || 'pk_test_51Ry0pQPwDwYyKZRmjUN3pTiFmiXqJTDmzYMR1aOMRI3LFAsrdNPAkZematdPddSbISDYBMW8INyGj3PzSXeqx6l300MfWguBil',
+      STRIPE_PUBLISHABLE_KEY:
+        process.env.STRIPE_PUBLISHABLE_KEY_DEV ||
+        'pk_test_51Ry0pQPwDwYyKZRmjUN3pTiFmiXqJTDmzYMR1aOMRI3LFAsrdNPAkZematdPddSbISDYBMW8INyGj3PzSXeqx6l300MfWguBil',
     },
   };
 

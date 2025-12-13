@@ -9,7 +9,7 @@ export default class MunicipalityBuildingPermitsRoute extends Route {
   async model() {
     // Check if user has read access to building permits module
     // hasModulePermission already checks for Avitar staff and returns true for them
-    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+    if (!this.currentUser.hasModulePermission('building_permit', 'read')) {
       return {
         accessDenied: true,
         moduleName: 'Building Permits',

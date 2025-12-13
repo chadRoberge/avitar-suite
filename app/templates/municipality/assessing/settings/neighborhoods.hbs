@@ -306,17 +306,28 @@
       
       
       {{#if this.landTaxationCategories.length}}
-        <div class="avitar-alert avitar-alert--info">
+        <div class="avitar-alert avitar-alert--info avitar-mb-4">
           <div class="avitar-alert__icon">
             <i class="fas fa-info-circle"></i>
           </div>
           <div class="avitar-alert__content">
             <div class="avitar-alert__title">Taxation Category Usage</div>
             <div class="avitar-alert__message">
-              These categories determine how different types of properties are taxed. 
+              These categories determine how different types of properties are taxed.
               0% = fully exempt, 100% = fully taxable. Intermediate values create partial exemptions.
             </div>
           </div>
+        </div>
+
+        <div class="avitar-flex avitar-justify-end">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.saveTaxationCategories}}
+          >
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Taxation Categories
+          </button>
         </div>
       {{/if}}
     </div>

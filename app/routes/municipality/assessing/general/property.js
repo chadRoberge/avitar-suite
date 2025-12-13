@@ -169,7 +169,8 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
     // Calculate CARD-SPECIFIC total from components
     // Only include land value for Card 1 (base land is parcel-level, only Card 1 gets it)
     const cardLandValue = parseInt(cardNumber) === 1 ? landValue : 0;
-    const cardTotalFromComponents = buildingValue + cardLandValue + featuresValue;
+    const cardTotalFromComponents =
+      buildingValue + cardLandValue + featuresValue;
     const cardProvidedTotal =
       assessment?.total_value ||
       assessment?.total ||
@@ -179,7 +180,9 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
 
     // Card-specific assessment total
     const currentCardAssessment =
-      cardProvidedTotal > cardTotalFromComponents ? cardProvidedTotal : cardTotalFromComponents;
+      cardProvidedTotal > cardTotalFromComponents
+        ? cardProvidedTotal
+        : cardTotalFromComponents;
 
     // PARCEL total (sum of all cards) - use assessment_summary if available
     // This is the correct parcel total that includes all cards
@@ -216,7 +219,12 @@ export default class MunicipalityAssessingGeneralPropertyRoute extends Route {
 
     // Preserve cards data from currently selected property if not present in new data
     const currentProperty = this.propertySelection.selectedProperty;
-    if (currentProperty && currentProperty.id === property.id && currentProperty.cards && !enhanced.cards) {
+    if (
+      currentProperty &&
+      currentProperty.id === property.id &&
+      currentProperty.cards &&
+      !enhanced.cards
+    ) {
       console.log('🃏 Route preserving cards data for property', property.id);
       enhanced.cards = currentProperty.cards;
     }

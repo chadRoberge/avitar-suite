@@ -1,0 +1,172 @@
+{{#if @isOpen}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;"
+    {{on "click" this.closeModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      style="position: relative; z-index: 10000;"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "upload" class="avitar-mr-2"}}
+          Upload Documents
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeModal}}
+        >
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! File Selection }}
+          <div>
+            <label class="avitar-label">
+              Select Files
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="file"
+              class="avitar-input"
+              multiple
+              {{on "change" this.handleFileSelection}}
+            />
+            {{#if this.selectedFiles.length}}
+              <div class="avitar-mt-2 avitar-text-sm avitar-text-muted">
+                {{this.selectedFiles.length}}
+                file(s) selected
+              </div>
+            {{/if}}
+          </div>
+
+          {{! Folder }}
+          <div>
+            <label class="avitar-label">
+              Folder
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="/ or /folder or /folder/subfolder"
+              value={{this.uploadFolder}}
+              list="folder-suggestions"
+              {{on "input" this.updateUploadFolder}}
+            />
+            <datalist id="folder-suggestions">
+              {{#each this.folderOptions as |folderOption|}}
+                <option value={{folderOption.value}}>{{folderOption.label}}</option>
+              {{/each}}
+            </datalist>
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Type a folder path to create a new folder, or select from existing folders
+            </div>
+          </div>
+
+          {{! Category (optional) }}
+          {{#if this.showCategory}}
+            <div>
+              <label class="avitar-label">Category</label>
+              <select
+                class="avitar-select"
+                value={{this.uploadCategory}}
+                {{on "change" this.updateUploadCategory}}
+              >
+                {{#each this.categoryOptions as |categoryOption|}}
+                  <option
+                    value={{categoryOption.value}}
+                    selected={{eq this.uploadCategory categoryOption.value}}
+                  >
+                    {{categoryOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          {{/if}}
+
+          {{! Description }}
+          <div>
+            <label class="avitar-label">Description</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              placeholder="Optional description for all files..."
+              value={{this.uploadDescription}}
+              {{on "input" this.updateUploadDescription}}
+            ></textarea>
+          </div>
+
+          {{! Tags }}
+          <div>
+            <label class="avitar-label">Tags</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="Comma-separated tags"
+              value={{this.uploadTags}}
+              {{on "input" this.updateUploadTags}}
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Enter tags separated by commas
+            </div>
+          </div>
+
+          {{! Visibility }}
+          <div>
+            <label class="avitar-label">
+              Visibility
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              class="avitar-select"
+              value={{this.uploadVisibility}}
+              {{on "change" this.updateUploadVisibility}}
+            >
+              {{#each this.visibilityOptions as |visOption|}}
+                <option
+                  value={{visOption.value}}
+                  selected={{eq this.uploadVisibility visOption.value}}
+                >
+                  {{visOption.label}}
+                  - {{visOption.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.uploadDocuments}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            {{lnr-icon "sync" class="avitar-mr-2"}}
+            Uploading...
+          {{else}}
+            {{lnr-icon "upload" class="avitar-mr-2"}}
+            Upload
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

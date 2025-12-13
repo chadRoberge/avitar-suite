@@ -31,7 +31,9 @@ function calculateTotalAssessedValue({
 }) {
   // Round each component to nearest hundred first
   // EXCEPT land value if it has current use assessment (must be exact)
-  const roundedLand = hasCurrentUse ? landValue : roundToNearestHundred(landValue);
+  const roundedLand = hasCurrentUse
+    ? landValue
+    : roundToNearestHundred(landValue);
   const roundedBuilding = roundToNearestHundred(buildingValue);
   const roundedFeatures = roundToNearestHundred(featuresValue);
   const roundedSketch = roundToNearestHundred(sketchValue);
@@ -82,9 +84,7 @@ async function getPropertyAssessmentComponents(
     if (cardNumber) {
       buildingQuery.card_number = cardNumber;
     }
-    const buildingAssessments = await BuildingAssessment.find(
-      buildingQuery,
-    )
+    const buildingAssessments = await BuildingAssessment.find(buildingQuery)
       .sort({ effective_year: -1 })
       .populate('base_type', 'code description rate depreciation buildingType')
       .populate('frame', 'displayText points featureType')
@@ -137,7 +137,8 @@ async function getPropertyAssessmentComponents(
 
       console.log(`🌳 LAND CALCULATION - Card ${cardNumber}:`, {
         cardNumber,
-        baseLandValue: landAssessment?.calculated_totals?.totalAssessedValue || 0,
+        baseLandValue:
+          landAssessment?.calculated_totals?.totalAssessedValue || 0,
         cardFeaturesFound: !!cardFeatures,
         cardFeaturesCardNumber: cardFeatures?.card_number,
         viewValue: cardFeatures?.land?.view_value || 0,
@@ -147,24 +148,34 @@ async function getPropertyAssessmentComponents(
       if (cardNumber === 1) {
         // Card 1 gets base land value + card-specific features
         landValue = landAssessment?.calculated_totals?.totalAssessedValue || 0;
-        console.log(`🌳 Card 1 - Starting with base land: $${landValue.toLocaleString()}`);
+        console.log(
+          `🌳 Card 1 - Starting with base land: $${landValue.toLocaleString()}`,
+        );
 
         if (cardFeatures?.land) {
           const viewValue = cardFeatures.land.view_value || 0;
           const waterfrontValue = cardFeatures.land.waterfront_value || 0;
           landValue += viewValue + waterfrontValue;
-          console.log(`🌳 Card 1 - Added view ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`);
+          console.log(
+            `🌳 Card 1 - Added view ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`,
+          );
         }
       } else {
         // Card 2+ gets only card-specific view/waterfront values
-        console.log(`🌳 Card ${cardNumber} - Should get ONLY view/waterfront (NO base land)`);
+        console.log(
+          `🌳 Card ${cardNumber} - Should get ONLY view/waterfront (NO base land)`,
+        );
         if (cardFeatures?.land) {
           const viewValue = cardFeatures.land.view_value || 0;
           const waterfrontValue = cardFeatures.land.waterfront_value || 0;
           landValue = viewValue + waterfrontValue;
-          console.log(`🌳 Card ${cardNumber} - View ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`);
+          console.log(
+            `🌳 Card ${cardNumber} - View ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`,
+          );
         } else {
-          console.log(`🌳 Card ${cardNumber} - No card features found, land value = $0`);
+          console.log(
+            `🌳 Card ${cardNumber} - No card features found, land value = $0`,
+          );
         }
       }
 
@@ -178,7 +189,10 @@ async function getPropertyAssessmentComponents(
         cardNumber: cardNumber,
       };
 
-      console.log(`🌳 FINAL LAND VALUE for Card ${cardNumber}: $${landValue.toLocaleString()}`, landComponents);
+      console.log(
+        `🌳 FINAL LAND VALUE for Card ${cardNumber}: $${landValue.toLocaleString()}`,
+        landComponents,
+      );
     } else {
       // Property-wide calculation (sum all cards)
       landValue = landAssessment?.calculated_totals?.totalAssessedValue || 0;
@@ -242,7 +256,7 @@ async function getPropertyAssessmentComponents(
     // Check both top-level credit AND individual land lines
     const topLevelCredit = (landAssessment?.current_use_credit || 0) > 0;
     const landLineCredits = (landAssessment?.land_use_details || []).some(
-      (line) => (line.currentUseCredit || 0) > 0
+      (line) => (line.currentUseCredit || 0) > 0,
     );
     const hasCurrentUse = topLevelCredit || landLineCredits;
 
@@ -251,9 +265,9 @@ async function getPropertyAssessmentComponents(
       topLevelCredit,
       landLineCredits,
       currentUseCredit: landAssessment?.current_use_credit || 0,
-      landLinesWithCredit: (landAssessment?.land_use_details || [])
-        .filter((line) => (line.currentUseCredit || 0) > 0)
-        .length,
+      landLinesWithCredit: (landAssessment?.land_use_details || []).filter(
+        (line) => (line.currentUseCredit || 0) > 0,
+      ).length,
       propertyId,
       cardNumber: cardNumber || 'all cards',
     });
@@ -655,14 +669,23 @@ async function updateCardAssessment(
 
     // Get building assessment ID for reference
     let buildingAssessmentId = null;
-    if (components.components.buildings && components.components.buildings.length > 0) {
+    if (
+      components.components.buildings &&
+      components.components.buildings.length > 0
+    ) {
       buildingAssessmentId = components.components.buildings[0]._id;
     }
 
     // Don't round land if it has current use
-    const roundedLandValue = components.hasCurrentUse ? components.landValue : roundToNearestHundred(components.landValue);
-    const roundedBuildingValue = roundToNearestHundred(components.buildingValue);
-    const roundedFeaturesValue = roundToNearestHundred(components.featuresValue);
+    const roundedLandValue = components.hasCurrentUse
+      ? components.landValue
+      : roundToNearestHundred(components.landValue);
+    const roundedBuildingValue = roundToNearestHundred(
+      components.buildingValue,
+    );
+    const roundedFeaturesValue = roundToNearestHundred(
+      components.featuresValue,
+    );
 
     console.log(`  📊 Card ${cardNumber} Final Assessment:`, {
       hasCurrentUse: components.hasCurrentUse,
@@ -818,7 +841,8 @@ async function updateParcelAssessment(
       parcelAssessment.card_assessments = cardAssessments;
       parcelAssessment.land_allocation = landAllocation;
       parcelAssessment.last_calculated = new Date();
-      parcelAssessment.calculation_trigger = options.trigger || 'building_update';
+      parcelAssessment.calculation_trigger =
+        options.trigger || 'building_update';
       parcelAssessment.calculated_by = options.userId || null;
       parcelAssessment.previous_total = previousTotal;
       parcelAssessment.change_amount = changeAmount;

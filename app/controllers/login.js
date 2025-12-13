@@ -95,14 +95,22 @@ export default class LoginController extends Controller {
 
     try {
       // Client-side validation
-      if (!this.signupFirstName || !this.signupLastName || !this.signupEmail || !this.signupPassword || !this.signupConfirmPassword) {
+      if (
+        !this.signupFirstName ||
+        !this.signupLastName ||
+        !this.signupEmail ||
+        !this.signupPassword ||
+        !this.signupConfirmPassword
+      ) {
         throw new Error('Please fill in all fields');
       }
 
       // Additional validation for commercial accounts
       if (this.signupUserType === 'commercial') {
         if (!this.signupBusinessName || !this.signupBusinessType) {
-          throw new Error('Business name and type are required for commercial accounts');
+          throw new Error(
+            'Business name and type are required for commercial accounts',
+          );
         }
       }
 

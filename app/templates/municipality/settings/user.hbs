@@ -1,0 +1,381 @@
+{{page-title "User Details"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Back button }}
+  <div class="avitar-mb-4">
+    <button type="button" class="avitar-btn avitar-btn--ghost avitar-btn--sm" {{on "click" this.backToUsers}}>
+      {{{lnr-icon "arrow-left"}}}
+      <span class="avitar-ml-2">Back to Users</span>
+    </button>
+  </div>
+
+  {{! User Header Card }}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__body avitar-p-4">
+      {{! Top Row: Avatar, Name/Email, Stats, Actions }}
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-gap-6 avitar-mb-3">
+        <div class="avitar-flex avitar-items-center avitar-gap-4">
+          <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-text-lg avitar-font-bold">
+            {{substring @model.user.first_name 0 1}}{{substring @model.user.last_name 0 1}}
+          </div>
+          <div>
+            <h1 class="avitar-text-xl avitar-font-bold avitar-mb-1">
+              {{@model.user.fullName}}
+            </h1>
+            <p class="avitar-text-sm avitar-text-muted">{{@model.user.email}}</p>
+          </div>
+        </div>
+
+        {{! Quick Stats }}
+        <div class="avitar-flex avitar-gap-6 avitar-flex-1 avitar-justify-center">
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+              {{#if @model.user.last_login}}
+                {{date-format @model.user.last_login "MMM DD"}}
+              {{else}}
+                --
+              {{/if}}
+            </div>
+            <div class="avitar-text-xs avitar-text-muted">Last Login</div>
+          </div>
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">{{this.totalLoginsCount}}</div>
+            <div class="avitar-text-xs avitar-text-muted">Total Logins</div>
+          </div>
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">{{this.activeSessionsCount}}</div>
+            <div class="avitar-text-xs avitar-text-muted">Active Sessions</div>
+          </div>
+          <div class="avitar-text-center">
+            <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+              {{date-format @model.user.createdAt "MMM YYYY"}}
+            </div>
+            <div class="avitar-text-xs avitar-text-muted">Member Since</div>
+          </div>
+        </div>
+
+        {{#if @model.canEdit}}
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.openEditModal}}>
+            {{{lnr-icon "pencil"}}}
+            <span class="avitar-ml-2">Edit</span>
+          </button>
+        {{/if}}
+      </div>
+
+      {{! Bottom Row: Badges }}
+      <div class="avitar-flex avitar-gap-2 avitar-items-center avitar-pl-16">
+        <span class="avitar-badge avitar-badge--primary avitar-badge--sm">
+          {{@model.user.global_role}}
+        </span>
+        {{#if @model.user.is_active}}
+          <span class="avitar-badge avitar-badge--success avitar-badge--sm">
+            {{{lnr-icon "checkmark-circle"}}}
+            <span class="avitar-ml-1">Active</span>
+          </span>
+        {{else}}
+          <span class="avitar-badge avitar-badge--danger avitar-badge--sm">
+            {{{lnr-icon "cross-circle"}}}
+            <span class="avitar-ml-1">Inactive</span>
+          </span>
+        {{/if}}
+        {{#if @model.user.two_factor_enabled}}
+          <span class="avitar-badge avitar-badge--info avitar-badge--sm">
+            {{{lnr-icon "lock"}}}
+            <span class="avitar-ml-1">2FA Enabled</span>
+          </span>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  {{! Tabs }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-tabs">
+        <button type="button"
+          class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "overview")}}>
+          {{{lnr-icon "user"}}}
+          <span class="avitar-ml-2">Overview</span>
+        </button>
+        <button type="button"
+          class="avitar-tab {{if (eq this.activeTab 'login-history') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "login-history")}}>
+          {{{lnr-icon "history"}}}
+          <span class="avitar-ml-2">Login History</span>
+          <span class="avitar-badge avitar-badge--sm avitar-badge--primary avitar-ml-2">
+            {{this.totalLoginsCount}}
+          </span>
+        </button>
+        <button type="button"
+          class="avitar-tab {{if (eq this.activeTab 'permission-history') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "permission-history")}}>
+          {{{lnr-icon "list"}}}
+          <span class="avitar-ml-2">Permission History</span>
+          <span class="avitar-badge avitar-badge--sm avitar-badge--primary avitar-ml-2">
+            {{this.permissionHistory.length}}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{! Overview Tab }}
+      {{#if (eq this.activeTab "overview")}}
+        <div class="avitar-flex avitar-flex-row avitar-gap-6">
+          {{! Left Column }}
+          <div class="avitar-flex-2 avitar-space-y-4">
+            {{! Basic Information }}
+            <div>
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Basic Information</h3>
+              <div class="avitar-space-y-2">
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">First Name:</label>
+                  <div class="avitar-text-base avitar-flex-2">{{@model.user.first_name}}</div>
+                </div>
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Last Name:</label>
+                  <div class="avitar-text-base avitar-flex-2">{{@model.user.last_name}}</div>
+                </div>
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Email:</label>
+                  <div class="avitar-text-base avitar-flex-2">{{@model.user.email}}</div>
+                </div>
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Phone:</label>
+                  <div class="avitar-text-base avitar-flex-2">{{or @model.user.phone "Not provided"}}</div>
+                </div>
+              </div>
+            </div>
+
+            {{! Municipal Permission }}
+            <div class="avitar-border-t avitar-pt-4">
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Municipal Permission</h3>
+              <div class="avitar-space-y-2">
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Role:</label>
+                  <div class="avitar-text-base avitar-flex-2">
+                    <span class="avitar-badge avitar-badge--primary">
+                      {{this.displayedPermission.role}}
+                    </span>
+                  </div>
+                </div>
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Department:</label>
+                  <div class="avitar-text-base avitar-flex-2">
+                    {{or this.displayedPermission.department "Not assigned"}}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{! Security Information }}
+            <div class="avitar-border-t avitar-pt-4">
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-3">Security Information</h3>
+              <div class="avitar-space-y-2">
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Two-Factor Auth:</label>
+                  <div class="avitar-text-base avitar-flex-2">
+                    {{#if @model.user.two_factor_enabled}}
+                      <span class="avitar-badge avitar-badge--success">Enabled</span>
+                    {{else}}
+                      <span class="avitar-badge avitar-badge--secondary">Disabled</span>
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="avitar-flex avitar-items-center avitar-gap-3">
+                  <label class="avitar-label avitar-flex-1 avitar-text-right">Login Attempts:</label>
+                  <div class="avitar-text-base avitar-flex-2">{{or @model.user.login_attempts 0}}</div>
+                </div>
+                {{#if @model.user.account_locked_until}}
+                  <div class="avitar-flex avitar-items-center avitar-gap-3">
+                    <label class="avitar-label avitar-flex-1 avitar-text-right">Locked Until:</label>
+                    <div class="avitar-text-base avitar-text-danger avitar-flex-2">
+                      {{date-format @model.user.account_locked_until "MMM DD, YYYY HH:mm"}}
+                    </div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+
+          {{! Right Column - Module Permissions }}
+          <div class="avitar-flex-2">
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">Module Permissions</h3>
+            {{#if this.modulePermissions.length}}
+              <div class="avitar-space-y-3">
+                {{#each this.modulePermissions as |module|}}
+                  <div class="avitar-card avitar-bg-gray-50">
+                    <div class="avitar-card__body avitar-p-3">
+                      <h4 class="avitar-font-semibold avitar-mb-2">{{module.displayName}}</h4>
+                      <div class="avitar-text-sm avitar-text-muted avitar-mb-2">
+                        Role: <span class="avitar-font-medium">{{module.role}}</span>
+                      </div>
+                      <div class="avitar-flex avitar-flex-wrap avitar-gap-2">
+                        {{#each module.permissions as |permission|}}
+                          <span class="avitar-badge avitar-badge--sm avitar-badge--success">
+                            {{{lnr-icon "checkmark"}}}
+                            <span class="avitar-ml-1">{{permission}}</span>
+                          </span>
+                        {{/each}}
+                      </div>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-empty-state avitar-py-8">
+                <i class="fas fa-lock fa-2x avitar-text-muted avitar-mb-3"></i>
+                <p class="avitar-text-muted avitar-text-sm">No module permissions assigned</p>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      {{/if}}
+
+      {{! Login History Tab }}
+      {{#if (eq this.activeTab "login-history")}}
+        <div>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">Recent Login Sessions</h3>
+          {{#if this.recentLoginSessions.length}}
+            <div class="avitar-table-container">
+              <table class="avitar-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Device</th>
+                    <th>Browser</th>
+                    <th>Operating System</th>
+                    <th>IP Address</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each this.recentLoginSessions as |session|}}
+                    <tr>
+                      <td>
+                        <div class="avitar-font-medium">
+                          {{date-format session.loginDate "MMM DD, YYYY"}}
+                        </div>
+                        <div class="avitar-text-sm avitar-text-muted">
+                          {{date-format session.loginDate "HH:mm:ss"}}
+                        </div>
+                      </td>
+                      <td>{{or session.deviceName "Unknown"}}</td>
+                      <td>
+                        <div class="avitar-flex avitar-items-center avitar-gap-2">
+                          {{#if (eq session.browser "Chrome")}}
+                            <i class="fab fa-chrome"></i>
+                          {{else if (eq session.browser "Safari")}}
+                            <i class="fab fa-safari"></i>
+                          {{else if (eq session.browser "Firefox")}}
+                            <i class="fab fa-firefox"></i>
+                          {{else if (eq session.browser "Edge")}}
+                            <i class="fab fa-edge"></i>
+                          {{else}}
+                            <i class="fas fa-browser"></i>
+                          {{/if}}
+                          {{session.browser}}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="avitar-flex avitar-items-center avitar-gap-2">
+                          {{#if (eq session.operatingSystem "Windows")}}
+                            <i class="fab fa-windows"></i>
+                          {{else if (eq session.operatingSystem "macOS")}}
+                            <i class="fab fa-apple"></i>
+                          {{else if (eq session.operatingSystem "Linux")}}
+                            <i class="fab fa-linux"></i>
+                          {{else if (eq session.operatingSystem "Android")}}
+                            <i class="fab fa-android"></i>
+                          {{else if (eq session.operatingSystem "iOS")}}
+                            <i class="fab fa-apple"></i>
+                          {{else}}
+                            <i class="fas fa-desktop"></i>
+                          {{/if}}
+                          {{session.operatingSystem}}
+                        </div>
+                      </td>
+                      <td>
+                        <code class="avitar-text-sm">{{or session.ipAddress "Unknown"}}</code>
+                      </td>
+                      <td>{{this.getSessionDuration session}}</td>
+                      <td>
+                        {{#if session.sessionActive}}
+                          <span class="avitar-badge avitar-badge--success">
+                            <span class="avitar-inline-block avitar-w-2 avitar-h-2 avitar-bg-success avitar-rounded-full avitar-mr-1"></span>
+                            Active
+                          </span>
+                        {{else}}
+                          <span class="avitar-badge avitar-badge--secondary">
+                            Ended
+                          </span>
+                        {{/if}}
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-history fa-3x avitar-text-muted avitar-mb-4"></i>
+              <p class="avitar-text-muted">No login history available</p>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+
+      {{! Permission History Tab }}
+      {{#if (eq this.activeTab "permission-history")}}
+        <div>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">Permission Change History</h3>
+          {{#if this.permissionHistory.length}}
+            <div class="avitar-space-y-4">
+              {{#each this.permissionHistory as |change|}}
+                <div class="avitar-card avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-p-4">
+                    <div class="avitar-flex avitar-justify-between avitar-items-start">
+                      <div class="avitar-flex avitar-gap-3 avitar-flex-1">
+                        <div class="avitar-flex-shrink-0">
+                          <div class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                            {{{lnr-icon "user"}}}
+                          </div>
+                        </div>
+                        <div class="avitar-flex-1">
+                          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-2">
+                            <span class={{this.getChangeTypeBadgeClass change.changeType}}>
+                              {{this.formatChangeType change.changeType}}
+                            </span>
+                            <span class="avitar-text-sm avitar-text-muted">
+                              {{date-format change.timestamp "MMM DD, YYYY HH:mm"}}
+                            </span>
+                          </div>
+                          <p class="avitar-text-sm avitar-mb-2">{{change.description}}</p>
+                          <div class="avitar-text-sm avitar-text-muted">
+                            Changed by: <span class="avitar-font-medium">{{change.changedByName}}</span>
+                          </div>
+                          {{#if change.moduleName}}
+                            <div class="avitar-text-sm avitar-text-muted">
+                              Module: <span class="avitar-font-medium">{{change.moduleName}}</span>
+                            </div>
+                          {{/if}}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-list fa-3x avitar-text-muted avitar-mb-4"></i>
+              <p class="avitar-text-muted">No permission changes recorded</p>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

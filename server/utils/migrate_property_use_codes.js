@@ -33,7 +33,10 @@ async function migratePropertyUseCodes() {
       }
 
       // Get the first land detail
-      if (!assessment.land_use_details || assessment.land_use_details.length === 0) {
+      if (
+        !assessment.land_use_details ||
+        assessment.land_use_details.length === 0
+      ) {
         noLandDetails++;
         console.log(`⚠️  No land details for assessment ${assessment._id}`);
         continue;
@@ -43,7 +46,9 @@ async function migratePropertyUseCodes() {
       const landUseType = firstLandDetail.land_use_type;
 
       if (!landUseType) {
-        console.log(`⚠️  First land detail has no land_use_type for assessment ${assessment._id}`);
+        console.log(
+          `⚠️  First land detail has no land_use_type for assessment ${assessment._id}`,
+        );
         noLandDetails++;
         continue;
       }
@@ -63,7 +68,6 @@ async function migratePropertyUseCodes() {
     console.log(`   ⏭️  Skipped (already set): ${skipped}`);
     console.log(`   ⚠️  No land details: ${noLandDetails}`);
     console.log(`   📊 Total: ${landAssessments.length}`);
-
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);

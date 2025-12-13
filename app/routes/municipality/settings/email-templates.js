@@ -8,7 +8,7 @@ export default class MunicipalitySettingsEmailTemplatesRoute extends Route {
   async model() {
     try {
       const response = await this.api.get(
-        `/municipalities/${this.municipality.currentMunicipality.id}/email-templates`
+        `/municipalities/${this.municipality.currentMunicipality.id}/email-templates`,
       );
 
       return {

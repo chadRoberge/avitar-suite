@@ -11,6 +11,7 @@ export default class MunicipalityService extends Service {
   @tracked currentMunicipality = null;
   @tracked availableMunicipalities = [];
   @tracked isLoading = false;
+  @tracked inspectionsTodayCount = 0;
 
   async loadMunicipality(slug) {
     this.isLoading = true;
@@ -22,6 +23,12 @@ export default class MunicipalityService extends Service {
 
       // Store in session
       this.session.set('selectedMunicipality', slug);
+
+      // Load today's inspection count for badge
+      if (this.hasModule('building_permit')) {
+        await this.loadInspectionsTodayCount();
+      }
+
       return this.currentMunicipality;
     } finally {
       this.isLoading = false;
@@ -34,6 +41,20 @@ export default class MunicipalityService extends Service {
       this._enhanceMunicipality(m),
     );
     return this.availableMunicipalities;
+  }
+
+  async loadInspectionsTodayCount() {
+    if (!this.currentMunicipality) return;
+
+    try {
+      const response = await this.api.get(
+        `/municipalities/${this.currentMunicipality.id}/inspections/today-count`,
+      );
+      this.inspectionsTodayCount = response.count || 0;
+    } catch (error) {
+      console.error('Failed to load today inspection count:', error);
+      this.inspectionsTodayCount = 0;
+    }
   }
 
   async updateModuleConfig(moduleName, config) {
@@ -269,7 +290,7 @@ export default class MunicipalityService extends Service {
       }
     }
 
-    if (this.hasModule('buildingPermits')) {
+    if (this.hasModule('building_permit')) {
       nav.push({
         title: 'Building Permits',
         route: 'municipality.building-permits',
@@ -286,6 +307,11 @@ export default class MunicipalityService extends Service {
             icon: 'file-alt',
           },
           {
+            title: 'Projects',
+            route: 'municipality.building-permits.projects',
+            icon: 'folder-open',
+          },
+          {
             title: 'New Permit',
             route: 'municipality.building-permits.create',
             icon: 'plus-circle',
@@ -294,6 +320,10 @@ export default class MunicipalityService extends Service {
             title: 'Inspections',
             route: 'municipality.building-permits.inspections',
             icon: 'clipboard-check',
+            badge:
+              this.inspectionsTodayCount > 0
+                ? this.inspectionsTodayCount
+                : null,
           },
           {
             title: 'Applications',

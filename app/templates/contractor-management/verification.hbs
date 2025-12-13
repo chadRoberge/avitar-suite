@@ -5,10 +5,18 @@
   <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
     <div>
       <h1 class="avitar-text-3xl avitar-font-bold avitar-text-gray-900">
-        Platform Verification
+        {{#if this.needsOnboarding}}
+          Complete Your Contractor Profile
+        {{else}}
+          Platform Verification
+        {{/if}}
       </h1>
       <p class="avitar-text-muted avitar-mt-2">
-        Become a verified contractor to access premium features and fast-track permit approvals
+        {{#if this.needsOnboarding}}
+          Create your contractor profile to get started with permit applications and platform verification
+        {{else}}
+          Become a verified contractor to access premium features and fast-track permit approvals
+        {{/if}}
       </p>
     </div>
     {{#if this.verification}}
@@ -17,6 +25,312 @@
       </span>
     {{/if}}
   </div>
+
+  {{! Onboarding Form - Create Contractor Profile FIRST }}
+  {{#if this.needsOnboarding}}
+    {{! Step Progress Indicator }}
+    <div class="avitar-step-progress">
+      {{! Step 1: Select Plan }}
+      <div class="avitar-step-progress__step {{if (eq this.onboardingStep 1) 'avitar-step-progress__step--active' 'avitar-step-progress__step--completed'}}">
+        <div class="avitar-step-progress__number">
+          {{#if (gt this.onboardingStep 1)}}
+            <i class="fas fa-check avitar-step-progress__icon"></i>
+          {{else}}
+            1
+          {{/if}}
+        </div>
+        <div class="avitar-step-progress__label">Select Plan</div>
+      </div>
+
+      {{! Connector }}
+      <div class="avitar-step-progress__connector {{if (eq this.onboardingStep 1) 'avitar-step-progress__connector--active' 'avitar-step-progress__connector--completed'}}"></div>
+
+      {{! Step 2: Company Info }}
+      <div class="avitar-step-progress__step {{if (eq this.onboardingStep 2) 'avitar-step-progress__step--active' 'avitar-step-progress__step--pending'}}">
+        <div class="avitar-step-progress__number">
+          2
+        </div>
+        <div class="avitar-step-progress__label">Company Info</div>
+      </div>
+    </div>
+
+    {{! Step 1: Plan Selection }}
+    {{#if (eq this.onboardingStep 1)}}
+      <div class="avitar-card avitar-bg-primary-light avitar-border-primary avitar-mb-6">
+        <div class="avitar-card__body avitar-p-4">
+          <h2 class="avitar-text-lg avitar-font-semibold avitar-mb-3">
+            <i class="fas fa-star avitar-mr-2"></i>
+            Choose Your Plan
+          </h2>
+          <p class="avitar-mb-2">
+            Select the plan that best fits your needs. You can upgrade or downgrade at any time.
+          </p>
+          <p class="avitar-text-sm avitar-text-muted">
+            All plans include permit application submission and email notifications.
+          </p>
+        </div>
+      </div>
+
+      {{#if this.planCards.length}}
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6 avitar-mb-6">
+          {{#each this.planCards as |planCard|}}
+            <div
+              class="plan-selection-wrapper {{if (and this.selectedPlan (eq this.selectedPlan.id planCard.originalPlan.id)) 'selected-plan'}}"
+              {{on "click" (fn this.selectPlan planCard)}}
+              style="cursor: pointer; position: relative;"
+            >
+              {{! Show selected indicator }}
+              {{#if (and this.selectedPlan (eq this.selectedPlan.id planCard.originalPlan.id))}}
+                <div class="selected-plan-badge">
+                  <i class="fas fa-check-circle"></i>
+                  Selected
+                </div>
+              {{/if}}
+
+              {{! Show pricing at the top }}
+              <div class="plan-pricing-header avitar-text-center avitar-bg-gray-50 avitar-p-4 avitar-rounded-t">
+                <div class="avitar-text-3xl avitar-font-bold avitar-text-primary avitar-mb-1">
+                  {{planCard.pricing}}
+                </div>
+                {{#if planCard.originalPlan.pricing}}
+                  <div class="avitar-text-xs avitar-text-muted">
+                    per {{planCard.originalPlan.pricing.interval}}
+                  </div>
+                {{/if}}
+              </div>
+
+              {{! Use module card component }}
+              <Shared::ModuleCard @module={{planCard}} />
+            </div>
+          {{/each}}
+        </div>
+
+        <div class="avitar-flex avitar-justify-end">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary avitar-btn--lg"
+            {{on "click" this.nextOnboardingStep}}
+            disabled={{not this.canSelectPlan}}
+          >
+            Continue
+            <i class="fas fa-arrow-right avitar-ml-2"></i>
+          </button>
+        </div>
+      {{else}}
+        <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-mb-6">
+          <div class="avitar-card__body avitar-p-4">
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+              No Plans Available
+            </h3>
+            <p class="avitar-mb-2">
+              Unable to load subscription plans. Please make sure Stripe is configured with commercial plans.
+            </p>
+            <p class="avitar-text-sm avitar-text-muted">
+              Plans should have metadata: <code>plan_type = "commercial"</code> and <code>plan_key = "free", "premium", or "pro"</code>
+            </p>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
+
+    {{! Step 2: Company Information }}
+    {{#if (eq this.onboardingStep 2)}}
+
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h2 class="avitar-card__title">
+          <i class="fas fa-building avitar-mr-2"></i>
+          Company Information
+        </h2>
+      </div>
+
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+          {{! Company Name }}
+          <div class="avitar-col-span-2">
+            <label class="avitar-label">
+              Company Name <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.company_name}}
+              {{on "input" (fn this.updateOnboardingField "company_name")}}
+              placeholder="ABC Construction LLC"
+            />
+          </div>
+
+          {{! License Number }}
+          <div>
+            <label class="avitar-label">
+              License Number <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.license_number}}
+              {{on "input" (fn this.updateOnboardingField "license_number")}}
+              placeholder="LIC-123456"
+            />
+          </div>
+
+          {{! License State }}
+          <div>
+            <label class="avitar-label">
+              License State <span class="avitar-text-danger">*</span>
+            </label>
+            <select class="avitar-select" {{on "change" (fn this.updateOnboardingField "license_state")}}>
+              <option value="">Select State...</option>
+              {{#each this.stateOptions as |stateOption|}}
+                <option value={{stateOption.value}} selected={{eq this.onboardingData.license_state stateOption.value}}>
+                  {{stateOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! License Type }}
+          <div>
+            <label class="avitar-label">
+              License Type
+            </label>
+            <select class="avitar-select" {{on "change" (fn this.updateOnboardingField "license_type")}}>
+              {{#each this.licenseTypeOptions as |typeOption|}}
+                <option value={{typeOption.value}} selected={{eq this.onboardingData.license_type typeOption.value}}>
+                  {{typeOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! License Expiration }}
+          <div>
+            <label class="avitar-label">
+              License Expiration Date <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="date"
+              class="avitar-input"
+              value={{this.onboardingData.license_expiration}}
+              {{on "input" (fn this.updateOnboardingField "license_expiration")}}
+            />
+          </div>
+
+          {{! Business Address }}
+          <div class="avitar-col-span-2">
+            <h3 class="avitar-font-semibold avitar-mb-3 avitar-mt-4">Business Address</h3>
+          </div>
+
+          <div class="avitar-col-span-2">
+            <label class="avitar-label">Street Address</label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.address.street}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info.address" "street")}}
+              placeholder="123 Main Street"
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">City</label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.address.city}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info.address" "city")}}
+              placeholder="Springfield"
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">State</label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.address.state}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info.address" "state")}}
+              placeholder="MA"
+              maxlength="2"
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">ZIP Code</label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.address.zip}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info.address" "zip")}}
+              placeholder="01234"
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Business Phone</label>
+            <input
+              type="tel"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.phone}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info" "phone")}}
+              placeholder="(555) 123-4567"
+            />
+          </div>
+
+          <div class="avitar-col-span-2">
+            <label class="avitar-label">Business Email</label>
+            <input
+              type="email"
+              class="avitar-input"
+              value={{this.onboardingData.business_info.email}}
+              {{on "input" (fn this.updateOnboardingNestedField "business_info" "email")}}
+              placeholder="contact@company.com"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-card__footer avitar-flex avitar-justify-between avitar-items-center">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.previousOnboardingStep}}
+        >
+          <i class="fas fa-arrow-left avitar-mr-2"></i>
+          Back to Plan Selection
+        </button>
+
+        <div class="avitar-flex avitar-items-center avitar-gap-4">
+          {{#unless this.canCreateProfile}}
+            <div class="avitar-text-sm avitar-text-muted">
+              <i class="fas fa-info-circle avitar-mr-1"></i>
+              Please fill in all required fields (*)
+            </div>
+          {{/unless}}
+
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary avitar-btn--lg"
+            {{on "click" this.createContractorProfile}}
+            disabled={{or this.isCreatingProfile (not this.canCreateProfile)}}
+          >
+            {{#if this.isCreatingProfile}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Creating Profile...
+            {{else}}
+              <i class="fas fa-check avitar-mr-2"></i>
+              Create Profile & Continue
+            {{/if}}
+          </button>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    {{! Return early - don't show verification form yet }}
+    {{!-- Force early return by using nested if --}}
+  {{else}}
 
   {{! Benefits Card }}
   <div class="avitar-card avitar-bg-primary-light avitar-border-primary avitar-mb-6">
@@ -474,5 +788,6 @@
         </div>
       </div>
     </div>
+  {{/if}}
   {{/if}}
 </div>

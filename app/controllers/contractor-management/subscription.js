@@ -82,7 +82,9 @@ export default class ContractorManagementSubscriptionController extends Controll
 
   get availablePlans() {
     // Show all plans except the current one
-    return this.model.plans.filter((plan) => plan.plan_key !== this.currentPlan?.plan_key);
+    return this.model.plans.filter(
+      (plan) => plan.plan_key !== this.currentPlan?.plan_key,
+    );
   }
 
   // Transform plans for display (similar to verification controller)
@@ -216,7 +218,8 @@ export default class ContractorManagementSubscriptionController extends Controll
 
     // Check if upgrading from Free to a paid plan
     // In this case, we need to collect/confirm payment method first
-    const isUpgradingToPaid = this.isFreePlan && planToUpgrade.pricing?.amount > 0;
+    const isUpgradingToPaid =
+      this.isFreePlan && planToUpgrade.pricing?.amount > 0;
 
     if (isUpgradingToPaid) {
       // Show payment modal to collect payment method
@@ -270,7 +273,9 @@ export default class ContractorManagementSubscriptionController extends Controll
       if (response.client_secret) {
         console.log('Confirming payment with client secret...');
         const stripe = await this.stripePromise;
-        const { error } = await stripe.confirmCardPayment(response.client_secret);
+        const { error } = await stripe.confirmCardPayment(
+          response.client_secret,
+        );
 
         if (error) {
           console.error('Payment confirmation error:', error);
@@ -301,9 +306,19 @@ export default class ContractorManagementSubscriptionController extends Controll
         payload.payment_method_id = paymentMethodId;
       }
 
-      console.log('Changing plan to:', payload.plan_key, 'Price ID:', payload.stripe_price_id, 'Payment method:', paymentMethodId ? 'provided' : 'none');
+      console.log(
+        'Changing plan to:',
+        payload.plan_key,
+        'Price ID:',
+        payload.stripe_price_id,
+        'Payment method:',
+        paymentMethodId ? 'provided' : 'none',
+      );
 
-      const response = await this.api.post('/subscriptions/change-plan', payload);
+      const response = await this.api.post(
+        '/subscriptions/change-plan',
+        payload,
+      );
 
       this.notifications.success('Subscription plan updated successfully!');
 
@@ -385,7 +400,9 @@ export default class ContractorManagementSubscriptionController extends Controll
     this.isLoadingInvoices = true;
 
     try {
-      const response = await this.api.get(`/contractors/${this.contractor._id}/billing-history`);
+      const response = await this.api.get(
+        `/contractors/${this.contractor._id}/billing-history`,
+      );
       this.billingInvoices = response.invoices || [];
     } catch (error) {
       console.error('Error loading billing history:', error);

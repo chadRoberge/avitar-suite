@@ -22,7 +22,11 @@
             <div class="avitar-text-sm avitar-text-muted">Get notified when permit status changes</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.emailPermitUpdates}}
+              {{on "change" (fn this.toggleEmailNotification "emailPermitUpdates")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -33,7 +37,11 @@
             <div class="avitar-text-sm avitar-text-muted">Notification when someone joins your team</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.emailTeamUpdates}}
+              {{on "change" (fn this.toggleEmailNotification "emailTeamUpdates")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -44,7 +52,11 @@
             <div class="avitar-text-sm avitar-text-muted">Receipts and payment confirmations</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.emailPaymentConfirmations}}
+              {{on "change" (fn this.toggleEmailNotification "emailPaymentConfirmations")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -55,7 +67,11 @@
             <div class="avitar-text-sm avitar-text-muted">Billing cycle and plan changes</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.emailSubscriptionUpdates}}
+              {{on "change" (fn this.toggleEmailNotification "emailSubscriptionUpdates")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -66,7 +82,11 @@
             <div class="avitar-text-sm avitar-text-muted">Get reminded before licenses expire</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.emailLicenseReminders}}
+              {{on "change" (fn this.toggleEmailNotification "emailLicenseReminders")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -80,37 +100,87 @@
       <h3 class="avitar-card__title">
         <i class="fas fa-mobile-alt avitar-mr-2"></i>
         SMS Notifications
+        {{#unless this.hasSMSAccess}}
+          <span class="avitar-badge avitar-badge--warning avitar-ml-2">Premium</span>
+        {{/unless}}
       </h3>
     </div>
     <div class="avitar-card__body">
-      <div class="avitar-space-y-4">
-        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
-          <div>
-            <div class="avitar-font-medium">Urgent Permit Updates</div>
-            <div class="avitar-text-sm avitar-text-muted">Critical status changes requiring immediate attention</div>
+      {{#if this.hasSMSAccess}}
+        {{! SMS Settings for Premium Users }}
+        <div class="avitar-space-y-4">
+          <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+            <div>
+              <div class="avitar-font-medium">Urgent Permit Updates</div>
+              <div class="avitar-text-sm avitar-text-muted">Critical status changes requiring immediate attention</div>
+            </div>
+            <label class="avitar-switch">
+              <input
+                type="checkbox"
+                checked={{this.smsUrgentUpdates}}
+                {{on "change" (fn this.toggleSMSNotification "smsUrgentUpdates")}}
+              />
+              <span class="avitar-switch__slider"></span>
+            </label>
           </div>
-          <label class="avitar-switch">
-            <input type="checkbox" />
-            <span class="avitar-switch__slider"></span>
-          </label>
-        </div>
 
-        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
-          <div>
-            <div class="avitar-font-medium">Inspection Reminders</div>
-            <div class="avitar-text-sm avitar-text-muted">Day-before inspection reminders</div>
+          <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+            <div>
+              <div class="avitar-font-medium">Inspection Reminders</div>
+              <div class="avitar-text-sm avitar-text-muted">Day-before inspection reminders</div>
+            </div>
+            <label class="avitar-switch">
+              <input
+                type="checkbox"
+                checked={{this.smsInspectionReminders}}
+                {{on "change" (fn this.toggleSMSNotification "smsInspectionReminders")}}
+              />
+              <span class="avitar-switch__slider"></span>
+            </label>
           </div>
-          <label class="avitar-switch">
-            <input type="checkbox" />
-            <span class="avitar-switch__slider"></span>
-          </label>
         </div>
+      {{else}}
+        {{! Upgrade Message for Free Users }}
+        <div class="avitar-text-center avitar-py-8">
+          <div class="avitar-mb-4">
+            <i class="fas fa-lock fa-3x avitar-text-warning"></i>
+          </div>
+          <h4 class="avitar-text-lg avitar-font-bold avitar-mb-2">SMS Notifications - Premium Feature</h4>
+          <p class="avitar-text-muted avitar-mb-4">
+            Upgrade to Pro, or Enterprise to receive urgent updates via SMS
+          </p>
+          <ul class="avitar-text-left avitar-mb-6" style="max-width: 400px; margin-left: auto; margin-right: auto;">
+            <li class="avitar-mb-2">
+              <i class="fas fa-check avitar-text-success avitar-mr-2"></i>
+              Critical permit status updates
+            </li>
+            <li class="avitar-mb-2">
+              <i class="fas fa-check avitar-text-success avitar-mr-2"></i>
+              Inspection reminders the day before
+            </li>
+            <li class="avitar-mb-2">
+              <i class="fas fa-check avitar-text-success avitar-mr-2"></i>
+              Never miss important deadlines
+            </li>
+          </ul>
+          <LinkTo @route="contractor-management.subscription" class="avitar-btn avitar-btn--primary">
+            <i class="fas fa-arrow-up avitar-mr-2"></i>
+            Upgrade Now
+          </LinkTo>
+        </div>
+      {{/if}}
+    </div>
+    {{#if this.hasSMSAccess}}
+      <div class="avitar-card__footer avitar-bg-success-light">
+        <i class="fas fa-check-circle avitar-mr-2 avitar-text-success"></i>
+        SMS notifications are active on your {{this.currentPlan}} plan.
       </div>
-    </div>
-    <div class="avitar-card__footer avitar-bg-warning-light">
-      <i class="fas fa-info-circle avitar-mr-2"></i>
-      SMS notifications are a premium feature available on Professional and Enterprise plans.
-    </div>
+    {{else}}
+      <div class="avitar-card__footer avitar-bg-warning-light">
+        <i class="fas fa-info-circle avitar-mr-2"></i>
+        SMS notifications are a premium feature available on Premium, Pro, and Enterprise plans.
+      </div>
+    {{/if}}
   </div>
 
   {{! Marketing Preferences Card }}
@@ -129,7 +199,11 @@
             <div class="avitar-text-sm avitar-text-muted">New features and improvements</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" checked />
+            <input
+              type="checkbox"
+              checked={{this.marketingProductUpdates}}
+              {{on "change" (fn this.toggleMarketingPreference "marketingProductUpdates")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -140,7 +214,11 @@
             <div class="avitar-text-sm avitar-text-muted">Weekly tips to get the most out of the platform</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={{this.marketingTips}}
+              {{on "change" (fn this.toggleMarketingPreference "marketingTips")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>
@@ -151,7 +229,11 @@
             <div class="avitar-text-sm avitar-text-muted">Special deals and discounts</div>
           </div>
           <label class="avitar-switch">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={{this.marketingPromotions}}
+              {{on "change" (fn this.toggleMarketingPreference "marketingPromotions")}}
+            />
             <span class="avitar-switch__slider"></span>
           </label>
         </div>

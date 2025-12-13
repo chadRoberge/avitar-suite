@@ -105,13 +105,12 @@ revaluationAnalysisSheetSchema.index({ revaluation_id: 1, display_order: 1 });
 revaluationAnalysisSheetSchema.index({ revaluation_id: 1, sheet_type: 1 });
 
 // Static method to get all sheets for a revaluation
-revaluationAnalysisSheetSchema.statics.getSheetsForRevaluation = async function (
-  revaluationId,
-) {
-  return await this.find({ revaluation_id: revaluationId })
-    .sort({ display_order: 1, createdAt: 1 })
-    .lean();
-};
+revaluationAnalysisSheetSchema.statics.getSheetsForRevaluation =
+  async function (revaluationId) {
+    return await this.find({ revaluation_id: revaluationId })
+      .sort({ display_order: 1, createdAt: 1 })
+      .lean();
+  };
 
 // Method to increment calculation version
 revaluationAnalysisSheetSchema.methods.incrementCalculationVersion =

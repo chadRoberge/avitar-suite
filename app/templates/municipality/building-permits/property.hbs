@@ -8,14 +8,14 @@
   </div>
   
   <div class="avitar-page-actions">
-    {{#if (can "create" "buildingPermits")}}
+    {{#if (can "create" "building_permit")}}
       <button type="button" class="avitar-button avitar-button--primary">
         <i class="fas fa-plus"></i>
         New Permit
       </button>
     {{/if}}
     
-    {{#if (can "inspect" "buildingPermits")}}
+    {{#if (can "inspect" "building_permit")}}
       <button type="button" class="avitar-button avitar-button--info">
         <i class="fas fa-search"></i>
         Schedule Inspection
@@ -61,7 +61,7 @@
         <div class="avitar-empty-state">
           <i class="fas fa-hard-hat"></i>
           <p>No active permits for this property</p>
-          {{#if (can "create" "buildingPermits")}}
+          {{#if (can "create" "building_permit")}}
             <button type="button" class="avitar-button avitar-button--outline">
               Create New Permit
             </button>

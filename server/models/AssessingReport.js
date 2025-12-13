@@ -7,7 +7,7 @@ const assessingReportSchema = new mongoose.Schema(
       required: true,
       enum: [
         'assessing',
-        'buildingPermits',
+        'building_permit',
         'taxCollection',
         'townClerk',
         'motorVehicle',

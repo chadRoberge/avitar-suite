@@ -12,19 +12,32 @@ router.get('/my-verification', authenticateToken, async (req, res) => {
 
     // Only contractors can access this
     if (user.global_role !== 'contractor') {
-      return res.status(403).json({ error: 'Only contractors can access verification status' });
+      return res
+        .status(403)
+        .json({ error: 'Only contractors can access verification status' });
     }
 
     if (!user.contractor_id) {
-      return res.status(404).json({ error: 'No contractor profile found for this user' });
+      return res
+        .status(404)
+        .json({ error: 'No contractor profile found for this user' });
     }
 
     const verification = await ContractorVerification.findOne({
       contractor_id: user.contractor_id,
     })
-      .populate('licenses.file_id', 'displayName originalName mimeType uploadedAt')
-      .populate('drivers_license.file_id', 'displayName originalName mimeType uploadedAt')
-      .populate('insurance.file_id', 'displayName originalName mimeType uploadedAt')
+      .populate(
+        'licenses.file_id',
+        'displayName originalName mimeType uploadedAt',
+      )
+      .populate(
+        'drivers_license.file_id',
+        'displayName originalName mimeType uploadedAt',
+      )
+      .populate(
+        'insurance.file_id',
+        'displayName originalName mimeType uploadedAt',
+      )
       .populate('reviewed_by', 'first_name last_name email');
 
     if (!verification) {
@@ -45,7 +58,9 @@ router.post('/my-verification', authenticateToken, async (req, res) => {
     const user = req.user;
 
     if (user.global_role !== 'contractor') {
-      return res.status(403).json({ error: 'Only contractors can create verification applications' });
+      return res.status(403).json({
+        error: 'Only contractors can create verification applications',
+      });
     }
 
     if (!user.contractor_id) {
@@ -87,15 +102,26 @@ router.post('/my-verification', authenticateToken, async (req, res) => {
 
     // Populate file references
     await verification.populate([
-      { path: 'licenses.file_id', select: 'displayName originalName mimeType uploadedAt' },
-      { path: 'drivers_license.file_id', select: 'displayName originalName mimeType uploadedAt' },
-      { path: 'insurance.file_id', select: 'displayName originalName mimeType uploadedAt' },
+      {
+        path: 'licenses.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
+      {
+        path: 'drivers_license.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
+      {
+        path: 'insurance.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
     ]);
 
     res.json({ verification });
   } catch (error) {
     console.error('Error saving verification:', error);
-    res.status(500).json({ error: 'Failed to save verification', details: error.message });
+    res
+      .status(500)
+      .json({ error: 'Failed to save verification', details: error.message });
   }
 });
 
@@ -105,7 +131,9 @@ router.post('/my-verification/submit', authenticateToken, async (req, res) => {
     const user = req.user;
 
     if (user.global_role !== 'contractor') {
-      return res.status(403).json({ error: 'Only contractors can submit verification' });
+      return res
+        .status(403)
+        .json({ error: 'Only contractors can submit verification' });
     }
 
     const verification = await ContractorVerification.findOne({
@@ -113,7 +141,9 @@ router.post('/my-verification/submit', authenticateToken, async (req, res) => {
     });
 
     if (!verification) {
-      return res.status(404).json({ error: 'No verification application found' });
+      return res
+        .status(404)
+        .json({ error: 'No verification application found' });
     }
 
     if (!['draft', 'rejected'].includes(verification.status)) {
@@ -127,9 +157,18 @@ router.post('/my-verification/submit', authenticateToken, async (req, res) => {
 
     // Populate file references
     await verification.populate([
-      { path: 'licenses.file_id', select: 'displayName originalName mimeType uploadedAt' },
-      { path: 'drivers_license.file_id', select: 'displayName originalName mimeType uploadedAt' },
-      { path: 'insurance.file_id', select: 'displayName originalName mimeType uploadedAt' },
+      {
+        path: 'licenses.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
+      {
+        path: 'drivers_license.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
+      {
+        path: 'insurance.file_id',
+        select: 'displayName originalName mimeType uploadedAt',
+      },
     ]);
 
     res.json({ verification, message: 'Verification submitted successfully' });
@@ -146,7 +185,9 @@ router.get('/admin/verifications', authenticateToken, async (req, res) => {
 
     // Only Avitar admins can review verifications
     if (user.global_role !== 'avitar_admin') {
-      return res.status(403).json({ error: 'Only Avitar administrators can review verifications' });
+      return res
+        .status(403)
+        .json({ error: 'Only Avitar administrators can review verifications' });
     }
 
     const { status, limit = 50, offset = 0 } = req.query;
@@ -187,7 +228,9 @@ router.get('/admin/verifications/:id', authenticateToken, async (req, res) => {
     const user = req.user;
 
     if (user.global_role !== 'avitar_admin') {
-      return res.status(403).json({ error: 'Only Avitar administrators can review verifications' });
+      return res
+        .status(403)
+        .json({ error: 'Only Avitar administrators can review verifications' });
     }
 
     const verification = await ContractorVerification.findById(req.params.id)
@@ -210,90 +253,108 @@ router.get('/admin/verifications/:id', authenticateToken, async (req, res) => {
 });
 
 // Admin: Approve verification
-router.post('/admin/verifications/:id/approve', authenticateToken, async (req, res) => {
-  try {
-    const user = req.user;
+router.post(
+  '/admin/verifications/:id/approve',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const user = req.user;
 
-    if (user.global_role !== 'avitar_admin') {
-      return res.status(403).json({ error: 'Only Avitar administrators can approve verifications' });
+      if (user.global_role !== 'avitar_admin') {
+        return res.status(403).json({
+          error: 'Only Avitar administrators can approve verifications',
+        });
+      }
+
+      const { notes } = req.body;
+
+      const verification = await ContractorVerification.findById(req.params.id);
+
+      if (!verification) {
+        return res.status(404).json({ error: 'Verification not found' });
+      }
+
+      if (
+        verification.status !== 'submitted' &&
+        verification.status !== 'under_review'
+      ) {
+        return res.status(400).json({
+          error: `Cannot approve verification in ${verification.status} status`,
+        });
+      }
+
+      await verification.approve(user._id, notes);
+
+      await verification.populate([
+        { path: 'contractor_id', select: 'company_name business_type' },
+        { path: 'user_id', select: 'first_name last_name email' },
+        { path: 'reviewed_by', select: 'first_name last_name' },
+      ]);
+
+      res.json({ verification, message: 'Verification approved successfully' });
+    } catch (error) {
+      console.error('Error approving verification:', error);
+      res.status(500).json({ error: 'Failed to approve verification' });
     }
-
-    const { notes } = req.body;
-
-    const verification = await ContractorVerification.findById(req.params.id);
-
-    if (!verification) {
-      return res.status(404).json({ error: 'Verification not found' });
-    }
-
-    if (verification.status !== 'submitted' && verification.status !== 'under_review') {
-      return res.status(400).json({
-        error: `Cannot approve verification in ${verification.status} status`,
-      });
-    }
-
-    await verification.approve(user._id, notes);
-
-    await verification.populate([
-      { path: 'contractor_id', select: 'company_name business_type' },
-      { path: 'user_id', select: 'first_name last_name email' },
-      { path: 'reviewed_by', select: 'first_name last_name' },
-    ]);
-
-    res.json({ verification, message: 'Verification approved successfully' });
-  } catch (error) {
-    console.error('Error approving verification:', error);
-    res.status(500).json({ error: 'Failed to approve verification' });
-  }
-});
+  },
+);
 
 // Admin: Reject verification
-router.post('/admin/verifications/:id/reject', authenticateToken, async (req, res) => {
-  try {
-    const user = req.user;
+router.post(
+  '/admin/verifications/:id/reject',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const user = req.user;
 
-    if (user.global_role !== 'avitar_admin') {
-      return res.status(403).json({ error: 'Only Avitar administrators can reject verifications' });
+      if (user.global_role !== 'avitar_admin') {
+        return res.status(403).json({
+          error: 'Only Avitar administrators can reject verifications',
+        });
+      }
+
+      const { reason, details } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ error: 'Rejection reason is required' });
+      }
+
+      const verification = await ContractorVerification.findById(req.params.id);
+
+      if (!verification) {
+        return res.status(404).json({ error: 'Verification not found' });
+      }
+
+      if (
+        verification.status !== 'submitted' &&
+        verification.status !== 'under_review'
+      ) {
+        return res.status(400).json({
+          error: `Cannot reject verification in ${verification.status} status`,
+        });
+      }
+
+      await verification.reject(user._id, reason, details);
+
+      await verification.populate([
+        { path: 'contractor_id', select: 'company_name business_type' },
+        { path: 'user_id', select: 'first_name last_name email' },
+        { path: 'reviewed_by', select: 'first_name last_name' },
+      ]);
+
+      res.json({ verification, message: 'Verification rejected' });
+    } catch (error) {
+      console.error('Error rejecting verification:', error);
+      res.status(500).json({ error: 'Failed to reject verification' });
     }
-
-    const { reason, details } = req.body;
-
-    if (!reason) {
-      return res.status(400).json({ error: 'Rejection reason is required' });
-    }
-
-    const verification = await ContractorVerification.findById(req.params.id);
-
-    if (!verification) {
-      return res.status(404).json({ error: 'Verification not found' });
-    }
-
-    if (verification.status !== 'submitted' && verification.status !== 'under_review') {
-      return res.status(400).json({
-        error: `Cannot reject verification in ${verification.status} status`,
-      });
-    }
-
-    await verification.reject(user._id, reason, details);
-
-    await verification.populate([
-      { path: 'contractor_id', select: 'company_name business_type' },
-      { path: 'user_id', select: 'first_name last_name email' },
-      { path: 'reviewed_by', select: 'first_name last_name' },
-    ]);
-
-    res.json({ verification, message: 'Verification rejected' });
-  } catch (error) {
-    console.error('Error rejecting verification:', error);
-    res.status(500).json({ error: 'Failed to reject verification' });
-  }
-});
+  },
+);
 
 // Check if contractor is verified (public endpoint for municipalities)
 router.get('/check/:contractorId', authenticateToken, async (req, res) => {
   try {
     const isVerified = await ContractorVerification.isContractorVerified(
-      req.params.contractorId
+      req.params.contractorId,
     );
 
     res.json({ isVerified });

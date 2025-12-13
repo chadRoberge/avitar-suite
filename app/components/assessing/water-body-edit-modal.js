@@ -6,15 +6,42 @@ export default class WaterBodyEditModalComponent extends Component {
   @tracked name = '';
   @tracked description = '';
   @tracked waterBodyType = '';
+  @tracked baseWaterValue = '';
   @tracked isSaving = false;
   @tracked nameError = null;
   @tracked descriptionError = null;
   @tracked typeError = null;
+  @tracked baseWaterValueError = null;
   @tracked generalError = null;
+
+  // Store the previous values to detect changes
+  _previousWaterBodyId = null;
+  _previousIsOpen = false;
 
   constructor() {
     super(...arguments);
-    this.initializeForm();
+  }
+
+  // Getter that triggers form update checks - called from template
+  get formInitializer() {
+    const currentWaterBodyId =
+      this.args.waterBody?.id || this.args.waterBody?._id;
+    const isOpen = this.args.isOpen;
+
+    // Check if water body changed or modal just opened
+    const waterBodyChanged = currentWaterBodyId !== this._previousWaterBodyId;
+    const modalJustOpened = isOpen && !this._previousIsOpen;
+
+    if (waterBodyChanged || modalJustOpened) {
+      // Use setTimeout to avoid updating during render
+      setTimeout(() => {
+        this.initializeForm();
+      }, 0);
+      this._previousWaterBodyId = currentWaterBodyId;
+    }
+
+    this._previousIsOpen = isOpen;
+    return null; // Don't render anything
   }
 
   initializeForm() {
@@ -23,11 +50,14 @@ export default class WaterBodyEditModalComponent extends Component {
       this.name = this.args.waterBody.name || '';
       this.description = this.args.waterBody.description || '';
       this.waterBodyType = this.args.waterBody.waterBodyType || '';
+      this.baseWaterValue =
+        this.args.waterBody.baseWaterValue?.toString() || '0';
     } else {
       // Create mode - clear values
       this.name = '';
       this.description = '';
       this.waterBodyType = '';
+      this.baseWaterValue = '0';
     }
     this.clearErrors();
   }
@@ -36,6 +66,7 @@ export default class WaterBodyEditModalComponent extends Component {
     this.nameError = null;
     this.descriptionError = null;
     this.typeError = null;
+    this.baseWaterValueError = null;
     this.generalError = null;
   }
 
@@ -67,6 +98,23 @@ export default class WaterBodyEditModalComponent extends Component {
       isValid = false;
     }
 
+    // Validate base water value
+    const baseValue = parseFloat(this.baseWaterValue);
+    if (
+      this.baseWaterValue === '' ||
+      this.baseWaterValue === null ||
+      this.baseWaterValue === undefined
+    ) {
+      this.baseWaterValueError = 'Base waterfront value is required';
+      isValid = false;
+    } else if (isNaN(baseValue)) {
+      this.baseWaterValueError = 'Base waterfront value must be a valid number';
+      isValid = false;
+    } else if (baseValue < 0) {
+      this.baseWaterValueError = 'Base waterfront value cannot be negative';
+      isValid = false;
+    }
+
     return isValid;
   }
 
@@ -95,6 +143,14 @@ export default class WaterBodyEditModalComponent extends Component {
   }
 
   @action
+  updateBaseWaterValue(event) {
+    this.baseWaterValue = event.target.value;
+    if (this.baseWaterValueError) {
+      this.baseWaterValueError = null;
+    }
+  }
+
+  @action
   handleBackdropClick(event) {
     if (event.target === event.currentTarget) {
       this.args.onClose?.();
@@ -117,6 +173,7 @@ export default class WaterBodyEditModalComponent extends Component {
         name: this.name.trim(),
         description: this.description.trim(),
         waterBodyType: this.waterBodyType,
+        baseWaterValue: parseFloat(this.baseWaterValue),
       };
 
       // Add ID if editing existing water body

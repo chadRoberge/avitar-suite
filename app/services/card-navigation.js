@@ -35,19 +35,26 @@ export default class CardNavigationService extends Service {
 
     // Enhanced fallback logic for missing cards data
     if (!property.cards) {
-      console.warn('🃏 CardNavigation service - Selected property missing cards data, attempting fallback');
+      console.warn(
+        '🃏 CardNavigation service - Selected property missing cards data, attempting fallback',
+      );
 
       // Try to reconstruct cards data from router state and context
       // If we're on card 2+, we know this is a multi-card property
       if (this.currentCard > 1) {
-        console.log('🃏 CardNavigation service - Reconstructing cards data from router state');
+        console.log(
+          '🃏 CardNavigation service - Reconstructing cards data from router state',
+        );
         enhancedProperty.cards = {
           total_cards: '?', // Unknown total, but we know it's multi-card
-          card_descriptions: []
+          card_descriptions: [],
         };
       }
     } else {
-      console.log('🃏 CardNavigation service - Property has cards data:', property.cards);
+      console.log(
+        '🃏 CardNavigation service - Property has cards data:',
+        property.cards,
+      );
     }
 
     return enhancedProperty;
@@ -71,7 +78,6 @@ export default class CardNavigationService extends Service {
     // Fallback: if we're on card 2+, assume multi-card property
     return this.currentCard > 1;
   }
-
 
   // Get total cards with fallback display
   get totalCards() {
@@ -173,7 +179,6 @@ export default class CardNavigationService extends Service {
 
       // The route's model hook will update property-selection with fresh card-specific assessment data
       // No need to update it here - let the route handle it to avoid showing stale values
-
     } catch (error) {
       console.error('Failed to navigate to card:', error);
     } finally {
@@ -210,17 +215,13 @@ export default class CardNavigationService extends Service {
     try {
       const newCardNumber = (property.cards?.total_cards || 1) + 1;
 
-      await this.assessing.localApi.post(
-        `/properties/${property.id}/cards`,
-        {
-          description: `Card ${newCardNumber}`,
-        },
-      );
+      await this.assessing.localApi.post(`/properties/${property.id}/cards`, {
+        description: `Card ${newCardNumber}`,
+      });
 
       // The property data will be refreshed by the route model hook
       // Return success so caller can trigger property reload if needed
       return true;
-
     } catch (error) {
       console.error('Failed to add card:', error);
       return false;
@@ -235,7 +236,7 @@ export default class CardNavigationService extends Service {
     if (!property?.cards?.card_descriptions) return null;
 
     const cardDesc = property.cards.card_descriptions.find(
-      (desc) => desc.card_number === this.currentCard
+      (desc) => desc.card_number === this.currentCard,
     );
 
     return cardDesc?.description || null;

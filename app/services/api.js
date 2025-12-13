@@ -109,7 +109,7 @@ export default class ApiService extends Service {
     const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         // Don't set Content-Type - let browser set it with boundary for multipart/form-data
       },
       body: formData,
@@ -117,7 +117,11 @@ export default class ApiService extends Service {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `Upload failed: ${response.statusText}`);
+      throw new Error(
+        errorData.error ||
+          errorData.message ||
+          `Upload failed: ${response.statusText}`,
+      );
     }
 
     return response.json();
@@ -151,7 +155,13 @@ export default class ApiService extends Service {
         } else {
           try {
             const errorData = JSON.parse(xhr.responseText);
-            reject(new Error(errorData.error || errorData.message || `Upload failed: ${xhr.statusText}`));
+            reject(
+              new Error(
+                errorData.error ||
+                  errorData.message ||
+                  `Upload failed: ${xhr.statusText}`,
+              ),
+            );
           } catch {
             reject(new Error(`Upload failed: ${xhr.statusText}`));
           }

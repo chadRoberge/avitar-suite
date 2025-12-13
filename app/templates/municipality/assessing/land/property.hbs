@@ -22,14 +22,14 @@
         {{/if}}
       </div>
     </div>
-    <div class="avitar-card__body">
+    <div class="avitar-card__body avitar-py-3">
       {{!-- Row 1: Zone and Market Value --}}
-      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+      <div class="avitar-flex avitar-flex-row avitar-mb-2">
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Zone:</span>
         </div>
         <div class="avitar-flex-3 avitar-ml-3">
-          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{or @model.landAssessment.zone_name 'No Zone'}}</span>
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{#if @model.landAssessment.zone.description}}{{@model.landAssessment.zone.description}}{{else}}No Zone{{/if}}</span>
         </div>
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Market Value:</span>
@@ -42,7 +42,7 @@
       </div>
 
       {{!-- Row 2: Neighborhood and Current Use Credit --}}
-      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+      <div class="avitar-flex avitar-flex-row avitar-mb-2">
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Neighborhood:</span>
         </div>
@@ -60,7 +60,7 @@
       </div>
 
       {{!-- Row 3: Land Use and Taxable Value --}}
-      <div class="avitar-flex avitar-flex-row avitar-mb-4">
+      <div class="avitar-flex avitar-flex-row avitar-mb-2">
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Land Use:</span>
         </div>
@@ -83,19 +83,19 @@
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Site:</span>
         </div>
         <div class="avitar-flex-3 avitar-ml-3">
-          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.site_conditions_name}}</span>
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{#if @model.landAssessment.site_conditions.displayText}}{{@model.landAssessment.site_conditions.displayText}}{{else}}-{{/if}}</span>
         </div>
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Driveway:</span>
         </div>
         <div class="avitar-flex-3 avitar-ml-3">
-          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.driveway_type_name}}</span>
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{#if @model.landAssessment.driveway_type.displayText}}{{@model.landAssessment.driveway_type.displayText}}{{else}}-{{/if}}</span>
         </div>
         <div class="avitar-flex-3 avitar-text-right">
           <span class="avitar-text-sm avitar-text-muted avitar-font-bold">Road:</span>
         </div>
         <div class="avitar-flex-3 avitar-ml-3">
-          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{@model.landAssessment.road_type_name}}</span>
+          <span class="avitar-text-sm avitar-font-bold avitar-text-primary">{{#if @model.landAssessment.road_type.displayText}}{{@model.landAssessment.road_type.displayText}}{{else}}-{{/if}}</span>
         </div>
       </div>
     </div>
@@ -347,8 +347,11 @@
           <div class="avitar-flex-table-cell avitar-flex-2">ACCESS</div>
           <div class="avitar-flex-table-cell avitar-flex-2">TOPOGRAPHY</div>
           <div class="avitar-flex-table-cell avitar-flex-2">LOCATION</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">COND %</div>
+          <div class="avitar-flex-table-cell avitar-flex-1">CU</div>
           <div class="avitar-flex-table-cell avitar-flex-2">BASE VALUE</div>
-          <div class="avitar-flex-table-cell avitar-flex-3">CALCULATED VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-3">MARKET VALUE</div>
+          <div class="avitar-flex-table-cell avitar-flex-3">ASSESSED</div>
           <div class="avitar-flex-table-cell avitar-flex-1">ACTIONS</div>
         </div>
 
@@ -363,19 +366,36 @@
                 {{waterfront.frontage}} ft
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2">
-                {{waterfront.access}}
+                {{waterfront.access_name}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2">
-                {{waterfront.topography}}
+                {{waterfront.topography_name}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2">
-                {{waterfront.location}}
+                {{waterfront.location_name}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{or waterfront.condition 100}}%
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-1">
+                {{#if waterfront.current_use}}
+                  <span class="avitar-badge avitar-badge--warning avitar-badge--sm">Yes</span>
+                {{else}}
+                  <span class="avitar-text-muted">-</span>
+                {{/if}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-2">
                 ${{number-format waterfront.base_value}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-3">
                 ${{number-format waterfront.calculated_value}}
+              </div>
+              <div class="avitar-flex-table-cell avitar-flex-3 {{if waterfront.current_use 'avitar-text-muted'}}">
+                {{#if waterfront.current_use}}
+                  <span class="avitar-text-xs">$0 (CU)</span>
+                {{else}}
+                  ${{number-format waterfront.calculated_value}}
+                {{/if}}
               </div>
               <div class="avitar-flex-table-cell avitar-flex-1">
                 {{#if (can "update" "assessing")}}
@@ -432,6 +452,7 @@
   @property={{@model.property}}
   @landAssessment={{@model.landAssessment}}
   @views={{@model.views}}
+  @waterfronts={{@model.landAssessment.waterfront}}
   @onSave={{this.refreshLandProperty}}
   @onClose={{this.closeLandEditModal}}
 />
@@ -454,6 +475,7 @@
   @property={{@model.property}}
   @waterfront={{this.selectedWaterfront}}
   @waterBodies={{this.waterBodies}}
+  @waterfrontAttributes={{this.waterfrontAttributes}}
   @onSave={{this.saveWaterfront}}
   @onClose={{this.closeWaterfrontEditModal}}
 />

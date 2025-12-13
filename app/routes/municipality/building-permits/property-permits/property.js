@@ -23,7 +23,7 @@ export default class MunicipalityBuildingPermitsPropertyPermitsPropertyRoute ext
       // Load permits for this property
       const municipalityId = this.municipality.currentMunicipality?.id;
       const permitsData = await this.api.get(
-        `/municipalities/${municipalityId}/properties/${property_id}/permits`
+        `/municipalities/${municipalityId}/properties/${property_id}/permits`,
       );
 
       return {
@@ -39,7 +39,7 @@ export default class MunicipalityBuildingPermitsPropertyPermitsPropertyRoute ext
 
   beforeModel() {
     // Check if user has read access to building permits module
-    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+    if (!this.currentUser.hasModulePermission('building_permit', 'read')) {
       this.router.transitionTo('municipality.dashboard');
       throw new Error('You do not have permission to view building permits');
     }

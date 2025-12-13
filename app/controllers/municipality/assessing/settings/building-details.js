@@ -44,6 +44,7 @@ export default class BuildingDetailsController extends Controller {
     { value: 'quality', label: 'Quality' },
     { value: 'story_height', label: 'Story Height' },
     { value: 'frame', label: 'Frame' },
+    { value: 'ceiling_height', label: 'Ceiling Height' },
   ];
 
   // Feature code tracking
@@ -1069,8 +1070,14 @@ export default class BuildingDetailsController extends Controller {
   async refreshRecalculationStatus() {
     try {
       // Check if model and municipality are available
-      if (!this.model || !this.model.municipality || !this.model.municipality.id) {
-        console.warn('Municipality not available yet, skipping recalculation status check');
+      if (
+        !this.model ||
+        !this.model.municipality ||
+        !this.model.municipality.id
+      ) {
+        console.warn(
+          'Municipality not available yet, skipping recalculation status check',
+        );
         return;
       }
 

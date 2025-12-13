@@ -1,0 +1,260 @@
+{{page-title "Project Details"}}
+
+{{! Project Header }}
+<div class="avitar-page-header">
+  <div class="avitar-page-header__content">
+    <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-2">
+      <h1 class="avitar-page-header__title">
+        <i class="fas fa-folder-open avitar-mr-2"></i>
+        {{@model.project.projectName}}
+      </h1>
+      <span
+        class="avitar-badge {{if (eq @model.project.status 'approved') 'avitar-badge--success' (if (eq @model.project.status 'draft') 'avitar-badge--secondary' 'avitar-badge--primary')}}"
+      >
+        {{@model.project.status}}
+      </span>
+    </div>
+    <p class="avitar-page-header__subtitle">
+      Project #{{@model.project.permitNumber}}
+      {{#if @model.property}}
+        -
+        {{@model.property.pid_formatted}}
+        -
+        {{@model.property.location.address}}
+      {{/if}}
+    </p>
+  </div>
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--secondary"
+      {{on "click" (fn (mut this) @model)}}
+    >
+      <i class="fas fa-arrow-left avitar-mr-2"></i>
+      Back to Projects
+    </button>
+  </div>
+</div>
+
+{{! Main Content }}
+<div class="avitar-flex avitar-gap-6" style="flex-wrap: wrap;">
+  {{! Left Column - Project Details }}
+  <div class="avitar-flex-1" style="min-width: 400px;">
+    <div class="avitar-card avitar-mb-6">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          Project Information
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+          <div>
+            <label class="avitar-label">Project Number</label>
+            <p class="avitar-font-medium">{{@model.project.permitNumber}}</p>
+          </div>
+          <div>
+            <label class="avitar-label">Status</label>
+            <p>
+              <span
+                class="avitar-badge {{if (eq @model.project.status 'approved') 'avitar-badge--success' (if (eq @model.project.status 'draft') 'avitar-badge--secondary' 'avitar-badge--primary')}}"
+              >
+                {{@model.project.status}}
+              </span>
+            </p>
+          </div>
+          {{#if @model.projectType}}
+            <div>
+              <label class="avitar-label">Project Type</label>
+              <p class="avitar-font-medium">
+                <i class="fas fa-{{@model.projectType.icon}} avitar-mr-1"></i>
+                {{@model.projectType.name}}
+              </p>
+            </div>
+            <div>
+              <label class="avitar-label">Category</label>
+              <p class="avitar-font-medium">{{@model.projectType.category}}</p>
+            </div>
+          {{/if}}
+          {{#if @model.property}}
+            <div class="avitar-col-span-2">
+              <label class="avitar-label">Property</label>
+              <p class="avitar-font-medium">
+                {{@model.property.pid_formatted}}
+                -
+                {{@model.property.location.address}}
+              </p>
+            </div>
+          {{/if}}
+          {{#if @model.project.estimatedValue}}
+            <div>
+              <label class="avitar-label">Estimated Value</label>
+              <p class="avitar-font-medium">{{format-currency @model.project.estimatedValue}}</p>
+            </div>
+          {{/if}}
+          {{#if @model.project.fees}}
+            <div>
+              <label class="avitar-label">Project Fees</label>
+              <p class="avitar-font-medium">{{format-currency @model.project.fees}}</p>
+            </div>
+          {{/if}}
+          <div>
+            <label class="avitar-label">Created Date</label>
+            <p>{{date-format @model.project.createdAt "MMM DD, YYYY"}}</p>
+          </div>
+          {{#if @model.project.submittedDate}}
+            <div>
+              <label class="avitar-label">Submitted Date</label>
+              <p>{{date-format @model.project.submittedDate "MMM DD, YYYY"}}</p>
+            </div>
+          {{/if}}
+          {{#if @model.project.approvedDate}}
+            <div>
+              <label class="avitar-label">Approved Date</label>
+              <p>{{date-format @model.project.approvedDate "MMM DD, YYYY"}}</p>
+            </div>
+          {{/if}}
+          {{#if @model.project.description}}
+            <div class="avitar-col-span-2">
+              <label class="avitar-label">Description</label>
+              <p>{{@model.project.description}}</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{! Project Permits }}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          Project Permits
+          <span class="avitar-badge avitar-badge--secondary avitar-ml-2">
+            {{@model.childPermits.length}}
+          </span>
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        {{#if @model.childPermits.length}}
+          <div class="avitar-table-container">
+            <table class="avitar-table avitar-table--hover">
+              <thead>
+                <tr>
+                  <th>Permit #</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Submitted</th>
+                  <th>Fees</th>
+                  <th class="avitar-text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each @model.childPermits as |permit|}}
+                  <tr>
+                    <td>
+                      <div class="avitar-font-medium avitar-text-primary">
+                        {{permit.permitNumber}}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="avitar-text-sm">
+                        {{permit.permitType}}
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        class="avitar-badge {{if (eq permit.status 'approved') 'avitar-badge--success' (if (eq permit.status 'draft') 'avitar-badge--secondary' 'avitar-badge--primary')}}"
+                      >
+                        {{permit.status}}
+                      </span>
+                    </td>
+                    <td>
+                      {{#if permit.submittedDate}}
+                        <div class="avitar-text-sm avitar-text-muted">
+                          {{date-format permit.submittedDate "MMM DD, YYYY"}}
+                        </div>
+                      {{else}}
+                        <span class="avitar-text-muted avitar-text-sm">-</span>
+                      {{/if}}
+                    </td>
+                    <td>
+                      {{#if permit.fees}}
+                        <div class="avitar-text-sm avitar-font-medium">
+                          {{format-currency permit.fees}}
+                        </div>
+                      {{else}}
+                        <span class="avitar-text-muted avitar-text-sm">-</span>
+                      {{/if}}
+                    </td>
+                    <td class="avitar-text-center">
+                      <LinkTo
+                        @route="municipality.building-permits.permit"
+                        @model={{permit._id}}
+                        class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                        title="View Permit"
+                      >
+                        {{{lnr-icon "eye"}}}
+                      </LinkTo>
+                    </td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-6">
+            <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-3"></i>
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Permits Yet</h3>
+            <p class="avitar-text-muted">
+              This project doesn't have any permits associated with it yet.
+            </p>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  {{! Right Column - Stats & Actions }}
+  <div style="min-width: 350px; max-width: 400px;">
+    {{! Project Stats }}
+    <div class="avitar-card avitar-mb-4">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          <i class="fas fa-chart-bar avitar-mr-2"></i>
+          Project Stats
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-flex avitar-flex-col avitar-gap-4">
+          <div class="avitar-flex avitar-justify-between avitar-items-center">
+            <span class="avitar-text-sm avitar-text-muted">Total Permits</span>
+            <span class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+              {{@model.childPermits.length}}
+            </span>
+          </div>
+          <div class="avitar-flex avitar-justify-between avitar-items-center">
+            <span class="avitar-text-sm avitar-text-muted">Project Value</span>
+            <span class="avitar-text-lg avitar-font-semibold">
+              {{#if @model.project.estimatedValue}}
+                {{format-currency @model.project.estimatedValue}}
+              {{else}}
+                -
+              {{/if}}
+            </span>
+          </div>
+          <div class="avitar-flex avitar-justify-between avitar-items-center">
+            <span class="avitar-text-sm avitar-text-muted">Total Fees</span>
+            <span class="avitar-text-lg avitar-font-semibold">
+              {{#if @model.project.fees}}
+                {{format-currency @model.project.fees}}
+              {{else}}
+                -
+              {{/if}}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,339 @@
+{{page-title "Document Library - Building Permits Settings"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+        Document Library
+      </h2>
+      <p class="avitar-text-sm avitar-text-muted">
+        Manage town-level documents that can be attached to multiple permits
+      </p>
+    </div>
+    <div class="avitar-flex avitar-gap-2">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--secondary"
+        {{on "click" this.openCreateFolderModal}}
+      >
+        <i class="fas fa-folder-plus avitar-mr-2"></i>
+        New Folder
+      </button>
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.openUploadModal}}
+      >
+        <i class="fas fa-upload avitar-mr-2"></i>
+        Upload Documents
+      </button>
+    </div>
+  </div>
+
+  {{! Info Card }}
+  <div class="avitar-card avitar-bg-info-light avitar-border-info avitar-mb-6">
+    <div class="avitar-card__body avitar-p-4">
+      <div class="avitar-flex avitar-items-start avitar-gap-3">
+        <div class="avitar-flex-shrink-0">
+          <i class="fas fa-info-circle avitar-text-info fa-lg"></i>
+        </div>
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">
+            About Document Library
+          </h3>
+          <p class="avitar-text-sm avitar-mb-2">
+            The document library allows you to maintain a central repository of
+            documents that can be reused across multiple permits. This includes
+            standard forms, reference documents, ordinances, and other files.
+          </p>
+          <ul class="avitar-text-sm avitar-list-disc avitar-list-inside avitar-space-y-1">
+            <li>Documents are stored once and can be attached to many permits</li>
+            <li>Organize documents into folders for easy management</li>
+            <li>Control visibility: public, private, or restricted access</li>
+            <li>
+              When creating a permit, users can browse this library and attach documents
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! File Browser }}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">
+        <i class="fas fa-folder-tree avitar-mr-2"></i>
+        Browse Documents
+      </h3>
+    </div>
+    <div class="avitar-card__body">
+      <Shared::FileBrowser
+        @municipalityId={{@model.municipalityId}}
+        @department="building_permit"
+        @selectionMode="single"
+        @showUpload={{true}}
+        @onUpload={{this.handleBrowserUpload}}
+      />
+    </div>
+  </div>
+
+  {{! Statistics Card }}
+  <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4 avitar-mt-6">
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-primary avitar-mb-2">
+          {{@model.files.length}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Total Documents</div>
+      </div>
+    </div>
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-success avitar-mb-2">
+          {{object-keys @model.folders}}.length
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Folders</div>
+      </div>
+    </div>
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-warning avitar-mb-2">
+          {{@model.municipality.name}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Municipality</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Upload Documents Modal }}
+<Shared::DocumentUploadModal
+  @isOpen={{this.showUploadModal}}
+  @onClose={{this.closeUploadModal}}
+  @onUpload={{this.refreshFiles}}
+  @municipalityId={{@model.municipalityId}}
+  @department="building_permit"
+  @folderOptions={{this.folderOptions}}
+  @visibilityOptions={{this.visibilityOptions}}
+/>
+
+{{! Create Folder Modal }}
+{{#if this.showCreateFolderModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeCreateFolderModal}}
+  >
+    <div
+      class="avitar-modal"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-folder-plus avitar-mr-2"></i>
+          Create New Folder
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeCreateFolderModal}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          <div>
+            <label class="avitar-label">
+              Folder Path
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="/forms or /forms/applications"
+              value={{this.newFolderPath}}
+              {{on "input" this.updateNewFolderPath}}
+            />
+            <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Use forward slashes to create nested folders (e.g., /forms/permits)
+            </div>
+          </div>
+
+          <div class="avitar-card avitar-bg-info-light avitar-border-info">
+            <div class="avitar-card__body avitar-p-3">
+              <div class="avitar-flex avitar-items-start avitar-gap-2">
+                <i class="fas fa-info-circle avitar-text-info"></i>
+                <div class="avitar-text-sm">
+                  <strong>Note:</strong>
+                  Folders are created automatically when you upload files to
+                  them. This validates the path format.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeCreateFolderModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.createFolder}}
+        >
+          <i class="fas fa-check avitar-mr-2"></i>
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Edit File Modal }}
+{{#if this.showEditFileModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeEditFileModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-edit avitar-mr-2"></i>
+          Edit File
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeEditFileModal}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Display Name }}
+          <div>
+            <label class="avitar-label">
+              Display Name
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.editDisplayName}}
+              {{on "input" this.updateEditDisplayName}}
+            />
+          </div>
+
+          {{! Description }}
+          <div>
+            <label class="avitar-label">Description</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              value={{this.editDescription}}
+              {{on "input" this.updateEditDescription}}
+            ></textarea>
+          </div>
+
+          {{! Folder }}
+          <div>
+            <label class="avitar-label">
+              Folder
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              class="avitar-select"
+              value={{this.editFolder}}
+              {{on "change" this.updateEditFolder}}
+            >
+              {{#each this.folderOptions as |folderOption|}}
+                <option
+                  value={{folderOption.value}}
+                  selected={{eq this.editFolder folderOption.value}}
+                >
+                  {{folderOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Tags }}
+          <div>
+            <label class="avitar-label">Tags</label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.editTags}}
+              {{on "input" this.updateEditTags}}
+            />
+          </div>
+
+          {{! Visibility }}
+          <div>
+            <label class="avitar-label">
+              Visibility
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              class="avitar-select"
+              value={{this.editVisibility}}
+              {{on "change" this.updateEditVisibility}}
+            >
+              {{#each this.visibilityOptions as |visOption|}}
+                <option
+                  value={{visOption.value}}
+                  selected={{eq this.editVisibility visOption.value}}
+                >
+                  {{visOption.label}}
+                  - {{visOption.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeEditFileModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.saveFileChanges}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Changes
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

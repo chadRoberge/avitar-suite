@@ -130,7 +130,7 @@ export default class PropertyDataLoaderService extends Service {
       console.warn('Tier 1 fallback to full property endpoint');
       const response = await this.localApi.get(
         `/properties/${propertyId}?card=${cardNumber}`,
-        { strategy: 'hybrid' }
+        { strategy: 'hybrid' },
       );
       return {
         property: response.property || response,

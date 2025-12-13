@@ -14,7 +14,9 @@ class EmailService {
     if (this.provider === 'sendgrid') {
       const apiKey = process.env.SENDGRID_API_KEY;
       if (!apiKey) {
-        console.warn('SENDGRID_API_KEY not configured. Email sending will fail.');
+        console.warn(
+          'SENDGRID_API_KEY not configured. Email sending will fail.',
+        );
       } else {
         sgMail.setApiKey(apiKey);
         console.log('SendGrid email service initialized');
@@ -136,12 +138,12 @@ class EmailService {
     } else {
       // For SMTP, send individually
       const results = await Promise.allSettled(
-        emails.map((email) => this.sendEmail(email))
+        emails.map((email) => this.sendEmail(email)),
       );
       return results.map((result) =>
         result.status === 'fulfilled'
           ? result.value
-          : { success: false, error: result.reason }
+          : { success: false, error: result.reason },
       );
     }
   }

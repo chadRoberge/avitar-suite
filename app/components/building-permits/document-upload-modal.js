@@ -69,15 +69,19 @@ export default class BuildingPermitsDocumentUploadModalComponent extends Compone
         formData.append('file', file);
 
         // Extract propertyId - handle both object and string
-        const propertyId = typeof this.args.propertyId === 'object'
-          ? (this.args.propertyId?._id || this.args.propertyId?.id)
-          : this.args.propertyId;
+        const propertyId =
+          typeof this.args.propertyId === 'object'
+            ? this.args.propertyId?._id || this.args.propertyId?.id
+            : this.args.propertyId;
         formData.append('propertyId', propertyId);
 
-        formData.append('department', 'building-permits');
+        formData.append('department', 'building_permit');
         formData.append('category', this.documentType);
         formData.append('displayName', file.name);
-        formData.append('description', this.description || `${this.documentType} document`);
+        formData.append(
+          'description',
+          this.description || `${this.documentType} document`,
+        );
         formData.append('visibility', 'private');
         formData.append('permitId', this.args.permitId);
         formData.append('permitNumber', this.args.permitNumber || '');
@@ -90,7 +94,7 @@ export default class BuildingPermitsDocumentUploadModalComponent extends Compone
 
         const uploadedFile = await this.api.upload(
           `/municipalities/${this.args.municipalityId}/files/upload`,
-          formData
+          formData,
         );
 
         this.notifications.success(`${file.name} uploaded successfully`);

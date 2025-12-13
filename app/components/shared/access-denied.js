@@ -37,23 +37,23 @@ export default class SharedAccessDeniedComponent extends Component {
             requestedBy: this.currentUser.user._id,
             reason: `Requesting access to ${this.args.moduleName} module`,
           }),
-        }
+        },
       );
 
       if (response.ok) {
         this.notifications.success(
-          'Access request submitted. Your administrator will be notified.'
+          'Access request submitted. Your administrator will be notified.',
         );
       } else {
         // Fallback if API endpoint doesn't exist yet
         this.notifications.info(
-          'Please contact your administrator to request access to this module.'
+          'Please contact your administrator to request access to this module.',
         );
       }
     } catch (error) {
       console.error('Error requesting access:', error);
       this.notifications.info(
-        'Please contact your administrator to request access to this module.'
+        'Please contact your administrator to request access to this module.',
       );
     }
   }

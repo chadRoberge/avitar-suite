@@ -1,0 +1,122 @@
+<div class="avitar-card">
+  <div class="avitar-card__header avitar-flex avitar-justify-between avitar-items-center">
+    <h3 class="avitar-card__title">
+      <i class="fas fa-clipboard-check avitar-mr-2"></i>
+      Inspections
+    </h3>
+    {{#if @canSchedule}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary avitar-btn--sm"
+        {{on "click" @onScheduleInspection}}
+      >
+        <i class="fas fa-plus avitar-mr-2"></i>
+        Schedule Inspection
+      </button>
+    {{/if}}
+  </div>
+  <div class="avitar-card__body">
+    {{#if @inspections.length}}
+      <div class="avitar-space-y-4">
+        {{#each @inspections as |inspection|}}
+          <div class="avitar-card avitar-bg-gray-50">
+            <div class="avitar-card__body avitar-p-4">
+              <div class="avitar-flex avitar-justify-between avitar-items-start">
+                <div class="avitar-flex-1">
+                  <h4 class="avitar-font-semibold avitar-mb-2">
+                    {{this.formatInspectionType inspection.type}}
+                  </h4>
+                  <div class="avitar-flex avitar-flex-wrap avitar-gap-4 avitar-text-sm avitar-text-muted">
+                    <div>
+                      <i class="fas fa-calendar avitar-mr-1"></i>
+                      {{date-format inspection.scheduledDate "MMM DD, YYYY"}}
+                    </div>
+                    <div>
+                      <i class="fas fa-clock avitar-mr-1"></i>
+                      {{#if inspection.scheduledTimeSlot}}
+                        {{inspection.scheduledTimeSlot}}
+                      {{else}}
+                        {{date-format inspection.scheduledDate "h:mm A"}}
+                      {{/if}}
+                    </div>
+                    {{#if inspection.inspector}}
+                      <div>
+                        <i class="fas fa-user avitar-mr-1"></i>
+                        {{inspection.inspector.first_name}} {{inspection.inspector.last_name}}
+                      </div>
+                    {{/if}}
+                  </div>
+                  {{#if inspection.inspector.email}}
+                    <div class="avitar-text-sm avitar-mt-2">
+                      <i class="fas fa-envelope avitar-mr-1 avitar-text-muted"></i>
+                      <a href="mailto:{{inspection.inspector.email}}" class="avitar-link">
+                        {{inspection.inspector.email}}
+                      </a>
+                    </div>
+                  {{/if}}
+                  {{#if inspection.notes}}
+                    <p class="avitar-text-sm avitar-mt-2">{{inspection.notes}}</p>
+                  {{/if}}
+                </div>
+                <span class="{{this.getStatusBadgeClass inspection.status}}">
+                  {{this.formatStatus inspection.status}}
+                </span>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      {{#if @canSchedule}}
+        {{! Permit is approved - Show scheduling interface }}
+        <div class="avitar-py-4">
+          <div class="avitar-alert avitar-alert--info avitar-mb-6">
+            <i class="fas fa-info-circle avitar-alert__icon"></i>
+            <div class="avitar-alert__content">
+              <div class="avitar-alert__message">
+                Your permit has been approved! You can now schedule inspections for your project.
+              </div>
+            </div>
+          </div>
+
+          {{! Calendar/Schedule Builder Placeholder }}
+          <div class="avitar-card avitar-bg-gray-50 avitar-mb-4">
+            <div class="avitar-card__body">
+              <h4 class="avitar-font-semibold avitar-mb-4">
+                <i class="fas fa-calendar-alt avitar-mr-2"></i>
+                Schedule Inspection
+              </h4>
+
+              <div class="avitar-text-center avitar-py-8">
+                <i class="fas fa-calendar-check fa-3x avitar-text-primary avitar-mb-4"></i>
+                <p class="avitar-text-muted avitar-mb-4">
+                  Calendar scheduling interface will be available here
+                </p>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" @onScheduleInspection}}
+                >
+                  <i class="fas fa-plus avitar-mr-2"></i>
+                  Schedule Your First Inspection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{else}}
+        {{! Permit is NOT approved - Show warning }}
+        <div class="avitar-alert avitar-alert--warning">
+          <i class="fas fa-exclamation-triangle avitar-alert__icon"></i>
+          <div class="avitar-alert__content">
+            <div class="avitar-alert__title">Inspections Not Available</div>
+            <div class="avitar-alert__message">
+              Inspections can only be scheduled once your permit has been approved by the municipality.
+              Your permit is currently under review.
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
+</div>

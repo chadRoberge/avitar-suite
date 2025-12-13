@@ -318,19 +318,6 @@
         </div>
       </div>
       
-      {{#if this.isLandRecalculating}}
-      <div class="avitar-alert avitar-alert--info avitar-mt-4">
-        <div class="avitar-alert__icon">
-          <i class="fas fa-spinner fa-spin"></i>
-        </div>
-        <div class="avitar-alert__content">
-          <div class="avitar-alert__title">Land Recalculation in Progress</div>
-          <div class="avitar-alert__message">
-            Please wait while land assessments are being recalculated with zone minimum acreage adjustments. This may take several minutes for large municipalities.
-          </div>
-        </div>
-      </div>
-      {{/if}}
       
       {{#if this.landRecalculationResult}}
       <div class="avitar-alert {{if this.landRecalculationResult.success 'avitar-alert--success' 'avitar-alert--error'}} avitar-mt-4">
@@ -339,14 +326,13 @@
         </div>
         <div class="avitar-alert__content">
           <div class="avitar-alert__title">
-            {{if this.landRecalculationResult.success "Land Recalculation Completed" "Land Recalculation Failed"}}
+            {{if this.landRecalculationResult.success "✅ Land Recalculation Completed" "❌ Land Recalculation Failed"}}
           </div>
           <div class="avitar-alert__message">
             {{#if this.landRecalculationResult.success}}
-              Processed {{this.landRecalculationResult.result.processed}} assessments, 
-              updated {{this.landRecalculationResult.result.updated}} values,
-              {{this.landRecalculationResult.result.zoneAdjustments}} zone adjustments made,
-              {{this.landRecalculationResult.result.excessAcreageCreated}} new excess acreage lines created,
+              <strong>Processed {{this.landRecalculationResult.result.processed}} assessments</strong> in {{this.landRecalculationResult.result.duration}}
+              at {{this.landRecalculationResult.result.rate}}/second.
+              Updated {{this.landRecalculationResult.result.updated}} values,
               {{this.landRecalculationResult.result.errors}} errors.
             {{else}}
               {{this.landRecalculationResult.message}}

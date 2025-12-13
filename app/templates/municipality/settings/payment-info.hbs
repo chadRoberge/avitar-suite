@@ -1,0 +1,254 @@
+{{page-title "Payment Dashboard"}}
+
+{{! Header Section }}
+<div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+  <div>
+    <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-1">Payment Dashboard</h2>
+    <p class="avitar-text-sm avitar-text-muted">
+      Overview of payments received for {{this.fiscalYear}} fiscal year
+    </p>
+  </div>
+  <div class="avitar-flex avitar-gap-3">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--secondary"
+      {{on "click" this.refreshDashboard}}
+    >
+      <i class="fas fa-sync-alt avitar-mr-2"></i>
+      Refresh
+    </button>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openStripeDashboard}}
+    >
+      <i class="fas fa-external-link-alt avitar-mr-2"></i>
+      Manage Account
+    </button>
+  </div>
+</div>
+
+{{! Stats Cards - Current Year Totals }}
+<div class="avitar-grid avitar-grid-cols-3 avitar-gap-6 avitar-mb-6">
+  {{! Property Tax Total }}
+  <div class="avitar-card">
+    <div class="avitar-card__body avitar-p-6">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4">
+        <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-blue-100 avitar-flex avitar-items-center avitar-justify-center">
+          <i class="fas fa-home avitar-text-primary fa-lg"></i>
+        </div>
+        <span class={{this.getPercentageBadgeClass this.yearOverYearChanges.property_tax_change}}>
+          {{this.formatPercentage this.yearOverYearChanges.property_tax_change}}
+        </span>
+      </div>
+      <div class="avitar-text-3xl avitar-font-bold avitar-mb-1">
+        {{this.formatCurrency this.currentYearTotals.property_tax}}
+      </div>
+      <div class="avitar-text-sm avitar-text-muted">Property Tax Payments</div>
+      <div class="avitar-text-xs avitar-text-muted avitar-mt-2">
+        Year-over-year comparison
+      </div>
+    </div>
+  </div>
+
+  {{! Building Permits Total }}
+  <div class="avitar-card">
+    <div class="avitar-card__body avitar-p-6">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4">
+        <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-green-100 avitar-flex avitar-items-center avitar-justify-center">
+          <i class="fas fa-hammer avitar-text-success fa-lg"></i>
+        </div>
+        <span class={{this.getPercentageBadgeClass this.yearOverYearChanges.building_permits_change}}>
+          {{this.formatPercentage this.yearOverYearChanges.building_permits_change}}
+        </span>
+      </div>
+      <div class="avitar-text-3xl avitar-font-bold avitar-mb-1">
+        {{this.formatCurrency this.currentYearTotals.building_permits}}
+      </div>
+      <div class="avitar-text-sm avitar-text-muted">Building Permit Fees</div>
+      <div class="avitar-text-xs avitar-text-muted avitar-mt-2">
+        Year-over-year comparison
+      </div>
+    </div>
+  </div>
+
+  {{! Total Revenue }}
+  <div class="avitar-card avitar-bg-primary avitar-text-white">
+    <div class="avitar-card__body avitar-p-6">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-4">
+        <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-white avitar-bg-opacity-20 avitar-flex avitar-items-center avitar-justify-center">
+          <i class="fas fa-dollar-sign avitar-text-white fa-lg"></i>
+        </div>
+        <span class="avitar-badge avitar-badge--lg {{if (gte this.yearOverYearChanges.total_change 0) 'avitar-bg-white avitar-text-primary' 'avitar-bg-danger'}}">
+          {{this.formatPercentage this.yearOverYearChanges.total_change}}
+        </span>
+      </div>
+      <div class="avitar-text-3xl avitar-font-bold avitar-mb-1">
+        {{this.formatCurrency this.currentYearTotals.total}}
+      </div>
+      <div class="avitar-text-sm avitar-opacity-90">Total Revenue {{this.fiscalYear}}</div>
+      <div class="avitar-text-xs avitar-opacity-75 avitar-mt-2">
+        Year-over-year comparison
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Payout Account Information }}
+{{#if this.payoutAccount}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <h3 class="avitar-card__title">
+        <i class="fas fa-university avitar-mr-2"></i>
+        Payout Account
+      </h3>
+    </div>
+    <div class="avitar-card__body avitar-p-6">
+      <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6">
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Account Holder</div>
+          <div class="avitar-font-semibold">
+            {{#if this.payoutAccount.account_holder_name}}
+              {{this.payoutAccount.account_holder_name}}
+            {{else}}
+              <span class="avitar-text-muted">Not set</span>
+            {{/if}}
+          </div>
+        </div>
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Bank Name</div>
+          <div class="avitar-font-semibold">
+            {{#if this.payoutAccount.bank_name}}
+              {{this.payoutAccount.bank_name}}
+            {{else}}
+              <span class="avitar-text-muted">Not set</span>
+            {{/if}}
+          </div>
+        </div>
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Account Number</div>
+          <div class="avitar-font-semibold">
+            {{#if this.payoutAccount.last4}}
+              ****{{this.payoutAccount.last4}}
+            {{else}}
+              <span class="avitar-text-muted">Not set</span>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+      <div class="avitar-mt-4 avitar-pt-4 avitar-border-t avitar-border-gray-200">
+        <p class="avitar-text-sm avitar-text-muted">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          To update your payout account information, click "Manage Account" above to access the Stripe dashboard.
+        </p>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Recent Transactions }}
+<div class="avitar-card">
+  <div class="avitar-card__header avitar-bg-gray-50">
+    <h3 class="avitar-card__title">
+      <i class="fas fa-receipt avitar-mr-2"></i>
+      Recent Transactions
+    </h3>
+  </div>
+  <div class="avitar-card__body">
+    {{#if this.recentTransactions.length}}
+      <div class="avitar-table-container">
+        <table class="avitar-table avitar-table--hover">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Payer</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th class="avitar-text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.recentTransactions as |transaction|}}
+              <tr>
+                <td>
+                  <div class="avitar-font-medium">
+                    {{this.formatDate transaction.date}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted">
+                    {{transaction.id}}
+                  </div>
+                </td>
+                <td>
+                  <div class="avitar-font-medium">
+                    {{transaction.payer_name}}
+                  </div>
+                  {{#if transaction.payer_email}}
+                    <div class="avitar-text-xs avitar-text-muted">
+                      {{transaction.payer_email}}
+                    </div>
+                  {{/if}}
+                </td>
+                <td>
+                  <span class="avitar-badge avitar-badge--sm avitar-badge--info">
+                    {{this.getPaymentTypeLabel transaction.type}}
+                  </span>
+                </td>
+                <td>
+                  <div class="avitar-font-semibold avitar-text-success">
+                    {{this.formatCurrency transaction.amount}}
+                  </div>
+                </td>
+                <td>
+                  <span class={{this.getStatusBadgeClass transaction.status}}>
+                    {{transaction.status}}
+                  </span>
+                </td>
+                <td class="avitar-text-right">
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--sm avitar-btn--ghost"
+                    {{on "click" (fn this.viewTransaction transaction)}}
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      {{! Empty state }}
+      <div class="avitar-empty-state avitar-py-12">
+        <div class="avitar-w-16 avitar-h-16 avitar-mx-auto avitar-rounded-full avitar-bg-gray-100 avitar-flex avitar-items-center avitar-justify-center avitar-mb-4">
+          <i class="fas fa-receipt fa-2x avitar-text-muted"></i>
+        </div>
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Transactions Yet</h3>
+        <p class="avitar-text-muted avitar-mb-6">
+          Transactions will appear here once payments are processed through your connected Stripe account.
+        </p>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.openStripeDashboard}}
+        >
+          <i class="fas fa-external-link-alt avitar-mr-2"></i>
+          View Full Dashboard
+        </button>
+      </div>
+    {{/if}}
+  </div>
+  {{#if this.recentTransactions.length}}
+    <div class="avitar-card__footer avitar-bg-gray-50 avitar-text-center">
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+        {{on "click" this.openStripeDashboard}}
+      >
+        View all transactions in Stripe
+        <i class="fas fa-arrow-right avitar-ml-2"></i>
+      </button>
+    </div>
+  {{/if}}
+</div>

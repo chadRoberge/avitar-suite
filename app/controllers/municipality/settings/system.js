@@ -88,9 +88,11 @@ export default class MunicipalitySettingsSystemController extends Controller {
     }
 
     // Guard against uninitialized state
-    if (typeof this.mapDigits === 'undefined' ||
-        typeof this.lotDigits === 'undefined' ||
-        typeof this.subDigits === 'undefined') {
+    if (
+      typeof this.mapDigits === 'undefined' ||
+      typeof this.lotDigits === 'undefined' ||
+      typeof this.subDigits === 'undefined'
+    ) {
       return rawPID;
     }
 
@@ -107,21 +109,15 @@ export default class MunicipalitySettingsSystemController extends Controller {
     const parts = [];
 
     // Add map
-    parts.push(
-      this.removeLeadingZeros ? parseInt(map, 10).toString() : map,
-    );
+    parts.push(this.removeLeadingZeros ? parseInt(map, 10).toString() : map);
 
     // Add lot
-    parts.push(
-      this.removeLeadingZeros ? parseInt(lot, 10).toString() : lot,
-    );
+    parts.push(this.removeLeadingZeros ? parseInt(lot, 10).toString() : lot);
 
     // Add sub (conditionally)
     const subInt = parseInt(sub, 10);
     if (!this.showSubOnlyWhenPresent || subInt > 0) {
-      parts.push(
-        this.removeLeadingZeros ? subInt.toString() : sub,
-      );
+      parts.push(this.removeLeadingZeros ? subInt.toString() : sub);
     }
 
     return parts.join(this.separator);
@@ -277,13 +273,13 @@ export default class MunicipalitySettingsSystemController extends Controller {
     // Show confirmation dialog
     const confirmed = window.confirm(
       'Are you sure you want to clear local data for this municipality?\n\n' +
-      'This will:\n' +
-      '• Delete all cached properties and assessments\n' +
-      '• Delete all cached building permits\n' +
-      '• Remove pending offline changes (they will be lost)\n' +
-      '• Force a complete resynchronization\n\n' +
-      'Your login session and preferences will be preserved.\n\n' +
-      'The application will reload after clearing data.'
+        'This will:\n' +
+        '• Delete all cached properties and assessments\n' +
+        '• Delete all cached building permits\n' +
+        '• Remove pending offline changes (they will be lost)\n' +
+        '• Force a complete resynchronization\n\n' +
+        'Your login session and preferences will be preserved.\n\n' +
+        'The application will reload after clearing data.',
     );
 
     if (!confirmed) {
@@ -308,14 +304,22 @@ export default class MunicipalitySettingsSystemController extends Controller {
 
         // Clear data from each table for this municipality
         for (const table of tables) {
-          if (table.schema.primKey.keyPath === 'id' || table.schema.primKey.keyPath === '++id') {
+          if (
+            table.schema.primKey.keyPath === 'id' ||
+            table.schema.primKey.keyPath === '++id'
+          ) {
             // Skip tables without municipalityId field
-            if (!table.schema.indexes.some(idx => idx.name === 'municipalityId')) {
+            if (
+              !table.schema.indexes.some((idx) => idx.name === 'municipalityId')
+            ) {
               continue;
             }
 
             // Delete all records for this municipality
-            const count = await table.where('municipalityId').equals(municipalityId).delete();
+            const count = await table
+              .where('municipalityId')
+              .equals(municipalityId)
+              .delete();
             console.log(`  ✅ Deleted ${count} records from ${table.name}`);
           }
         }
@@ -333,15 +337,21 @@ export default class MunicipalitySettingsSystemController extends Controller {
 
       // Clear ALL localStorage and sessionStorage
       // This will log the user out, but ensures no stale data remains
-      console.log(`  🧹 Clearing ALL localStorage (${localStorage.length} items)`);
+      console.log(
+        `  🧹 Clearing ALL localStorage (${localStorage.length} items)`,
+      );
       localStorage.clear();
       console.log(`  ✅ LocalStorage cleared`);
 
-      console.log(`  🧹 Clearing ALL sessionStorage (${sessionStorage.length} items)`);
+      console.log(
+        `  🧹 Clearing ALL sessionStorage (${sessionStorage.length} items)`,
+      );
       sessionStorage.clear();
       console.log(`  ✅ SessionStorage cleared`);
 
-      this.notifications.success('Municipality data cleared. Reloading application...');
+      this.notifications.success(
+        'Municipality data cleared. Reloading application...',
+      );
 
       // Reload the application after a brief delay
       // Use hard reload to bypass any service worker caches
@@ -350,9 +360,7 @@ export default class MunicipalitySettingsSystemController extends Controller {
       }, 1000);
     } catch (error) {
       console.error('Error clearing local data:', error);
-      this.notifications.error(
-        error.message || 'Failed to clear local data'
-      );
+      this.notifications.error(error.message || 'Failed to clear local data');
       this.isClearing = false;
     }
   }

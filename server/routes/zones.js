@@ -7,6 +7,7 @@ const DrivewayType = require('../models/DrivewayType');
 const RoadType = require('../models/RoadType');
 const { authenticateToken } = require('../middleware/auth');
 const { requireModuleAccess } = require('../middleware/moduleAuth');
+const updateMunicipalityTimestamp = require('../middleware/updateMunicipalityTimestamp');
 
 const router = express.Router();
 
@@ -44,6 +45,7 @@ router.post(
   '/municipalities/:municipalityId/zones',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
@@ -107,6 +109,7 @@ router.put(
   '/municipalities/:municipalityId/zones/:zoneId',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId, zoneId } = req.params;
@@ -178,6 +181,7 @@ router.delete(
   '/municipalities/:municipalityId/zones/:zoneId',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId, zoneId } = req.params;
@@ -271,6 +275,7 @@ router.post(
   '/municipalities/:municipalityId/zones/:zoneId/land-ladder',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId, zoneId } = req.params;
@@ -332,6 +337,7 @@ router.put(
   '/municipalities/:municipalityId/zones/:zoneId/land-ladder/:tierId',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId, zoneId, tierId } = req.params;
@@ -389,6 +395,7 @@ router.delete(
   '/municipalities/:municipalityId/zones/:zoneId/land-ladder/:tierId',
   authenticateToken,
   requireModuleAccess('assessing'),
+  updateMunicipalityTimestamp,
   async (req, res) => {
     try {
       const { municipalityId, zoneId, tierId } = req.params;

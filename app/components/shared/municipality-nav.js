@@ -8,6 +8,7 @@ export default class MunicipalityNavComponent extends Component {
   @service municipality;
   @service router;
   @service session;
+  @service('current-user') currentUser;
   @service('property-selection') propertySelection;
   @service('property-queue') propertyQueue;
 
@@ -75,6 +76,62 @@ export default class MunicipalityNavComponent extends Component {
     // Get current query parameters to preserve them in navigation
     const currentRoute = this.router.currentRoute;
     return currentRoute ? currentRoute.queryParams : {};
+  }
+
+  get userRole() {
+    // Get user's role for current municipality
+    const municipalityId = this.municipality.currentMunicipality?.id;
+    if (!municipalityId || !this.currentUser.user) {
+      return null;
+    }
+
+    // Check if global avitar staff/admin
+    const globalRole = this.currentUser.user.global_role;
+    if (globalRole === 'avitar_admin') {
+      return { role: 'Avitar Admin', badge: 'avitar-badge--danger' };
+    }
+    if (globalRole === 'avitar_staff') {
+      return { role: 'Avitar Staff', badge: 'avitar-badge--warning' };
+    }
+
+    // Get municipal permission
+    const permission = this.currentUser.user.municipal_permissions?.find(
+      (perm) => perm.municipality_id === municipalityId,
+    );
+
+    if (!permission) {
+      return null;
+    }
+
+    // Map roles to display names and badge colors
+    const roleMap = {
+      admin: { role: 'Administrator', badge: 'avitar-badge--danger' },
+      supervisor: { role: 'Supervisor', badge: 'avitar-badge--warning' },
+      department_head: { role: 'Department Head', badge: 'avitar-badge--info' },
+      staff: { role: 'Staff', badge: 'avitar-badge--primary' },
+      data_entry: { role: 'Data Entry', badge: 'avitar-badge--secondary' },
+      readonly: { role: 'Read Only', badge: 'avitar-badge--secondary' },
+    };
+
+    return (
+      roleMap[permission.role] || {
+        role: permission.role,
+        badge: 'avitar-badge--secondary',
+      }
+    );
+  }
+
+  get userDepartment() {
+    const municipalityId = this.municipality.currentMunicipality?.id;
+    if (!municipalityId || !this.currentUser.user) {
+      return null;
+    }
+
+    const permission = this.currentUser.user.municipal_permissions?.find(
+      (perm) => perm.municipality_id === municipalityId,
+    );
+
+    return permission?.department;
   }
 
   @action

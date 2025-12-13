@@ -1,4 +1,5 @@
 /* Printing Styles for Avitar Suite */
+
 /* All print-specific styles for modals, reports, and documents */
 
 /* Formula text - applies on screen and print */
@@ -10,7 +11,7 @@
 }
 
 .print-formulas h4 {
-  margin: 0 0 1px 0;
+  margin: 0 0 1px;
   font-size: 5.5pt !important;
   font-weight: bold;
 }
@@ -119,7 +120,7 @@
   .report-title {
     font-size: 12pt;
     font-weight: bold;
-    margin: 5px 0 10px 0;
+    margin: 5px 0 10px;
   }
 
   .print-settings-box {

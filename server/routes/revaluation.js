@@ -126,70 +126,72 @@ router.put(
 // =============================================================================
 
 // GET /api/revaluations/:revId/sheets - Get all sheets for revaluation
-router.get('/revaluations/:revId/sheets', authenticateToken, async (req, res) => {
-  try {
-    const { revId } = req.params;
-    const revObjectId = new mongoose.Types.ObjectId(revId);
+router.get(
+  '/revaluations/:revId/sheets',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { revId } = req.params;
+      const revObjectId = new mongoose.Types.ObjectId(revId);
 
-    const sheets = await RevaluationAnalysisSheet.getSheetsForRevaluation(
-      revObjectId,
-    );
+      const sheets =
+        await RevaluationAnalysisSheet.getSheetsForRevaluation(revObjectId);
 
-    res.json({ sheets });
-  } catch (error) {
-    console.error('Error fetching sheets:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      res.json({ sheets });
+    } catch (error) {
+      console.error('Error fetching sheets:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // POST /api/revaluations/:revId/sheets - Create new analysis sheet
-router.post('/revaluations/:revId/sheets', authenticateToken, async (req, res) => {
-  try {
-    const { revId } = req.params;
-    const revObjectId = new mongoose.Types.ObjectId(revId);
-    const userId = req.user._id;
+router.post(
+  '/revaluations/:revId/sheets',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { revId } = req.params;
+      const revObjectId = new mongoose.Types.ObjectId(revId);
+      const userId = req.user._id;
 
-    const {
-      sheet_name,
-      sheet_type,
-      sales,
-      sheet_settings,
-      display_order,
-    } = req.body;
+      const { sheet_name, sheet_type, sales, sheet_settings, display_order } =
+        req.body;
 
-    // Create the sheet
-    const sheet = new RevaluationAnalysisSheet({
-      revaluation_id: revObjectId,
-      sheet_name,
-      sheet_type,
-      sheet_settings: sheet_settings || {},
-      display_order: display_order || 0,
-      status: 'draft',
-      created_by: userId,
-    });
+      // Create the sheet
+      const sheet = new RevaluationAnalysisSheet({
+        revaluation_id: revObjectId,
+        sheet_name,
+        sheet_type,
+        sheet_settings: sheet_settings || {},
+        display_order: display_order || 0,
+        status: 'draft',
+        created_by: userId,
+      });
 
-    await sheet.save();
-
-    // Add sales to the sheet if provided
-    if (sales && sales.length > 0) {
-      await RevaluationSaleAdjustment.addSalesToSheet(
-        revObjectId,
-        sheet._id,
-        sales,
-        userId,
-      );
-
-      // Update sales count
-      sheet.results.total_sales_count = sales.length;
       await sheet.save();
-    }
 
-    res.status(201).json({ sheet });
-  } catch (error) {
-    console.error('Error creating sheet:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      // Add sales to the sheet if provided
+      if (sales && sales.length > 0) {
+        await RevaluationSaleAdjustment.addSalesToSheet(
+          revObjectId,
+          sheet._id,
+          sales,
+          userId,
+        );
+
+        // Update sales count
+        sheet.results.total_sales_count = sales.length;
+        await sheet.save();
+      }
+
+      res.status(201).json({ sheet });
+    } catch (error) {
+      console.error('Error creating sheet:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // GET /api/revaluations/:revId/sheets/:sheetId - Get specific sheet
 router.get(
@@ -235,7 +237,8 @@ router.put(
         sheet.markModified('sheet_settings');
       }
       if (status !== undefined) sheet.status = status;
-      if (results !== undefined) sheet.results = { ...sheet.results, ...results };
+      if (results !== undefined)
+        sheet.results = { ...sheet.results, ...results };
 
       sheet.updated_by = userId;
       await sheet.save();

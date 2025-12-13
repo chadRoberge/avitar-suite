@@ -41,20 +41,24 @@ export default class PropertyRecordCardComponent extends Component {
       return false;
     }
     // Check if any view detail has a calculated value > 0
-    return viewDetails.some(detail => (detail.calculatedValue || 0) > 0);
+    return viewDetails.some((detail) => (detail.calculatedValue || 0) > 0);
   }
 
   // Check if this card has waterfront value
   get hasWaterfrontValue() {
-    const waterfrontDetails = this.args.landAssessment?.assessment?.waterfront_details;
+    const waterfrontDetails =
+      this.args.landAssessment?.assessment?.waterfront_details;
+
     if (!waterfrontDetails || waterfrontDetails.length === 0) {
       return false;
     }
     // Check if any waterfront detail has a calculated value > 0
-    return waterfrontDetails.some(detail => (detail.calculatedValue || 0) > 0);
+    return waterfrontDetails.some(
+      (detail) => (detail.calculatedValue || 0) > 0,
+    );
   }
 
-  get hasFeatures() {    
+  get hasFeatures() {
     return this.args.propertyFeatures?.features?.length > 0;
   }
 
@@ -140,13 +144,13 @@ export default class PropertyRecordCardComponent extends Component {
   // Get current year's values from assessment history for displaying in totals sections
   get currentYearValues() {
     const history = this.assessedValuesHistory;
-    // Return the first item (current year) from the history    
+    // Return the first item (current year) from the history
     return history && history.length > 0 ? history[0] : null;
   }
 
   get assessedValuesHistory() {
     const currentYear = this.args.assessmentYear || new Date().getFullYear();
-    const cardNumber = this.args.cardNumber || 1;    
+    const cardNumber = this.args.cardNumber || 1;
 
     // Use assessment history from API if available
     if (this.args.assessmentHistory && this.args.assessmentHistory.length > 0) {
@@ -197,7 +201,9 @@ export default class PropertyRecordCardComponent extends Component {
     }
 
     // Fallback: Calculate from current data (for backward compatibility)
-    console.warn('🎯 Property Record Card - No assessment history, calculating from current data');
+    console.warn(
+      '🎯 Property Record Card - No assessment history, calculating from current data',
+    );
     const years = [];
 
     // Create array for current year and 2 previous years
@@ -213,7 +219,7 @@ export default class PropertyRecordCardComponent extends Component {
           ?.totalAssessedValue ||
         this.args.landAssessment?.assessment?.land_value ||
         this.args.landAssessment?.assessment?.value ||
-        0;      
+        0;
 
       if (cardNumber === 1) {
         // Card 1: Gets the full base land value

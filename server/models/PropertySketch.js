@@ -10,7 +10,10 @@ const shapeSchema = new mongoose.Schema({
   coordinates: {
     // For rectangle: { x, y, width, height }
     // For circle: { cx, cy, radius }
-    // For polygon: { points: [{ x, y }, ...] }
+    // For polygon: { points: [{ x, y, bulge? }, ...] }
+    //   - bulge: optional DXF-style bulge factor (tan(angle/4))
+    //   - positive bulge = curve to the right, negative = curve to the left
+    //   - omitted/undefined = straight line segment
     // For arc: { cx, cy, radius, startAngle, endAngle }
     type: mongoose.Schema.Types.Mixed,
     required: true,

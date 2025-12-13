@@ -1,0 +1,50 @@
+<div class="avitar-step-progress avitar-step-progress--vertical avitar-flex avitar-column avitar-flex-cemter">
+  {{#each @steps as |step index|}}
+    {{! Step }}
+    <div class="avitar-step-progress__step {{if (lt index @currentStepIndex) 'avitar-step-progress__step--completed' (if (eq index @currentStepIndex) 'avitar-step-progress__step--active' 'avitar-step-progress__step--pending')}}">
+      <div class="avitar-step-progress__number">
+        {{#if (lt index @currentStepIndex)}}
+          <i class="fas fa-check avitar-step-progress__icon"></i>
+        {{else}}
+          <i class="fas fa-{{step.icon}} avitar-step-progress__icon"></i>
+        {{/if}}
+      </div>
+      <div class="avitar-step-progress__content">
+        <div class="avitar-step-progress__label">{{step.label}}</div>
+
+        {{! Show department reviews if this is the "Under Review" step and reviews exist }}
+        {{#if (and (eq step.status "under_review") @departmentReviews @departmentReviews.length)}}
+          <div class="avitar-step-progress__departments">
+            {{#each @departmentReviews as |review|}}
+              <div class="avitar-step-progress__department avitar-step-progress__department--compact {{if review.approved 'avitar-step-progress__department--approved' 'avitar-step-progress__department--pending'}}">
+                <div class="avitar-step-progress__department-icon">
+                  {{#if review.approved}}
+                    <i class="fas fa-check-circle"></i>
+                  {{else}}
+                    <i class="fas fa-clock"></i>
+                  {{/if}}
+                </div>
+                <div class="avitar-step-progress__department-info">
+                  <div class="avitar-step-progress__department-name">{{review.department}}</div>
+                  {{#if review.reviewedAt}}
+                    <div class="avitar-step-progress__department-meta">
+                      {{date-format review.reviewedAt "MMM DD"}}
+                    </div>
+                  {{/if}}
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{! Connector line and arrow between steps }}
+    {{#if (not-eq index (sub @steps.length 1))}}
+      
+      <div class="avitar-step-progress__arrow avitar-pr-5">
+        {{lnr-icon "chevron-down"}}
+      </div>
+    {{/if}}
+  {{/each}}
+</div>

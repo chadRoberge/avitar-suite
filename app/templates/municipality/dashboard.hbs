@@ -151,7 +151,7 @@
         <div class="modules-grid">
           {{#each-in this.model.availableModules as |moduleKey enabled|}}
             {{#if enabled}}
-              {{#if (eq moduleKey "buildingPermits")}}
+              {{#if (eq moduleKey "building_permit")}}
                 <LinkTo @route="municipality.building-permits" class="module-card">
                   <div class="module-icon">
                     <i class="icon-home"></i>

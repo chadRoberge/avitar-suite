@@ -7,9 +7,34 @@ export default class ContractorManagementVerificationController extends Controll
   @service api;
   @service notifications;
   @service router;
+  @service('current-user') currentUser;
 
   @tracked isLoading = false;
   @tracked isSaving = false;
+  @tracked isCreatingProfile = false;
+
+  // Onboarding step tracking
+  @tracked onboardingStep = 1; // 1 = plan selection, 2 = company info
+  @tracked selectedPlan = null;
+
+  // Onboarding form data (for creating contractor profile)
+  @tracked onboardingData = {
+    company_name: '',
+    license_number: '',
+    license_state: '',
+    license_type: 'general_contractor',
+    license_expiration: '',
+    business_info: {
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zip: '',
+      },
+      phone: '',
+      email: '',
+    },
+  };
 
   // Form data - licenses array
   @tracked licenses = [];
@@ -34,6 +59,78 @@ export default class ContractorManagementVerificationController extends Controll
 
   get verification() {
     return this.model.verification;
+  }
+
+  get needsOnboarding() {
+    return this.model.needsOnboarding || !this.model.contractor;
+  }
+
+  get availablePlans() {
+    return this.model.availablePlans || [];
+  }
+
+  // Transform plans for module card display
+  get planCards() {
+    const plans = this.availablePlans;
+
+    return plans.map((plan) => {
+      // Determine linearicon and color based on plan key
+      let icon = 'gift'; // linearicon name without lnr- prefix
+      let color = 'gray';
+      let tier = plan.plan_key || 'basic';
+
+      if (plan.plan_key === 'free') {
+        icon = 'gift';
+        color = 'blue';
+      } else if (plan.plan_key === 'premium') {
+        icon = 'star';
+        color = 'purple';
+      } else if (plan.plan_key === 'pro') {
+        icon = 'rocket';
+        color = 'gold';
+      }
+
+      // Extract feature list (server already extracted from marketing_features)
+      const featureList = plan.features || [];
+
+      // Build pricing display
+      // Note: Server already converts from cents to dollars
+      let pricingText = 'Free';
+      if (plan.pricing && plan.pricing.amount > 0) {
+        const amount = plan.pricing.amount.toFixed(2);
+        const interval = plan.pricing.interval || 'month';
+        pricingText = `$${amount}/${interval}`;
+      }
+
+      return {
+        // Original plan data
+        originalPlan: plan,
+        // Module card format
+        name: plan.name || tier.charAt(0).toUpperCase() + tier.slice(1),
+        icon,
+        color,
+        tier,
+        description: plan.description || `${tier} contractor subscription plan`,
+        pricing: pricingText,
+        features: featureList,
+        hasAccess: false, // Set to false to prevent footer LinkTo from rendering
+      };
+    });
+  }
+
+  get canSelectPlan() {
+    return this.selectedPlan !== null;
+  }
+
+  get canCreateProfile() {
+    const valid =
+      this.selectedPlan &&
+      this.onboardingData.company_name &&
+      this.onboardingData.license_number &&
+      this.onboardingData.license_state &&
+      this.onboardingData.license_expiration;
+
+    return valid;
   }
 
   get canSubmit() {
@@ -124,12 +221,57 @@ export default class ContractorManagementVerificationController extends Controll
 
   get stateOptions() {
     return [
-      'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-      'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-      'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-      'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-      'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-    ].map(state => ({ value: state, label: state }));
+      'AL',
+      'AK',
+      'AZ',
+      'AR',
+      'CA',
+      'CO',
+      'CT',
+      'DE',
+      'FL',
+      'GA',
+      'HI',
+      'ID',
+      'IL',
+      'IN',
+      'IA',
+      'KS',
+      'KY',
+      'LA',
+      'ME',
+      'MD',
+      'MA',
+      'MI',
+      'MN',
+      'MS',
+      'MO',
+      'MT',
+      'NE',
+      'NV',
+      'NH',
+      'NJ',
+      'NM',
+      'NY',
+      'NC',
+      'ND',
+      'OH',
+      'OK',
+      'OR',
+      'PA',
+      'RI',
+      'SC',
+      'SD',
+      'TN',
+      'TX',
+      'UT',
+      'VT',
+      'VA',
+      'WA',
+      'WV',
+      'WI',
+      'WY',
+    ].map((state) => ({ value: state, label: state }));
   }
 
   // Initialize form from existing verification
@@ -219,11 +361,14 @@ export default class ContractorManagementVerificationController extends Controll
 
     this.isSaving = true;
     try {
-      const response = await this.api.post('/contractor-verification/my-verification', {
-        licenses: this.licenses,
-        drivers_license: this.driversLicense,
-        insurance: this.insurance,
-      });
+      const response = await this.api.post(
+        '/contractor-verification/my-verification',
+        {
+          licenses: this.licenses,
+          drivers_license: this.driversLicense,
+          insurance: this.insurance,
+        },
+      );
 
       this.model.verification = response.verification;
       this.notifications.success('Draft saved successfully');
@@ -269,5 +414,116 @@ export default class ContractorManagementVerificationController extends Controll
   resetForm() {
     this.setupFormData();
     this.notifications.info('Form reset to saved state');
+  }
+
+  @action
+  selectPlan(planCard) {
+    // Store the original plan data for submission
+    this.selectedPlan = planCard.originalPlan;
+  }
+
+  @action
+  nextOnboardingStep() {
+    if (this.onboardingStep === 1 && this.canSelectPlan) {
+      this.onboardingStep = 2;
+      window.scrollTo(0, 0);
+    }
+  }
+
+  @action
+  previousOnboardingStep() {
+    if (this.onboardingStep === 2) {
+      this.onboardingStep = 1;
+      window.scrollTo(0, 0);
+    }
+  }
+
+  @action
+  updateOnboardingField(field, event) {
+    // Reassign the entire object to trigger reactivity
+    this.onboardingData = {
+      ...this.onboardingData,
+      [field]: event.target.value,
+    };
+  }
+
+  @action
+  updateOnboardingNestedField(parent, field, event) {
+    const value = event.target.value;
+
+    if (parent === 'business_info.address') {
+      // Update nested address field
+      this.onboardingData = {
+        ...this.onboardingData,
+        business_info: {
+          ...this.onboardingData.business_info,
+          address: {
+            ...this.onboardingData.business_info.address,
+            [field]: value,
+          },
+        },
+      };
+    } else if (parent === 'business_info') {
+      // Update business_info field
+      this.onboardingData = {
+        ...this.onboardingData,
+        business_info: {
+          ...this.onboardingData.business_info,
+          [field]: value,
+        },
+      };
+    }
+  }
+
+  @action
+  async createContractorProfile() {
+    if (!this.canCreateProfile) {
+      this.notifications.error(
+        'Please fill in all required fields and select a plan',
+      );
+      return;
+    }
+
+    this.isCreatingProfile = true;
+
+    try {
+      const payload = {
+        ...this.onboardingData,
+        selected_plan: this.selectedPlan
+          ? {
+              plan_key: this.selectedPlan.plan_key,
+              product_id: this.selectedPlan.id,
+              price_id: this.selectedPlan.pricing?.price_id,
+            }
+          : null,
+      };
+
+      const response = await this.api.post('/contractors', payload);
+
+      // If there's a subscription that requires payment, handle it
+      if (response.subscription?.client_secret) {
+        this.notifications.info(
+          'Redirecting to payment... (Stripe integration pending)',
+        );
+        // TODO: Integrate Stripe payment element here
+      }
+
+      this.notifications.success(
+        'Contractor profile created successfully! You can now upload verification documents.',
+      );
+
+      // Refresh current user to get updated contractor_id
+      await this.currentUser.load();
+
+      // Redirect to refresh the route and load contractor data
+      this.router.transitionTo('contractor-management.verification');
+    } catch (error) {
+      console.error('Error creating contractor profile:', error);
+      this.notifications.error(
+        error.message || 'Failed to create contractor profile',
+      );
+    } finally {
+      this.isCreatingProfile = false;
+    }
   }
 }

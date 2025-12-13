@@ -105,6 +105,43 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Helper to parse user agent
+const parseUserAgent = (userAgent) => {
+  if (!userAgent) return { browser: 'Unknown', operatingSystem: 'Unknown' };
+
+  let browser = 'Unknown';
+  let operatingSystem = 'Unknown';
+
+  // Detect browser
+  if (userAgent.includes('Chrome')) browser = 'Chrome';
+  else if (userAgent.includes('Safari')) browser = 'Safari';
+  else if (userAgent.includes('Firefox')) browser = 'Firefox';
+  else if (userAgent.includes('Edge')) browser = 'Edge';
+  else if (userAgent.includes('MSIE') || userAgent.includes('Trident'))
+    browser = 'Internet Explorer';
+
+  // Detect OS
+  if (userAgent.includes('Windows')) operatingSystem = 'Windows';
+  else if (userAgent.includes('Mac OS')) operatingSystem = 'macOS';
+  else if (userAgent.includes('Linux')) operatingSystem = 'Linux';
+  else if (userAgent.includes('Android')) operatingSystem = 'Android';
+  else if (userAgent.includes('iOS')) operatingSystem = 'iOS';
+
+  return { browser, operatingSystem };
+};
+
+// Helper to get client IP
+const getClientIp = (req) => {
+  return (
+    req.headers['x-forwarded-for']?.split(',')[0] ||
+    req.headers['x-real-ip'] ||
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress ||
+    req.ip ||
+    'Unknown'
+  );
+};
+
 // @route   POST /api/auth/login
 // @desc    Authenticate user and get token
 // @access  Public
@@ -146,8 +183,26 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Capture device information
+    const userAgent = req.headers['user-agent'] || '';
+    const { browser, operatingSystem } = parseUserAgent(userAgent);
+    const ipAddress = getClientIp(req);
+    const deviceName =
+      req.headers['x-device-name'] || req.headers['host'] || 'Unknown Device';
+
+    // Create new login session
+    user.loginSessions.push({
+      loginDate: new Date(),
+      ipAddress,
+      deviceName,
+      browser,
+      operatingSystem,
+      sessionActive: true,
+    });
+
     // Update last login
     await user.updateLastLogin();
+    await user.save();
 
     // Generate token
     const token = generateToken(user._id);
@@ -311,11 +366,34 @@ router.put('/profile', authenticateToken, async (req, res) => {
 // @route   POST /api/auth/logout
 // @desc    Logout user (client-side token removal)
 // @access  Private
-router.post('/logout', authenticateToken, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      // Find the most recent active session and mark it as ended
+      const activeSession = user.loginSessions
+        .filter((session) => session.sessionActive)
+        .sort((a, b) => b.loginDate - a.loginDate)[0];
+
+      if (activeSession) {
+        activeSession.logoutDate = new Date();
+        activeSession.sessionActive = false;
+        await user.save();
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Still return success even if session update fails
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  }
 });
 
 // @route   GET /api/auth/verify-token

@@ -277,6 +277,30 @@
               </div>
             {{/if}}
 
+            {{#if (eq this.calculationType "percentage")}}
+              <div class="avitar-form-row">
+                <div class="avitar-form-group">
+                  <label class="avitar-label">Percentage Rate</label>
+                  <div class="avitar-input-group">
+                    <input
+                      type="number"
+                      class="avitar-input"
+                      placeholder="2.5"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={{this.percentageRate}}
+                      {{on "input" (fn this.updateFeeField "percentageRate")}}
+                    />
+                    <span class="avitar-input-group__addon">%</span>
+                  </div>
+                  <p class="avitar-text-muted avitar-text-sm avitar-mt-2">
+                    This percentage will be applied to the estimated project value. For example, 2.5% of a $200,000 project = $5,000 fee.
+                  </p>
+                </div>
+              </div>
+            {{/if}}
+
             {{#if (eq this.calculationType "custom")}}
               <div class="avitar-form-row">
                 <div class="avitar-form-group">
@@ -830,55 +854,124 @@
         {{#if (eq this.currentSection 6)}}
           <div class="avitar-form">
             <p class="avitar-text-muted avitar-mb-4">
-              Upload template files, forms, and checklists that applicants can download.
+              Select template files, forms, and checklists that applicants can download when applying for this permit type.
             </p>
 
-            <div class="avitar-alert avitar-alert--info avitar-mb-4">
-              <i class="fas fa-info-circle"></i>
-              <div>
-                <strong>Coming Soon:</strong> File upload functionality will be available in the next update.
-                For now, you can add links to existing documents.
-              </div>
+            <div class="avitar-mb-4">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.openFileBrowser}}
+              >
+                {{lnr-icon "file-add" class="avitar-mr-2"}}
+                Select Template Files
+              </button>
             </div>
 
             {{#if this.templateFiles.length}}
-              <div class="avitar-list">
+              <div class="avitar-space-y-2">
                 {{#each this.templateFiles as |file fileIndex|}}
-                  <div class="avitar-list-item">
-                    <div class="avitar-flex avitar-justify-between avitar-items-center">
-                      <div class="avitar-flex avitar-items-center avitar-gap-3">
-                        <i class="fas fa-file-pdf fa-2x avitar-text-primary"></i>
-                        <div>
-                          <div class="avitar-font-semibold">{{file.displayName}}</div>
-                          <p class="avitar-text-muted avitar-text-sm">{{file.description}}</p>
+                  <div
+                    class="avitar-flex avitar-items-center avitar-gap-3 avitar-p-3 avitar-rounded avitar-border avitar-border-gray-200"
+                  >
+                    {{! File Icon }}
+                    <div class="avitar-flex-shrink-0">
+                      <div
+                        class="avitar-w-10 avitar-h-10 avitar-rounded avitar-bg-gray-100 avitar-flex avitar-items-center avitar-justify-center"
+                      >
+                        {{#if (eq file.fileExtension "pdf")}}
+                          {{lnr-icon "book" class="avitar-text-lg avitar-text-primary"}}
+                        {{else if
+                          (or
+                            (eq file.fileExtension "doc")
+                            (eq file.fileExtension "docx")
+                          )
+                        }}
+                          {{lnr-icon "file-empty" class="avitar-text-lg avitar-text-primary"}}
+                        {{else if
+                          (or
+                            (eq file.fileExtension "xls")
+                            (eq file.fileExtension "xlsx")
+                          )
+                        }}
+                          {{lnr-icon "chart-bars" class="avitar-text-lg avitar-text-primary"}}
+                        {{else}}
+                          {{lnr-icon "file-empty" class="avitar-text-lg avitar-text-primary"}}
+                        {{/if}}
+                      </div>
+                    </div>
+
+                    {{! File Info }}
+                    <div class="avitar-flex-1 avitar-min-w-0">
+                      <div class="avitar-font-semibold avitar-truncate">
+                        {{file.displayName}}
+                      </div>
+                      {{#if file.description}}
+                        <p class="avitar-text-xs avitar-text-muted avitar-truncate">
+                          {{file.description}}
+                        </p>
+                      {{/if}}
+                      {{#if file.tags}}
+                        <div class="avitar-flex avitar-gap-2 avitar-mt-1">
+                          {{#each file.tags as |tag|}}
+                            <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-badge--pill">
+                              {{tag}}
+                            </span>
+                          {{/each}}
                         </div>
-                      </div>
-                      <div class="avitar-btn-group">
-                        <a
-                          href={{file.fileUrl}}
-                          target="_blank"
-                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
-                        >
-                          <i class="fas fa-download"></i>
-                        </a>
-                        <button
-                          type="button"
-                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
-                        >
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
+                      {{/if}}
+                    </div>
+
+                    {{! Actions }}
+                    <div class="avitar-flex-shrink-0 avitar-flex avitar-gap-1">
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-success hover:avitar-bg-success-light"
+                        {{on "click" (fn this.downloadTemplateFile file)}}
+                        title="Download"
+                      >
+                        {{lnr-icon "download"}}
+                      </button>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-danger hover:avitar-bg-danger-light"
+                        {{on "click" (fn this.removeTemplateFile fileIndex)}}
+                        title="Remove"
+                      >
+                        {{lnr-icon "trash"}}
+                      </button>
                     </div>
                   </div>
                 {{/each}}
               </div>
+
+              <div class="avitar-alert avitar-alert--info avitar-mt-4">
+                <i class="fas fa-info-circle avitar-mr-2"></i>
+                <div>
+                  <strong>{{this.templateFiles.length}}</strong>
+                  template file{{if (gt this.templateFiles.length 1) "s"}}
+                  selected. Applicants will be able to download these files when applying for this permit type.
+                </div>
+              </div>
             {{else}}
-              <div class="avitar-empty-state">
-                <i class="fas fa-folder-open fa-3x avitar-text-muted avitar-mb-3"></i>
-                <h4 class="avitar-mb-2">No Template Files</h4>
-                <p class="avitar-text-muted">
-                  Template file upload will be available soon.
+              <div class="avitar-empty-state avitar-py-8">
+                <div style="font-size: 3rem;">
+                  {{lnr-icon "folder-open" class="avitar-text-muted"}}
+                </div>
+                <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+                  No Template Files Selected
+                </h4>
+                <p class="avitar-text-muted avitar-mb-4">
+                  Select template files, forms, and checklists from your document library that applicants can download.
                 </p>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.openFileBrowser}}
+                >
+                  {{lnr-icon "file-add" class="avitar-mr-2"}}
+                  Select Template Files
+                </button>
               </div>
             {{/if}}
           </div>
@@ -928,6 +1021,64 @@
             {{/if}}
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! File Browser Modal for Template Selection }}
+{{#if this.showFileBrowserModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000;"
+    {{on "click" this.closeFileBrowser}}
+  >
+    <div
+      class="avitar-modal avitar-modal--xl"
+      style="position: relative; z-index: 10001; max-height: 90vh; overflow-y: auto;"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "folder" class="avitar-mr-2"}}
+          Select Template Files
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeFileBrowser}}
+        >
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-alert avitar-alert--info avitar-mb-4">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          <div>
+            Select template files, forms, and checklists from your document library. Files will be made available for applicants to download when applying for this permit type.
+          </div>
+        </div>
+
+        <Shared::FileBrowser
+          @municipalityId={{@municipalityId}}
+          @department="building_permit"
+          @selectionMode="multiple"
+          @onSelect={{this.selectTemplateFiles}}
+          @showUpload={{false}}
+        />
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeFileBrowser}}
+        >
+          Cancel
+        </button>
       </div>
     </div>
   </div>

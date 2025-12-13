@@ -152,7 +152,9 @@ router.get('/search', authenticateToken, async (req, res) => {
  */
 router.get('/plans', authenticateToken, async (req, res) => {
   try {
-    console.log('📦 GET /contractors/plans - Fetching commercial plans from Stripe');
+    console.log(
+      '📦 GET /contractors/plans - Fetching commercial plans from Stripe',
+    );
 
     // Get all active products from Stripe with plan_type = commercial
     const products = await stripeService.stripe.products.list({
@@ -160,7 +162,9 @@ router.get('/plans', authenticateToken, async (req, res) => {
       limit: 100,
     });
 
-    console.log(`   - Found ${products.data.length} total active products in Stripe`);
+    console.log(
+      `   - Found ${products.data.length} total active products in Stripe`,
+    );
 
     // Log all product metadata for debugging
     products.data.forEach((product, index) => {
@@ -251,7 +255,9 @@ router.get('/plans', authenticateToken, async (req, res) => {
     console.log('✅ Returning plans to client:');
     plansWithPricing.forEach((plan, index) => {
       console.log(`   Plan ${index + 1}: ${plan.name} (${plan.plan_key})`);
-      console.log(`      - Pricing: ${plan.pricing ? `$${plan.pricing.amount}/${plan.pricing.interval}` : 'Free'}`);
+      console.log(
+        `      - Pricing: ${plan.pricing ? `$${plan.pricing.amount}/${plan.pricing.interval}` : 'Free'}`,
+      );
       console.log(`      - Features: ${plan.features.length} items`);
     });
 
@@ -312,7 +318,11 @@ router.post('/', authenticateToken, async (req, res) => {
     const planKey = selected_plan?.plan_key || 'free';
     const isFree = planKey === 'free';
     let planFeatures = {};
-    let ownerPermissions = ['submit_permits', 'view_all_permits', 'view_own_permits'];
+    let ownerPermissions = [
+      'submit_permits',
+      'view_all_permits',
+      'view_own_permits',
+    ];
 
     if (selected_plan?.product_id) {
       try {
@@ -334,7 +344,8 @@ router.post('/', authenticateToken, async (req, res) => {
             stripeProduct.metadata.advanced_reporting === 'true';
           planFeatures.priority_support =
             stripeProduct.metadata.priority_support === 'true';
-          planFeatures.api_access = stripeProduct.metadata.api_access === 'true';
+          planFeatures.api_access =
+            stripeProduct.metadata.api_access === 'true';
           planFeatures.custom_branding =
             stripeProduct.metadata.custom_branding === 'true';
 
@@ -421,10 +432,7 @@ router.post('/', authenticateToken, async (req, res) => {
     // Create Stripe customer for the contractor
     let stripeCustomer = null;
     try {
-      stripeCustomer = await stripeService.createCustomer(
-        contractor,
-        req.user,
-      );
+      stripeCustomer = await stripeService.createCustomer(contractor, req.user);
 
       // Update contractor with Stripe customer ID
       contractor.subscription.stripe_customer_id = stripeCustomer.id;
@@ -445,7 +453,9 @@ router.post('/', authenticateToken, async (req, res) => {
     let stripeSubscription = null;
     if (stripeCustomer && selected_plan?.price_id) {
       try {
-        console.log(`🔵 Creating Stripe subscription for plan: ${planKey} (${isFree ? '$0/month' : 'paid'})`);
+        console.log(
+          `🔵 Creating Stripe subscription for plan: ${planKey} (${isFree ? '$0/month' : 'paid'})`,
+        );
 
         stripeSubscription = await stripeService.createSubscription(
           stripeCustomer.id,
@@ -484,7 +494,9 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     } else if (stripeCustomer) {
       // No price_id provided - log warning
-      console.warn(`⚠️  No price_id provided for contractor ${contractor._id}, subscription not created`);
+      console.warn(
+        `⚠️  No price_id provided for contractor ${contractor._id}, subscription not created`,
+      );
     }
 
     // Update user to link to contractor
@@ -499,8 +511,8 @@ router.post('/', authenticateToken, async (req, res) => {
         ? {
             id: stripeSubscription.id,
             status: stripeSubscription.status,
-            client_secret: stripeSubscription.latest_invoice?.payment_intent
-              ?.client_secret,
+            client_secret:
+              stripeSubscription.latest_invoice?.payment_intent?.client_secret,
           }
         : null,
     });

@@ -110,7 +110,8 @@ export default class TaxImpactAnalysisComponent extends Component {
       comparisonYearTaxRevenue:
         this.reportData.summary?.comparison_year_revenue || 0,
       revenueDifference: this.reportData.summary?.revenue_difference || 0,
-      revenuePercentChange: this.reportData.summary?.revenue_percent_change || 0,
+      revenuePercentChange:
+        this.reportData.summary?.revenue_percent_change || 0,
       averageTaxIncrease: this.reportData.summary?.average_tax_increase || 0,
       propertiesWithIncrease:
         this.reportData.summary?.properties_with_increase || 0,

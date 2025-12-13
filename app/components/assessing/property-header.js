@@ -168,7 +168,6 @@ export default class PropertyHeaderComponent extends Component {
     }
   }
 
-
   @action
   editOwner() {
     this.showOwnerModal = true;

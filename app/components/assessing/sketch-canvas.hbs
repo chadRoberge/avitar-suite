@@ -1,1 +1,47 @@
 <div class="sketch-canvas-container {{if @isResponsive 'avitar-flex avitar-flex-1 avitar-justify-center avitar-items-center'}}" id="sketch-canvas-{{this.canvasId}}"></div>
+
+{{!-- Arc Depth Editor Modal --}}
+{{#if this.showBulgeEditor}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeBulgeEditor}}>
+    <div class="avitar-modal avitar-modal--sm" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h3 class="avitar-modal__title">
+          <i class="fas fa-bezier-curve avitar-mr-2"></i>
+          Edit Arc Depth
+        </h3>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeBulgeEditor}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-mb-4">
+          <label class="avitar-label">Arc Depth (feet)</label>
+          <input
+            type="number"
+            step="0.1"
+            class="avitar-input"
+            value={{this.editingSagittaValue}}
+            {{on "input" this.updateSagittaValue}}
+            placeholder="Enter arc depth in feet (e.g., 2.5, -1.0)"
+          />
+          <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+            <strong>Positive values</strong> curve right, <strong>negative values</strong> curve left.<br/>
+            Arc depth is the perpendicular distance from the chord to the arc peak.<br/>
+            Examples: 2.5 (curves 2.5ft to the right), -1.0 (curves 1ft to the left)
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.closeBulgeEditor}}>
+          Cancel
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveBulgeEdit}}>
+          <i class="fas fa-check avitar-mr-2"></i>
+          Apply
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

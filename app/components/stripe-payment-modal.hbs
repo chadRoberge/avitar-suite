@@ -18,14 +18,69 @@
           {{/if}}
 
           {{#if @amount}}
-            <div class="avitar-bg-primary-light avitar-p-4 avitar-rounded avitar-mb-4">
-              <div class="avitar-text-center">
-                <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Amount to charge</div>
-                <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
-                  {{this.formattedAmount}}
+            {{#if @isPermitPayment}}
+              {{! Permit Payment Breakdown }}
+              <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4 avitar-border avitar-border-gray-200">
+                <h3 class="avitar-text-sm avitar-font-semibold avitar-mb-3 avitar-text-gray-700">Payment Breakdown</h3>
+
+                {{#if @paymentBreakdown}}
+                  <div class="avitar-space-y-2">
+                    {{! Permit Fee }}
+                    <div class="avitar-flex avitar-justify-between avitar-text-sm">
+                      <span class="avitar-text-gray-600">Permit Fee</span>
+                      <span class="avitar-font-medium avitar-text-gray-900">
+                        ${{@paymentBreakdown.permitFee}}
+                      </span>
+                    </div>
+
+                    {{! Processing Fees }}
+                    {{#if @paymentBreakdown.processingFees}}
+                      <div class="avitar-flex avitar-justify-between avitar-text-sm">
+                        <span class="avitar-text-gray-600">Processing Fees</span>
+                        <span class="avitar-font-medium avitar-text-gray-900">
+                          ${{@paymentBreakdown.processingFees}}
+                        </span>
+                      </div>
+                    {{/if}}
+
+                    {{! Divider }}
+                    <div class="avitar-border-t avitar-border-gray-300 avitar-my-2"></div>
+
+                    {{! Total Amount }}
+                    <div class="avitar-flex avitar-justify-between avitar-items-baseline">
+                      <span class="avitar-text-base avitar-font-semibold avitar-text-gray-900">Total to Charge</span>
+                      <span class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+                        {{this.formattedAmount}}
+                      </span>
+                    </div>
+                  </div>
+                {{else}}
+                  <div class="avitar-text-center">
+                    <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
+                      {{this.formattedAmount}}
+                    </div>
+                  </div>
+                {{/if}}
+
+                {{! Fee breakdown note }}
+                <div class="avitar-mt-3 avitar-pt-3 avitar-border-t avitar-border-gray-200">
+                  <p class="avitar-text-xs avitar-text-muted">
+                    <i class="fas fa-info-circle avitar-mr-1"></i>
+                    Processing fees cover payment processing and platform costs.
+                  </p>
                 </div>
               </div>
-            </div>
+            {{else}}
+              {{! Non-permit payment (original layout) }}
+              <div class="avitar-bg-primary-light avitar-p-4 avitar-rounded avitar-mb-4">
+                <div class="avitar-text-center">
+                  <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Amount to charge</div>
+                  <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
+                    {{this.formattedAmount}}
+                  </div>
+                </div>
+              </div>
+            {{/if}}
           {{/if}}
 
           <div class="avitar-space-y-4">

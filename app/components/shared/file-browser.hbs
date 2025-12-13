@@ -1,0 +1,303 @@
+{{!-- File Browser Component --}}
+<div class="file-browser">
+  {{!-- Header with Search and Actions --}}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+    <div class="avitar-flex-1 avitar-mr-4">
+      <div class="avitar-input-group">
+        <i class="fas fa-search avitar-input-icon"></i>
+        <input
+          type="text"
+          class="avitar-input avitar-input--with-icon"
+          placeholder="Search files..."
+          value={{this.searchText}}
+          {{on "input" this.updateSearch}}
+        />
+      </div>
+    </div>
+
+    <div class="avitar-flex avitar-gap-2">
+      {{#if this.hasSelection}}
+        <span class="avitar-badge avitar-badge--primary avitar-badge--pill">
+          {{this.selectedFileIds.length}} selected
+        </span>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+          {{on "click" this.clearSelection}}
+        >
+          <i class="fas fa-times avitar-mr-1"></i>
+          Clear
+        </button>
+      {{/if}}
+
+      {{#if this.showUpload}}
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary avitar-btn--sm"
+          {{on "click" this.handleUpload}}
+        >
+          <i class="fas fa-upload avitar-mr-1"></i>
+          Upload
+        </button>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Breadcrumb Navigation --}}
+  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-4 avitar-text-sm">
+    {{lnr-icon "folder" class="avitar-text-muted"}}
+    {{#each this.breadcrumbs as |crumb index|}}
+      {{#if (gt index 0)}}
+        {{lnr-icon "chevron-right" class="avitar-text-muted avitar-text-xs"}}
+      {{/if}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--link avitar-btn--sm {{if (eq crumb.path this.currentFolder) 'avitar-font-semibold'}}"
+        {{on "click" (fn this.navigateToFolder crumb.path)}}
+      >
+        {{crumb.name}}
+      </button>
+    {{/each}}
+  </div>
+
+  {{!-- Main Content: Folder Tree + File List --}}
+  <div class="avitar-grid avitar-grid-cols-12 avitar-gap-4">
+    {{!-- Folder Tree Sidebar --}}
+    <div class="avitar-col-span-3">
+      <div class="avitar-card avitar-p-3" style="max-height: 600px; overflow-y: auto;">
+        <h4 class="avitar-font-semibold avitar-mb-3 avitar-flex avitar-items-center">
+          {{lnr-icon "folder" class="avitar-mr-2 avitar-text-primary"}}
+          Folders
+        </h4>
+
+        {{#if this.folderStructure}}
+          <div class="folder-tree">
+            {{#each-in this.folderStructure as |folderPath folderData|}}
+              <div class="folder-tree-item">
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-w-full avitar-justify-start {{if (eq folderPath this.currentFolder) 'avitar-bg-primary-light'}}"
+                  {{on "click" (fn this.navigateToFolder folderPath)}}
+                >
+                  {{lnr-icon "folder" class="avitar-mr-2 avitar-text-warning"}}
+                  <span class="avitar-flex-1 avitar-text-left">
+                    {{if (eq folderPath "/") "Root" folderPath}}
+                  </span>
+                  <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-badge--pill">
+                    {{folderData.fileCount}}
+                  </span>
+                </button>
+              </div>
+            {{/each-in}}
+          </div>
+        {{else}}
+          <div class="avitar-text-center avitar-text-muted avitar-py-4">
+            {{lnr-icon "folder" class="avitar-mb-2"}}
+            <p class="avitar-text-sm">No folders</p>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- File List --}}
+    <div class="avitar-col-span-9">
+      <div class="avitar-card avitar-p-3" style="max-height: 600px; overflow-y: auto;">
+        {{#if this.isLoading}}
+          <div class="avitar-empty-state avitar-py-8">
+            <i class="fas fa-spinner fa-spin fa-2x avitar-text-primary avitar-mb-3"></i>
+            <p class="avitar-text-muted">Loading files...</p>
+          </div>
+        {{else if this.filteredFiles.length}}
+          <div class="avitar-space-y-2">
+            {{#each this.filteredFiles as |file|}}
+              <div
+                class="file-item avitar-flex avitar-items-center avitar-gap-3 avitar-p-3 avitar-rounded avitar-border avitar-cursor-pointer avitar-transition-all
+                  {{if (this.isFileSelected file) 'avitar-border-primary avitar-bg-primary-light' 'avitar-border-gray-200 hover:avitar-border-primary'}}"
+                {{on "click" (fn this.selectFile file)}}
+              >
+                {{!-- File Icon --}}
+                <div class="avitar-flex-shrink-0">
+                  <div class="avitar-w-10 avitar-h-10 avitar-rounded avitar-bg-gray-100 avitar-flex avitar-items-center avitar-justify-center">
+                    {{lnr-icon (this.getFileIcon file) class="avitar-text-lg avitar-text-primary"}}
+                  </div>
+                </div>
+
+                {{!-- File Info --}}
+                <div class="avitar-flex-1 avitar-min-w-0">
+                  <div class="avitar-font-semibold avitar-truncate">
+                    {{file.displayName}}
+                  </div>
+                  <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-text-xs avitar-text-muted avitar-mt-1">
+                    <span>
+                      {{lnr-icon "file-empty" class="avitar-mr-1"}}
+                      {{file.fileExtension}}
+                    </span>
+                    <span>
+                      {{lnr-icon "database" class="avitar-mr-1"}}
+                      {{this.formatFileSize file.fileSize}}
+                    </span>
+                    <span>
+                      {{lnr-icon "calendar-full" class="avitar-mr-1"}}
+                      {{this.formatDate file.uploadedAt}}
+                    </span>
+                  </div>
+                  {{#if file.description}}
+                    <div class="avitar-text-xs avitar-text-muted avitar-mt-1 avitar-truncate">
+                      {{file.description}}
+                    </div>
+                  {{/if}}
+                  {{#if file.tags}}
+                    <div class="avitar-flex avitar-gap-2 avitar-mt-2">
+                      {{#each file.tags as |tag|}}
+                        <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-badge--pill">
+                          {{tag}}
+                        </span>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+
+                {{!-- Selection Indicator --}}
+                <div class="avitar-flex-shrink-0">
+                  {{#if (this.isFileSelected file)}}
+                    <div class="avitar-w-6 avitar-h-6 avitar-rounded-full avitar-bg-primary avitar-flex avitar-items-center avitar-justify-center">
+                      <i class="fas fa-check avitar-text-white avitar-text-xs"></i>
+                    </div>
+                  {{else}}
+                    <div class="avitar-w-6 avitar-h-6 avitar-rounded-full avitar-border-2 avitar-border-gray-300"></div>
+                  {{/if}}
+                </div>
+
+                {{!-- Actions --}}
+                <div class="avitar-flex-shrink-0 avitar-flex avitar-gap-1" {{on "click" this.stopPropagation}}>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-primary hover:avitar-bg-primary-light"
+                    {{on "click" (fn this.previewFile file)}}
+                    title="Preview"
+                  >
+                    {{lnr-icon "eye"}}
+                  </button>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-success hover:avitar-bg-success-light"
+                    {{on "click" (fn this.downloadFile file)}}
+                    title="Download"
+                  >
+                    {{lnr-icon "download"}}
+                  </button>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-8">
+            <div class="avitar-mb-3" style="font-size: 3rem;">
+              {{lnr-icon "folder-open" class="avitar-text-muted"}}
+            </div>
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              No files found
+            </h3>
+            <p class="avitar-text-muted">
+              {{#if this.searchText}}
+                No files match your search criteria
+              {{else}}
+                This folder is empty
+              {{/if}}
+            </p>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  {{!-- Selection Summary (for multiple selection mode) --}}
+  {{#if (and this.hasSelection (eq this.selectionMode "multiple"))}}
+    <div class="avitar-mt-4 avitar-card avitar-card--info avitar-p-3">
+      <div class="avitar-flex avitar-items-center avitar-justify-between">
+        <div>
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          <strong>{{this.selectedFileIds.length}}</strong> file{{if (gt this.selectedFileIds.length 1) "s"}} selected
+        </div>
+        <div class="avitar-flex avitar-gap-2 avitar-text-xs">
+          {{#each this.selectedFiles as |file|}}
+            <span class="avitar-badge avitar-badge--primary avitar-badge--pill">
+              {{file.displayName}}
+            </span>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>
+
+{{! Document Viewer Modal - Rendered at document body level }}
+{{#if this.showViewerModal}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    <BuildingPermits::DocumentViewerModal
+      @isOpen={{this.showViewerModal}}
+      @file={{this.fileToView}}
+      @onClose={{this.closeViewerModal}}
+    />
+  {{/in-element}}
+{{/if}}
+
+<style>
+  .file-browser {
+    width: 100%;
+  }
+
+  .folder-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .folder-tree-item {
+    width: 100%;
+  }
+
+  .file-item {
+    transition: all 0.2s ease;
+  }
+
+  .file-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Make action buttons more visible */
+  .file-item button[title="Preview"],
+  .file-item button[title="Download"] {
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-size: 1.125rem;
+  }
+
+  .file-item button[title="Preview"]:hover {
+    background-color: #e6f0ff !important;
+    border-color: #3b82f6;
+  }
+
+  .file-item button[title="Download"]:hover {
+    background-color: #dcfce7 !important;
+    border-color: #22c55e;
+  }
+
+  /* Folder buttons styling */
+  .folder-tree-item button {
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+
+  .folder-tree-item button:hover {
+    background-color: #f3f4f6;
+  }
+
+  .folder-tree-item button.avitar-bg-primary-light {
+    background-color: #dbeafe;
+    font-weight: 600;
+  }
+</style>

@@ -2,41 +2,36 @@ import { helper } from '@ember/component/helper';
 import { htmlSafe } from '@ember/template';
 
 /**
- * Helper to generate linearicons with optional size and color classes
+ * Helper to generate icomoon icons with optional size and color classes
  *
  * Usage:
  * {{lnr-icon "pencil"}} - Basic icon
- * {{lnr-icon "pencil" size="lg"}} - Large icon
- * {{lnr-icon "pencil" color="primary"}} - Primary colored icon
- * {{lnr-icon "pencil" size="lg" color="primary"}} - Large primary icon
- * {{lnr-icon "pencil" class="custom-class"}} - Custom classes
+ * {{lnr-icon "pencil" size="24"}} - Icon with specific size
+ * {{lnr-icon "pencil" class="avitar-text-primary"}} - Custom classes for color
+ * {{lnr-icon "pencil" size="24" class="avitar-text-primary"}} - Size with custom classes
  */
-export function lnrIcon(
-  [iconName],
-  { size, color, class: additionalClasses } = {},
-) {
+export function lnrIcon([iconName], { size, class: additionalClasses } = {}) {
   if (!iconName) {
     return htmlSafe('');
   }
 
-  const classes = ['lnr', `lnr-${iconName}`];
-
-  // Add size class if specified
-  if (size) {
-    classes.push(`lnr-${size}`);
-  }
-
-  // Add color class if specified
-  if (color) {
-    classes.push(`lnr-${color}`);
-  }
+  // Use icon- prefix for icomoon fonts
+  const classes = [`icon-${iconName}`];
 
   // Add any additional classes
   if (additionalClasses) {
     classes.push(additionalClasses);
   }
 
-  return htmlSafe(`<i class="${classes.join(' ')}" aria-hidden="true"></i>`);
+  // Build style attribute for size if specified
+  let styleAttr = '';
+  if (size) {
+    styleAttr = ` style="font-size: ${size}px;"`;
+  }
+
+  return htmlSafe(
+    `<i class="${classes.join(' ')}"${styleAttr} aria-hidden="true"></i>`,
+  );
 }
 
 export default helper(lnrIcon);

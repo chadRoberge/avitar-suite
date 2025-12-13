@@ -1,7 +1,7 @@
 const MODULES = {
   ASSESSING: 'assessing',
   TAX_COLLECTION: 'taxCollection',
-  BUILDING_PERMITS: 'buildingPermits',
+  BUILDING_PERMITS: 'building_permit', // Updated to match Stripe metadata
   TOWN_CLERK: 'townClerk',
   MOTOR_VEHICLE: 'motorVehicle',
   UTILITY_BILLING: 'utilityBilling',
@@ -26,7 +26,7 @@ const MODULE_FEATURES = {
     AUTOMATED_REMINDERS: 'automatedReminders',
     LIENS_MANAGEMENT: 'liensManagement',
   },
-  buildingPermits: {
+  building_permit: {
     ONLINE_APPLICATIONS: 'onlineApplications',
     DIGITAL_PLAN_REVIEW: 'digitalPlanReview',
     INSPECTION_SCHEDULING: 'inspectionScheduling',
@@ -58,7 +58,7 @@ const TIER_FEATURES = {
     [MODULES.ASSESSING]: [],
     [MODULES.TAX_COLLECTION]: [MODULE_FEATURES.taxCollection.ONLINE_PAYMENTS],
     [MODULES.BUILDING_PERMITS]: [
-      MODULE_FEATURES.buildingPermits.ONLINE_APPLICATIONS,
+      MODULE_FEATURES.building_permit.ONLINE_APPLICATIONS,
     ],
     [MODULES.TOWN_CLERK]: [MODULE_FEATURES.townClerk.DIGITAL_RECORDS],
     [MODULES.MOTOR_VEHICLE]: [MODULE_FEATURES.motorVehicle.ONLINE_REGISTRATION],
@@ -75,9 +75,9 @@ const TIER_FEATURES = {
       MODULE_FEATURES.taxCollection.AUTOMATED_REMINDERS,
     ],
     [MODULES.BUILDING_PERMITS]: [
-      MODULE_FEATURES.buildingPermits.ONLINE_APPLICATIONS,
-      MODULE_FEATURES.buildingPermits.DIGITAL_PLAN_REVIEW,
-      MODULE_FEATURES.buildingPermits.INSPECTION_SCHEDULING,
+      MODULE_FEATURES.building_permit.ONLINE_APPLICATIONS,
+      MODULE_FEATURES.building_permit.DIGITAL_PLAN_REVIEW,
+      MODULE_FEATURES.building_permit.INSPECTION_SCHEDULING,
     ],
     [MODULES.TOWN_CLERK]: [
       MODULE_FEATURES.townClerk.DIGITAL_RECORDS,
@@ -109,10 +109,10 @@ const TIER_FEATURES = {
       MODULE_FEATURES.taxCollection.LIENS_MANAGEMENT,
     ],
     [MODULES.BUILDING_PERMITS]: [
-      MODULE_FEATURES.buildingPermits.ONLINE_APPLICATIONS,
-      MODULE_FEATURES.buildingPermits.DIGITAL_PLAN_REVIEW,
-      MODULE_FEATURES.buildingPermits.INSPECTION_SCHEDULING,
-      MODULE_FEATURES.buildingPermits.WORKFLOW_AUTOMATION,
+      MODULE_FEATURES.building_permit.ONLINE_APPLICATIONS,
+      MODULE_FEATURES.building_permit.DIGITAL_PLAN_REVIEW,
+      MODULE_FEATURES.building_permit.INSPECTION_SCHEDULING,
+      MODULE_FEATURES.building_permit.WORKFLOW_AUTOMATION,
     ],
     [MODULES.TOWN_CLERK]: [
       MODULE_FEATURES.townClerk.DIGITAL_RECORDS,

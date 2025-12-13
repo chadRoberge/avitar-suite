@@ -311,7 +311,9 @@ export default class PermitInspectionModel extends Model {
 
   get requiresAction() {
     return (
-      (this.isCompleted && this.requiresReinspection && !this.nextInspectionDate) ||
+      (this.isCompleted &&
+        this.requiresReinspection &&
+        !this.nextInspectionDate) ||
       (this.hasOpenViolations && this.isFailed) ||
       (this.hasConditions && this.pendingConditionsCount > 0)
     );

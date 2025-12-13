@@ -11,8 +11,10 @@ export default class AssessingRevaluationsSheetDevelopedLandComponent extends Co
       ...sale,
       landValue: sale.land_assessment || 0,
       buildingValue: sale.building_assessment || 0,
-      totalAssessment: (sale.land_assessment || 0) + (sale.building_assessment || 0),
-      landRatio: sale.sale_price > 0 ? (sale.land_assessment || 0) / sale.sale_price : 0,
+      totalAssessment:
+        (sale.land_assessment || 0) + (sale.building_assessment || 0),
+      landRatio:
+        sale.sale_price > 0 ? (sale.land_assessment || 0) / sale.sale_price : 0,
     }));
   }
 }

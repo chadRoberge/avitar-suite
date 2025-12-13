@@ -1,0 +1,168 @@
+{{page-title (concat @model.permit.permitNumber " - Permit Details")}}
+{{! Two-column layout: Progress sidebar + Main content }}
+<div class="avitar-flex avitar-flex-row">
+  {{! Left Sidebar - Permit Info + Status Progress }}
+  <div class="avitar-flex-3" style="position: sticky; top: calc(var(--topbar-height) * 2); height: calc(100vh - calc(var(--topbar-height) * 2)); overflow-y: auto; border-right: 1px solid #e5e7eb; background: white;">
+    {{! Permit Information Header }}
+    <div class="avitar-p-2 avitar-border-b avitar-border-gray-200">
+      {{! Permit Number - Prominent }}
+      <div class="avitar-mb-1 avitar-pb-1 avitar-border-b avitar-border-gray-200">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Permit Number</div>
+        <div class="avitar-text-lg avitar-font-bold avitar-text-gray-900">
+          {{@model.permit.permitNumber}}
+        </div>
+      </div>
+      {{! Two-Column Grid for Details }}
+      {{! Application Date }}
+      <div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Applied</div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{date-format @model.permit.applicationDate "MMM DD, YYYY"}}
+        </div>
+      </div>
+      {{! Property Address - Full Width }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">
+          <i class="fas fa-map-marker-alt"></i>
+          Property Address
+        </div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{@model.permit.propertyAddress}}
+        </div>
+      </div>
+    </div>
+    {{! Status Progress }}
+    <Contractor::PermitStatusProgress @permit={{@model.permit}} @steps={{this.permitStatusSteps}} @currentStepIndex={{this.currentStepIndex}} @departmentReviews={{this.departmentReviews}} />
+  </div>
+  {{! Right Content - Sticky Tabs + Scrollable Content }}
+  <main class="avitar-flex-10" style="background-color: #f9fafb; scrollbar-gutter: stable;">
+    {{! Sticky Tab Navigation }}
+    <div style="position: sticky; top: calc(var(--topbar-height) * 2); z-index: 10; background: white; border-bottom: 1px solid #e5e7eb;">
+      <div class="avitar-tabs" style="overflow: visible;">
+        <button type="button" class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}" {{on "click" (fn this.setActiveTab 'overview')}}>
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          Overview
+        </button>
+        <button type="button" class="avitar-tab {{if (eq this.activeTab 'inspections') 'avitar-tab--active'}}" {{on "click" (fn this.setActiveTab 'inspections')}}>
+          <i class="fas fa-clipboard-check avitar-mr-2"></i>
+          Inspections
+          {{#if @model.inspections.length}}
+          <span class="avitar-badge avitar-badge--primary avitar-ml-2">
+            {{@model.inspections.length}}
+          </span>
+          {{/if}}
+        </button>
+        <button type="button" class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}" {{on "click" (fn this.setActiveTab 'documents')}}>
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          Documents
+          {{#if @model.files.length}}
+          <span class="avitar-badge avitar-badge--primary avitar-ml-2">
+            {{@model.files.length}}
+          </span>
+          {{/if}}
+        </button>
+        <button type="button" class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}" {{on "click" (fn this.setActiveTab 'chat')}}>
+          <i class="fas fa-comments avitar-mr-2"></i>
+          Communications
+          {{#if this.publicComments.length}}
+          <span class="avitar-badge avitar-badge--primary avitar-ml-2">
+            {{this.publicComments.length}}
+          </span>
+          {{/if}}
+        </button>
+      </div>
+    </div>
+    {{! Scrollable Tab Content }}
+    <div class="avitar-p-6">
+      {{#if (eq this.activeTab 'overview')}}
+      <Contractor::PermitOverview @permit={{@model.permit}} />
+      {{else if (eq this.activeTab 'inspections')}}
+      <Contractor::PermitInspections @permit={{@model.permit}} @inspections={{@model.inspections}} @canSchedule={{this.canScheduleInspection}} @onScheduleInspection={{this.openScheduleInspectionModal}} />
+      {{else if (eq this.activeTab 'documents')}}
+      <Contractor::PermitDocuments @permit={{@model.permit}} @files={{@model.files}} @canUpload={{this.canUploadDocuments}} @onUpload={{this.openUploadDocumentModal}} @onDownload={{this.viewDocument}} />
+      {{else if (eq this.activeTab 'chat')}}
+      <Contractor::PermitCommunications @permit={{@model.permit}} @comments={{this.publicComments}} @currentUser={{@model.user}} @onAddComment={{this.openAddCommentModal}} />
+      {{/if}}
+    </div>
+  </main>
+</div>
+{{! Upload Document Modal }}
+{{#if this.showUploadDocumentModal}}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeUploadDocumentModal}}>
+  <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+    <div class="avitar-modal__header">
+      <h2 class="avitar-modal__title">
+        <i class="fas fa-upload avitar-mr-2"></i>
+        Upload Documents
+      </h2>
+      <button type="button" class="avitar-modal__close" {{on "click" this.closeUploadDocumentModal}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="avitar-modal__body">
+      <p class="avitar-text-muted avitar-mb-4">
+        Select one or more files to upload to this permit.
+      </p>
+      <label class="avitar-btn avitar-btn--primary avitar-btn--block">
+        <i class="fas fa-file-upload avitar-mr-2"></i>
+        Choose Files
+        <input type="file" multiple class="avitar-hidden" {{on "change" this.handleFileUpload}} />
+      </label>
+    </div>
+    <div class="avitar-modal__footer">
+      <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.closeUploadDocumentModal}}>
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+{{/if}}
+{{! Add Comment Modal }}
+{{#if this.showAddCommentModal}}
+<div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeAddCommentModal}}>
+  <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+    <div class="avitar-modal__header">
+      <h2 class="avitar-modal__title">
+        <i class="fas fa-comment avitar-mr-2"></i>
+        Add Comment
+      </h2>
+      <button type="button" class="avitar-modal__close" {{on "click" this.closeAddCommentModal}}>
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="avitar-modal__body">
+      <label class="avitar-label">Message</label>
+      <textarea class="avitar-input" rows="4" placeholder="Enter your message..." value={{this.newCommentText}} {{on "input" this.updateCommentText}}></textarea>
+    </div>
+    <div class="avitar-modal__footer">
+      <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.closeAddCommentModal}}>
+        Cancel
+      </button>
+      <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.submitComment}} disabled={{this.isLoading}}>
+        {{#if this.isLoading}}
+        <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+        Sending...
+        {{else}}
+        <i class="fas fa-paper-plane avitar-mr-2"></i>
+        Send Message
+        {{/if}}
+      </button>
+    </div>
+  </div>
+</div>
+{{/if}}
+
+{{! Schedule Inspection Modal }}
+<Contractor::ScheduleInspectionModal
+  @permit={{@model.permit}}
+  @isOpen={{this.showScheduleInspectionModal}}
+  @onClose={{this.closeScheduleInspectionModal}}
+  @onSchedule={{this.scheduleInspection}}
+/>
+
+{{! Document Viewer Modal }}
+<BuildingPermits::DocumentViewerModal
+  @isOpen={{this.showDocumentViewer}}
+  @file={{this.selectedDocumentForViewing}}
+  @onClose={{this.closeDocumentViewer}}
+/>

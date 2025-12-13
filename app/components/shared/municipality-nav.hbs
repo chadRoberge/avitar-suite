@@ -51,13 +51,29 @@
 
     {{!-- User Actions --}}
     <div class="avitar-topbar__user">
+      {{!-- User Role Badge --}}
+      {{#if this.userRole}}
+        <span class="avitar-badge {{this.userRole.badge}}" title="Your role in this municipality">
+          {{{lnr-icon "user"}}}
+          <span class="avitar-ml-1">{{this.userRole.role}}</span>
+        </span>
+      {{/if}}
+
+      {{!-- Department Badge (if applicable) --}}
+      {{#if this.userDepartment}}
+        <span class="avitar-badge avitar-badge--secondary avitar-ml-2" title="Your department">
+          {{{lnr-icon "briefcase"}}}
+          <span class="avitar-ml-1">{{this.userDepartment}}</span>
+        </span>
+      {{/if}}
+
       {{!-- Subscription Info --}}
       {{#if this.municipality.subscriptionInfo}}
-        <span class="avitar-badge avitar-badge--{{this.municipality.subscriptionInfo.tier}}">
+        <span class="avitar-badge avitar-badge--{{this.municipality.subscriptionInfo.tier}} avitar-ml-2">
           {{this.municipality.subscriptionInfo.tier}} Plan
         </span>
       {{/if}}
-      
+
       {{!-- Municipality Selection Button --}}
       <button 
         class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-ml-2"
@@ -141,7 +157,7 @@
                 title={{if child.iconOnly child.title}}
               >
                 {{#if child.iconOnly}}
-                  {{lnr-icon child.icon}}
+                  {{{lnr-icon child.icon}}}
                 {{else}}
                   <i class="fas fa-{{child.icon}}"></i>
                   {{child.title}}

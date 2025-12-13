@@ -60,7 +60,7 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const { name, description, waterBodyType } = req.body;
+      const { name, description, waterBodyType, baseWaterValue } = req.body;
 
       // Validation
       if (!name || !description || !waterBodyType) {
@@ -75,6 +75,7 @@ router.post(
         name,
         description,
         waterBodyType,
+        baseWaterValue: baseWaterValue || 0,
       });
 
       await waterBody.save();
@@ -107,7 +108,7 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      const { name, description, waterBodyType } = req.body;
+      const { name, description, waterBodyType, baseWaterValue } = req.body;
 
       const waterBody = await WaterBody.findByMunicipalityAndId(
         municipalityId,
@@ -124,6 +125,8 @@ router.put(
       if (name) waterBody.name = name;
       if (description) waterBody.description = description;
       if (waterBodyType) waterBody.waterBodyType = waterBodyType;
+      if (baseWaterValue !== undefined)
+        waterBody.baseWaterValue = baseWaterValue;
 
       await waterBody.save();
 

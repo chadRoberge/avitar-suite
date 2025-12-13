@@ -17,7 +17,14 @@ const contractorVerificationSchema = new mongoose.Schema(
     // Application status
     status: {
       type: String,
-      enum: ['draft', 'submitted', 'under_review', 'approved', 'rejected', 'expired'],
+      enum: [
+        'draft',
+        'submitted',
+        'under_review',
+        'approved',
+        'rejected',
+        'expired',
+      ],
       default: 'draft',
     },
 
@@ -118,7 +125,7 @@ const contractorVerificationSchema = new mongoose.Schema(
   {
     timestamps: true,
     collection: 'contractor_verifications',
-  }
+  },
 );
 
 // Indexes
@@ -143,7 +150,10 @@ contractorVerificationSchema.virtual('isExpiringSoon').get(function () {
 });
 
 // Method to approve verification
-contractorVerificationSchema.methods.approve = function (reviewerId, notes = '') {
+contractorVerificationSchema.methods.approve = function (
+  reviewerId,
+  notes = '',
+) {
   this.status = 'approved';
   this.reviewed_by = reviewerId;
   this.reviewed_at = new Date();
@@ -162,7 +172,7 @@ contractorVerificationSchema.methods.approve = function (reviewerId, notes = '')
 contractorVerificationSchema.methods.reject = function (
   reviewerId,
   reason,
-  details = ''
+  details = '',
 ) {
   this.status = 'rejected';
   this.reviewed_by = reviewerId;
@@ -193,7 +203,7 @@ contractorVerificationSchema.methods.submit = function () {
 
 // Static method to check if contractor is verified
 contractorVerificationSchema.statics.isContractorVerified = async function (
-  contractorId
+  contractorId,
 ) {
   const verification = await this.findOne({
     contractor_id: contractorId,
@@ -210,5 +220,5 @@ contractorVerificationSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model(
   'ContractorVerification',
-  contractorVerificationSchema
+  contractorVerificationSchema,
 );

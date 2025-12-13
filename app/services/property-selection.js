@@ -130,7 +130,10 @@ export default class PropertySelectionService extends Service {
           };
         }
 
-        console.log('Updated property assessment total (parcel):', newAssessedValue);
+        console.log(
+          'Updated property assessment total (parcel):',
+          newAssessedValue,
+        );
       }
     } catch (error) {
       console.warn('Could not refresh assessment totals:', error);

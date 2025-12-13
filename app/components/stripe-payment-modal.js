@@ -27,8 +27,17 @@ export default class StripePaymentModalComponent extends Component {
    * @arg {string} currency - Currency code (default: USD)
    * @arg {function} onClose - Called when modal closes
    * @arg {function} onSuccess - Called when payment succeeds
-   * @arg {function} onPaymentMethodReady - Called with payment method when card is ready
+   * @arg {function} onPaymentMethodReady - Called with payment method when card is ready (subscription mode)
    * @arg {object} metadata - Additional metadata for the payment
+   * @arg {string} clientSecret - Payment intent client secret (for destination charge payments)
+   * @arg {string} stripeAccountId - Connected account ID (not used for destination charges, kept for future direct charge support)
+   * @arg {boolean} isPermitPayment - Whether this is a permit payment (shows breakdown)
+   * @arg {object} paymentBreakdown - Payment breakdown object (permitFee, processingFees, totalAmount) for permit payments
+   *
+   * Payment Modes:
+   * 1. Subscription Mode: Only pass onPaymentMethodReady (no clientSecret) - creates payment method only
+   * 2. Destination Charge Mode: Pass clientSecret - confirms payment intent created on platform with transfer_data
+   * 3. Direct Charge Mode: Pass clientSecret + stripeAccountId - for future use with direct charges on connected accounts
    */
 
   get config() {
@@ -124,7 +133,8 @@ export default class StripePaymentModalComponent extends Component {
         } catch (error) {
           console.error('Payment error:', error);
           ev.complete('fail');
-          this.errorMessage = error.message || 'Payment failed. Please try again.';
+          this.errorMessage =
+            error.message || 'Payment failed. Please try again.';
           this.notifications.error(this.errorMessage);
         } finally {
           this.isProcessing = false;
@@ -171,7 +181,8 @@ export default class StripePaymentModalComponent extends Component {
         base: {
           fontSize: '16px',
           color: '#32325d',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           '::placeholder': {
             color: '#aab7c4',
           },
@@ -231,33 +242,68 @@ export default class StripePaymentModalComponent extends Component {
     this.errorMessage = null;
 
     try {
-      // Create payment method from card element
-      const { error, paymentMethod } = await this.stripe.createPaymentMethod({
-        type: 'card',
-        card: this.cardElement,
-        billing_details: {
-          email: this.args.billingEmail || '',
-          name: this.args.billingName || '',
-        },
-      });
+      // If clientSecret is provided, confirm the payment intent (destination charge mode)
+      if (this.args.clientSecret) {
+        const confirmOptions = {
+          payment_method: {
+            card: this.cardElement,
+            billing_details: {
+              email: this.args.billingEmail || '',
+              name: this.args.billingName || '',
+            },
+          },
+        };
 
-      if (error) {
-        this.errorMessage = error.message;
-        this.isProcessing = false;
-        return;
-      }
+        // For destination charges, do NOT pass stripeAccount
+        // The payment intent was created on the platform account and will automatically
+        // transfer to the connected account via transfer_data
+        const { error, paymentIntent } = await this.stripe.confirmCardPayment(
+          this.args.clientSecret,
+          confirmOptions,
+        );
 
-      // Call parent's success handler with payment method
-      if (this.args.onPaymentMethodReady) {
-        await this.args.onPaymentMethodReady(paymentMethod);
-      }
+        if (error) {
+          this.errorMessage = error.message;
+          this.isProcessing = false;
+          return;
+        }
 
-      // Success notification
-      this.notifications.success('Payment successful!');
+        // Success notification
+        this.notifications.success('Payment successful!');
 
-      // Call success callback
-      if (this.args.onSuccess) {
-        this.args.onSuccess(paymentMethod);
+        // Call success callback with payment intent
+        if (this.args.onSuccess) {
+          this.args.onSuccess(paymentIntent);
+        }
+      } else {
+        // Original flow: Create payment method only (for subscriptions)
+        const { error, paymentMethod } = await this.stripe.createPaymentMethod({
+          type: 'card',
+          card: this.cardElement,
+          billing_details: {
+            email: this.args.billingEmail || '',
+            name: this.args.billingName || '',
+          },
+        });
+
+        if (error) {
+          this.errorMessage = error.message;
+          this.isProcessing = false;
+          return;
+        }
+
+        // Call parent's success handler with payment method
+        if (this.args.onPaymentMethodReady) {
+          await this.args.onPaymentMethodReady(paymentMethod);
+        }
+
+        // Success notification
+        this.notifications.success('Payment successful!');
+
+        // Call success callback
+        if (this.args.onSuccess) {
+          this.args.onSuccess(paymentMethod);
+        }
       }
     } catch (error) {
       console.error('Payment error:', error);

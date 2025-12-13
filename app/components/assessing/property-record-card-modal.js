@@ -119,6 +119,21 @@ export default class PropertyRecordCardModalComponent extends Component {
     this.lastLoadedPropertyId = null;
 
     if (this.selectedProperty) {
+      // Clear IndexedDB cache for land assessments
+      if (this.assessing.localApi && this.assessing.localApi.clearCache) {
+        for (let cardNumber = 1; cardNumber <= this.totalCards; cardNumber++) {
+          const cacheKey = `_properties_${this.selectedProperty.id}_assessment_land_card_${cardNumber}`;
+          try {
+            this.assessing.localApi.clearCache(cacheKey);
+            console.log(
+              `✅ Cleared land assessment cache for card ${cardNumber}`,
+            );
+          } catch (e) {
+            console.warn(`Failed to clear cache key: ${cacheKey}`, e);
+          }
+        }
+      }
+
       // Only clear property record card specific cache, preserve edit modal cache
       this.assessing.clearSketchCache(
         this.selectedProperty.id,
@@ -162,6 +177,24 @@ export default class PropertyRecordCardModalComponent extends Component {
           // Clear cached data if property changed
           if (stillPropertyChanged) {
             this.clearCachedData();
+            // Also clear IndexedDB cache for land assessments
+            if (this.assessing.localApi && this.assessing.localApi.clearCache) {
+              for (
+                let cardNumber = 1;
+                cardNumber <= this.totalCards;
+                cardNumber++
+              ) {
+                const cacheKey = `_properties_${this.selectedProperty.id}_assessment_land_card_${cardNumber}`;
+                try {
+                  this.assessing.localApi.clearCache(cacheKey);
+                  console.log(
+                    `✅ Cleared land assessment cache for card ${cardNumber} on property change`,
+                  );
+                } catch (e) {
+                  console.warn(`Failed to clear cache key: ${cacheKey}`, e);
+                }
+              }
+            }
           }
           this.loadPropertyData();
         }
@@ -196,18 +229,20 @@ export default class PropertyRecordCardModalComponent extends Component {
   }
 
   async loadCardData(cardNumber, forceRefresh = false) {
-    console.log(`🎯 Property Record Card Modal - Loading data for card ${cardNumber}`);
-
     try {
-      const [landData, buildingData, featuresData, sketchData, assessmentHistory] =
-        await Promise.all([
-          this.loadLandAssessment(cardNumber),
-          this.loadBuildingAssessment(cardNumber),
-          this.loadPropertyFeatures(cardNumber),
-          this.loadSketchData(cardNumber, forceRefresh),
-          this.loadAssessmentHistory(cardNumber),
-        ]);
-
+      const [
+        landData,
+        buildingData,
+        featuresData,
+        sketchData,
+        assessmentHistory,
+      ] = await Promise.all([
+        this.loadLandAssessment(cardNumber, forceRefresh),
+        this.loadBuildingAssessment(cardNumber),
+        this.loadPropertyFeatures(cardNumber),
+        this.loadSketchData(cardNumber, forceRefresh),
+        this.loadAssessmentHistory(cardNumber),
+      ]);
 
       return {
         cardNumber,
@@ -274,13 +309,28 @@ export default class PropertyRecordCardModalComponent extends Component {
     return this.performDataLoading(forceRefresh);
   }
 
-  async loadLandAssessment(cardNumber) {
+  async loadLandAssessment(cardNumber, forceRefresh = false) {
     try {
+      const options = forceRefresh ? { skipCache: true } : {};
       const response = await this.assessing.getLandAssessmentForYear(
         this.selectedProperty.id,
         cardNumber,
         this.assessmentYear,
+        options,
       );
+
+      // If we got a response from cache without waterfront_details field, force refresh
+      if (
+        !forceRefresh &&
+        response?.assessment &&
+        !response.assessment.hasOwnProperty('waterfront_details')
+      ) {
+        console.log(
+          '⚠️ Property Record Card: Cached data missing waterfront_details, refreshing...',
+        );
+        return this.loadLandAssessment(cardNumber, true);
+      }
+
       return response;
     } catch (error) {
       console.error('Error loading land assessment:', error);

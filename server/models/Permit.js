@@ -248,6 +248,194 @@ const permitSchema = new mongoose.Schema(
       ref: 'User',
     },
 
+    // Department reviews tracking
+    departmentReviews: [
+      {
+        department: {
+          type: String,
+          required: true,
+        },
+        required: {
+          type: Boolean,
+          default: true,
+        },
+        // Review status: pending, in_review, revisions_requested, approved, conditionally_approved, rejected
+        status: {
+          type: String,
+          enum: [
+            'pending',
+            'in_review',
+            'revisions_requested',
+            'approved',
+            'conditionally_approved',
+            'rejected',
+          ],
+          default: 'pending',
+        },
+        approved: {
+          type: Boolean,
+          default: false,
+        },
+        // Assigned reviewer for this department
+        assignedTo: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        assignedAt: Date,
+        // Who performed the review
+        reviewedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        reviewedAt: Date,
+        // Review started timestamp (when reviewer first opens/claims)
+        reviewStartedAt: Date,
+        // Comments related to this department's review (references PermitComment IDs)
+        // Allows both internal municipal comments and external applicant communication
+        comments: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PermitComment',
+          },
+        ],
+        // Conditions/stipulations attached to approval (e.g., "Must install fire sprinklers")
+        conditions: [String],
+        // Re-review tracking
+        requiresReReview: {
+          type: Boolean,
+          default: false,
+        },
+        reReviewReason: String,
+        reReviewRequestedAt: Date,
+        reReviewRequestedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        // Review history for audit trail
+        reviewHistory: [
+          {
+            action: {
+              type: String,
+              enum: [
+                'assigned',
+                'started',
+                'approved',
+                'conditionally_approved',
+                'rejected',
+                'revisions_requested',
+                're_review_requested',
+              ],
+            },
+            performedBy: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: 'User',
+            },
+            performedAt: {
+              type: Date,
+              default: Date.now,
+            },
+            notes: String,
+          },
+        ],
+      },
+    ],
+
+    // SLA Tracking & Notifications (Category 3)
+    sla: {
+      // Target review time in business days (set from municipality settings or permit type)
+      targetReviewDays: {
+        type: Number,
+        default: 30,
+      },
+      // Expected completion date based on submission + target days
+      expectedCompletionDate: Date,
+      // Actual completion date (when fully approved/denied)
+      actualCompletionDate: Date,
+      // Is this permit overdue?
+      isOverdue: {
+        type: Boolean,
+        default: false,
+      },
+      // Days overdue (calculated)
+      daysOverdue: {
+        type: Number,
+        default: 0,
+      },
+      // Warning notifications sent
+      warningsSent: [
+        {
+          sentAt: Date,
+          warningType: {
+            type: String,
+            enum: ['approaching_deadline', 'overdue', 'severely_overdue'],
+          },
+          daysFromDeadline: Number,
+        },
+      ],
+    },
+
+    // Notification tracking
+    notifications: {
+      // Track which notifications have been sent to avoid duplicates
+      emailsSent: [
+        {
+          type: {
+            type: String,
+            enum: [
+              'submitted',
+              'assigned',
+              'comment_added',
+              'status_changed',
+              'approved',
+              'rejected',
+              'revisions_requested',
+              'sla_warning',
+            ],
+          },
+          sentTo: [String], // Email addresses
+          sentAt: {
+            type: Date,
+            default: Date.now,
+          },
+          relatedDepartment: String, // If notification is department-specific
+        },
+      ],
+      // Track @mentions in comments
+      mentions: [
+        {
+          userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+          },
+          commentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'PermitComment',
+          },
+          read: {
+            type: Boolean,
+            default: false,
+          },
+          readAt: Date,
+        },
+      ],
+    },
+
+    // Track when users view the permit (for unread comment tracking)
+    viewedBy: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        lastViewedAt: {
+          type: Date,
+          required: true,
+          default: Date.now,
+        },
+      },
+    ],
+
     // Project Management (for complex permits with multiple types)
     isProject: {
       type: Boolean,
@@ -259,12 +447,61 @@ const permitSchema = new mongoose.Schema(
       index: true,
     }, // References the parent project permit
     projectName: String, // e.g., "Major Construction - 123 Main St"
+    projectTypeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ProjectType',
+    }, // References the project type template used
+    projectOwnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }, // User who created the project (may differ from individual permit owners)
+    projectTotalFee: {
+      type: Number,
+      default: 0,
+      min: 0,
+    }, // Total fee for entire project (upfront payment)
+    projectFeePaid: {
+      type: Boolean,
+      default: false,
+    }, // Whether project fee has been paid
     childPermits: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Permit',
       },
     ], // For project permits, references to child permits (foundation, electrical, etc.)
+
+    // Denormalized project stats (computed, updated when child permits change)
+    projectStats: {
+      totalChildren: {
+        type: Number,
+        default: 0,
+      },
+      childrenByStatus: {
+        draft: { type: Number, default: 0 },
+        submitted: { type: Number, default: 0 },
+        under_review: { type: Number, default: 0 },
+        approved: { type: Number, default: 0 },
+        conditionally_approved: { type: Number, default: 0 },
+        denied: { type: Number, default: 0 },
+        closed: { type: Number, default: 0 },
+      },
+      totalProjectValue: {
+        type: Number,
+        default: 0,
+      }, // Sum of all child estimatedValues
+      completedChildren: {
+        type: Number,
+        default: 0,
+      },
+      overallProgress: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+      }, // 0-100%
+      lastChildUpdate: Date,
+    },
 
     // Related permits (non-project relationships)
     relatedPermits: [
@@ -296,6 +533,40 @@ const permitSchema = new mongoose.Schema(
         notes: String,
       },
     ],
+
+    // Analytics & Metrics (Category 5) - Cached for performance
+    metrics: {
+      // Total time from submission to final decision (in business days)
+      totalReviewDays: Number,
+      // Time in each department (cached for reporting)
+      departmentReviewTimes: [
+        {
+          department: String,
+          daysInReview: Number,
+          startedAt: Date,
+          completedAt: Date,
+        },
+      ],
+      // Number of revisions requested
+      revisionCount: {
+        type: Number,
+        default: 0,
+      },
+      // Number of comments/communications
+      commentCount: {
+        type: Number,
+        default: 0,
+      },
+      // Number of document uploads
+      documentCount: {
+        type: Number,
+        default: 0,
+      },
+      // Last activity timestamp (for staleness detection)
+      lastActivityAt: Date,
+      // Days since last activity
+      daysSinceActivity: Number,
+    },
 
     // Soft delete
     isActive: {
@@ -342,16 +613,19 @@ permitSchema.index({
 
 // Virtual for total fees
 permitSchema.virtual('totalFees').get(function () {
+  if (!this.fees || !Array.isArray(this.fees)) return 0;
   return this.fees.reduce((sum, fee) => sum + fee.amount, 0);
 });
 
 // Virtual for unpaid fees
 permitSchema.virtual('unpaidFees').get(function () {
+  if (!this.fees || !Array.isArray(this.fees)) return [];
   return this.fees.filter((fee) => !fee.paid);
 });
 
 // Virtual for total paid amount
 permitSchema.virtual('totalPaid').get(function () {
+  if (!this.fees || !Array.isArray(this.fees)) return 0;
   return this.fees
     .filter((fee) => fee.paid)
     .reduce((sum, fee) => sum + (fee.paidAmount || fee.amount), 0);
@@ -361,9 +635,7 @@ permitSchema.virtual('totalPaid').get(function () {
 permitSchema.virtual('daysUntilExpiration').get(function () {
   if (!this.expirationDate) return null;
   const now = new Date();
-  const days = Math.floor(
-    (this.expirationDate - now) / (1000 * 60 * 60 * 24),
-  );
+  const days = Math.floor((this.expirationDate - now) / (1000 * 60 * 60 * 24));
   return days;
 });
 
@@ -545,10 +817,7 @@ permitSchema.statics.findByContractor = function (contractorId, options = {}) {
 // Static method to find permits for a user (contractor member or citizen)
 permitSchema.statics.findByUser = function (userId, options = {}) {
   const query = {
-    $or: [
-      { createdBy: userId },
-      { submitted_by: userId },
-    ],
+    $or: [{ createdBy: userId }, { submitted_by: userId }],
     isActive: true,
   };
 
@@ -571,16 +840,16 @@ permitSchema.statics.findByUser = function (userId, options = {}) {
 // Static method to find all permits accessible by a user
 // For contractors: includes all permits by their contractor company
 // For citizens: only their own permits
-permitSchema.statics.findAccessibleByUser = async function (user, options = {}) {
+permitSchema.statics.findAccessibleByUser = async function (
+  user,
+  options = {},
+) {
   const query = {
     isActive: true,
   };
 
   // Build the OR conditions based on user type
-  const orConditions = [
-    { createdBy: user._id },
-    { submitted_by: user._id },
-  ];
+  const orConditions = [{ createdBy: user._id }, { submitted_by: user._id }];
 
   // If user is a contractor, include all permits by their contractor
   if (user.contractor_id) {

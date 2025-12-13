@@ -20,6 +20,7 @@ Router.map(function () {
     this.route('active'); // Active permits
     this.route('history'); // Past permits
     this.route('permit', { path: '/:permit_id' }); // Permit detail
+    this.route('project', { path: '/project/:project_id' }); // Project detail
     this.route('create'); // Create new permit (multi-step wizard)
   });
 
@@ -99,6 +100,8 @@ Router.map(function () {
       this.route('queue'); // Work queue for municipal staff
       this.route('permits'); // All permits list
       this.route('applications'); // All applications list
+      this.route('projects'); // All projects list
+      this.route('project', { path: '/project/:project_id' }); // Project detail
 
       // Property-specific routes with implicit index
       this.route('property-permits', function () {
@@ -118,6 +121,7 @@ Router.map(function () {
       this.route('create'); // Create new permit
       this.route('edit', { path: '/edit/:permit_id' }); // Edit permit
       this.route('permit', { path: '/permit/:permit_id' }); // Permit detail
+      this.route('review', { path: '/review/:permit_id/:department_name' }); // Department review
 
       // Advanced features
       this.route('plan-review'); // Professional+ feature
@@ -128,10 +132,12 @@ Router.map(function () {
       // Settings
       this.route('settings', function () {
         this.route('permit-types'); // Permit types configuration
+        this.route('project-types'); // Project types configuration
         this.route('inspections'); // Inspection types and workflows
         this.route('users'); // Users and inspectors management
         this.route('documents'); // Document library management
       });
+      this.route('inspection', { path: '/inspection/:inspection_id' });
     });
 
     // Town Clerk Module
@@ -178,12 +184,14 @@ Router.map(function () {
     this.route('settings', function () {
       this.route('municipal-info');
       this.route('users');
+      this.route('user', { path: '/user/:user_id' }); // User detail page - standalone
       this.route('system');
       this.route('modules');
       this.route('features');
       this.route('email-templates');
       this.route('documents'); // General municipal documents
       this.route('payment-setup'); // Stripe Connect onboarding
+      this.route('payment-info'); // Payment dashboard and information
     });
 
     // User settings

@@ -160,10 +160,15 @@ class LandAssessmentCalculationService {
     const assessmentData = landAssessment.toObject();
     // Ensure zone ID is a string for the calculator
     if (assessmentData.zone && typeof assessmentData.zone === 'object') {
+      // Zone is a Mongoose ObjectId or populated document - extract the ID
+      assessmentData.zone = assessmentData.zone._id
+        ? assessmentData.zone._id.toString()
+        : assessmentData.zone.toString();
+    } else if (
+      assessmentData.zone &&
+      assessmentData.zone instanceof mongoose.Types.ObjectId
+    ) {
       assessmentData.zone = assessmentData.zone.toString();
-    } else if (assessmentData.zone && typeof assessmentData.zone === 'string') {
-      // Zone is already a string, ensure it's consistent
-      assessmentData.zone = assessmentData.zone;
     }
 
     // Log zone ID for debugging missing ladder issues
@@ -195,11 +200,33 @@ class LandAssessmentCalculationService {
       views = [];
     }
 
-    return this.calculator.calculatePropertyAssessment(assessmentData, views);
+    // Fetch property waterfronts to include in calculation
+    let waterfronts = [];
+    try {
+      const PropertyWaterfront = require('../models/PropertyWaterfront');
+      waterfronts = await PropertyWaterfront.findByProperty(
+        landAssessment.property_id,
+      );
+      console.log(
+        `Found ${waterfronts.length} waterfronts for property ${landAssessment.property_id}`,
+      );
+    } catch (error) {
+      console.warn(
+        'Failed to fetch property waterfronts for calculation:',
+        error.message,
+      );
+      waterfronts = [];
+    }
+
+    return this.calculator.calculatePropertyAssessment(
+      assessmentData,
+      views,
+      waterfronts,
+    );
   }
 
   /**
-   * Recalculate all land assessments for a municipality
+   * Recalculate all land assessments for a municipality (OPTIMIZED)
    * @param {String} municipalityId - Municipality ID
    * @param {Object} options - Calculation options
    * @returns {Object} Summary of recalculation results
@@ -208,15 +235,18 @@ class LandAssessmentCalculationService {
     await this.initialize(municipalityId);
 
     const effectiveYear = options.effectiveYear || new Date().getFullYear();
+    const jobId = options.jobId || `recalc-${municipalityId}-${Date.now()}`;
+
     console.log(
-      `Starting municipality-wide recalculation for: ${municipalityId}, year: ${effectiveYear}`,
+      `🚀 Starting OPTIMIZED municipality-wide recalculation for: ${municipalityId}, year: ${effectiveYear}, jobId: ${jobId}`,
     );
 
-    const batchSize = options.batchSize || 100;
+    const batchSize = options.batchSize || 500; // Increased from 100 to 500
     let processedCount = 0;
     let updatedCount = 0;
     let errorCount = 0;
     const errors = [];
+    const startTime = Date.now();
 
     try {
       // First, ensure all properties have assessments for the target year
@@ -236,129 +266,88 @@ class LandAssessmentCalculationService {
       const totalCount = await LandAssessment.countDocuments(query);
 
       console.log(
-        `Found ${totalCount} properties with land assessments for year ${effectiveYear} to recalculate`,
+        `📊 Found ${totalCount} properties with land assessments for year ${effectiveYear} to recalculate`,
       );
 
-      // Process in batches to avoid memory issues
-      for (let offset = 0; offset < totalCount; offset += batchSize) {
-        const landAssessments = await LandAssessment.find(query)
-          .skip(offset)
-          .limit(batchSize);
-
-        // Process batch
-        const batchPromises = landAssessments.map(async (landAssessment) => {
-          try {
-            // If forceClearValues option is set, clear all calculated values from land lines first
-            if (options.forceClearValues) {
-              landAssessment.land_use_details?.forEach((landLine) => {
-                landLine.baseRate = 0;
-                landLine.baseValue = 0;
-                landLine.neighborhoodFactor = 0;
-                landLine.economyOfScaleFactor = 0;
-                landLine.siteFactor = 0;
-                landLine.drivewayFactor = 0;
-                landLine.roadFactor = 0;
-                landLine.topographyFactor = 0;
-                landLine.conditionFactor = 0;
-                landLine.marketValue = 0;
-                landLine.currentUseValue = 0;
-                landLine.currentUseCredit = 0;
-                landLine.assessedValue = 0;
-              });
-            }
-
-            const calculationResult =
-              await this.calculateLandAssessment(landAssessment);
-
-            // If forceClearValues option is set, update individual land line calculated values
-            if (
-              options.forceClearValues &&
-              calculationResult.land_use_details
-            ) {
-              // Update each land line with recalculated values
-              for (let i = 0; i < landAssessment.land_use_details.length; i++) {
-                const calculatedLine = calculationResult.land_use_details[i];
-                if (calculatedLine) {
-                  // Copy calculated values back to the original land line
-                  Object.assign(landAssessment.land_use_details[i], {
-                    baseRate: calculatedLine.baseRate || 0,
-                    baseValue: calculatedLine.baseValue || 0,
-                    neighborhoodFactor: calculatedLine.neighborhoodFactor || 0,
-                    economyOfScaleFactor:
-                      calculatedLine.economyOfScaleFactor || 0,
-                    siteFactor: calculatedLine.siteFactor || 0,
-                    drivewayFactor: calculatedLine.drivewayFactor || 0,
-                    roadFactor: calculatedLine.roadFactor || 0,
-                    topographyFactor: calculatedLine.topographyFactor || 0,
-                    conditionFactor: calculatedLine.conditionFactor || 0,
-                    marketValue: calculatedLine.marketValue || 0,
-                    currentUseValue: calculatedLine.currentUseValue || 0,
-                    currentUseCredit: calculatedLine.currentUseCredit || 0,
-                    assessedValue: calculatedLine.assessedValue || 0,
-                  });
-                }
-              }
-            }
-
-            // Update land assessment with new calculated values
-            landAssessment.calculated_totals =
-              calculationResult.calculated_totals;
-            landAssessment.last_calculated = new Date();
-
-            if (options.save !== false) {
-              await landAssessment.save();
-            }
-
-            return {
-              success: true,
-              propertyId: landAssessment.property_id,
-              totals: calculationResult.calculated_totals,
-            };
-          } catch (error) {
-            console.error(
-              `Error calculating land assessment ${landAssessment._id} for property ${landAssessment.property_id}:`,
-              error.message,
-            );
-
-            // Provide more specific error handling
-            let errorMessage = error.message;
-            if (error.message.includes('warrant has been issued')) {
-              errorMessage = `Cannot update - warrant already issued for year ${landAssessment.effective_year}. Only current year assessments can be recalculated.`;
-            } else if (error.message.includes('No land ladder data')) {
-              errorMessage = `Missing land ladder for zone ${landAssessment.zone}`;
-            }
-
-            return {
-              success: false,
-              propertyId: landAssessment.property_id,
-              assessmentId: landAssessment._id,
-              zone: landAssessment.zone,
-              year: landAssessment.effective_year,
-              error: errorMessage,
-            };
-          }
+      // Store initial progress
+      if (options.progressTracker) {
+        await options.progressTracker.update(jobId, {
+          status: 'running',
+          progress: 0,
+          totalCount,
+          processedCount: 0,
+          updatedCount: 0,
+          errorCount: 0,
         });
-
-        const results = await Promise.all(batchPromises);
-
-        // Count results
-        results.forEach((result) => {
-          processedCount++;
-          if (result.success) {
-            updatedCount++;
-          } else {
-            errorCount++;
-            errors.push(result);
-          }
-        });
-
-        // Log progress
-        const progress = Math.round((processedCount / totalCount) * 100);
-        console.log(
-          `Progress: ${progress}% (${processedCount}/${totalCount}) - Updated: ${updatedCount}, Errors: ${errorCount}`,
-        );
       }
 
+      // USE STREAMING CURSOR to avoid loading all into memory
+      const cursor = LandAssessment.find(query).cursor({ batchSize });
+      let batch = [];
+      let batchNumber = 0;
+
+      for await (const landAssessment of cursor) {
+        batch.push(landAssessment);
+
+        // Process when batch is full
+        if (batch.length >= batchSize) {
+          batchNumber++;
+          const batchResult = await this.processBatchOptimized(
+            batch,
+            options,
+            batchNumber,
+          );
+
+          processedCount += batchResult.processedCount;
+          updatedCount += batchResult.updatedCount;
+          errorCount += batchResult.errorCount;
+          errors.push(...batchResult.errors);
+
+          // Update progress
+          const progress = Math.round((processedCount / totalCount) * 100);
+          const elapsed = Date.now() - startTime;
+          const rate = processedCount / (elapsed / 1000); // per second
+          const remaining = totalCount - processedCount;
+          const eta = Math.round(remaining / rate);
+
+          console.log(
+            `⚡ Progress: ${progress}% (${processedCount}/${totalCount}) - Rate: ${rate.toFixed(1)}/sec - ETA: ${eta}s - Updated: ${updatedCount}, Errors: ${errorCount}`,
+          );
+
+          if (options.progressTracker) {
+            await options.progressTracker.update(jobId, {
+              status: 'running',
+              progress,
+              totalCount,
+              processedCount,
+              updatedCount,
+              errorCount,
+              rate: rate.toFixed(1),
+              eta,
+            });
+          }
+
+          // Clear batch
+          batch = [];
+        }
+      }
+
+      // Process remaining items in last batch
+      if (batch.length > 0) {
+        batchNumber++;
+        const batchResult = await this.processBatchOptimized(
+          batch,
+          options,
+          batchNumber,
+        );
+
+        processedCount += batchResult.processedCount;
+        updatedCount += batchResult.updatedCount;
+        errorCount += batchResult.errorCount;
+        errors.push(...batchResult.errors);
+      }
+
+      const duration = Date.now() - startTime;
       const summary = {
         municipalityId,
         totalProperties: totalCount,
@@ -366,16 +355,217 @@ class LandAssessmentCalculationService {
         updatedCount,
         errorCount,
         errors: errors.slice(0, 10), // Limit error details
+        duration: `${(duration / 1000).toFixed(2)}s`,
+        rate: `${(processedCount / (duration / 1000)).toFixed(1)}/sec`,
         completedAt: new Date(),
       };
 
-      console.log('Municipality-wide recalculation completed:', summary);
+      console.log('✅ Municipality-wide recalculation completed:', summary);
+
+      if (options.progressTracker) {
+        await options.progressTracker.update(jobId, {
+          status: 'completed',
+          progress: 100,
+          totalCount,
+          processedCount,
+          updatedCount,
+          errorCount,
+          duration: summary.duration,
+          rate: summary.rate,
+        });
+      }
+
       return summary;
     } catch (error) {
       console.error(
-        'Failed to complete municipality-wide recalculation:',
+        '❌ Failed to complete municipality-wide recalculation:',
         error,
       );
+
+      if (options.progressTracker) {
+        await options.progressTracker.update(jobId, {
+          status: 'failed',
+          error: error.message,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Process a batch of assessments with optimization (BULK OPERATIONS)
+   * @param {Array} batch - Array of land assessments to process
+   * @param {Object} options - Processing options
+   * @param {Number} batchNumber - Batch number for logging
+   * @returns {Object} Batch processing results
+   */
+  async processBatchOptimized(batch, options, batchNumber) {
+    const PropertyView = require('../models/PropertyView');
+    const PropertyWaterfront = require('../models/PropertyWaterfront');
+
+    let processedCount = 0;
+    let updatedCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    try {
+      // OPTIMIZATION 1: BULK FETCH views and waterfronts for entire batch
+      const propertyIds = batch.map((la) => la.property_id);
+
+      const [allViews, allWaterfronts] = await Promise.all([
+        PropertyView.find({ propertyId: { $in: propertyIds } }).lean(),
+        PropertyWaterfront.find({ propertyId: { $in: propertyIds } }).lean(),
+      ]);
+
+      // Group by property ID for fast lookup
+      const viewsByProperty = {};
+      const waterfrontsByProperty = {};
+
+      allViews.forEach((view) => {
+        const propId = view.propertyId.toString();
+        if (!viewsByProperty[propId]) viewsByProperty[propId] = [];
+        viewsByProperty[propId].push(view);
+      });
+
+      allWaterfronts.forEach((wf) => {
+        const propId = wf.propertyId.toString();
+        if (!waterfrontsByProperty[propId]) waterfrontsByProperty[propId] = [];
+        waterfrontsByProperty[propId].push(wf);
+      });
+
+      console.log(
+        `  📦 Batch ${batchNumber}: Fetched ${allViews.length} views and ${allWaterfronts.length} waterfronts for ${batch.length} properties`,
+      );
+
+      // OPTIMIZATION 2: Process all calculations in memory (no individual saves)
+      const bulkOps = [];
+
+      for (const landAssessment of batch) {
+        try {
+          processedCount++;
+
+          // Get views and waterfronts from bulk-fetched data
+          const propId = landAssessment.property_id.toString();
+          const views = viewsByProperty[propId] || [];
+          const waterfronts = waterfrontsByProperty[propId] || [];
+
+          // Clear values if requested
+          if (options.forceClearValues) {
+            landAssessment.land_use_details?.forEach((landLine) => {
+              landLine.baseRate = 0;
+              landLine.baseValue = 0;
+              landLine.neighborhoodFactor = 0;
+              landLine.economyOfScaleFactor = 0;
+              landLine.siteFactor = 0;
+              landLine.drivewayFactor = 0;
+              landLine.roadFactor = 0;
+              landLine.topographyFactor = 0;
+              landLine.conditionFactor = 0;
+              landLine.marketValue = 0;
+              landLine.currentUseValue = 0;
+              landLine.currentUseCredit = 0;
+              landLine.assessedValue = 0;
+            });
+          }
+
+          // Calculate using the pre-fetched views and waterfronts
+          const assessmentData = landAssessment.toObject();
+
+          // Ensure zone ID is a string
+          if (assessmentData.zone && typeof assessmentData.zone === 'object') {
+            assessmentData.zone = assessmentData.zone._id
+              ? assessmentData.zone._id.toString()
+              : assessmentData.zone.toString();
+          } else if (
+            assessmentData.zone &&
+            assessmentData.zone instanceof mongoose.Types.ObjectId
+          ) {
+            assessmentData.zone = assessmentData.zone.toString();
+          }
+
+          const calculationResult = this.calculator.calculatePropertyAssessment(
+            assessmentData,
+            views,
+            waterfronts,
+          );
+
+          // Update land line values if requested
+          if (options.forceClearValues && calculationResult.land_use_details) {
+            for (let i = 0; i < landAssessment.land_use_details.length; i++) {
+              const calculatedLine = calculationResult.land_use_details[i];
+              if (calculatedLine) {
+                Object.assign(landAssessment.land_use_details[i], {
+                  baseRate: calculatedLine.baseRate || 0,
+                  baseValue: calculatedLine.baseValue || 0,
+                  neighborhoodFactor: calculatedLine.neighborhoodFactor || 0,
+                  economyOfScaleFactor:
+                    calculatedLine.economyOfScaleFactor || 0,
+                  siteFactor: calculatedLine.siteFactor || 0,
+                  drivewayFactor: calculatedLine.drivewayFactor || 0,
+                  roadFactor: calculatedLine.roadFactor || 0,
+                  topographyFactor: calculatedLine.topographyFactor || 0,
+                  conditionFactor: calculatedLine.conditionFactor || 0,
+                  marketValue: calculatedLine.marketValue || 0,
+                  currentUseValue: calculatedLine.currentUseValue || 0,
+                  currentUseCredit: calculatedLine.currentUseCredit || 0,
+                  assessedValue: calculatedLine.assessedValue || 0,
+                });
+              }
+            }
+          }
+
+          // Prepare bulk update operation (no save yet)
+          if (options.save !== false) {
+            bulkOps.push({
+              updateOne: {
+                filter: { _id: landAssessment._id },
+                update: {
+                  $set: {
+                    calculated_totals: calculationResult.calculated_totals,
+                    land_use_details: landAssessment.land_use_details,
+                    last_calculated: new Date(),
+                  },
+                },
+              },
+            });
+          }
+
+          updatedCount++;
+        } catch (error) {
+          console.error(
+            `  ❌ Error calculating assessment ${landAssessment._id}:`,
+            error.message,
+          );
+
+          errorCount++;
+          errors.push({
+            success: false,
+            propertyId: landAssessment.property_id,
+            assessmentId: landAssessment._id,
+            error: error.message,
+          });
+        }
+      }
+
+      // OPTIMIZATION 3: BULK SAVE - Single database operation for entire batch
+      if (bulkOps.length > 0 && options.save !== false) {
+        const bulkResult = await LandAssessment.bulkWrite(bulkOps, {
+          ordered: false,
+        });
+        console.log(
+          `  💾 Batch ${batchNumber}: Bulk saved ${bulkResult.modifiedCount} assessments`,
+        );
+      }
+
+      return {
+        processedCount,
+        updatedCount,
+        errorCount,
+        errors,
+      };
+    } catch (error) {
+      console.error(`  ❌ Batch ${batchNumber} processing failed:`, error);
       throw error;
     }
   }
@@ -746,7 +936,7 @@ class LandAssessmentCalculationService {
             propertyId: assessment.property_id,
             adjustments: adjustmentResult.adjustments,
             excessAcreageCreated: adjustmentResult.excessAcreageCreated,
-            newTotals: calculatedTotals,
+            newTotals: calculationResult.calculated_totals,
           });
         }
       } catch (error) {
@@ -795,6 +985,7 @@ class LandAssessmentCalculationService {
     const minimumAcreage = zone.minimumAcreage;
     let totalExcessToRedistribute = 0;
     const adjustments = [];
+    let firstContributingLine = null; // Track the first line that contributes excess acreage
 
     // First pass: Check non-excess land lines for acreage above zone minimum
     for (const landLine of assessment.land_use_details) {
@@ -805,6 +996,11 @@ class LandAssessmentCalculationService {
       ) {
         const excessAcreage = landLine.size - minimumAcreage;
         totalExcessToRedistribute += excessAcreage;
+
+        // Store the first contributing line for copying land use details
+        if (!firstContributingLine) {
+          firstContributingLine = landLine;
+        }
 
         // Store original size for reporting
         const originalSize = landLine.size;
@@ -861,15 +1057,19 @@ class LandAssessmentCalculationService {
           addedAcreage: totalExcessToRedistribute,
         });
       } else {
-        // Create new excess acreage line with proper defaults for calculation
+        // Create new excess acreage line, copying land use details from first contributing line
+        // This ensures the excess acreage has the same land use type and topography as the source
         const newExcessLine = {
-          land_use_type: 'Excess Acreage',
+          // Copy land use details from the first contributing line
+          land_use_detail_id: firstContributingLine?.land_use_detail_id || null,
+          land_use_type: firstContributingLine?.land_use_type || 'RES',
+          topography_id: firstContributingLine?.topography_id || null,
+          topography: firstContributingLine?.topography || 'Level',
           size: totalExcessToRedistribute,
           size_unit: 'AC',
           is_excess_acreage: true,
-          topography: 'Level',
           condition: 100, // 100% condition factor
-          notes: 'Created from zone minimum acreage adjustments',
+          notes: `Excess acreage from zone minimum adjustment (${totalExcessToRedistribute.toFixed(2)} AC)`,
           // Initialize calculated values that will be properly computed
           baseRate: 0,
           baseValue: 0,
@@ -891,10 +1091,9 @@ class LandAssessmentCalculationService {
 
         adjustments.push({
           type: 'excess_acreage_created',
-          landUseType: 'Excess Acreage',
+          landUseType: firstContributingLine?.land_use_type || 'RES',
           size: totalExcessToRedistribute,
-          notes:
-            'New excess acreage line created from zone minimum adjustments',
+          notes: `New excess acreage line created from zone minimum adjustments, using land use from contributing line`,
         });
       }
     }

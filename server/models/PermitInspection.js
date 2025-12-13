@@ -90,7 +90,14 @@ const permitInspectionSchema = new mongoose.Schema(
     // Results
     result: {
       type: String,
-      enum: ['pending', 'passed', 'failed', 'partial', 'conditional', 'cancelled'],
+      enum: [
+        'pending',
+        'passed',
+        'failed',
+        'partial',
+        'conditional',
+        'cancelled',
+      ],
       default: 'pending',
     },
 
@@ -133,6 +140,10 @@ const permitInspectionSchema = new mongoose.Schema(
         url: { type: String, required: true }, // Google Cloud Storage URL
         filename: String,
         caption: String,
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
         uploadedAt: { type: Date, default: Date.now },
         thumbnail: String, // Thumbnail URL
       },
@@ -187,6 +198,58 @@ const permitInspectionSchema = new mongoose.Schema(
       ref: 'User',
     },
 
+    // Notes
+    notes: [
+      {
+        content: { type: String, required: true },
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        createdAt: { type: Date, default: Date.now },
+        attachments: [String], // URLs to attachments
+      },
+    ],
+
+    // History tracking
+    history: [
+      {
+        action: {
+          type: String,
+          required: true,
+          enum: [
+            'created',
+            'scheduled',
+            'rescheduled',
+            'status_updated',
+            'note_added',
+            'photo_added',
+            'completed',
+            'cancelled',
+          ],
+        },
+        performedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        performedAt: { type: Date, default: Date.now },
+        details: mongoose.Schema.Types.Mixed, // Flexible field for action-specific data
+      },
+    ],
+
+    // Reschedule tracking
+    rescheduledAt: Date,
+    rescheduledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    rescheduleReason: String,
+
+    // Completion tracking
+    completedAt: Date,
+
     // Soft delete
     isActive: {
       type: Boolean,
@@ -203,7 +266,11 @@ const permitInspectionSchema = new mongoose.Schema(
 
 // Compound indexes for common queries
 permitInspectionSchema.index({ municipalityId: 1, scheduledDate: 1 });
-permitInspectionSchema.index({ municipalityId: 1, inspector: 1, scheduledDate: 1 });
+permitInspectionSchema.index({
+  municipalityId: 1,
+  inspector: 1,
+  scheduledDate: 1,
+});
 permitInspectionSchema.index({ municipalityId: 1, status: 1 });
 permitInspectionSchema.index({ permitId: 1, type: 1 });
 permitInspectionSchema.index({ municipalityId: 1, result: 1 });

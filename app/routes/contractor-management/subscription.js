@@ -1,5 +1,6 @@
 import Route from '@ember/routing/route';
 import { service } from '@ember/service';
+import { action } from '@ember/object';
 
 export default class ContractorManagementSubscriptionRoute extends Route {
   @service api;
@@ -19,14 +20,16 @@ export default class ContractorManagementSubscriptionRoute extends Route {
       // Get contractor from parent route
       const parentModel = this.modelFor('contractor-management');
 
-      // Get subscription plans
-      const plansResponse = await this.api.get('/subscriptions/plans');
+      // Get subscription plans from Stripe (same endpoint as signup)
+      const plansResponse = await this.api.get('/contractors/plans');
 
       // Get current subscription details if contractor exists
       let subscriptionData = null;
       if (parentModel.contractor) {
         try {
-          subscriptionData = await this.api.get('/subscriptions/my-subscription');
+          subscriptionData = await this.api.get(
+            '/subscriptions/my-subscription',
+          );
         } catch (error) {
           console.warn('Could not load subscription data:', error);
         }
@@ -56,5 +59,11 @@ export default class ContractorManagementSubscriptionRoute extends Route {
         upcomingInvoice: null,
       };
     }
+  }
+
+  @action
+  refreshModel() {
+    // Refresh this route's model
+    this.refresh();
   }
 }

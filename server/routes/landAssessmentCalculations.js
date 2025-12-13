@@ -1,11 +1,12 @@
 const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const LandAssessmentCalculationService = require('../services/landAssessmentCalculationService');
+const progressTracker = require('../services/progressTracker');
 
 const router = express.Router();
 
 // @route   POST /api/municipalities/:municipalityId/land-assessments/recalculate
-// @desc    Recalculate all land assessments for a municipality
+// @desc    Recalculate all land assessments for a municipality (OPTIMIZED with progress tracking)
 // @access  Private (Admin/Staff only)
 router.post(
   '/municipalities/:municipalityId/land-assessments/recalculate',
@@ -13,7 +14,7 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const { batchSize, save } = req.body;
+      const { batchSize, save, effectiveYear } = req.body;
 
       // Check if user has admin access to this municipality
       const hasAdminAccess =
@@ -31,28 +32,95 @@ router.post(
         });
       }
 
+      // Generate unique job ID for progress tracking
+      const jobId = `recalc-${municipalityId}-${Date.now()}`;
+
       console.log(
-        `Starting municipality-wide recalculation for ${municipalityId}`,
+        `🚀 Starting OPTIMIZED municipality-wide recalculation for ${municipalityId}, jobId: ${jobId}`,
       );
 
-      const calculationService = new LandAssessmentCalculationService();
-      const result = await calculationService.recalculateAllProperties(
+      // Initialize progress tracker
+      await progressTracker.update(jobId, {
+        status: 'starting',
+        progress: 0,
         municipalityId,
-        { batchSize, save },
-      );
+        startedAt: new Date(),
+        userId: req.user._id,
+      });
 
-      console.log('Recalculation completed:', result);
+      // Start recalculation asynchronously (don't wait for it to complete)
+      const calculationService = new LandAssessmentCalculationService();
+
+      // Run in background
+      setImmediate(async () => {
+        try {
+          const result = await calculationService.recalculateAllProperties(
+            municipalityId,
+            {
+              batchSize,
+              save,
+              effectiveYear,
+              userId: req.user._id,
+              jobId,
+              progressTracker,
+            },
+          );
+
+          console.log('✅ Recalculation completed:', result);
+        } catch (error) {
+          console.error('❌ Recalculation error:', error);
+          await progressTracker.update(jobId, {
+            status: 'failed',
+            error: error.message,
+          });
+        }
+      });
+
+      // Return immediately with job ID for progress tracking
+      res.json({
+        success: true,
+        message: 'Municipality-wide recalculation started',
+        jobId,
+      });
+    } catch (error) {
+      console.error('Error starting municipality-wide recalculation:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to start municipality-wide recalculation',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/land-assessments/recalculate/progress/:jobId
+// @desc    Get progress of a recalculation job
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/land-assessments/recalculate/progress/:jobId',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { jobId } = req.params;
+
+      const progress = progressTracker.get(jobId);
+
+      if (!progress) {
+        return res.status(404).json({
+          success: false,
+          message: 'Job not found or expired',
+        });
+      }
 
       res.json({
         success: true,
-        message: 'Municipality-wide recalculation completed',
-        data: result,
+        progress,
       });
     } catch (error) {
-      console.error('Error in municipality-wide recalculation:', error);
+      console.error('Error fetching progress:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to complete municipality-wide recalculation',
+        message: 'Failed to fetch progress',
         error: error.message,
       });
     }

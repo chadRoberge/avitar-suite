@@ -8,6 +8,7 @@ export default class AssessingLandEditModalComponent extends Component {
   @service municipality;
   @service assessing;
   @service('property-cache') propertyCache;
+  @service('hybrid-api') hybridApi;
 
   @tracked isLoading = false;
   @tracked isSaving = false;
@@ -32,45 +33,135 @@ export default class AssessingLandEditModalComponent extends Component {
 
   constructor() {
     super(...arguments);
+
+    console.log('🚀 Land Edit Modal - Constructor called');
+    console.log('🚀 landAssessment prop:', this.args.landAssessment);
+
+    // Listen for configuration updates
+    this.hybridApi.on(
+      'configurationUpdated',
+      this,
+      'handleConfigurationUpdate',
+    );
+
     this.initializeData();
     // Load all municipality reference data upfront
     this.loadMunicipalityOptions();
   }
 
+  willDestroy() {
+    super.willDestroy();
+    // Remove event listener
+    this.hybridApi.off(
+      'configurationUpdated',
+      this,
+      'handleConfigurationUpdate',
+    );
+  }
+
+  /**
+   * Handle configuration updates from HybridAPI
+   * Reload affected data in background
+   */
+  @action
+  async handleConfigurationUpdate(changes) {
+    if (changes.landLadders || changes.zones || changes.propertyAttributes) {
+      console.log(
+        '🔄 Configuration updated, refreshing land assessment data...',
+      );
+
+      // Reload reference data in background
+      await this.loadMunicipalityOptions();
+
+      // Notify user subtly (optional)
+      console.log('✅ Land assessment configuration refreshed');
+    }
+  }
+
+  /**
+   * Extract ObjectId from a field that might be an ObjectId string or a populated object
+   * Returns null if the value is not a valid ObjectId
+   */
+  extractObjectId(field) {
+    if (!field) return null;
+
+    // If it's an object with an _id or id, return it
+    if (typeof field === 'object') {
+      if (field._id) {
+        return String(field._id);
+      }
+      if (field.id) {
+        return String(field.id);
+      }
+    }
+
+    // If it's a string, validate it's a proper ObjectId (24 hex characters)
+    if (typeof field === 'string') {
+      // ObjectIds are 24 character hex strings
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(field);
+      if (isValidObjectId) {
+        return field;
+      }
+      // If it's not a valid ObjectId, it's probably old data
+      console.warn('⚠️ Invalid ObjectId format, ignoring:', field);
+      return null;
+    }
+
+    return null;
+  }
+
   initializeData() {
     if (this.args.landAssessment) {
-      this.landAssessment = { ...this.args.landAssessment };
+      // Extract ObjectIds from all reference fields that may be populated objects
+      // The nested objects (e.g., zone: { _id, name, description }) are converted to just the ObjectId string
+      this.landAssessment = {
+        ...this.args.landAssessment,
+        zone: this.extractObjectId(this.args.landAssessment.zone),
+        neighborhood: this.extractObjectId(
+          this.args.landAssessment.neighborhood,
+        ),
+        taxation_category: this.extractObjectId(
+          this.args.landAssessment.taxation_category,
+        ),
+        site_conditions: this.extractObjectId(
+          this.args.landAssessment.site_conditions,
+        ),
+        driveway_type: this.extractObjectId(
+          this.args.landAssessment.driveway_type,
+        ),
+        road_type: this.extractObjectId(this.args.landAssessment.road_type),
+      };
 
-      // Convert ObjectId to string for taxation_category to ensure dropdown matching
-      if (
-        this.landAssessment.taxation_category &&
-        typeof this.landAssessment.taxation_category === 'object'
-      ) {
-        this.landAssessment.taxation_category =
-          this.landAssessment.taxation_category.toString();
-        console.log(
-          '🔍 Converted taxation_category to string:',
-          this.landAssessment.taxation_category,
-        );
-      }
-
-      console.log(
-        '🔍 Initialized landAssessment.taxation_category:',
-        this.landAssessment.taxation_category,
-        typeof this.landAssessment.taxation_category,
-      );
+      console.log('🔍 Land Edit Modal - Initialized data:', {
+        zone_raw: this.args.landAssessment.zone,
+        zone_extracted: this.landAssessment.zone,
+        neighborhood_raw: this.args.landAssessment.neighborhood,
+        neighborhood_extracted: this.landAssessment.neighborhood,
+        site_conditions_raw: this.args.landAssessment.site_conditions,
+        site_extracted: this.landAssessment.site_conditions,
+        driveway_type_raw: this.args.landAssessment.driveway_type,
+        driveway_extracted: this.landAssessment.driveway_type,
+        road_type_raw: this.args.landAssessment.road_type,
+        road_extracted: this.landAssessment.road_type,
+      });
 
       // Ensure all entries have unique IDs for stable rendering
       this.landUseEntries = (
         this.args.landAssessment.land_use_details || []
       ).map((entry, index) => {
         console.log(`🔍 Land use entry ${index}:`, {
+          land_use_detail_id: entry.land_use_detail_id,
           land_use_type: entry.land_use_type,
+          topography_id: entry.topography_id,
           topography: entry.topography,
         });
         return {
           ...entry,
           id: entry.id || `existing_${index}_${Date.now()}`,
+          // Extract ObjectId from land_use_detail_id if it's a populated object
+          land_use_detail_id: this.extractObjectId(entry.land_use_detail_id),
+          // Extract ObjectId from topography_id if it's a populated object
+          topography_id: this.extractObjectId(entry.topography_id),
         };
       });
     }
@@ -102,6 +193,16 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableZones?.length || 0,
           this.availableZones,
         );
+        // Debug: Check the structure of zone objects
+        if (this.availableZones && this.availableZones.length > 0) {
+          console.log('🔍 First zone structure:', this.availableZones[0]);
+          console.log('🔍 Zone has _id?', '_id' in this.availableZones[0]);
+          console.log('🔍 Zone has id?', 'id' in this.availableZones[0]);
+          console.log(
+            '🔍 Current landAssessment.zone:',
+            this.landAssessment.zone,
+          );
+        }
       } else {
         console.error('❌ Failed to load zones:', results[0].reason);
       }
@@ -112,6 +213,28 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableNeighborhoods?.length || 0,
           this.availableNeighborhoods,
         );
+        // Debug: Check the structure of neighborhood objects
+        if (
+          this.availableNeighborhoods &&
+          this.availableNeighborhoods.length > 0
+        ) {
+          console.log(
+            '🔍 First neighborhood structure:',
+            this.availableNeighborhoods[0],
+          );
+          console.log(
+            '🔍 Neighborhood has _id?',
+            '_id' in this.availableNeighborhoods[0],
+          );
+          console.log(
+            '🔍 Neighborhood has id?',
+            'id' in this.availableNeighborhoods[0],
+          );
+          console.log(
+            '🔍 Current landAssessment.neighborhood:',
+            this.landAssessment.neighborhood,
+          );
+        }
       } else {
         console.error('❌ Failed to load neighborhoods:', results[1].reason);
       }
@@ -122,6 +245,16 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableSites?.length || 0,
           this.availableSites,
         );
+        // Debug: Check the structure of site objects
+        if (this.availableSites && this.availableSites.length > 0) {
+          console.log('🔍 First site structure:', this.availableSites[0]);
+          console.log('🔍 Site has _id?', '_id' in this.availableSites[0]);
+          console.log('🔍 Site has id?', 'id' in this.availableSites[0]);
+          console.log(
+            '🔍 Current landAssessment.site_conditions:',
+            this.landAssessment.site_conditions,
+          );
+        }
       } else {
         console.error('❌ Failed to load site conditions:', results[2].reason);
       }
@@ -132,6 +265,25 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableDriveways?.length || 0,
           this.availableDriveways,
         );
+        // Debug: Check the structure of driveway objects
+        if (this.availableDriveways && this.availableDriveways.length > 0) {
+          console.log(
+            '🔍 First driveway structure:',
+            this.availableDriveways[0],
+          );
+          console.log(
+            '🔍 Driveway has _id?',
+            '_id' in this.availableDriveways[0],
+          );
+          console.log(
+            '🔍 Driveway has id?',
+            'id' in this.availableDriveways[0],
+          );
+          console.log(
+            '🔍 Current landAssessment.driveway_type:',
+            this.landAssessment.driveway_type,
+          );
+        }
       } else {
         console.error('❌ Failed to load driveway types:', results[3].reason);
       }
@@ -142,6 +294,16 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableRoads?.length || 0,
           this.availableRoads,
         );
+        // Debug: Check the structure of road objects
+        if (this.availableRoads && this.availableRoads.length > 0) {
+          console.log('🔍 First road structure:', this.availableRoads[0]);
+          console.log('🔍 Road has _id?', '_id' in this.availableRoads[0]);
+          console.log('🔍 Road has id?', 'id' in this.availableRoads[0]);
+          console.log(
+            '🔍 Current landAssessment.road_type:',
+            this.landAssessment.road_type,
+          );
+        }
       } else {
         console.error('❌ Failed to load road types:', results[4].reason);
       }
@@ -192,16 +354,6 @@ export default class AssessingLandEditModalComponent extends Component {
           this.availableTopology?.length || 0,
           this.availableTopology,
         );
-        if (this.availableTopology.length > 0) {
-          console.log(
-            '🔍 First topology item structure:',
-            this.availableTopology[0],
-          );
-          console.log(
-            '🔍 Available topology displayText values:',
-            this.availableTopology.map((t) => t.displayText),
-          );
-        }
       } else {
         console.error('❌ Failed to load topology:', results[5].reason);
         this.availableTopology = [];
@@ -242,7 +394,10 @@ export default class AssessingLandEditModalComponent extends Component {
         } else if (landLaddersResponse && landLaddersResponse.landLadders) {
           // Direct API response: {success: true, landLadders: [...]}
           landLaddersData = landLaddersResponse.landLadders;
-        } else if (landLaddersResponse && landLaddersResponse.success !== undefined) {
+        } else if (
+          landLaddersResponse &&
+          landLaddersResponse.success !== undefined
+        ) {
           // API response without landLadders property (empty result)
           landLaddersData = [];
         }
@@ -251,8 +406,8 @@ export default class AssessingLandEditModalComponent extends Component {
         const hasValidStructure =
           Array.isArray(landLaddersData) &&
           (landLaddersData.length === 0 ||
-            (landLaddersData[0].tiers !== undefined ||
-              landLaddersData[0].zoneId !== undefined));
+            landLaddersData[0].tiers !== undefined ||
+            landLaddersData[0].zoneId !== undefined);
 
         // If structure is still invalid, force refresh from server
         if (!hasValidStructure && landLaddersData.length > 0) {
@@ -285,11 +440,13 @@ export default class AssessingLandEditModalComponent extends Component {
 
         // Create zone ID mapping to handle different zone ID formats
         const zoneIdMapping = {};
+        const currentZoneIds = new Set();
         if (this.availableZones && Array.isArray(this.availableZones)) {
           this.availableZones.forEach((zone, index) => {
             const fullZoneId = zone._id || zone.id;
             const simpleZoneId = (index + 1).toString(); // Map to "1", "2", "3", etc.
             if (fullZoneId) {
+              currentZoneIds.add(fullZoneId);
               zoneIdMapping[fullZoneId] = simpleZoneId;
               zoneIdMapping[simpleZoneId] = simpleZoneId; // Self-map simple IDs
             }
@@ -320,7 +477,7 @@ export default class AssessingLandEditModalComponent extends Component {
             // Convert to string for consistent comparison
             const ladderZoneIdStr = String(rawZoneId);
 
-            // Store under the ladder's zone ID (usually "1", "2", "3", etc.)
+            // Store under the ladder's zone ID
             if (ladderZoneIdStr && ladderZoneIdStr !== 'undefined') {
               this.landLadders[ladderZoneIdStr] = ladder.tiers || [ladder];
             } else {
@@ -367,8 +524,7 @@ export default class AssessingLandEditModalComponent extends Component {
         if (Array.isArray(landUseResponse)) {
           // Check if this is valid land use data (should have code and displayText fields)
           const hasValidStructure =
-            landUseResponse.length > 0 &&
-            landUseResponse[0].code !== undefined;
+            landUseResponse.length > 0 && landUseResponse[0].code !== undefined;
 
           if (!hasValidStructure && landUseResponse.length > 0) {
             console.warn(
@@ -665,12 +821,14 @@ export default class AssessingLandEditModalComponent extends Component {
       land_use_details: this.landUseEntries,
     };
 
-    // Include views from the args (passed from controller model)
+    // Include views and waterfronts from the args (passed from controller model)
     const views = this.args.views || [];
+    const waterfronts = this.args.waterfronts || [];
 
     return this.calculator.calculatePropertyAssessment(
       landAssessmentData,
       views,
+      waterfronts,
     );
   }
 
@@ -871,6 +1029,64 @@ export default class AssessingLandEditModalComponent extends Component {
       event.target.type === 'checkbox'
         ? event.target.checked
         : event.target.value;
+
+    // Special handling for land_use_type - set both ID and legacy string
+    if (field === 'land_use_type') {
+      const selectedId = value;
+      // Find the land use detail by ID
+      const landUseDetail = this.availableLandUseDetails?.find(
+        (lu) => lu._id === selectedId,
+      );
+      // Find in current use categories if not found in land use details
+      const currentUse = !landUseDetail
+        ? this.availableCurrentUseCategories?.find(
+            (cu) => cu._id === selectedId,
+          )
+        : null;
+
+      const selectedItem = landUseDetail || currentUse;
+
+      if (selectedItem) {
+        // Update both the ObjectId reference and the legacy string
+        this.landUseEntries = this.landUseEntries.map((entry, i) => {
+          if (i === index) {
+            return {
+              ...entry,
+              land_use_detail_id: selectedItem._id,
+              land_use_type: selectedItem.code || selectedItem.displayText,
+            };
+          }
+          return entry;
+        });
+        return;
+      }
+    }
+
+    // Special handling for topography - set both ID and legacy string
+    if (field === 'topography') {
+      const selectedId = value;
+      // Find the topology attribute by ID
+      const topologyAttr = this.availableTopology?.find(
+        (t) => t._id === selectedId,
+      );
+
+      if (topologyAttr) {
+        // Update both the ObjectId reference and the legacy string
+        this.landUseEntries = this.landUseEntries.map((entry, i) => {
+          if (i === index) {
+            return {
+              ...entry,
+              topography_id: topologyAttr._id,
+              topography: topologyAttr.displayText,
+            };
+          }
+          return entry;
+        });
+        return;
+      }
+    }
+
+    // Default handling for other fields
     this.updateLandUseEntry(index, field, value);
   }
 
@@ -902,10 +1118,11 @@ export default class AssessingLandEditModalComponent extends Component {
       // Use the complete calculated property assessment
       const propertyAssessment = this.propertyAssessment;
 
+      // Only save ObjectIds - display names will be populated on GET
       const payload = {
         ...this.landAssessment,
-        land_use_details: propertyAssessment.land_use_details, // Includes all calculated values
-        calculated_totals: propertyAssessment.calculated_totals, // Include corrected totals
+        land_use_details: propertyAssessment.land_use_details,
+        calculated_totals: propertyAssessment.calculated_totals,
         market_value: this.totalMarketValue,
         taxable_value: this.totalAssessedValue,
       };
@@ -913,21 +1130,14 @@ export default class AssessingLandEditModalComponent extends Component {
       // Land assessment is parcel-level, not card-specific
       await this.assessing.updateLandAssessment(propertyId, payload);
 
-      // Log zone information for debugging
-      if (this.landAssessment.zone) {
-        const selectedZone = this.availableZones.find(
-          (zone) => zone.id === this.landAssessment.zone,
-        );
-        if (selectedZone) {
-          console.log(
-            `Land assessment saved with zone: ${selectedZone.name} (ID: ${this.landAssessment.zone})`,
-          );
-        }
-      }
-
       // After successful save, the assessing service will update cache with fresh property data
       // Just notify other users of the update
-      this.propertyCache.notifyPropertyUpdate(propertyId, 1, null, 'land-update');
+      this.propertyCache.notifyPropertyUpdate(
+        propertyId,
+        1,
+        null,
+        'land-update',
+      );
 
       this.args.onSave?.();
       this.args.onClose?.();

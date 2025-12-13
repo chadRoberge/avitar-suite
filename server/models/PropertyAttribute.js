@@ -5,7 +5,7 @@ const propertyAttributeSchema = new mongoose.Schema(
   {
     code: {
       type: String,
-      required: true,
+      required: false, // Optional - using ObjectId as primary identifier
       trim: true,
       maxlength: 10,
     },
@@ -47,12 +47,8 @@ propertyAttributeSchema.index({
   isActive: 1,
 });
 
-// Index for code lookup
-propertyAttributeSchema.index({
-  code: 1,
-  attributeType: 1,
-  municipalityId: 1,
-}, { unique: true });
+// Note: No unique index on code field - using ObjectId (_id) as primary identifier
+// If code is provided in the future, uniqueness can be enforced at application level
 
 // Static method to find all attributes for a municipality by type
 propertyAttributeSchema.statics.findByMunicipalityAndType = function (

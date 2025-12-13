@@ -19,7 +19,11 @@ export default class SharedTemplateVariablesComponent extends Component {
         label: 'Municipality Address',
         example: '123 Main Street',
       },
-      { name: 'current_date', label: 'Current Date', example: 'January 15, 2025' },
+      {
+        name: 'current_date',
+        label: 'Current Date',
+        example: 'January 15, 2025',
+      },
       { name: 'user_name', label: 'User Name', example: 'John Doe' },
       { name: 'user_email', label: 'User Email', example: 'john@example.com' },
     ];

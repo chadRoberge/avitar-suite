@@ -16,6 +16,7 @@ export default class MunicipalityAssessingLandPropertyController extends Control
   @tracked selectedWaterfront = null;
   @tracked viewAttributes = [];
   @tracked waterBodies = [];
+  @tracked waterfrontAttributes;
   @tracked zoneBaseViewValues = {};
 
   @action
@@ -83,14 +84,28 @@ export default class MunicipalityAssessingLandPropertyController extends Control
       }
       const viewsArray = Array.isArray(views) ? views : [];
 
-      console.log('Updated land assessment data:', landAssessment);
-      console.log('Updated views data:', viewsArray);
+      // Extract waterfronts from land assessment response
+      // Waterfronts are nested in the assessment object, like: landAssessmentResponse.assessment.waterfront
+      const waterfrontsArray =
+        landAssessmentResponse?.assessment?.waterfront ||
+        landAssessmentResponse?.waterfront ||
+        [];
+
+      console.log('🔄 Refreshed land property data:', {
+        viewsCount: viewsArray.length,
+        waterfrontsCount: waterfrontsArray.length,
+      });
 
       // Use Ember's set method to ensure proper reactivity
       set(this, 'model.landAssessment', landAssessment);
       set(this, 'model.landHistory', landAssessmentResponse.history || []);
       set(this, 'model.comparables', landAssessmentResponse.comparables || []);
       set(this, 'model.views', [...viewsArray]);
+
+      // Update waterfronts in the land assessment
+      if (landAssessment) {
+        set(this, 'model.landAssessment.waterfront', [...waterfrontsArray]);
+      }
 
       // Force template recomputation by updating a dummy property
       this.notifyPropertyChange('model');
@@ -297,16 +312,22 @@ export default class MunicipalityAssessingLandPropertyController extends Control
   @action
   async saveWaterfront(waterfrontData) {
     try {
+      // Add municipality ID to the waterfront data
+      const dataWithMunicipality = {
+        ...waterfrontData,
+        municipalityId: this.municipality.currentMunicipality?.id,
+      };
+
       if (this.selectedWaterfront) {
         await this.assessing.updateWaterfront(
           this.model.property.id,
           this.selectedWaterfront.id,
-          waterfrontData,
+          dataWithMunicipality,
         );
       } else {
         await this.assessing.addWaterfront(
           this.model.property.id,
-          waterfrontData,
+          dataWithMunicipality,
         );
       }
       await this.refreshLandProperty();
@@ -320,13 +341,64 @@ export default class MunicipalityAssessingLandPropertyController extends Control
     try {
       const municipalityId = this.municipality.currentMunicipality?.id;
       if (municipalityId) {
+        // Load water bodies
         const waterBodies = await this.assessing.getWaterBodies(municipalityId);
-        // Transform MongoDB _id to id and normalize field names for frontend compatibility
-        this.waterBodies = waterBodies.map(wb => ({
-          ...wb,
-          id: wb._id || wb.id,
-          base_value: wb.baseWaterValue ?? wb.base_value ?? 0,
-        }));
+
+        // Load ladder data for each water body
+        const waterBodiesWithLadders = await Promise.all(
+          waterBodies.map(async (wb) => {
+            const waterBodyId = wb._id || wb.id;
+            try {
+              const ladders = await this.assessing.getWaterfrontLadders(
+                municipalityId,
+                waterBodyId,
+              );
+              return {
+                ...wb,
+                id: waterBodyId,
+                base_value: wb.baseWaterValue ?? wb.base_value ?? 0,
+                ladders: ladders || [],
+              };
+            } catch (error) {
+              console.warn(
+                `Failed to load ladders for water body ${waterBodyId}:`,
+                error,
+              );
+              return {
+                ...wb,
+                id: waterBodyId,
+                base_value: wb.baseWaterValue ?? wb.base_value ?? 0,
+                ladders: [],
+              };
+            }
+          }),
+        );
+
+        this.waterBodies = waterBodiesWithLadders;
+
+        // Load waterfront attributes
+        const waterfrontAttributes =
+          await this.assessing.getWaterfrontAttributes(municipalityId);
+
+        console.log(
+          '🔍 First waterfront attribute sample:',
+          waterfrontAttributes[0],
+        );
+        console.log('🔍 First attribute id:', waterfrontAttributes[0]?.id);
+        console.log('🔍 First attribute _id:', waterfrontAttributes[0]?._id);
+
+        // Group attributes by type
+        this.waterfrontAttributes = {
+          water_access: waterfrontAttributes.filter(
+            (attr) => attr.attributeType === 'water_access',
+          ),
+          water_location: waterfrontAttributes.filter(
+            (attr) => attr.attributeType === 'water_location',
+          ),
+          topography: waterfrontAttributes.filter(
+            (attr) => attr.attributeType === 'topography',
+          ),
+        };
       }
     } catch (error) {
       console.error('Failed to load waterfront data:', error);

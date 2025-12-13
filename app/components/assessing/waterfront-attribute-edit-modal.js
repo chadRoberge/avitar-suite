@@ -14,9 +14,34 @@ export default class WaterfrontAttributeEditModalComponent extends Component {
   @tracked factorError = null;
   @tracked generalError = null;
 
+  // Store the previous values to detect changes
+  _previousAttributeId = null;
+  _previousIsOpen = false;
+
   constructor() {
     super(...arguments);
-    this.initializeForm();
+  }
+
+  // Getter that triggers form update checks - called from template
+  get formInitializer() {
+    const currentAttributeId =
+      this.args.attribute?.id || this.args.attribute?._id;
+    const isOpen = this.args.isOpen;
+
+    // Check if attribute changed or modal just opened
+    const attributeChanged = currentAttributeId !== this._previousAttributeId;
+    const modalJustOpened = isOpen && !this._previousIsOpen;
+
+    if (attributeChanged || modalJustOpened) {
+      // Use setTimeout to avoid updating during render
+      setTimeout(() => {
+        this.initializeForm();
+      }, 0);
+      this._previousAttributeId = currentAttributeId;
+    }
+
+    this._previousIsOpen = isOpen;
+    return null; // Don't render anything
   }
 
   initializeForm() {
@@ -153,9 +178,10 @@ export default class WaterfrontAttributeEditModalComponent extends Component {
         factor: parseFloat(this.factor),
       };
 
-      // Add ID if editing existing attribute
-      if (this.args.attribute?.id) {
-        attributeData.id = this.args.attribute.id;
+      // Add ID if editing existing attribute (check both id and _id)
+      const attributeId = this.args.attribute?.id || this.args.attribute?._id;
+      if (attributeId) {
+        attributeData.id = attributeId;
       }
 
       console.log('Sending waterfront attribute data:', attributeData);

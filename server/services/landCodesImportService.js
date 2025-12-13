@@ -27,7 +27,7 @@ class LandCodesImportService {
         noFactor: true, // Land use codes only have code and description (columns D, E)
         leftOnly: true, // Only parse left columns (3, 4) - neighborhoods are on the right
       },
-      'neighborhoods': {
+      neighborhoods: {
         model: 'NeighborhoodCode',
         useCodeAsDisplayText: true,
         rightOnly: true, // Only parse right columns (6-9) - land use codes are on the left
@@ -65,7 +65,7 @@ class LandCodesImportService {
         model: 'ViewAttribute',
         attributeType: 'subject',
         useDescriptionAsDisplayText: true,
-        pairLeftRight: true,  // Left column is name, right column is factor
+        pairLeftRight: true, // Left column is name, right column is factor
       },
       'view widths': {
         model: 'ViewAttribute',
@@ -93,19 +93,19 @@ class LandCodesImportService {
         model: 'WaterfrontAttribute',
         attributeType: 'water_access',
         useDescriptionAsDisplayText: true,
-        leftOnly: true,  // Only parse left side (col 3 code, col 6 factor)
+        leftOnly: true, // Only parse left side (col 3 code, col 6 factor)
       },
       'water frontage location': {
         model: 'WaterfrontAttribute',
         attributeType: 'water_location',
         useDescriptionAsDisplayText: true,
-        rightOnly: true,  // Only parse right side (col 7 code, col 9 factor)
+        rightOnly: true, // Only parse right side (col 7 code, col 9 factor)
       },
       'water frontage topography': {
         model: 'WaterfrontAttribute',
         attributeType: 'topography',
         useDescriptionAsDisplayText: true,
-        leftOnly: true,  // Only parse left side (standalone section)
+        leftOnly: true, // Only parse left side (standalone section)
       },
     };
   }
@@ -120,7 +120,10 @@ class LandCodesImportService {
       const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      const data = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        defval: '',
+      });
 
       console.log(`📋 Parsing land codes from sheet: ${sheetName}`);
       console.log(`   Total rows: ${data.length}`);
@@ -165,18 +168,33 @@ class LandCodesImportService {
       result.stats.viewAttributesCount = result.viewAttributes.length;
       result.stats.waterBodiesCount = result.waterBodies.length;
       result.stats.waterBodyLaddersCount = result.waterBodyLadders.length;
-      result.stats.waterfrontAttributesCount = result.waterfrontAttributes.length;
+      result.stats.waterfrontAttributesCount =
+        result.waterfrontAttributes.length;
 
       console.log(`✅ Parsed ${result.stats.zonesCount} zones`);
-      console.log(`✅ Parsed ${result.stats.landLaddersCount} land ladder tiers`);
+      console.log(
+        `✅ Parsed ${result.stats.landLaddersCount} land ladder tiers`,
+      );
       console.log(`✅ Parsed ${result.stats.landUseCodesCount} land use codes`);
-      console.log(`✅ Parsed ${result.stats.neighborhoodCodesCount} neighborhood codes`);
-      console.log(`✅ Parsed ${result.stats.propertyAttributesCount} property attributes`);
-      console.log(`✅ Parsed ${result.stats.currentUseCodesCount} current use codes`);
-      console.log(`✅ Parsed ${result.stats.viewAttributesCount} view attributes`);
+      console.log(
+        `✅ Parsed ${result.stats.neighborhoodCodesCount} neighborhood codes`,
+      );
+      console.log(
+        `✅ Parsed ${result.stats.propertyAttributesCount} property attributes`,
+      );
+      console.log(
+        `✅ Parsed ${result.stats.currentUseCodesCount} current use codes`,
+      );
+      console.log(
+        `✅ Parsed ${result.stats.viewAttributesCount} view attributes`,
+      );
       console.log(`✅ Parsed ${result.stats.waterBodiesCount} water bodies`);
-      console.log(`✅ Parsed ${result.stats.waterBodyLaddersCount} water body ladder tiers`);
-      console.log(`✅ Parsed ${result.stats.waterfrontAttributesCount} waterfront attributes`);
+      console.log(
+        `✅ Parsed ${result.stats.waterBodyLaddersCount} water body ladder tiers`,
+      );
+      console.log(
+        `✅ Parsed ${result.stats.waterfrontAttributesCount} waterfront attributes`,
+      );
 
       return result;
     } catch (error) {
@@ -249,7 +267,9 @@ class LandCodesImportService {
       const rowText = row.join(' ').toLowerCase();
 
       // Stop if we hit another section header
-      const hitAnotherSection = Object.keys(this.sectionHeaders).some(headerKey => rowText.includes(headerKey));
+      const hitAnotherSection = Object.keys(this.sectionHeaders).some(
+        (headerKey) => rowText.includes(headerKey),
+      );
       if (hitAnotherSection) {
         console.log(`   📍 Row ${i}: Hit another section, stopping`);
         break;
@@ -257,7 +277,8 @@ class LandCodesImportService {
 
       // Look for data header row (Code | Description | Factor/Rate)
       if (!foundDataHeader) {
-        const hasCodeHeader = rowText.includes('code') && rowText.includes('description');
+        const hasCodeHeader =
+          rowText.includes('code') && rowText.includes('description');
         if (hasCodeHeader) {
           foundDataHeader = true;
           console.log(`   ✓ Row ${i}: Found data header row`);
@@ -275,8 +296,16 @@ class LandCodesImportService {
       const leftDesc = row[4] ? row[4].toString().trim() : '';
       const leftValue = row[6];
 
-      const rightCode = row[6] ? row[6].toString().trim() : (row[7] ? row[7].toString().trim() : '');
-      const rightDesc = row[7] ? row[7].toString().trim() : (row[8] ? row[8].toString().trim() : '');
+      const rightCode = row[6]
+        ? row[6].toString().trim()
+        : row[7]
+          ? row[7].toString().trim()
+          : '';
+      const rightDesc = row[7]
+        ? row[7].toString().trim()
+        : row[8]
+          ? row[8].toString().trim()
+          : '';
       const rightValue = row[9];
 
       // Check for empty row on both sides
@@ -292,16 +321,35 @@ class LandCodesImportService {
       }
 
       // Skip header rows
-      if (leftCode.toLowerCase() === 'code' && leftDesc.toLowerCase() === 'description') continue;
-      if (rightCode.toLowerCase() === 'code' && rightDesc.toLowerCase() === 'description') continue;
+      if (
+        leftCode.toLowerCase() === 'code' &&
+        leftDesc.toLowerCase() === 'description'
+      )
+        continue;
+      if (
+        rightCode.toLowerCase() === 'code' &&
+        rightDesc.toLowerCase() === 'description'
+      )
+        continue;
 
       // Special handling for pairLeftRight: left column is name, right column is factor
-      if (config.pairLeftRight && leftCode && leftCode.toLowerCase() !== 'code') {
-        const value = typeof rightValue === 'number' ? rightValue : (rightValue ? parseFloat(rightValue) : null);
+      if (
+        config.pairLeftRight &&
+        leftCode &&
+        leftCode.toLowerCase() !== 'code'
+      ) {
+        const value =
+          typeof rightValue === 'number'
+            ? rightValue
+            : rightValue
+              ? parseFloat(rightValue)
+              : null;
 
         // Skip rows where factor is null/missing (required for these models)
         if (value === null || isNaN(value)) {
-          console.log(`   📋 ${config.model} (${config.attributeType}): ${leftCode} → null (skipped - missing factor)`);
+          console.log(
+            `   📋 ${config.model} (${config.attributeType}): ${leftCode} → null (skipped - missing factor)`,
+          );
           continue;
         }
 
@@ -319,13 +367,20 @@ class LandCodesImportService {
         }
 
         parsed.push(item);
-        console.log(`   📋 ${config.model} (${config.attributeType}): ${leftCode} → ${value}`);
+        console.log(
+          `   📋 ${config.model} (${config.attributeType}): ${leftCode} → ${value}`,
+        );
         continue; // Skip normal left/right parsing
       }
 
       // Parse left side data if present (unless rightOnly is specified)
       if (!config.rightOnly && leftCode && leftCode.toLowerCase() !== 'code') {
-        const value = typeof leftValue === 'number' ? leftValue : (leftValue ? parseFloat(leftValue) : null);
+        const value =
+          typeof leftValue === 'number'
+            ? leftValue
+            : leftValue
+              ? parseFloat(leftValue)
+              : null;
 
         const item = {
           code: leftCode,
@@ -333,7 +388,10 @@ class LandCodesImportService {
         };
 
         // ViewAttribute and WaterfrontAttribute use 'name' instead of 'code'
-        if (config.model === 'ViewAttribute' || config.model === 'WaterfrontAttribute') {
+        if (
+          config.model === 'ViewAttribute' ||
+          config.model === 'WaterfrontAttribute'
+        ) {
           item.name = leftCode;
           delete item.code;
         }
@@ -365,8 +423,18 @@ class LandCodesImportService {
         if (config.hasMinMax) {
           const minValue = row[8];
           const maxValue = row[9];
-          item.minRate = typeof minValue === 'number' ? minValue : (minValue ? parseFloat(minValue) : null);
-          item.maxRate = typeof maxValue === 'number' ? maxValue : (maxValue ? parseFloat(maxValue) : null);
+          item.minRate =
+            typeof minValue === 'number'
+              ? minValue
+              : minValue
+                ? parseFloat(minValue)
+                : null;
+          item.maxRate =
+            typeof maxValue === 'number'
+              ? maxValue
+              : maxValue
+                ? parseFloat(maxValue)
+                : null;
         }
 
         parsed.push(item);
@@ -374,8 +442,18 @@ class LandCodesImportService {
       }
 
       // Parse right side data if present (unless leftOnly is specified)
-      if (!config.leftOnly && rightCode && rightCode.toLowerCase() !== 'code' && rightCode !== leftCode) {
-        const value = typeof rightValue === 'number' ? rightValue : (rightValue ? parseFloat(rightValue) : null);
+      if (
+        !config.leftOnly &&
+        rightCode &&
+        rightCode.toLowerCase() !== 'code' &&
+        rightCode !== leftCode
+      ) {
+        const value =
+          typeof rightValue === 'number'
+            ? rightValue
+            : rightValue
+              ? parseFloat(rightValue)
+              : null;
 
         const item = {
           code: rightCode,
@@ -383,7 +461,10 @@ class LandCodesImportService {
         };
 
         // ViewAttribute and WaterfrontAttribute use 'name' instead of 'code'
-        if (config.model === 'ViewAttribute' || config.model === 'WaterfrontAttribute') {
+        if (
+          config.model === 'ViewAttribute' ||
+          config.model === 'WaterfrontAttribute'
+        ) {
           item.name = rightCode;
           delete item.code;
         }
@@ -437,7 +518,11 @@ class LandCodesImportService {
       let zoneColIndex = -1;
 
       for (let col = 0; col < row.length; col++) {
-        if (row[col] && row[col].toString().trim().toLowerCase() === 'zone' && row[col + 1]) {
+        if (
+          row[col] &&
+          row[col].toString().trim().toLowerCase() === 'zone' &&
+          row[col + 1]
+        ) {
           zoneCodeValue = row[col + 1].toString().trim();
           zoneColIndex = col;
           break;
@@ -467,7 +552,11 @@ class LandCodesImportService {
           // Check if we hit another zone
           let nextZone = false;
           for (let col = 0; col < detailRow.length; col++) {
-            if (detailRow[col] && detailRow[col].toString().trim().toLowerCase() === 'zone' && detailRow[col + 1]) {
+            if (
+              detailRow[col] &&
+              detailRow[col].toString().trim().toLowerCase() === 'zone' &&
+              detailRow[col + 1]
+            ) {
               nextZone = true;
               break;
             }
@@ -475,19 +564,27 @@ class LandCodesImportService {
           if (nextZone) break;
 
           // Parse labels and values from columns 4 and 5
-          const label = detailRow[4] ? detailRow[4].toString().trim().toLowerCase() : '';
+          const label = detailRow[4]
+            ? detailRow[4].toString().trim().toLowerCase()
+            : '';
           const value = detailRow[5];
 
           if (label === 'description' || label === 'description:') {
             name = value ? value.toString().trim() : '';
           } else if (label === 'lot size' || label === 'lot size:') {
             if (value !== null && value !== undefined && value !== '') {
-              const parsed = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+              const parsed =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(String(value).replace(/[$,]/g, ''));
               minimumAcreage = !isNaN(parsed) ? parsed : null;
             }
           } else if (label === 'frontage' || label === 'frontage:') {
             if (value !== null && value !== undefined && value !== '') {
-              const parsed = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+              const parsed =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(String(value).replace(/[$,]/g, ''));
               minimumFrontage = !isNaN(parsed) ? parsed : null;
             }
           } else if (label === 'lot price' || label === 'lot price:') {
@@ -495,17 +592,26 @@ class LandCodesImportService {
             // Skip it
           } else if (label.includes('excess acreage')) {
             if (value !== null && value !== undefined && value !== '') {
-              const parsed = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+              const parsed =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(String(value).replace(/[$,]/g, ''));
               excessLandCostPerAcre = !isNaN(parsed) ? parsed : null;
             }
           } else if (label.includes('excess frontage')) {
             if (value !== null && value !== undefined && value !== '') {
-              const parsed = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+              const parsed =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(String(value).replace(/[$,]/g, ''));
               excessFrontageCostPerFoot = !isNaN(parsed) ? parsed : null;
             }
           } else if (label === 'view' || label === 'view:') {
             if (value !== null && value !== undefined && value !== '') {
-              const parsed = typeof value === 'number' ? value : parseFloat(String(value).replace(/[$,]/g, ''));
+              const parsed =
+                typeof value === 'number'
+                  ? value
+                  : parseFloat(String(value).replace(/[$,]/g, ''));
               baseViewValue = !isNaN(parsed) ? parsed : null;
             }
           }
@@ -519,24 +625,42 @@ class LandCodesImportService {
             const atSymbol = detailRow[col];
 
             // Check if this column contains the @ symbol
-            if (atSymbol && (atSymbol.toString().trim() === '@' || atSymbol === '@')) {
+            if (
+              atSymbol &&
+              (atSymbol.toString().trim() === '@' || atSymbol === '@')
+            ) {
               // Land value is 2 columns BEFORE the @ (skip empty column)
               const landValueCol = detailRow[col - 2];
               // Acreage is 1 column AFTER the @
               const acreageCol = detailRow[col + 1];
 
-              const landValue = typeof landValueCol === 'number' ? landValueCol : parseFloat(landValueCol);
-              const acreage = typeof acreageCol === 'number' ? acreageCol : parseFloat(acreageCol);
+              const landValue =
+                typeof landValueCol === 'number'
+                  ? landValueCol
+                  : parseFloat(landValueCol);
+              const acreage =
+                typeof acreageCol === 'number'
+                  ? acreageCol
+                  : parseFloat(acreageCol);
 
-              if (!isNaN(landValue) && !isNaN(acreage) && landValue > 0 && acreage > 0) {
+              if (
+                !isNaN(landValue) &&
+                !isNaN(acreage) &&
+                landValue > 0 &&
+                acreage > 0
+              ) {
                 // Check if we already have a tier with this acreage (avoid duplicates)
-                const existingTier = ladderTiers.find(t => t.acreage === acreage);
+                const existingTier = ladderTiers.find(
+                  (t) => t.acreage === acreage,
+                );
                 if (!existingTier) {
                   ladderTiers.push({
                     acreage: acreage,
                     value: landValue,
                   });
-                  console.log(`      📊 Ladder tier: ${landValue} @ ${acreage} ac`);
+                  console.log(
+                    `      📊 Ladder tier: ${landValue} @ ${acreage} ac`,
+                  );
                 }
                 break; // Only one ladder tier per row
               }
@@ -545,8 +669,8 @@ class LandCodesImportService {
         }
 
         zones.push({
-          name: zoneCode,  // Use zone code as the name (e.g., "01", "02")
-          description: name || zoneCode,  // Use parsed name as description (e.g., "RD RES DISTRICT")
+          name: zoneCode, // Use zone code as the name (e.g., "01", "02")
+          description: name || zoneCode, // Use parsed name as description (e.g., "RD RES DISTRICT")
           minimumAcreage: minimumAcreage,
           minimumFrontage: minimumFrontage,
           excessLandCostPerAcre: excessLandCostPerAcre,
@@ -565,7 +689,9 @@ class LandCodesImportService {
           });
         });
 
-        console.log(`   ✓ Zone ${zoneCode}: ${ladderTiers.length} ladder tiers`);
+        console.log(
+          `   ✓ Zone ${zoneCode}: ${ladderTiers.length} ladder tiers`,
+        );
       }
     }
 
@@ -589,10 +715,15 @@ class LandCodesImportService {
     for (let i = startRow; i < Math.min(startRow + 10, data.length); i++) {
       const row = data[i];
       for (let col = 0; col < row.length; col++) {
-        if (row[col] && row[col].toString().trim().toLowerCase().includes('water body name')) {
+        if (
+          row[col] &&
+          row[col].toString().trim().toLowerCase().includes('water body name')
+        ) {
           waterBodyNameCol = col;
           headerRow = i;
-          console.log(`   🔍 Found "Water Body Name" column header at row ${i}, col ${col}`);
+          console.log(
+            `   🔍 Found "Water Body Name" column header at row ${i}, col ${col}`,
+          );
           break;
         }
       }
@@ -628,10 +759,16 @@ class LandCodesImportService {
         break;
       }
 
-      const waterBodyName = row[waterBodyNameCol] ? row[waterBodyNameCol].toString().trim() : '';
+      const waterBodyName = row[waterBodyNameCol]
+        ? row[waterBodyNameCol].toString().trim()
+        : '';
 
       // Skip empty names or header-like text
-      if (!waterBodyName || waterBodyName.toLowerCase().includes('water body') || waterBodyName.toLowerCase() === 'code') {
+      if (
+        !waterBodyName ||
+        waterBodyName.toLowerCase().includes('water body') ||
+        waterBodyName.toLowerCase() === 'code'
+      ) {
         continue;
       }
 
@@ -691,22 +828,31 @@ class LandCodesImportService {
           const factor = row[col + 2];
 
           // Check for the pattern: number, "ft.", number
-          if (typeof frontage === 'number' && frontage > 0 &&
-              units && units.toString().toLowerCase().includes('ft') &&
-              typeof factor === 'number' && factor > 0) {
+          if (
+            typeof frontage === 'number' &&
+            frontage > 0 &&
+            units &&
+            units.toString().toLowerCase().includes('ft') &&
+            typeof factor === 'number' &&
+            factor > 0
+          ) {
             waterBodyLadders.push({
               waterBodyName: waterBody.name,
               frontage: frontage,
-              factor: factor,  // Use 'factor' field name (matches WaterBodyLadder model)
+              factor: factor, // Use 'factor' field name (matches WaterBodyLadder model)
               order: tierOrder++,
             });
-            console.log(`      📊 Ladder tier ${tierOrder}: ${frontage} ft → factor ${factor}`);
+            console.log(
+              `      📊 Ladder tier ${tierOrder}: ${frontage} ft → factor ${factor}`,
+            );
             col += 2; // Skip the "ft." and factor columns since we just processed them
           }
         }
       }
 
-      console.log(`   ✓ Water Body ${waterBody.name}: ${tierOrder} ladder tiers`);
+      console.log(
+        `   ✓ Water Body ${waterBody.name}: ${tierOrder} ladder tiers`,
+      );
     }
 
     return { waterBodies, waterBodyLadders };

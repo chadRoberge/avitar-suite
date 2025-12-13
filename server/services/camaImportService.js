@@ -62,10 +62,10 @@ class CAMAImportService {
       phase1: {
         // Extract unique zones from Zone column
         zones: {
-          sheetName: 'Sheet1',  // Avitar exports to single sheet
+          sheetName: 'Sheet1', // Avitar exports to single sheet
           extractUnique: 'Zone',
           fieldMappings: {
-            Zone: 'code',  // Use zone code as both code and name
+            Zone: 'code', // Use zone code as both code and name
           },
         },
         // Extract unique neighborhoods from NeighCode column
@@ -80,7 +80,7 @@ class CAMAImportService {
         buildingCodes: {
           sheetName: 'Sheet1',
           extractUnique: 'BaseRateCode',
-          filterNonEmpty: true,  // Only include rows with building data
+          filterNonEmpty: true, // Only include rows with building data
           fieldMappings: {
             BaseRateCode: 'code',
             BaseRateAmt: 'rate',
@@ -315,7 +315,7 @@ class CAMAImportService {
         zones: {
           sheetName: 'Zones',
           fieldMappings: {
-            'Zone': 'name',
+            Zone: 'name',
             'Zone Desc': 'description',
             'Min Acres': 'minimumAcreage',
             'Min Front Ft': 'minimumFrontage',
@@ -324,7 +324,7 @@ class CAMAImportService {
         neighborhoods: {
           sheetName: 'Nbhds',
           fieldMappings: {
-            'Nbhd': 'code',
+            Nbhd: 'code',
             'Nbhd Desc': 'name',
             Notes: 'description',
           },
@@ -346,7 +346,7 @@ class CAMAImportService {
             'Property ID': 'pid_raw',
             'Prop Class': 'property_class',
             'House #': 'location.street_number',
-            'Street': 'location.street',
+            Street: 'location.street',
             'Owner Name': 'owner.primary_name',
             'Owner Addr': 'owner.mailing_address',
             'Owner City': 'owner.mailing_city',
@@ -367,16 +367,16 @@ class CAMAImportService {
             'Eff Area': 'effective_area',
             Grade: 'quality_grade',
             'No Stories': 'story_height',
-            'Frame': 'frame',
+            Frame: 'frame',
             'Ceil Ht': 'ceiling_height',
-            'Roof': 'roof_style',
+            Roof: 'roof_style',
             'Roof Matl': 'roof_cover',
             'Ext Wall': 'exterior_wall_1',
             'Int Wall': 'interior_wall_1',
-            'Floor': 'flooring_1',
-            'Heat': 'heating_fuel',
+            Floor: 'flooring_1',
+            Heat: 'heating_fuel',
             'Heat Sys': 'heating_type',
-            'AC': 'air_conditioning',
+            AC: 'air_conditioning',
             'No BR': 'bedrooms',
             'No FB': 'full_baths',
             'No HB': 'half_baths',
@@ -390,10 +390,10 @@ class CAMAImportService {
             'Property ID': 'pid_raw',
             'Use Type': 'land_use_type',
             Acres: 'size_acres',
-            'Frontage': 'frontage',
-            'Depth': 'depth',
-            'Topo': 'topography',
-            'Cond': 'condition',
+            Frontage: 'frontage',
+            Depth: 'depth',
+            Topo: 'topography',
+            Cond: 'condition',
             Zone: 'zone',
             Nbhd: 'neighborhood',
           },
@@ -480,8 +480,14 @@ class CAMAImportService {
 
     // Create search criteria for deduplication
     const ownerName = ownerData.primary_name.trim().toUpperCase();
-    const mailingAddress = (ownerData.mailing_address || '').toString().trim().toUpperCase();
-    const mailingCity = (ownerData.mailing_city || '').toString().trim().toUpperCase();
+    const mailingAddress = (ownerData.mailing_address || '')
+      .toString()
+      .trim()
+      .toUpperCase();
+    const mailingCity = (ownerData.mailing_city || '')
+      .toString()
+      .trim()
+      .toUpperCase();
     const mailingZip = (ownerData.mailing_zipcode || '').toString().trim();
 
     // Try to find existing owner by name and address
@@ -490,13 +496,21 @@ class CAMAImportService {
       $or: [
         {
           // Match by full name and mailing address
-          business_name: { $regex: new RegExp(`^${this.escapeRegex(ownerName)}$`, 'i') },
-          'mailing_address.street': { $regex: new RegExp(`^${this.escapeRegex(mailingAddress)}$`, 'i') },
-          'mailing_address.city': { $regex: new RegExp(`^${this.escapeRegex(mailingCity)}$`, 'i') },
+          business_name: {
+            $regex: new RegExp(`^${this.escapeRegex(ownerName)}$`, 'i'),
+          },
+          'mailing_address.street': {
+            $regex: new RegExp(`^${this.escapeRegex(mailingAddress)}$`, 'i'),
+          },
+          'mailing_address.city': {
+            $regex: new RegExp(`^${this.escapeRegex(mailingCity)}$`, 'i'),
+          },
         },
         {
           // Match by name and zip (in case address format varies)
-          business_name: { $regex: new RegExp(`^${this.escapeRegex(ownerName)}$`, 'i') },
+          business_name: {
+            $regex: new RegExp(`^${this.escapeRegex(ownerName)}$`, 'i'),
+          },
           'mailing_address.zip_code': mailingZip,
         },
       ],
@@ -530,7 +544,10 @@ class CAMAImportService {
       // Clean and validate zip code - extract only digits and format as 5 or 9 digit zip
       let cleanZip = undefined; // Use undefined instead of empty string to avoid validation
       if (ownerData.mailing_zipcode) {
-        const zipStr = ownerData.mailing_zipcode.toString().trim().replace(/\D/g, ''); // Remove non-digits
+        const zipStr = ownerData.mailing_zipcode
+          .toString()
+          .trim()
+          .replace(/\D/g, ''); // Remove non-digits
         if (zipStr.length > 0) {
           // Pad with leading zeros if needed (Excel removes leading zeros)
           const paddedZip = zipStr.padStart(5, '0');
@@ -545,9 +562,13 @@ class CAMAImportService {
 
       ownerDoc.mailing_address = {
         is_different: true, // Assume mailing is different from property address
-        street: ownerData.mailing_address ? ownerData.mailing_address.toString() : '',
+        street: ownerData.mailing_address
+          ? ownerData.mailing_address.toString()
+          : '',
         city: ownerData.mailing_city ? ownerData.mailing_city.toString() : '',
-        state: ownerData.mailing_state ? ownerData.mailing_state.toString() : '',
+        state: ownerData.mailing_state
+          ? ownerData.mailing_state.toString()
+          : '',
         country: 'US',
       };
 
@@ -570,7 +591,12 @@ class CAMAImportService {
    * @param {Boolean} isPrimary - Whether this is the primary owner
    * @returns {Promise<Object>} PropertyOwner document
    */
-  async createPropertyOwner(propertyId, ownerId, municipalityId, isPrimary = true) {
+  async createPropertyOwner(
+    propertyId,
+    ownerId,
+    municipalityId,
+    isPrimary = true,
+  ) {
     const PropertyOwner = require('../models/PropertyOwner');
 
     // Check if relationship already exists
@@ -613,15 +639,32 @@ class CAMAImportService {
     if (!name) return 'individual';
 
     const businessIndicators = [
-      'LLC', 'INC', 'CORP', 'LTD', 'CO', 'COMPANY', 'CORPORATION',
-      'TRUST', 'ESTATE', 'PARTNERSHIP', 'L.L.C.', 'L.P.', 'ASSOCIATION',
-      'BANK', 'PROPERTIES', 'INVESTMENTS', 'MANAGEMENT', 'GROUP',
-      'REALTY', 'DEVELOPMENT', 'HOLDINGS'
+      'LLC',
+      'INC',
+      'CORP',
+      'LTD',
+      'CO',
+      'COMPANY',
+      'CORPORATION',
+      'TRUST',
+      'ESTATE',
+      'PARTNERSHIP',
+      'L.L.C.',
+      'L.P.',
+      'ASSOCIATION',
+      'BANK',
+      'PROPERTIES',
+      'INVESTMENTS',
+      'MANAGEMENT',
+      'GROUP',
+      'REALTY',
+      'DEVELOPMENT',
+      'HOLDINGS',
     ];
 
     const upperName = name.toUpperCase();
-    const hasBusinessIndicator = businessIndicators.some(indicator =>
-      upperName.includes(indicator)
+    const hasBusinessIndicator = businessIndicators.some((indicator) =>
+      upperName.includes(indicator),
     );
 
     return hasBusinessIndicator ? 'business' : 'individual';
@@ -651,7 +694,7 @@ class CAMAImportService {
       const firstName = parts[0];
       const lastName = parts[parts.length - 1];
       const middleParts = parts.slice(1, -1);
-      const middleInitial = middleParts.map(p => p.charAt(0)).join('');
+      const middleInitial = middleParts.map((p) => p.charAt(0)).join('');
 
       return { firstName, lastName, middleInitial };
     }

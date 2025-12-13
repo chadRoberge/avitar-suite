@@ -29,7 +29,7 @@ data.forEach((row, index) => {
       type: 'Zone',
       startRow: index,
       zoneCode: row[7],
-      data: []
+      data: [],
     };
   }
 
@@ -42,7 +42,7 @@ data.forEach((row, index) => {
     currentSection = {
       type: 'NeighborhoodCodes',
       startRow: index,
-      data: []
+      data: [],
     };
   }
 
@@ -54,7 +54,7 @@ data.forEach((row, index) => {
     currentSection = {
       type: 'LandLadder',
       startRow: index,
-      data: []
+      data: [],
     };
   }
 
@@ -66,7 +66,7 @@ data.forEach((row, index) => {
     currentSection = {
       type: 'ViewCodes',
       startRow: index,
-      data: []
+      data: [],
     };
   }
 
@@ -78,7 +78,7 @@ data.forEach((row, index) => {
     currentSection = {
       type: 'WaterfrontLadder',
       startRow: index,
-      data: []
+      data: [],
     };
   }
 
@@ -90,7 +90,7 @@ data.forEach((row, index) => {
     currentSection = {
       type: 'AttributeCodes',
       startRow: index,
-      data: []
+      data: [],
     };
   }
 });
@@ -102,18 +102,25 @@ if (currentSection) {
 }
 
 console.log('Found sections:');
-sections.forEach(section => {
-  console.log(`  ${section.type}: rows ${section.startRow} to ${section.endRow}`);
+sections.forEach((section) => {
+  console.log(
+    `  ${section.type}: rows ${section.startRow} to ${section.endRow}`,
+  );
 });
 
 // Show detailed view of each section type
 console.log('\n===== SECTION DETAILS =====\n');
 
-sections.forEach(section => {
-  console.log(`\n----- ${section.type} (rows ${section.startRow}-${section.endRow}) -----`);
-  const sectionData = data.slice(section.startRow, Math.min(section.endRow + 1, section.startRow + 20));
+sections.forEach((section) => {
+  console.log(
+    `\n----- ${section.type} (rows ${section.startRow}-${section.endRow}) -----`,
+  );
+  const sectionData = data.slice(
+    section.startRow,
+    Math.min(section.endRow + 1, section.startRow + 20),
+  );
   sectionData.forEach((row, idx) => {
-    if (row.some(cell => cell !== '')) {
+    if (row.some((cell) => cell !== '')) {
       console.log(`  Row ${section.startRow + idx}:`, JSON.stringify(row));
     }
   });

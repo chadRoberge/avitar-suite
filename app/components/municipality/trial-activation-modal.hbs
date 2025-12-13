@@ -1,0 +1,243 @@
+{{! Trial Activation Modal }}
+{{#if @showModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" @onClose}}
+    role="presentation"
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="trial-modal-title"
+    >
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title" id="trial-modal-title">
+          {{lnr-icon "gift" size=20}}
+          <span class="avitar-ml-2">Start Free Trial</span>
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" @onClose}}
+          aria-label="Close modal"
+        >
+          {{lnr-icon "cross" size=16}}
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        {{#if this.isSuccess}}
+          {{! Success State }}
+          <div class="avitar-text-center avitar-py-6">
+            <div
+              class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-success-light avitar-flex avitar-items-center avitar-justify-center avitar-mx-auto avitar-mb-4"
+            >
+              {{lnr-icon "check-circle" size=48 class="avitar-text-success"}}
+            </div>
+            <h3 class="avitar-text-xl avitar-font-bold avitar-mb-2">
+              Trial Activated!
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Your 30-day free trial for
+              <strong>{{@module.name}}</strong>
+              has started.
+            </p>
+            <p class="avitar-text-sm avitar-text-muted">
+              You can now access all features of this module. Your trial will end on
+              {{date-format this.trialEndDate "MMMM DD, YYYY"}}.
+            </p>
+          </div>
+        {{else}}
+          {{! Trial Information }}
+          <div class="avitar-space-y-4">
+            {{! Module Info }}
+            <div class="avitar-card avitar-bg-primary-light">
+              <div class="avitar-card__body avitar-p-4">
+                <div class="avitar-flex avitar-items-start avitar-gap-4">
+                  <div
+                    class="avitar-w-12 avitar-h-12 avitar-rounded-lg avitar-bg-primary avitar-flex avitar-items-center avitar-justify-center avitar-flex-shrink-0"
+                  >
+                    {{lnr-icon @moduleIcon size=24 class="avitar-text-white"}}
+                  </div>
+                  <div class="avitar-flex-1">
+                    <h3 class="avitar-font-semibold avitar-mb-1">
+                      {{@module.name}}
+                    </h3>
+                    <p class="avitar-text-sm avitar-text-muted">
+                      {{@module.description}}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {{! Trial Details }}
+            <div>
+              <h4 class="avitar-font-semibold avitar-mb-2">
+                What's Included in Your Trial:
+              </h4>
+              <ul
+                class="avitar-text-sm avitar-space-y-2"
+                style="list-style: none; padding-left: 0;"
+              >
+                <li
+                  class="avitar-flex avitar-items-start avitar-gap-2"
+                >
+                  <span class="avitar-text-success avitar-flex-shrink-0 avitar-mt-1">
+                    {{lnr-icon "check-circle" size=16}}
+                  </span>
+                  <span>30 days of full access to all module features</span>
+                </li>
+                <li
+                  class="avitar-flex avitar-items-start avitar-gap-2"
+                >
+                  <span class="avitar-text-success avitar-flex-shrink-0 avitar-mt-1">
+                    {{lnr-icon "check-circle" size=16}}
+                  </span>
+                  <span>No credit card required to start</span>
+                </li>
+                <li
+                  class="avitar-flex avitar-items-start avitar-gap-2"
+                >
+                  <span class="avitar-text-success avitar-flex-shrink-0 avitar-mt-1">
+                    {{lnr-icon "check-circle" size=16}}
+                  </span>
+                  <span>Convert to paid subscription anytime</span>
+                </li>
+                <li
+                  class="avitar-flex avitar-items-start avitar-gap-2"
+                >
+                  <span class="avitar-text-success avitar-flex-shrink-0 avitar-mt-1">
+                    {{lnr-icon "check-circle" size=16}}
+                  </span>
+                  <span>Read-only access after trial ends (data preserved)</span>
+                </li>
+              </ul>
+            </div>
+
+            {{! Pricing Preview }}
+            <div class="avitar-card avitar-bg-gray-50">
+              <div class="avitar-card__body avitar-p-4">
+                {{#if @module.calculated_pricing}}
+                  {{! Show specific pricing }}
+                  <div class="avitar-text-sm avitar-text-muted avitar-mb-1">
+                    After trial pricing (based on
+                    {{@parcelCount}}
+                    parcels):
+                  </div>
+                  <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+                    {{this.formatPrice @module.calculated_pricing}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Billed annually • Cancel anytime
+                  </div>
+                {{else if @module.pricing_tiers}}
+                  {{! Show tiered pricing examples }}
+                  <div class="avitar-text-sm avitar-text-muted avitar-mb-2">
+                    After trial pricing:
+                  </div>
+                  {{#each @module.pricing_tiers as |tier|}}
+                    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-py-1">
+                      <div class="avitar-text-sm avitar-text-muted">
+                        {{tier.parcel_count}} parcels
+                      </div>
+                      <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                        ${{tier.amount}}/{{tier.interval}}
+                      </div>
+                    </div>
+                  {{/each}}
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-2 avitar-italic">
+                    Your exact pricing will be calculated based on your parcel count
+                  </div>
+                {{else if @module.pricing}}
+                  {{! Fallback to default pricing }}
+                  <div class="avitar-text-sm avitar-text-muted avitar-mb-1">
+                    After trial pricing:
+                  </div>
+                  <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+                    {{this.formatPrice @module.pricing}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    Billed annually • Cancel anytime
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+
+            {{! Billing Email }}
+            <div>
+              <label class="avitar-label avitar-required">
+                Billing Email
+              </label>
+              <input
+                type="email"
+                class="avitar-input {{if this.emailError 'avitar-input--error'}}"
+                placeholder="billing@municipality.gov"
+                value={{this.billingEmail}}
+                {{on "input" this.updateBillingEmail}}
+                disabled={{this.isLoading}}
+                required
+              />
+              {{#if this.emailError}}
+                <div class="avitar-error-message avitar-mt-1">
+                  {{this.emailError}}
+                </div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                We'll send trial and subscription updates to this email
+              </div>
+            </div>
+
+            {{! Error Message }}
+            {{#if this.errorMessage}}
+              <div class="avitar-alert avitar-alert--danger">
+                {{lnr-icon "alert-triangle" size=16}}
+                <span class="avitar-ml-2">{{this.errorMessage}}</span>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        {{#if this.isSuccess}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" @onClose}}
+          >
+            Get Started
+          </button>
+        {{else}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" @onClose}}
+            disabled={{this.isLoading}}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.startTrial}}
+            disabled={{or this.isLoading (not this.isValid)}}
+          >
+            {{#if this.isLoading}}
+              {{lnr-icon "spinner" size=14 class="avitar-animate-spin"}}
+              <span class="avitar-ml-2">Starting Trial...</span>
+            {{else}}
+              {{lnr-icon "gift" size=14}}
+              <span class="avitar-ml-2">Start 30-Day Free Trial</span>
+            {{/if}}
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+{{/if}}

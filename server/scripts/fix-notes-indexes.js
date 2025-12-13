@@ -8,7 +8,8 @@ require('dotenv').config({ path: './server/.env' });
 async function fixIndexes() {
   try {
     // Connect to MongoDB
-    const dbUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/avitar-suite';
+    const dbUrl =
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/avitar-suite';
 
     await mongoose.connect(dbUrl, {
       useNewUrlParser: true,
@@ -26,7 +27,10 @@ async function fixIndexes() {
 
     // Get existing indexes
     const notesIndexes = await notesCollection.indexes();
-    console.log('Current PropertyNotes indexes:', notesIndexes.map(i => i.name));
+    console.log(
+      'Current PropertyNotes indexes:',
+      notesIndexes.map((i) => i.name),
+    );
 
     // Drop the old unique index if it exists
     try {
@@ -44,7 +48,7 @@ async function fixIndexes() {
     try {
       await notesCollection.createIndex(
         { propertyId: 1, municipalityId: 1, card_number: 1 },
-        { unique: true, name: 'propertyId_1_municipalityId_1_card_number_1' }
+        { unique: true, name: 'propertyId_1_municipalityId_1_card_number_1' },
       );
       console.log('✅ Created new PropertyNotes unique index with card_number');
     } catch (error) {
@@ -57,7 +61,10 @@ async function fixIndexes() {
 
     // Get existing indexes
     const listingIndexes = await listingCollection.indexes();
-    console.log('Current ListingHistory indexes:', listingIndexes.map(i => i.name));
+    console.log(
+      'Current ListingHistory indexes:',
+      listingIndexes.map((i) => i.name),
+    );
 
     // Drop the old index if it exists
     try {
@@ -75,7 +82,7 @@ async function fixIndexes() {
     try {
       await listingCollection.createIndex(
         { propertyId: 1, card_number: 1, visitDate: -1 },
-        { name: 'propertyId_1_card_number_1_visitDate_-1' }
+        { name: 'propertyId_1_card_number_1_visitDate_-1' },
       );
       console.log('✅ Created new ListingHistory index with card_number');
     } catch (error) {
@@ -85,10 +92,16 @@ async function fixIndexes() {
     // Show final indexes
     console.log('\n📊 Final indexes:');
     const finalNotesIndexes = await notesCollection.indexes();
-    console.log('PropertyNotes:', finalNotesIndexes.map(i => i.name));
+    console.log(
+      'PropertyNotes:',
+      finalNotesIndexes.map((i) => i.name),
+    );
 
     const finalListingIndexes = await listingCollection.indexes();
-    console.log('ListingHistory:', finalListingIndexes.map(i => i.name));
+    console.log(
+      'ListingHistory:',
+      finalListingIndexes.map((i) => i.name),
+    );
 
     console.log('\n✅ Index fix completed successfully!');
     process.exit(0);

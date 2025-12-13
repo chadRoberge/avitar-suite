@@ -1,8 +1,20 @@
 /**
  * Subscription Plans Configuration
  *
- * Defines the available subscription tiers and their features
- * for contractor accounts on the platform.
+ * NOTE: This configuration is primarily for backward compatibility and reference.
+ * The actual source of truth for plans and features is Stripe product metadata.
+ * The /contractors/plans endpoint fetches plans directly from Stripe.
+ *
+ * When updating subscription features, update the Stripe product metadata in Stripe Dashboard:
+ * - plan_key: 'free', 'pro', 'professional', 'enterprise'
+ * - plan_type: 'commercial'
+ * - team_management: 'true' or 'false'
+ * - stored_payment_methods: 'true' or 'false'
+ * - advanced_reporting: 'true' or 'false'
+ * - priority_support: 'true' or 'false'
+ * - api_access: 'true' or 'false'
+ * - custom_branding: 'true' or 'false'
+ * - max_team_members: number or 'unlimited' or '-1'
  */
 
 const SUBSCRIPTION_PLANS = {
@@ -46,6 +58,28 @@ const SUBSCRIPTION_PLANS = {
     },
     description: 'Great for small teams',
     tagline: 'Team Collaboration',
+    popular: false,
+  },
+
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    price: 10, // $10/month
+    billing_period: 'month',
+    stripe_price_id: process.env.STRIPE_PRICE_ID_PRO_MONTHLY,
+    features: {
+      team_management: true,
+      stored_payment_methods: true,
+      advanced_reporting: false,
+      priority_support: false,
+      api_access: false,
+      custom_branding: false,
+      max_team_members: 5,
+      max_permits_per_month: 50,
+      permit_fee_discount: 0,
+    },
+    description: 'For small teams',
+    tagline: 'Essential Features',
     popular: false,
   },
 
@@ -164,7 +198,7 @@ function getPlan(planId) {
  */
 function getPlanByStripePriceId(stripePriceId) {
   return Object.values(SUBSCRIPTION_PLANS).find(
-    (plan) => plan.stripe_price_id === stripePriceId
+    (plan) => plan.stripe_price_id === stripePriceId,
   );
 }
 

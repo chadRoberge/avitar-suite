@@ -1,0 +1,334 @@
+{{page-title "Projects"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Tabs }}
+  <div class="avitar-card avitar-card--sticky-header avitar-mb-4">
+    <div class="avitar-card__header avitar-bg-gray-50 avitar-p-0">
+      <div class="avitar-tabs">
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.selectedTab 'all') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "all")}}
+        >
+          All Projects
+          {{#if this.tabStats.all}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-ml-2">
+              {{this.tabStats.all}}
+            </span>
+          {{/if}}
+        </button>
+
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.selectedTab 'active') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "active")}}
+        >
+          Active
+          {{#if this.tabStats.active}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--info avitar-ml-2">
+              {{this.tabStats.active}}
+            </span>
+          {{/if}}
+        </button>
+
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.selectedTab 'completed') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "completed")}}
+        >
+          Completed
+          {{#if this.tabStats.completed}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--success avitar-ml-2">
+              {{this.tabStats.completed}}
+            </span>
+          {{/if}}
+        </button>
+
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.selectedTab 'onHold') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "onHold")}}
+        >
+          On Hold
+          {{#if this.tabStats.onHold}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--warning avitar-ml-2">
+              {{this.tabStats.onHold}}
+            </span>
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{! Main Card }}
+  <div class="avitar-card">
+    {{! Filters }}
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-flex avitar-gap-3 avitar-items-end">
+        {{! Search Input }}
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            <i class="fas fa-search avitar-mr-1"></i>
+            Search Projects
+          </label>
+          <input
+            type="text"
+            class="avitar-input"
+            placeholder="Search by project name, permit #, or address..."
+            value={{this.searchText}}
+            {{on "input" this.updateSearch}}
+          />
+        </div>
+
+        {{! Status Filter }}
+        <div style="min-width: 180px;">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            Status
+          </label>
+          <select
+            class="avitar-select"
+            {{on "change" this.setFilterStatus}}
+          >
+            {{#each this.statusOptions as |statusOption|}}
+              <option value={{statusOption.value}} selected={{eq this.filterStatus statusOption.value}}>
+                {{statusOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        {{! Sort By }}
+        <div style="min-width: 160px;">
+          <label class="avitar-label avitar-text-sm avitar-font-medium avitar-mb-1">
+            Sort By
+          </label>
+          <select
+            class="avitar-select"
+            {{on "change" this.setSortBy}}
+          >
+            {{#each this.sortOptions as |sortOption|}}
+              <option value={{sortOption.value}} selected={{eq this.sortBy sortOption.value}}>
+                {{sortOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        {{! Clear Filters Button }}
+        {{#if this.hasFiltersApplied}}
+          <div>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--ghost avitar-btn--secondary"
+              {{on "click" this.clearFilters}}
+              title="Clear all filters"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        {{/if}}
+      </div>
+
+      {{! Active Filters Display }}
+      {{#if this.hasFiltersApplied}}
+        <div class="avitar-flex avitar-gap-2 avitar-mt-3">
+          <span class="avitar-text-sm avitar-text-muted">Active filters:</span>
+          {{#if (not (eq this.filterStatus 'all'))}}
+            <span class="avitar-badge avitar-badge--secondary">
+              Status: {{this.filterStatus}}
+              <button
+                type="button"
+                class="avitar-ml-1"
+                {{on "click" (fn this.setFilterStatus (hash target (hash value "all")))}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          {{/if}}
+          {{#if this.searchText}}
+            <span class="avitar-badge avitar-badge--secondary">
+              Search: "{{this.searchText}}"
+              <button
+                type="button"
+                class="avitar-ml-1"
+                {{on "click" (fn this.updateSearch (hash target (hash value "")))}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+    </div>
+
+    {{! Table Body }}
+    <div class="avitar-card__body avitar-p-0">
+    {{! Results Summary }}
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-p-4 avitar-pb-3 avitar-border-b">
+      <div class="avitar-text-sm avitar-text-muted">
+        <i class="fas fa-folder-open avitar-mr-1"></i>
+        Showing
+        <strong>{{this.displayedProjects.length}}</strong>
+        {{#if (eq this.displayedProjects.length 1)}}
+          project
+        {{else}}
+          projects
+        {{/if}}
+      </div>
+    </div>
+
+    {{! Projects List }}
+    {{#if this.displayedProjects.length}}
+      <div class="avitar-table-container">
+        <table
+          class="avitar-table avitar-table--hover avitar-table--striped"
+          style="table-layout: fixed;"
+        >
+          <thead>
+            <tr>
+              <th style="width: 120px;">Project #</th>
+              <th style="width: auto;">Project Name</th>
+              <th style="width: 130px;">Type</th>
+              <th style="width: auto;">Property</th>
+              <th style="width: 100px;">Permits</th>
+              <th style="width: 110px;">Value</th>
+              <th style="width: 100px;">Status</th>
+              <th style="width: 90px;">Created</th>
+              <th style="width: 100px;" class="avitar-text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.displayedProjects as |project|}}
+              <tr class="avitar-cursor-pointer" {{on "click" (fn this.viewProject project)}}>
+                <td>
+                  <div class="avitar-font-medium avitar-text-primary">
+                    {{project.permitNumber}}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-font-medium avitar-text-gray-900">
+                    {{project.projectName}}
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-flex avitar-items-center avitar-gap-2">
+                    <i class="fas fa-{{project.typeIcon}} avitar-text-muted"></i>
+                    <span class="avitar-text-sm">{{project.typeDisplay}}</span>
+                  </div>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm">
+                    <div class="avitar-font-medium avitar-text-gray-900 avitar-truncate">
+                      {{project.pidFormatted}}
+                    </div>
+                    <div class="avitar-text-muted avitar-truncate">
+                      {{project.propertyAddress}}
+                    </div>
+                  </div>
+                </td>
+
+                <td>
+                  <span class="avitar-badge avitar-badge--secondary">
+                    {{project.permitCount}}
+                    {{#if (eq project.permitCount 1)}}
+                      permit
+                    {{else}}
+                      permits
+                    {{/if}}
+                  </span>
+                </td>
+
+                <td>
+                  {{#if project.estimatedValue}}
+                    <div class="avitar-text-sm avitar-font-medium">
+                      {{format-currency project.estimatedValue}}
+                    </div>
+                  {{else}}
+                    <span class="avitar-text-muted avitar-text-sm">-</span>
+                  {{/if}}
+                </td>
+
+                <td>
+                  <span class={{project.statusBadge.class}}>
+                    {{project.statusBadge.text}}
+                  </span>
+                </td>
+
+                <td>
+                  <div class="avitar-text-sm avitar-text-muted">
+                    {{date-format project.createdAt "MMM DD, YYYY"}}
+                  </div>
+                </td>
+
+                <td {{on "click" this.stopPropagation}}>
+                  <div class="avitar-flex avitar-justify-center avitar-gap-1">
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"
+                      {{on "click" (fn this.viewProject project)}}
+                      title="View Project Details"
+                    >
+                      {{{lnr-icon "eye"}}}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="avitar-empty-state avitar-py-6">
+        <div
+          class="avitar-flex avitar-flex-col avitar-items-center avitar-justify-center"
+        >
+          {{#if this.hasFiltersApplied}}
+            <div class="avitar-mb-4 avitar-text-center">
+              <i class="fas fa-filter fa-3x avitar-text-muted"></i>
+            </div>
+            <h3 class="avitar-text-xl avitar-font-semibold avitar-mb-2">No Projects Match Your Filters</h3>
+            <p
+              class="avitar-text-muted avitar-mb-4 avitar-text-center"
+              style="max-width: 400px;"
+            >
+              We couldn't find any projects matching your current search criteria. Try
+              adjusting your filters to see more results.
+            </p>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.clearFilters}}
+            >
+              <i class="fas fa-times-circle avitar-mr-2"></i>
+              Clear All Filters
+            </button>
+          {{else}}
+            <div class="avitar-mb-4 avitar-text-center">
+              <div
+                class="avitar-flex avitar-items-center avitar-justify-center avitar-mb-3"
+              >
+                <div
+                  class="avitar-stat__icon avitar-stat__icon--lg avitar-bg-primary-light avitar-text-primary"
+                >
+                  <i class="fas fa-folder-open"></i>
+                </div>
+              </div>
+            </div>
+            <h3 class="avitar-text-xl avitar-font-semibold avitar-mb-2">No Projects Yet</h3>
+            <p
+              class="avitar-text-muted avitar-mb-4 avitar-text-center"
+              style="max-width: 450px;"
+            >
+              There are no projects in the system yet. Projects will appear here when
+              contractors or citizens create permit applications as part of a project.
+            </p>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>

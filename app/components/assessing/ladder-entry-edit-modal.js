@@ -20,7 +20,8 @@ export default class LadderEntryEditModalComponent extends Component {
 
   // Getter that triggers form update checks - called from template
   get formInitializer() {
-    const currentEntryId = this.args.ladderEntry?.id || this.args.ladderEntry?._id;
+    const currentEntryId =
+      this.args.ladderEntry?.id || this.args.ladderEntry?._id;
     const isOpen = this.args.isOpen;
 
     // Check if entry changed or modal just opened
@@ -44,7 +45,10 @@ export default class LadderEntryEditModalComponent extends Component {
       // Edit mode - populate existing values
       this.frontage = this.args.ladderEntry.frontage?.toString() || '';
       // Server stores as 'factor', but we may also get 'value' from legacy data
-      this.value = (this.args.ladderEntry.factor || this.args.ladderEntry.value)?.toString() || '';
+      this.value =
+        (
+          this.args.ladderEntry.factor || this.args.ladderEntry.value
+        )?.toString() || '';
     } else {
       // Create mode - clear values
       this.frontage = '';

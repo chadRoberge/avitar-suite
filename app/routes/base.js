@@ -22,7 +22,8 @@ export default class BaseRoute extends Route {
       fromRoute.includes('.property') &&
       toRoute.includes('.property') &&
       fromModule === toModule &&
-      transition.from?.params?.property_id === transition.to.params?.property_id;
+      transition.from?.params?.property_id ===
+        transition.to.params?.property_id;
 
     // Only show loading if:
     // - Changing modules AND

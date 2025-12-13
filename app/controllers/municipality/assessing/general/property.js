@@ -257,10 +257,15 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
           // Also update in-memory property cache
           this.propertyCache.set(propertyId, freshProperty);
 
-          console.log('✅ Updated cache with fresh property data after listing history save');
+          console.log(
+            '✅ Updated cache with fresh property data after listing history save',
+          );
         }
       } catch (error) {
-        console.warn('Could not update cache after listing history save:', error);
+        console.warn(
+          'Could not update cache after listing history save:',
+          error,
+        );
         // Fall back to invalidation if update fails
         this.propertyCache.invalidate(propertyId, cardNumber);
       }
@@ -326,10 +331,15 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
           // Also update in-memory property cache
           this.propertyCache.set(propertyId, freshProperty);
 
-          console.log('✅ Updated cache with fresh property data after property notes save');
+          console.log(
+            '✅ Updated cache with fresh property data after property notes save',
+          );
         }
       } catch (error) {
-        console.warn('Could not update cache after property notes save:', error);
+        console.warn(
+          'Could not update cache after property notes save:',
+          error,
+        );
         // Fall back to invalidation if update fails
         this.propertyCache.invalidate(propertyId, cardNumber);
       }
@@ -461,10 +471,15 @@ export default class MunicipalityAssessingGeneralPropertyController extends Cont
           // Also update in-memory property cache
           this.propertyCache.set(propertyId, freshProperty);
 
-          console.log('✅ Updated cache with fresh property data after listing history deletion');
+          console.log(
+            '✅ Updated cache with fresh property data after listing history deletion',
+          );
         }
       } catch (error) {
-        console.warn('Could not update cache after listing history delete:', error);
+        console.warn(
+          'Could not update cache after listing history delete:',
+          error,
+        );
         // Fall back to invalidation if update fails
         this.propertyCache.invalidate(propertyId, cardNumber);
       }

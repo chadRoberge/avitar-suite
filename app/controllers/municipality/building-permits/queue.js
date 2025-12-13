@@ -9,6 +9,7 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
   @service session;
   @service api;
   @service municipality;
+  @service('current-user') currentUser;
 
   @tracked queue = [];
   @tracked needingAttention = [];
@@ -173,7 +174,10 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
 
   @action
   viewPermit(permit) {
-    this.router.transitionTo('municipality.building-permits.permit', permit._id);
+    this.router.transitionTo(
+      'municipality.building-permits.permit',
+      permit._id,
+    );
   }
 
   @action
@@ -240,9 +244,14 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
     // Load full permit data with inspections and property for printing
     try {
       const [permitData, inspections] = await Promise.all([
-        this.api.get(`/municipalities/${this.municipalityId}/permits/${permit._id}`),
-        this.api.get(`/municipalities/${this.municipalityId}/permits/${permit._id}/inspections`)
-          .catch(() => ({ inspections: [] }))
+        this.api.get(
+          `/municipalities/${this.municipalityId}/permits/${permit._id}`,
+        ),
+        this.api
+          .get(
+            `/municipalities/${this.municipalityId}/permits/${permit._id}/inspections`,
+          )
+          .catch(() => ({ inspections: [] })),
       ]);
 
       // Load property data if propertyId exists
@@ -250,10 +259,13 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
       if (permitData.propertyId) {
         try {
           // Convert propertyId to string in case it's an ObjectId object
-          const propertyId = typeof permitData.propertyId === 'object'
-            ? permitData.propertyId._id || permitData.propertyId.toString()
-            : permitData.propertyId;
-          const propertyResponse = await this.api.get(`/properties/${propertyId}`);
+          const propertyId =
+            typeof permitData.propertyId === 'object'
+              ? permitData.propertyId._id || permitData.propertyId.toString()
+              : permitData.propertyId;
+          const propertyResponse = await this.api.get(
+            `/properties/${propertyId}`,
+          );
           property = propertyResponse.property || propertyResponse;
         } catch (error) {
           console.warn('Could not load property data:', error);
@@ -263,7 +275,7 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
       this.selectedPermit = {
         ...permitData,
         inspections: inspections.inspections || [],
-        property: property
+        property: property,
       };
       this.showPrintModal = true;
     } catch (error) {
@@ -281,5 +293,49 @@ export default class MunicipalityBuildingPermitsQueueController extends Controll
   @action
   triggerPrint() {
     window.print();
+  }
+
+  // Helper to check if permit can be reviewed by current user
+  canReviewPermit = (permit) => {
+    if (!permit?.departmentReviews || !permit.departmentReviews.length) {
+      return false;
+    }
+
+    // Get user's department for this municipality
+    const userDepartment =
+      this.currentUser?.currentMunicipalPermissions?.department;
+
+    if (!userDepartment) {
+      return false;
+    }
+
+    // Check if any review for this user's department is pending or in_review
+    return permit.departmentReviews.some(
+      (review) =>
+        review.department === userDepartment &&
+        ['pending', 'in_review'].includes(review.status),
+    );
+  };
+
+  @action
+  reviewPermit(permit) {
+    if (!this.canReviewPermit(permit)) {
+      return;
+    }
+
+    // Get user's department
+    const userDepartment =
+      this.currentUser?.currentMunicipalPermissions?.department;
+
+    if (!userDepartment) {
+      return;
+    }
+
+    // Navigate to review route
+    this.router.transitionTo(
+      'municipality.building-permits.review',
+      permit._id,
+      userDepartment,
+    );
   }
 }

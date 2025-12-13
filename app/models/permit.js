@@ -306,7 +306,14 @@ export default class PermitModel extends Model {
   // === Priority Helpers ===
 
   get priorityDisplay() {
-    const levels = ['Normal', 'Low Priority', 'Medium', 'High', 'Urgent', 'Critical'];
+    const levels = [
+      'Normal',
+      'Low Priority',
+      'Medium',
+      'High',
+      'Urgent',
+      'Critical',
+    ];
     return levels[this.priorityLevel] || 'Normal';
   }
 

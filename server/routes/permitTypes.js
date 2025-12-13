@@ -43,7 +43,9 @@ const checkPermitTypePermission = (action) => {
     }
 
     // Check buildingPermits module permission
-    if (!req.user.hasModulePermission(municipalityId, 'buildingPermits', action)) {
+    if (
+      !req.user.hasModulePermission(municipalityId, 'building_permit', action)
+    ) {
       return res
         .status(403)
         .json({ error: `Insufficient permissions to ${action} permit types` });
@@ -56,12 +58,11 @@ const checkPermitTypePermission = (action) => {
 /**
  * GET /api/municipalities/:municipalityId/permit-types
  * List all permit types for a municipality
+ * NOTE: Public endpoint for contractors/citizens to view available permit types
  */
 router.get(
   '/municipalities/:municipalityId/permit-types',
   authenticateToken,
-  checkMunicipalityAccess,
-  checkPermitTypePermission('read'),
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
@@ -99,12 +100,11 @@ router.get(
 /**
  * GET /api/municipalities/:municipalityId/permit-types/:permitTypeId
  * Get a single permit type by ID
+ * NOTE: Public endpoint for contractors/citizens to view permit type details
  */
 router.get(
   '/municipalities/:municipalityId/permit-types/:permitTypeId',
   authenticateToken,
-  checkMunicipalityAccess,
-  checkPermitTypePermission('read'),
   async (req, res) => {
     try {
       const { permitTypeId, municipalityId } = req.params;
@@ -320,8 +320,14 @@ router.post(
   async (req, res) => {
     try {
       const { permitTypeId, municipalityId } = req.params;
-      const { fileName, displayName, description, fileUrl, fileSize, isPublic } =
-        req.body;
+      const {
+        fileName,
+        displayName,
+        description,
+        fileUrl,
+        fileSize,
+        isPublic,
+      } = req.body;
 
       if (!fileName || !fileUrl) {
         return res
@@ -355,7 +361,8 @@ router.post(
 
       res.json({
         message: 'Template file added successfully',
-        templateFile: permitType.templateFiles[permitType.templateFiles.length - 1],
+        templateFile:
+          permitType.templateFiles[permitType.templateFiles.length - 1],
       });
     } catch (error) {
       console.error('Error uploading template file:', error);

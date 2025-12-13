@@ -37,7 +37,9 @@ class SMSGatewayService {
       this.twilioNumber = process.env.TWILIO_PHONE_NUMBER;
 
       if (!accountSid || !authToken || !this.twilioNumber) {
-        console.warn('Twilio credentials not configured. SMS sending will fail.');
+        console.warn(
+          'Twilio credentials not configured. SMS sending will fail.',
+        );
       } else {
         // Initialize Twilio client when needed
         this.twilioClient = require('twilio')(accountSid, authToken);
@@ -98,7 +100,7 @@ class SMSGatewayService {
     // Warn if message was truncated
     if (message.length > this.SMS_GATEWAY_LIMIT) {
       console.warn(
-        `SMS message truncated from ${message.length} to ${this.SMS_GATEWAY_LIMIT} characters for ${smsEmail}`
+        `SMS message truncated from ${message.length} to ${this.SMS_GATEWAY_LIMIT} characters for ${smsEmail}`,
       );
     }
 
@@ -164,7 +166,7 @@ class SMSGatewayService {
    */
   getSupportedCarriers() {
     return Object.keys(this.carrierGateways).filter(
-      (carrier) => carrier !== 'other'
+      (carrier) => carrier !== 'other',
     );
   }
 
@@ -203,7 +205,7 @@ class SMSGatewayService {
    */
   async sendBulk(messages) {
     const results = await Promise.allSettled(
-      messages.map((msg) => this.sendSMS(msg))
+      messages.map((msg) => this.sendSMS(msg)),
     );
 
     return results.map((result, index) => {
@@ -238,9 +240,7 @@ class SMSGatewayService {
       supportedCarriers: this.getSupportedCarriers(),
       cost: this.provider === 'twilio' ? 'Paid (~$0.0079/msg)' : 'Free',
       deliverySpeed:
-        this.provider === 'twilio'
-          ? 'Near-instant'
-          : 'Variable (1-30 seconds)',
+        this.provider === 'twilio' ? 'Near-instant' : 'Variable (1-30 seconds)',
       deliveryConfirmation: this.provider === 'twilio',
     };
   }

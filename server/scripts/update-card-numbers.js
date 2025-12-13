@@ -7,7 +7,8 @@ require('dotenv').config({ path: './server/.env' });
 async function updateCardNumbers() {
   try {
     // Connect to MongoDB
-    const dbUrl = process.env.MONGODB_URI || 'mongodb://localhost:27017/avitar-suite';
+    const dbUrl =
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/avitar-suite';
 
     await mongoose.connect(dbUrl);
 
@@ -22,10 +23,12 @@ async function updateCardNumbers() {
 
     const notesUpdateResult = await notesCollection.updateMany(
       { card_number: { $exists: false } },
-      { $set: { card_number: 1 } }
+      { $set: { card_number: 1 } },
     );
 
-    console.log(`✅ Updated ${notesUpdateResult.modifiedCount} PropertyNotes records`);
+    console.log(
+      `✅ Updated ${notesUpdateResult.modifiedCount} PropertyNotes records`,
+    );
 
     // Update ListingHistory
     console.log('\n📋 Updating ListingHistory records...');
@@ -33,14 +36,20 @@ async function updateCardNumbers() {
 
     const listingUpdateResult = await listingCollection.updateMany(
       { card_number: { $exists: false } },
-      { $set: { card_number: 1 } }
+      { $set: { card_number: 1 } },
     );
 
-    console.log(`✅ Updated ${listingUpdateResult.modifiedCount} ListingHistory records`);
+    console.log(
+      `✅ Updated ${listingUpdateResult.modifiedCount} ListingHistory records`,
+    );
 
     // Verify
-    const notesWithoutCard = await notesCollection.countDocuments({ card_number: { $exists: false } });
-    const listingWithoutCard = await listingCollection.countDocuments({ card_number: { $exists: false } });
+    const notesWithoutCard = await notesCollection.countDocuments({
+      card_number: { $exists: false },
+    });
+    const listingWithoutCard = await listingCollection.countDocuments({
+      card_number: { $exists: false },
+    });
 
     console.log('\n🔍 Verification:');
     console.log(`PropertyNotes without card_number: ${notesWithoutCard}`);

@@ -494,6 +494,88 @@
           </div>
           {{/each}}
           {{/if}}
+          {{!-- Waterfront Details --}}
+          {{#if this.hasWaterfrontValue}}
+          {{#each @landAssessment.assessment.waterfront_details as |detail index|}}
+            <div class="avitar-flex avitar-flex-row property-record-table-row">
+            {{!-- Waterfront --}}
+            <div class="avitar-flex-12">
+              <uppercase>Waterfront {{detail.waterBodyName}} - {{detail.frontage}} ft</uppercase>
+            </div>
+            {{!-- Base Rate --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              {{number-format detail.baseValue 0}}
+            </div>
+            {{!-- Frontage Factor --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                X
+              </div>
+            </div>
+            {{!-- Frontage Factor --}}
+            <div class="avitar-flex-3 avitar-text-right">
+              <div class="">
+                {{multiply 100 detail.frontageFactor}}
+              </div>
+            </div>
+            {{!-- Access --}}
+            <div class="avitar-flex-3 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{multiply 100 detail.accessFactor}}
+              </div>
+            </div>
+            {{!-- Topography --}}
+            <div class="avitar-flex-3 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{multiply 100 detail.topographyFactor}}
+              </div>
+            </div>
+            {{!-- Location --}}
+            <div class="avitar-flex-3 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{multiply 100 detail.locationFactor}}
+              </div>
+            </div>
+            {{!-- Intentionally Blank --}}
+            <div class="avitar-text-right">
+              <div class="">
+
+              </div>
+            </div>
+            {{!-- Condition --}}
+            <div class="avitar-flex-2 avitar-text-right">
+              <div class="avitar-pr-1">
+                {{divide detail.condition 100}}
+              </div>
+            </div>
+            {{!-- Market Value --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              ${{number-format detail.calculatedValue}}
+            </div>
+            {{!-- Intentionally Left Blank --}}
+            <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+
+            </div>
+            {{!-- Intentionally Left Blank --}}
+            <div class="avitar-flex-2 avitar-flex avitar-justify-end">
+            </div>
+            {{!-- Tax Value --}}
+            <div class="avitar-flex-4 avitar-flex avitar-justify-end">
+              {{#if detail.currentUse}}
+                $0
+              {{else}}
+                ${{number-format detail.calculatedValue}}
+              {{/if}}
+            </div>
+            {{!-- Notes --}}
+            <div class="avitar-flex-12">
+              <div class="avitar-pl-1">
+                {{#if detail.currentUse}}Current Use{{/if}}
+              </div>
+            </div>
+          </div>
+          {{/each}}
+          {{/if}}
         </div>
         {{!-- Calculated Totals Section - Aligned with columns --}}
         {{#if (and @landAssessment.assessment.calculated_totals this.hasBaseLandValue)}}

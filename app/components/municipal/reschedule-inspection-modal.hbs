@@ -1,0 +1,175 @@
+{{#if @isOpen}}
+  {{did-insert this.handleModalOpen}}
+
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.handleClose}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-calendar-alt avitar-mr-2"></i>
+          Reschedule Inspection
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.handleClose}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        {{#if @inspection}}
+          {{! Current Inspection Info }}
+          <div class="avitar-card avitar-bg-gray-50 avitar-mb-4">
+            <div class="avitar-card__body avitar-p-4">
+              <h3 class="avitar-text-sm avitar-font-semibold avitar-mb-2">
+                Current Inspection Details
+              </h3>
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+                <div>
+                  <div class="avitar-text-xs avitar-text-muted">Type</div>
+                  <div class="avitar-text-sm avitar-font-medium">
+                    {{this.formatInspectionType @inspection.type}}
+                  </div>
+                </div>
+                <div>
+                  <div class="avitar-text-xs avitar-text-muted">Current Date & Time</div>
+                  <div class="avitar-text-sm avitar-font-medium">
+                    {{this.formatDate @inspection.scheduledDate}}
+                    {{#if @inspection.scheduledTimeSlot}}
+                      <div class="avitar-text-xs">{{@inspection.scheduledTimeSlot}}</div>
+                    {{/if}}
+                  </div>
+                </div>
+                {{#if @inspection.permitId}}
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted">Permit Number</div>
+                    <div class="avitar-text-sm avitar-font-medium">
+                      {{@inspection.permitId.permitNumber}}
+                    </div>
+                  </div>
+                {{/if}}
+                {{#if @inspection.propertyId}}
+                  <div>
+                    <div class="avitar-text-xs avitar-text-muted">Property</div>
+                    <div class="avitar-text-sm avitar-font-medium">
+                      {{@inspection.propertyId.location.address}}
+                    </div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+
+          {{! Loading State }}
+          {{#if this.isLoadingSlots}}
+            <div class="avitar-text-center avitar-py-8">
+              <i class="fas fa-spinner fa-spin fa-2x avitar-text-primary avitar-mb-3"></i>
+              <p class="avitar-text-muted">Loading available time slots...</p>
+            </div>
+          {{else}}
+            {{! Available Time Slots }}
+            {{#if this.availableSlots.length}}
+              <div class="avitar-space-y-4">
+                <div>
+                  <label class="avitar-label">Select New Date & Time *</label>
+                  <div class="avitar-space-y-3 avitar-max-h-64 avitar-overflow-y-auto">
+                    {{#each this.groupedSlots as |dateGroup|}}
+                      <div>
+                        <h4 class="avitar-text-sm avitar-font-semibold avitar-mb-2">
+                          {{this.formatDate dateGroup.date}}
+                        </h4>
+                        <div class="avitar-grid avitar-grid-cols-3 avitar-gap-2">
+                          {{#each dateGroup.slots as |slot|}}
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--sm {{if (eq this.selectedTimeSlot slot) 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+                              {{on "click" (fn this.selectTimeSlot slot)}}
+                            >
+                              {{this.formatTime slot.startTime}}
+                              -
+                              {{this.formatTime slot.endTime}}
+                            </button>
+                          {{/each}}
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+
+                {{! Reason for Rescheduling }}
+                <div>
+                  <label class="avitar-label">Reason for Rescheduling *</label>
+                  <textarea
+                    class="avitar-input"
+                    rows="3"
+                    placeholder="Please provide a reason for rescheduling this inspection..."
+                    value={{this.reason}}
+                    {{on "input" this.updateReason}}
+                  ></textarea>
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    This will be included in the notification sent to the contractor.
+                  </p>
+                </div>
+              </div>
+            {{else}}
+              {{! No Slots Available }}
+              <div class="avitar-empty-state avitar-py-6">
+                <i class="fas fa-calendar-times fa-2x avitar-text-muted avitar-mb-3"></i>
+                <h3 class="avitar-text-base avitar-font-semibold avitar-mb-2">
+                  No Available Time Slots
+                </h3>
+                <p class="avitar-text-muted avitar-text-sm">
+                  There are currently no available time slots for this inspection type.
+                  Please contact an administrator to adjust inspection settings.
+                </p>
+              </div>
+            {{/if}}
+          {{/if}}
+        {{else}}
+          {{! No Inspection Selected }}
+          <div class="avitar-empty-state avitar-py-6">
+            <i class="fas fa-exclamation-triangle fa-2x avitar-text-warning avitar-mb-3"></i>
+            <p class="avitar-text-muted">No inspection selected</p>
+          </div>
+        {{/if}}
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.handleClose}}
+          disabled={{this.isSubmitting}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.handleSubmit}}
+          disabled={{or this.isSubmitting (not this.canSubmit)}}
+        >
+          {{#if this.isSubmitting}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Rescheduling...
+          {{else}}
+            <i class="fas fa-calendar-check avitar-mr-2"></i>
+            Reschedule Inspection
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

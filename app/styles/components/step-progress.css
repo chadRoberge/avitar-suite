@@ -6,7 +6,7 @@
   padding: 2rem 1.5rem;
   background: white;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
   margin-bottom: 1.5rem;
   position: relative;
 }
@@ -23,11 +23,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
-  font-weight: 600;
-  font-size: 0.625rem;
+  font-weight: 700;
+  font-size: 0.875rem;
   transition: all 0.3s ease;
   background: white;
   position: relative;
@@ -42,26 +42,26 @@
 
 /* Active state */
 .avitar-step-progress__step--active .avitar-step-progress__number {
-  background-color: #3b82f6;
+  background-color: var(--avitar-green);
   color: white;
-  border: 1px solid #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--avitar-green);
+  box-shadow: 0 0 0 4px var(--avitar-green-pale);
 }
 
 /* Completed state */
 .avitar-step-progress__step--completed .avitar-step-progress__number {
-  background-color: #10b981;
+  background-color: var(--avitar-green-light);
   color: white;
-  border: 1px solid #10b981;
+  border: 1px solid var(--avitar-green-light);
 }
 
 /* Step label */
 .avitar-step-progress__label {
-  margin-top: 0.375rem;
-  font-size: 0.625rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
   text-align: center;
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 600;
   color: #6b7280;
   white-space: nowrap;
 }
@@ -72,37 +72,42 @@
 }
 
 .avitar-step-progress__step--completed .avitar-step-progress__label {
-  color: #10b981;
+  color: var(--avitar-green-light);
   font-weight: 500;
 }
 
 /* Connector line */
 .avitar-step-progress__connector {
   flex: 1;
-  height: 1px;
+  height: 2px;
   background-color: #e5e7eb;
-  margin: 0 0.5rem;
-  min-width: 1rem;
+  margin: 0 1rem;
+  min-width: 2rem;
   transition: all 0.3s ease;
   position: relative;
-  top: -0.75rem;
+  top: -1.25rem;
+  border-radius: 2px;
 }
 
 .avitar-step-progress__connector--completed {
-  background-color: #10b981;
+  background-color: var(--avitar-green-light);
 }
 
 .avitar-step-progress__connector--active {
-  background: linear-gradient(to right, #10b981 50%, #e5e7eb 50%);
+  background: linear-gradient(
+    to right,
+    var(--avitar-green-light) 50%,
+    #e5e7eb 50%
+  );
 }
 
 /* Icon inside number circle */
 .avitar-step-progress__icon {
-  font-size: 0.625rem;
+  font-size: 0.875rem;
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .avitar-step-progress {
     padding: 1.5rem 1rem;
     overflow-x: auto;
@@ -135,4 +140,189 @@
 
 .avitar-step-progress--compact .avitar-step-progress__label {
   font-size: 0.75rem;
+}
+
+/* Vertical Layout */
+.avitar-step-progress--vertical {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.5rem;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__step {
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__number {
+  flex-shrink: 0;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__content {
+  flex: 1;
+  margin-left: 1rem;
+  margin-top: 0.25rem;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__label {
+  margin-top: 0;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__connector {
+  width: 2px;
+  height: 1.5rem;
+  margin: 0.25rem 0 0.25rem 0.938rem;
+  min-width: auto;
+  top: 0;
+}
+
+.avitar-step-progress--vertical .avitar-step-progress__connector--active {
+  background: linear-gradient(
+    to bottom,
+    var(--avitar-green-light) 50%,
+    #e5e7eb 50%
+  );
+}
+
+.avitar-step-progress__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.6rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* Department Reviews */
+.avitar-step-progress__departments {
+  margin-top: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #e5e7eb;
+}
+
+.avitar-step-progress__department {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: white;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.avitar-step-progress__department:hover {
+  box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
+}
+
+/* Compact variant */
+.avitar-step-progress__department--compact {
+  padding: 0.375rem 0.625rem;
+  margin-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.avitar-step-progress__department--approved {
+  border-left: 3px solid var(--avitar-green);
+  background-color: var(--avitar-green-pale);
+}
+
+.avitar-step-progress__department--pending {
+  border-left: 3px solid var(--avitar-yellow);
+  background-color: var(--avitar-yellow-pale);
+}
+
+.avitar-step-progress__department-icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-top: 0.125rem;
+}
+
+/* Compact icon */
+.avitar-step-progress__department--compact
+  .avitar-step-progress__department-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 0.875rem;
+  margin-top: 0;
+}
+
+.avitar-step-progress__department--approved
+  .avitar-step-progress__department-icon {
+  color: var(--avitar-green);
+}
+
+.avitar-step-progress__department--pending
+  .avitar-step-progress__department-icon {
+  color: var(--avitar-yellow-dark);
+}
+
+.avitar-step-progress__department-info {
+  flex: 1;
+}
+
+.avitar-step-progress__department-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1f2937;
+  margin-bottom: 0.125rem;
+}
+
+/* Compact name */
+.avitar-step-progress__department--compact
+  .avitar-step-progress__department-name {
+  font-size: 0.75rem;
+  margin-bottom: 0;
+  line-height: 1.2;
+}
+
+.avitar-step-progress__department-meta {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Compact meta */
+.avitar-step-progress__department--compact
+  .avitar-step-progress__department-meta {
+  font-size: 0.625rem;
+  line-height: 1.2;
+}
+
+/* Responsive adjustments for vertical layout */
+@media (width <= 768px) {
+  .avitar-step-progress--vertical {
+    padding: 1rem;
+  }
+
+  .avitar-step-progress--vertical .avitar-step-progress__content {
+    margin-left: 0.75rem;
+  }
+
+  .avitar-step-progress--vertical .avitar-step-progress__connector {
+    margin-left: 0.938rem;
+  }
+
+  .avitar-step-progress__arrow {
+    margin-left: 0.938rem;
+  }
+
+  .avitar-step-progress__departments {
+    padding-left: 0.5rem;
+  }
+
+  .avitar-step-progress__department {
+    padding: 0.5rem 0.75rem;
+  }
 }

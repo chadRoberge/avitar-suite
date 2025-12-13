@@ -1,0 +1,262 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.handleClose}}>
+    <div class="avitar-modal avitar-modal--lg" style="max-width: 900px;" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <div>
+          <h2 class="avitar-modal__title">
+            <i class="fas fa-calendar-check avitar-mr-2"></i>
+            Schedule Inspection
+          </h2>
+          <div class="avitar-modal__subtitle">
+            Select an inspection type and available time slot
+          </div>
+        </div>
+        <button type="button" class="avitar-modal__close" {{on "click" this.handleClose}}>
+          <i class="fas fa-times avitar-modal__close-icon"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        <div class="avitar-flex avitar-gap-6">
+
+          {{! Left Sidebar - Inspection Summary (sticky) }}
+          {{#if this.selectedTimeSlot}}
+            <div class="avitar-flex-shrink-0" style="width: 280px;">
+              <div style="position: sticky; top: 0;">
+                <div class="avitar-card avitar-bg-primary-pale avitar-border-primary">
+                  <div class="avitar-card__body avitar-p-4">
+                    <h4 class="avitar-font-semibold avitar-mb-3 avitar-text-primary">
+                      <i class="fas fa-calendar-check avitar-mr-2"></i>
+                      Inspection Summary
+                    </h4>
+                    <div class="avitar-space-y-3 avitar-text-sm">
+                      <div>
+                        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Type:</div>
+                        <div class="avitar-font-medium">{{this.selectedInspectionDetails.label}}</div>
+                      </div>
+                      <div>
+                        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Date:</div>
+                        <div class="avitar-font-medium">{{this.formatDate this.selectedTimeSlot.date}}</div>
+                      </div>
+                      <div>
+                        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Time:</div>
+                        <div class="avitar-font-medium">
+                          {{this.formatTime this.selectedTimeSlot.startTime}} - {{this.formatTime this.selectedTimeSlot.endTime}}
+                        </div>
+                      </div>
+                      <div>
+                        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Duration:</div>
+                        <div class="avitar-font-medium">~{{this.selectedTimeSlot.estimatedMinutes}} minutes</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Right Column - Form }}
+          <div class="avitar-flex-1">
+            <form {{on "submit" this.handleSubmit}}>
+
+          {{! Step 1: Select Inspection Type }}
+          <div class="avitar-form-group avitar-mb-6">
+            <label class="avitar-label avitar-label--required" for="inspection-type">
+              <i class="fas fa-clipboard-list avitar-mr-2"></i>
+              Inspection Type
+            </label>
+            <select
+              id="inspection-type"
+              class="avitar-select"
+              {{on "change" this.selectInspectionType}}
+              required
+            >
+              <option value="">Select inspection type...</option>
+              {{#each this.inspectionTypes as |inspectionType|}}
+                <option value={{inspectionType.value}} selected={{eq this.selectedInspectionType inspectionType.value}}>
+                  {{inspectionType.label}}
+                  {{#if inspectionType.bufferDays}}
+                    - Requires {{inspectionType.bufferDays}} day(s) notice
+                  {{/if}}
+                </option>
+              {{/each}}
+            </select>
+            {{#if this.selectedInspectionDetails}}
+              <div class="avitar-form-help avitar-mt-2">
+                <i class="fas fa-info-circle avitar-mr-1"></i>
+                {{#if this.selectedInspectionDetails.description}}
+                  {{this.selectedInspectionDetails.description}}
+                {{else}}
+                  Estimated duration: {{this.selectedInspectionDetails.estimatedMinutes}} minutes
+                {{/if}}
+              </div>
+            {{/if}}
+          </div>
+
+          {{! Step 2: Select Time Slot }}
+          {{#if this.selectedInspectionType}}
+            <div class="avitar-form-group avitar-mb-6">
+              <label class="avitar-label avitar-label--required">
+                <i class="fas fa-clock avitar-mr-2"></i>
+                Available Time Slots
+              </label>
+
+              {{#if this.isLoadingSlots}}
+                <div class="avitar-text-center avitar-py-8">
+                  <div class="avitar-loading avitar-loading--lg avitar-loading--center"></div>
+                  <p class="avitar-text-muted avitar-mt-4">Loading available time slots...</p>
+                </div>
+              {{else if this.groupedSlots.length}}
+                <div class="avitar-space-y-6 avitar-max-h-96 avitar-overflow-y-auto avitar-border avitar-rounded avitar-p-4 avitar-bg-gray-50">
+                  {{#each this.groupedSlots as |dateGroup|}}
+                    <div>
+                      <h4 class="avitar-font-semibold avitar-mb-3 avitar-text-primary avitar-text-base">
+                        {{this.formatDate dateGroup.date}}
+                      </h4>
+                      <div class="avitar-grid avitar-grid-cols-2 avitar-gap-3">
+                        {{#each dateGroup.slots as |slot|}}
+                          <button
+                            type="button"
+                            class="avitar-btn {{if (eq this.selectedTimeSlot slot) 'avitar-btn--primary' 'avitar-btn--outline'}} avitar-py-3 avitar-text-base avitar-font-medium"
+                            {{on "click" (fn this.selectTimeSlot slot)}}
+                          >
+                            <i class="fas fa-clock avitar-mr-2"></i>
+                            {{this.formatTime slot.startTime}}
+                          </button>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+                <div class="avitar-form-help avitar-mt-2">
+                  <i class="fas fa-info-circle avitar-mr-1"></i>
+                  Click a time slot to continue to contact information
+                </div>
+              {{else}}
+                <div class="avitar-alert avitar-alert--warning">
+                  <i class="fas fa-exclamation-triangle avitar-alert__icon"></i>
+                  <div class="avitar-alert__content">
+                    <div class="avitar-alert__message">
+                      No available time slots found for this inspection type. Please contact the municipality.
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+          {{/if}}
+
+          {{! Step 3: Contact Information }}
+          {{#if this.selectedTimeSlot}}
+            <div id="contact-information-section" class="avitar-border-t avitar-pt-6 avitar-mt-6">
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-4">
+                <i class="fas fa-user avitar-mr-2"></i>
+                Contact Information
+              </h3>
+
+              <div class="avitar-form-row">
+                <div class="avitar-form-group">
+                  <label class="avitar-label avitar-label--required" for="contact-name">Name</label>
+                  <input
+                    type="text"
+                    id="contact-name"
+                    class="avitar-input"
+                    placeholder="Your name"
+                    value={{this.contactName}}
+                    {{on "input" (fn this.updateField "contactName")}}
+                    required
+                  />
+                </div>
+
+                <div class="avitar-form-group">
+                  <label class="avitar-label avitar-label--required" for="contact-phone">Phone</label>
+                  <input
+                    type="tel"
+                    id="contact-phone"
+                    class="avitar-input"
+                    placeholder="(555) 123-4567"
+                    value={{this.contactPhone}}
+                    {{on "input" (fn this.updateField "contactPhone")}}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label avitar-label--required" for="contact-email">Email</label>
+                <input
+                  type="email"
+                  id="contact-email"
+                  class="avitar-input"
+                  placeholder="your.email@example.com"
+                  value={{this.contactEmail}}
+                  {{on "input" (fn this.updateField "contactEmail")}}
+                  required
+                />
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label" for="access-instructions">
+                  Access Instructions
+                  <span class="avitar-text-muted avitar-text-sm avitar-ml-2">(Optional)</span>
+                </label>
+                <textarea
+                  id="access-instructions"
+                  class="avitar-textarea"
+                  placeholder="Gate codes, parking instructions, special entry requirements..."
+                  rows="3"
+                  value={{this.accessInstructions}}
+                  {{on "input" (fn this.updateField "accessInstructions")}}
+                ></textarea>
+                <div class="avitar-form-help">
+                  Provide any special instructions for the inspector to access the property
+                </div>
+              </div>
+
+              <div class="avitar-form-group">
+                <label class="avitar-label" for="description">
+                  Additional Notes
+                  <span class="avitar-text-muted avitar-text-sm avitar-ml-2">(Optional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  class="avitar-textarea"
+                  placeholder="Any additional information for the inspector..."
+                  rows="3"
+                  value={{this.description}}
+                  {{on "input" (fn this.updateField "description")}}
+                ></textarea>
+              </div>
+            </div>
+          {{/if}}
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--ghost"
+          {{on "click" this.handleClose}}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="avitar-btn avitar-btn--primary"
+          disabled={{not this.canSubmit}}
+          {{on "click" this.handleSubmit}}
+        >
+          <i class="fas fa-check avitar-mr-2"></i>
+          Schedule Inspection
+        </button>
+      </div>
+
+    </div>
+  </div>
+{{/if}}

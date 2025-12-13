@@ -1,17 +1,530 @@
-{{!-- User Management Settings --}}
+{{page-title "Municipality Users"}}
+
 <div class="avitar-content" style="padding: var(--spacing-6); background: var(--color-gray-50);">
-  <div class="avitar-card">
-    <div class="avitar-card__header">
-      <h1 class="avitar-card__title">User Management</h1>
-      <div class="avitar-card__subtitle">Manage user accounts, roles, and permissions</div>
+  {{! Header with Title and Add Button }}
+  <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-1">User Management</h1>
+      <p class="avitar-text-sm avitar-text-muted">Manage municipal staff accounts, roles, and permissions</p>
     </div>
-    <div class="avitar-card__body">
-      <p class="avitar-text-muted">Add, edit, and manage user accounts and their access permissions.</p>
-      {{!-- Placeholder content - will be implemented later --}}
-      <div class="avitar-empty-state">
-        <i class="fas fa-users"></i>
-        <span>User management settings coming soon</span>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openAddUserModal}}
+    >
+      {{lnr-icon "plus-circle" size=16}}
+      <span class="avitar-ml-2">Add User</span>
+    </button>
+  </div>
+
+  {{! Stats Cards }}
+  <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Total Users</div>
+          <div class="avitar-stat__value">{{this.totalUsers}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Administrators</div>
+          <div class="avitar-stat__value avitar-text-danger">{{this.adminCount}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Staff Members</div>
+          <div class="avitar-stat__value avitar-text-success">{{this.staffCount}}</div>
+        </div>
       </div>
     </div>
   </div>
+
+  {{! Users Table Card }}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h2 class="avitar-card__title">
+        {{lnr-icon "users" size=20}}
+        <span class="avitar-ml-2">Municipal Staff</span>
+      </h2>
+    </div>
+    <div class="avitar-card__body">
+      <Shared::UsersTable
+        @users={{this.filteredUsers}}
+        @municipalityId={{this.municipalityId}}
+        @context="municipal"
+        @searchText={{this.searchText}}
+        @filterRole={{this.filterRole}}
+        @roleOptions={{this.roleOptions}}
+        @onSearchUpdate={{this.updateSearch}}
+        @onFilterUpdate={{this.setFilterRole}}
+        @onEdit={{this.openEditUserModal}}
+        @onRemove={{this.removeUser}}
+        @canModifyUser={{this.canModifyUser}}
+      />
+    </div>
+  </div>
 </div>
+
+{{! Add User Modal }}
+{{#if this.showAddUserModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeAddUserModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "user-plus" size=20}}
+          <span class="avitar-ml-2">Add New User</span>
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeAddUserModal}}
+        >
+          {{lnr-icon "cross" size=20}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Email }}
+          <div>
+            <label class="avitar-label">Email
+              <span class="avitar-text-danger">*</span></label>
+            <input
+              type="email"
+              class="avitar-input"
+              placeholder="user@example.com"
+              value={{this.formEmail}}
+              {{on "input" (fn this.updateFormField "formEmail")}}
+            />
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              If this email is already registered, they will be added to this municipality.
+            </p>
+          </div>
+
+          {{! First Name }}
+          <div>
+            <label class="avitar-label">First Name
+              <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.formFirstName}}
+              {{on "input" (fn this.updateFormField "formFirstName")}}
+            />
+          </div>
+
+          {{! Last Name }}
+          <div>
+            <label class="avitar-label">Last Name
+              <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.formLastName}}
+              {{on "input" (fn this.updateFormField "formLastName")}}
+            />
+          </div>
+
+          {{! Phone }}
+          <div>
+            <label class="avitar-label">Phone</label>
+            <input
+              type="tel"
+              class="avitar-input"
+              placeholder="(555) 123-4567"
+              value={{this.formPhone}}
+              {{on "input" (fn this.updateFormField "formPhone")}}
+            />
+          </div>
+
+          {{! Role }}
+          <div>
+            <label class="avitar-label">Municipal Role
+              <span class="avitar-text-danger">*</span></label>
+            <select
+              class="avitar-select"
+              {{on "change" (fn this.updateFormField "formRole")}}
+            >
+              {{#each this.roleOptions as |roleOpt|}}
+                <option
+                  value={{roleOpt.value}}
+                  selected={{eq this.formRole roleOpt.value}}
+                >
+                  {{roleOpt.label}}
+                  - {{roleOpt.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Department }}
+          <div>
+            <label class="avitar-label">Department</label>
+            <select
+              class="avitar-select"
+              {{on "change" (fn this.updateFormField "formDepartment")}}
+            >
+              <option value="" selected={{eq this.formDepartment ""}}>
+                No Department
+              </option>
+              {{#each @model.availableDepartments as |dept|}}
+                <option value={{dept}} selected={{eq this.formDepartment dept}}>
+                  {{dept}}
+                </option>
+              {{/each}}
+            </select>
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Assign user to a specific department for permit reviews and workflows
+            </p>
+          </div>
+
+          {{! Module Permissions }}
+          <div>
+            <label class="avitar-label avitar-mb-2 avitar-block">
+              Module Access & Roles
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <p class="avitar-text-xs avitar-text-muted avitar-mb-3">
+              Select the role for each module. Choose "No Access" to deny access to that module.
+            </p>
+            {{#if @model.enabledModules.length}}
+              <div class="avitar-border avitar-rounded avitar-p-4 avitar-bg-gray-50 avitar-space-y-3">
+                {{#each @model.enabledModules as |enabledModule|}}
+                  <div class="avitar-flex avitar-items-center avitar-justify-between avitar-gap-4">
+                    <div class="avitar-flex avitar-items-center avitar-gap-2">
+                      <span class="avitar-font-medium avitar-min-w-[160px]">
+                        {{enabledModule.displayName}}
+                      </span>
+                      <span class="avitar-badge avitar-badge--sm avitar-badge--info">
+                        {{enabledModule.tier}}
+                      </span>
+                    </div>
+                    <select
+                      class="avitar-select avitar-select--sm"
+                      style="min-width: 180px;"
+                      {{on "change" (fn this.updateModuleRole enabledModule.name)}}
+                    >
+                      <option
+                        value=""
+                        selected={{not (this.getModuleRole enabledModule.name)}}
+                      >
+                        No Access
+                      </option>
+                      <option
+                        value="readonly"
+                        selected={{eq (this.getModuleRole enabledModule.name) "readonly"}}
+                      >
+                        Read Only
+                      </option>
+                      <option
+                        value="data_entry"
+                        selected={{eq (this.getModuleRole enabledModule.name) "data_entry"}}
+                      >
+                        Data Entry
+                      </option>
+                      <option
+                        value="staff"
+                        selected={{eq (this.getModuleRole enabledModule.name) "staff"}}
+                      >
+                        Staff
+                      </option>
+                      <option
+                        value="supervisor"
+                        selected={{eq (this.getModuleRole enabledModule.name) "supervisor"}}
+                      >
+                        Supervisor
+                      </option>
+                      <option
+                        value="admin"
+                        selected={{eq (this.getModuleRole enabledModule.name) "admin"}}
+                      >
+                        Module Admin
+                      </option>
+                    </select>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-border avitar-rounded avitar-p-4 avitar-bg-warning-light avitar-text-center">
+                <p class="avitar-text-sm avitar-text-warning avitar-font-semibold">
+                  {{lnr-icon "alert-triangle" size=16}}
+                  <span class="avitar-ml-2">No modules are currently enabled for this municipality</span>
+                </p>
+                <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+                  Please enable modules in the Modules settings before adding users.
+                </p>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeAddUserModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.addUser}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            {{lnr-icon "spinner" size=16 class="avitar-spinner"}}
+            <span class="avitar-ml-2">Adding...</span>
+          {{else}}
+            {{lnr-icon "check" size=16}}
+            <span class="avitar-ml-2">Add User</span>
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Edit User Modal }}
+{{#if this.showEditUserModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeEditUserModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "pencil" size=20}}
+          <span class="avitar-ml-2">Edit User</span>
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeEditUserModal}}
+        >
+          {{lnr-icon "cross" size=20}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Email (read-only) }}
+          <div>
+            <label class="avitar-label">Email</label>
+            <input
+              type="email"
+              class="avitar-input"
+              value={{this.formEmail}}
+              disabled
+            />
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Email cannot be changed
+            </p>
+          </div>
+
+          {{! First Name }}
+          <div>
+            <label class="avitar-label">First Name
+              <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.formFirstName}}
+              {{on "input" (fn this.updateFormField "formFirstName")}}
+            />
+          </div>
+
+          {{! Last Name }}
+          <div>
+            <label class="avitar-label">Last Name
+              <span class="avitar-text-danger">*</span></label>
+            <input
+              type="text"
+              class="avitar-input"
+              value={{this.formLastName}}
+              {{on "input" (fn this.updateFormField "formLastName")}}
+            />
+          </div>
+
+          {{! Phone }}
+          <div>
+            <label class="avitar-label">Phone</label>
+            <input
+              type="tel"
+              class="avitar-input"
+              placeholder="(555) 123-4567"
+              value={{this.formPhone}}
+              {{on "input" (fn this.updateFormField "formPhone")}}
+            />
+          </div>
+
+          {{! Role }}
+          <div>
+            <label class="avitar-label">Municipal Role
+              <span class="avitar-text-danger">*</span></label>
+            <select
+              class="avitar-select"
+              {{on "change" (fn this.updateFormField "formRole")}}
+            >
+              {{#each this.roleOptions as |roleOpt|}}
+                <option
+                  value={{roleOpt.value}}
+                  selected={{eq this.formRole roleOpt.value}}
+                >
+                  {{roleOpt.label}}
+                  - {{roleOpt.description}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Department }}
+          <div>
+            <label class="avitar-label">Department</label>
+            <select
+              class="avitar-select"
+              {{on "change" (fn this.updateFormField "formDepartment")}}
+            >
+              <option value="" selected={{eq this.formDepartment ""}}>
+                No Department
+              </option>
+              {{#each @model.availableDepartments as |dept|}}
+                <option value={{dept}} selected={{eq this.formDepartment dept}}>
+                  {{dept}}
+                </option>
+              {{/each}}
+            </select>
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              Assign user to a specific department for permit reviews and workflows
+            </p>
+          </div>
+
+          {{! Module Permissions }}
+          <div>
+            <label class="avitar-label avitar-mb-2 avitar-block">
+              Module Access & Roles
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <p class="avitar-text-xs avitar-text-muted avitar-mb-3">
+              Select the role for each module. Choose "No Access" to deny access to that module.
+            </p>
+            {{#if @model.enabledModules.length}}
+              <div class="avitar-border avitar-rounded avitar-p-4 avitar-bg-gray-50 avitar-space-y-3">
+                {{#each @model.enabledModules as |enabledModule|}}
+                  <div class="avitar-flex avitar-items-center avitar-justify-between avitar-gap-4">
+                    <div class="avitar-flex avitar-items-center avitar-gap-2">
+                      <span class="avitar-font-medium avitar-min-w-[160px]">
+                        {{enabledModule.displayName}}
+                      </span>
+                      <span class="avitar-badge avitar-badge--sm avitar-badge--info">
+                        {{enabledModule.tier}}
+                      </span>
+                    </div>
+                    <select
+                      class="avitar-select avitar-select--sm"
+                      style="min-width: 180px;"
+                      {{on "change" (fn this.updateModuleRole enabledModule.name)}}
+                    >
+                      <option
+                        value=""
+                        selected={{not (this.getModuleRole enabledModule.name)}}
+                      >
+                        No Access
+                      </option>
+                      <option
+                        value="readonly"
+                        selected={{eq (this.getModuleRole enabledModule.name) "readonly"}}
+                      >
+                        Read Only
+                      </option>
+                      <option
+                        value="data_entry"
+                        selected={{eq (this.getModuleRole enabledModule.name) "data_entry"}}
+                      >
+                        Data Entry
+                      </option>
+                      <option
+                        value="staff"
+                        selected={{eq (this.getModuleRole enabledModule.name) "staff"}}
+                      >
+                        Staff
+                      </option>
+                      <option
+                        value="supervisor"
+                        selected={{eq (this.getModuleRole enabledModule.name) "supervisor"}}
+                      >
+                        Supervisor
+                      </option>
+                      <option
+                        value="admin"
+                        selected={{eq (this.getModuleRole enabledModule.name) "admin"}}
+                      >
+                        Module Admin
+                      </option>
+                    </select>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-border avitar-rounded avitar-p-4 avitar-bg-warning-light avitar-text-center">
+                <p class="avitar-text-sm avitar-text-warning avitar-font-semibold">
+                  {{lnr-icon "alert-triangle" size=16}}
+                  <span class="avitar-ml-2">No modules are currently enabled for this municipality</span>
+                </p>
+                <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+                  Please enable modules in the Modules settings before adding users.
+                </p>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeEditUserModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.updateUser}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            {{lnr-icon "spinner" size=16 class="avitar-spinner"}}
+            <span class="avitar-ml-2">Saving...</span>
+          {{else}}
+            {{lnr-icon "check" size=16}}
+            <span class="avitar-ml-2">Save Changes</span>
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

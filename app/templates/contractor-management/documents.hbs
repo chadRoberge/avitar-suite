@@ -1,0 +1,106 @@
+{{page-title "My Document Library - Contractor Management"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+        My Document Library
+      </h2>
+      <p class="avitar-text-sm avitar-text-muted">
+        Manage your company's documents, templates, and frequently-used files
+      </p>
+    </div>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openUploadModal}}
+    >
+      <i class="fas fa-upload avitar-mr-2"></i>
+      Upload Documents
+    </button>
+  </div>
+
+  {{! Info Card }}
+  <div class="avitar-card avitar-bg-info-light avitar-border-info avitar-mb-6">
+    <div class="avitar-card__body avitar-p-4">
+      <div class="avitar-flex avitar-items-start avitar-gap-3">
+        <div class="avitar-flex-shrink-0">
+          <i class="fas fa-info-circle avitar-text-info fa-lg"></i>
+        </div>
+        <div>
+          <h3 class="avitar-font-semibold avitar-mb-2">
+            Your Private Document Library
+          </h3>
+          <p class="avitar-text-sm avitar-mb-2">
+            Store and organize your company's documents in one central location. These files are private to your company and can be easily attached to permit applications.
+          </p>
+          <ul class="avitar-text-sm avitar-list-disc avitar-list-inside avitar-space-y-1">
+            <li>Upload templates, contracts, insurance documents, and more</li>
+            <li>Organize files into folders for easy management</li>
+            <li>Attach documents to multiple permits without re-uploading</li>
+            <li>Files remain private to your company by default</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! File Browser }}
+  <div class="avitar-card">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">
+        <i class="fas fa-folder-tree avitar-mr-2"></i>
+        Browse Documents
+      </h3>
+    </div>
+    <div class="avitar-card__body">
+      <Shared::FileBrowser
+        @contractorId={{@model.contractorId}}
+        @department="contractor"
+        @selectionMode="single"
+        @showUpload={{true}}
+        @onUpload={{this.handleBrowserUpload}}
+      />
+    </div>
+  </div>
+
+  {{! Statistics Card }}
+  <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4 avitar-mt-6">
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-primary avitar-mb-2">
+          {{@model.files.length}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Total Documents</div>
+      </div>
+    </div>
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-success avitar-mb-2">
+          {{object-keys @model.folders}}.length
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Folders</div>
+      </div>
+    </div>
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center">
+        <div class="avitar-text-3xl avitar-font-bold avitar-text-warning avitar-mb-2">
+          {{@model.contractor.company_name}}
+        </div>
+        <div class="avitar-text-sm avitar-text-muted">Company</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Upload Documents Modal }}
+<Shared::DocumentUploadModal
+  @isOpen={{this.showUploadModal}}
+  @onClose={{this.closeUploadModal}}
+  @onUpload={{this.refreshFiles}}
+  @contractorId={{@model.contractorId}}
+  @department="contractor"
+  @folderOptions={{this.folderOptions}}
+  @visibilityOptions={{this.visibilityOptions}}
+/>

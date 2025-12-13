@@ -26,7 +26,10 @@ export default class AssessingService extends Service {
     // Check cache first
     const cached = this.propertyCache.get(propertyId, cardNumber);
     if (cached) {
-      console.log('🃏 getPropertyWithCard - Cached property cards data:', cached.property?.cards);
+      console.log(
+        '🃏 getPropertyWithCard - Cached property cards data:',
+        cached.property?.cards,
+      );
       return cached;
     }
 
@@ -34,10 +37,13 @@ export default class AssessingService extends Service {
     // The IndexedDB cache may have stale property list data without cards information
     const result = await this.localApi.get(
       `/properties/${propertyId}?card=${cardNumber}`,
-      { strategy: 'network-first' }
+      { strategy: 'network-first' },
     );
 
-    console.log('🃏 getPropertyWithCard - Fresh API property cards data:', result.property?.cards);
+    console.log(
+      '🃏 getPropertyWithCard - Fresh API property cards data:',
+      result.property?.cards,
+    );
 
     // Cache the result in memory
     this.propertyCache.set(propertyId, result, cardNumber);
@@ -178,7 +184,9 @@ export default class AssessingService extends Service {
       // Also update in-memory property cache
       this.propertyCache.set(propertyId, result);
 
-      console.log('✅ Updated cache with fresh property data after property update');
+      console.log(
+        '✅ Updated cache with fresh property data after property update',
+      );
     } else {
       // Fall back to invalidation if no property in response
       this.propertyCache.invalidate(propertyId);
@@ -322,6 +330,7 @@ export default class AssessingService extends Service {
     propertyId,
     cardNumber = 1,
     assessmentYear = null,
+    options = {},
   ) {
     const params = new URLSearchParams({ card: cardNumber });
     if (assessmentYear) {
@@ -329,11 +338,19 @@ export default class AssessingService extends Service {
     }
     const response = await this.localApi.get(
       `/properties/${propertyId}/assessment/land?${params.toString()}`,
+      options,
     );
 
     // Normalize response format - handle API vs IndexedDB responses
     if (!response) {
-      return { assessment: null, history: [], comparables: [], views: [], viewAttributes: [], zones: [] };
+      return {
+        assessment: null,
+        history: [],
+        comparables: [],
+        views: [],
+        viewAttributes: [],
+        zones: [],
+      };
     }
 
     // Check if it's already in the API wrapper format
@@ -385,7 +402,12 @@ export default class AssessingService extends Service {
 
     // Normalize response format - handle API vs IndexedDB responses
     if (!response) {
-      return { assessment: null, history: [], depreciation: {}, improvements: [] };
+      return {
+        assessment: null,
+        history: [],
+        depreciation: {},
+        improvements: [],
+      };
     }
 
     // Check if it's already in the API wrapper format
@@ -432,7 +454,9 @@ export default class AssessingService extends Service {
         // Also update in-memory property cache
         this.propertyCache.set(propertyId, freshProperty);
 
-        console.log('✅ Updated cache with fresh property data after building save');
+        console.log(
+          '✅ Updated cache with fresh property data after building save',
+        );
       }
     } catch (error) {
       console.warn('Could not update cache after building save:', error);
@@ -985,18 +1009,27 @@ export default class AssessingService extends Service {
   async getWaterBodies(municipalityId = null) {
     const muniId = municipalityId || this.municipality.currentMunicipality.id;
 
-    // Use hybridApi for better error handling and network fallback
+    // Use hybridApi - it will automatically unwrap the response
     const response = await this.hybridApi.get(
       `/municipalities/${muniId}/water-bodies`,
     );
 
-    // Handle different response formats - could be array directly or object with waterBodies property
-    if (Array.isArray(response)) {
-      return response;
-    } else if (response && response.waterBodies) {
-      return response.waterBodies;
-    }
-    return [];
+    // HybridAPI's unwrapApiResponse will handle all response formats automatically
+    // Just ensure we always return an array
+    return Array.isArray(response) ? response : [];
+  }
+
+  async getWaterfrontAttributes(municipalityId = null) {
+    const muniId = municipalityId || this.municipality.currentMunicipality.id;
+
+    // Use hybridApi - it will automatically unwrap the response
+    const response = await this.hybridApi.get(
+      `/municipalities/${muniId}/waterfront-attributes`,
+    );
+
+    // HybridAPI's unwrapApiResponse will handle all response formats automatically
+    // Just ensure we always return an array
+    return Array.isArray(response) ? response : [];
   }
 
   // === Property Views ===
@@ -1048,6 +1081,19 @@ export default class AssessingService extends Service {
     return this.localApi.delete(
       `/properties/${propertyId}/waterfront/${waterfrontId}`,
     );
+  }
+
+  async getWaterfrontLadders(municipalityId, waterBodyId) {
+    const muniId = municipalityId || this.municipality.currentMunicipality.id;
+
+    // Use hybridApi - it will automatically unwrap the response
+    const response = await this.hybridApi.get(
+      `/municipalities/${muniId}/water-bodies/${waterBodyId}/ladder`,
+    );
+
+    // HybridAPI's unwrapApiResponse will handle all response formats automatically
+    // Just ensure we always return an array
+    return Array.isArray(response) ? response : [];
   }
 
   // === Cache Management ===
@@ -1123,7 +1169,9 @@ export default class AssessingService extends Service {
         // Also update in-memory property cache
         this.propertyCache.set(propertyId, freshProperty);
 
-        console.log('✅ Updated cache with fresh property data after land assessment save');
+        console.log(
+          '✅ Updated cache with fresh property data after land assessment save',
+        );
       }
     } catch (error) {
       console.warn('Could not update cache after land save:', error);

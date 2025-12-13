@@ -1,0 +1,257 @@
+{{page-title "Payment Options"}}
+
+<div class="avitar-container avitar-pt-6 avitar-pb-6">
+  {{#if this.needsOnboarding}}
+    {{! Onboarding Message }}
+    <div class="avitar-card avitar-bg-warning-light avitar-border-warning avitar-mb-6">
+      <div class="avitar-card__body avitar-p-4">
+        <div class="avitar-flex avitar-items-start avitar-gap-4">
+          <div class="avitar-flex-shrink-0">
+            <i class="fas fa-exclamation-triangle fa-2x avitar-text-warning"></i>
+          </div>
+          <div class="avitar-flex-1">
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">Complete Your Profile</h3>
+            <p class="avitar-mb-3">Please complete your contractor profile before managing payment methods.</p>
+            <LinkTo @route="contractor-management.verification" class="avitar-btn avitar-btn--primary">
+              Complete Profile
+            </LinkTo>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    {{! Header }}
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+      <div>
+        <h2 class="avitar-text-2xl avitar-font-bold">Payment Options</h2>
+        <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+          Manage your payment methods for permit fees and subscriptions
+        </p>
+      </div>
+      {{#if this.hasPremiumAccess}}
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.openAddPaymentModal}}
+          disabled={{this.isLoading}}
+        >
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Payment Method
+        </button>
+      {{/if}}
+    </div>
+
+    {{! Premium Feature Gate }}
+    {{#if this.isFreePlan}}
+      {{! Free Plan Info }}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">
+            <i class="fas fa-info-circle avitar-mr-2"></i>
+            Free Plan Payment
+          </h3>
+        </div>
+        <div class="avitar-card__body">
+          <p class="avitar-text-muted avitar-mb-4">
+            On the free plan, you can still submit permit applications and pay fees.
+            You'll enter your payment information at checkout for each permit application.
+          </p>
+          <p class="avitar-text-muted">
+            Upgrade to a premium plan to save payment methods and streamline the permit application process for your entire team.
+          </p>
+        </div>
+      </div>
+
+      <div class="avitar-card avitar-bg-primary-light avitar-border-primary">
+        <div class="avitar-card__body avitar-p-6">
+          <div class="avitar-flex avitar-items-start avitar-gap-4">
+            <div class="avitar-flex-shrink-0">
+              <div class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                <i class="fas fa-lock fa-2x"></i>
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <h3 class="avitar-text-xl avitar-font-bold avitar-mb-3">
+                Premium Feature: Payment Options
+              </h3>
+              <p class="avitar-text-muted avitar-mb-4">
+                Upgrade to a premium plan to unlock advanced payment management features including:
+              </p>
+              <div class="avitar-bg-white avitar-rounded avitar-p-4 avitar-mb-4">
+                <ul class="avitar-space-y-2">
+                  <li class="avitar-flex avitar-items-start avitar-gap-2">
+                    <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+                    <span>Save multiple payment methods for quick permit payments</span>
+                  </li>
+                  <li class="avitar-flex avitar-items-start avitar-gap-2">
+                    <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+                    <span>Allow team members to use specific payment methods for permit applications</span>
+                  </li>
+                  <li class="avitar-flex avitar-items-start avitar-gap-2">
+                    <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+                    <span>Set default payment methods for faster checkout</span>
+                  </li>
+                  <li class="avitar-flex avitar-items-start avitar-gap-2">
+                    <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+                    <span>Manage payment method permissions and access controls</span>
+                  </li>
+                  <li class="avitar-flex avitar-items-start avitar-gap-2">
+                    <i class="fas fa-check-circle avitar-text-success avitar-mt-1"></i>
+                    <span>Track payment history and receipts across your team</span>
+                  </li>
+                </ul>
+              </div>
+              <LinkTo @route="contractor-management.subscription" class="avitar-btn avitar-btn--primary avitar-btn--lg">
+                <i class="fas fa-arrow-up avitar-mr-2"></i>
+                Upgrade to Premium
+              </LinkTo>
+            </div>
+          </div>
+        </div>
+      </div>
+    {{else}}
+      {{! Payment Methods List (Premium Users) }}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">
+            <i class="fas fa-wallet avitar-mr-2"></i>
+            Saved Payment Methods
+          </h3>
+        </div>
+        <div class="avitar-card__body">
+          {{#if this.paymentMethods.length}}
+            <div class="avitar-space-y-4">
+              {{#each this.paymentMethods as |method|}}
+                <div class="avitar-border avitar-rounded avitar-p-4 avitar-flex avitar-items-center avitar-justify-between">
+                  <div class="avitar-flex avitar-items-center avitar-gap-4">
+                    <div class="avitar-w-12 avitar-h-12 avitar-bg-gray-100 avitar-rounded avitar-flex avitar-items-center avitar-justify-center">
+                      {{#if (eq method.type "card")}}
+                        <i class="fas fa-credit-card fa-lg avitar-text-primary"></i>
+                      {{else}}
+                        <i class="fas fa-university fa-lg avitar-text-primary"></i>
+                      {{/if}}
+                    </div>
+                    <div>
+                      <div class="avitar-font-semibold">
+                        {{#if (eq method.type "card")}}
+                          {{method.card.brand}} •••• {{method.card.last4}}
+                        {{else}}
+                          Bank Account •••• {{method.last4}}
+                        {{/if}}
+                        {{#if method.is_default}}
+                          <span class="avitar-badge avitar-badge--success avitar-ml-2">Default</span>
+                        {{/if}}
+                      </div>
+                      <div class="avitar-text-sm avitar-text-muted">
+                        {{#if (eq method.type "card")}}
+                          Expires {{method.card.exp_month}}/{{method.card.exp_year}}
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="avitar-flex avitar-gap-2">
+                    {{#unless method.is_default}}
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                        {{on "click" (fn this.setDefaultPaymentMethod method.id)}}
+                        disabled={{this.isLoading}}
+                      >
+                        Set as Default
+                      </button>
+                    {{/unless}}
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                      {{on "click" (fn this.removePaymentMethod method.id)}}
+                      disabled={{this.isLoading}}
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            {{! Empty State }}
+            <div class="avitar-empty-state avitar-py-8">
+              <i class="fas fa-wallet fa-3x avitar-text-muted avitar-mb-4"></i>
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Payment Methods</h3>
+              <p class="avitar-text-muted avitar-mb-4">
+                You haven't added any payment methods yet. Add a payment method to streamline permit payments.
+              </p>
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.openAddPaymentModal}}
+              >
+                <i class="fas fa-plus avitar-mr-2"></i>
+                Add Your First Payment Method
+              </button>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{! Payment Permissions Info }}
+      <div class="avitar-card avitar-mt-6">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">
+            <i class="fas fa-users avitar-mr-2"></i>
+            Team Payment Permissions
+          </h3>
+        </div>
+        <div class="avitar-card__body">
+          <p class="avitar-text-muted avitar-mb-4">
+            Control which team members can use specific payment methods when submitting permit applications.
+          </p>
+          <p class="avitar-text-sm avitar-text-muted">
+            <i class="fas fa-info-circle avitar-mr-1"></i>
+            Payment permissions can be managed in the <LinkTo @route="contractor-management.team" class="avitar-text-primary">Team Members</LinkTo> section.
+          </p>
+        </div>
+      </div>
+    {{/if}}
+  {{/if}}
+</div>
+
+{{! Add Payment Method Modal (placeholder for future Stripe integration) }}
+{{#if this.showAddPaymentModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeAddPaymentModal}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Add Payment Method
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeAddPaymentModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-bg-info-light avitar-p-4 avitar-rounded">
+          <div class="avitar-flex avitar-items-start avitar-gap-3">
+            <i class="fas fa-info-circle avitar-text-info avitar-mt-1"></i>
+            <div>
+              <p class="avitar-font-semibold avitar-mb-1">Stripe Integration Coming Soon</p>
+              <p class="avitar-text-sm avitar-text-muted">
+                Payment method management with Stripe will be available in an upcoming release.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeAddPaymentModal}}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

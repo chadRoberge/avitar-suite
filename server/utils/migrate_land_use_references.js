@@ -15,24 +15,24 @@ require('dotenv').config();
 
 // Default mapping for categories to specific codes
 const CATEGORY_TO_DEFAULT_CODE = {
-  'RES': 'R1',      // Residential → Single Family Residential
-  'COM': 'CI',      // Commercial → Commercial/Industrial
-  'IND': 'CI',      // Industrial → Commercial/Industrial
-  'MXU': 'MXU',     // Mixed Use → Mixed Use
-  'AG': 'R1',       // Agricultural → Residential (fallback, adjust if you have AG codes)
-  'EX': 'EX-M',     // Exempt → Exempt Municipal
-  'UTL': 'UTL',     // Utility → Utility
+  RES: 'R1', // Residential → Single Family Residential
+  COM: 'CI', // Commercial → Commercial/Industrial
+  IND: 'CI', // Industrial → Commercial/Industrial
+  MXU: 'MXU', // Mixed Use → Mixed Use
+  AG: 'R1', // Agricultural → Residential (fallback, adjust if you have AG codes)
+  EX: 'EX-M', // Exempt → Exempt Municipal
+  UTL: 'UTL', // Utility → Utility
 };
 
 // Map landUseType to category abbreviations
 const LAND_USE_TYPE_TO_CATEGORY = {
-  'residential': 'RES',
-  'commercial': 'COM',
-  'industrial': 'IND',
-  'mixed_use': 'MXU',
-  'agricultural': 'AG',
-  'exempt': 'EX',
-  'utility': 'UTL',
+  residential: 'RES',
+  commercial: 'COM',
+  industrial: 'IND',
+  mixed_use: 'MXU',
+  agricultural: 'AG',
+  exempt: 'EX',
+  utility: 'UTL',
 };
 
 async function migrateLandUseReferences() {
@@ -47,7 +47,7 @@ async function migrateLandUseReferences() {
     const codeToIdMap = {};
     const codeToTypeMap = {};
 
-    landUseDetails.forEach(detail => {
+    landUseDetails.forEach((detail) => {
       codeToIdMap[detail.code] = detail._id;
       codeToTypeMap[detail.code] = detail.landUseType;
     });
@@ -69,16 +69,23 @@ async function migrateLandUseReferences() {
 
         // Skip if already has land_use_detail_id references
         const hasReferences = assessment.land_use_details?.some(
-          detail => detail.land_use_detail_id
+          (detail) => detail.land_use_detail_id,
         );
 
-        if (hasReferences && assessment.property_use_code && assessment.property_use_category) {
+        if (
+          hasReferences &&
+          assessment.property_use_code &&
+          assessment.property_use_category
+        ) {
           skipped++;
           continue;
         }
 
         // Get the first land detail
-        if (!assessment.land_use_details || assessment.land_use_details.length === 0) {
+        if (
+          !assessment.land_use_details ||
+          assessment.land_use_details.length === 0
+        ) {
           noLandDetails++;
           continue;
         }
@@ -94,23 +101,28 @@ async function migrateLandUseReferences() {
           const defaultCode = CATEGORY_TO_DEFAULT_CODE[landUseCategory];
           if (defaultCode && codeToIdMap[defaultCode]) {
             landUseCode = defaultCode;
-            console.log(`  Mapping ${landUseCategory} → ${landUseCode} for property ${assessment.property_id}`);
+            console.log(
+              `  Mapping ${landUseCategory} → ${landUseCode} for property ${assessment.property_id}`,
+            );
           } else {
-            console.log(`  ⚠️  No mapping found for category "${landUseCategory}" on property ${assessment.property_id}`);
+            console.log(
+              `  ⚠️  No mapping found for category "${landUseCategory}" on property ${assessment.property_id}`,
+            );
             errors++;
             continue;
           }
         }
 
         // Update each land detail line with the reference
-        assessment.land_use_details.forEach(detail => {
+        assessment.land_use_details.forEach((detail) => {
           // If detail doesn't have land_use_code, use the default
           let detailCode = detail.land_use_code || landUseCode;
           let detailCategory = detail.land_use_type || landUseCategory;
 
           // Map to default if needed
           if (!codeToIdMap[detailCode]) {
-            detailCode = CATEGORY_TO_DEFAULT_CODE[detailCategory] || landUseCode;
+            detailCode =
+              CATEGORY_TO_DEFAULT_CODE[detailCategory] || landUseCode;
           }
 
           if (codeToIdMap[detailCode]) {
@@ -133,9 +145,11 @@ async function migrateLandUseReferences() {
             console.log(`✓ Processed ${updated} assessments...`);
           }
         }
-
       } catch (error) {
-        console.error(`❌ Error processing assessment ${assessment._id}:`, error.message);
+        console.error(
+          `❌ Error processing assessment ${assessment._id}:`,
+          error.message,
+        );
         errors++;
       }
     }
@@ -146,7 +160,6 @@ async function migrateLandUseReferences() {
     console.log(`   ⚠️  No land details: ${noLandDetails}`);
     console.log(`   ❌ Errors: ${errors}`);
     console.log(`   📊 Total: ${landAssessments.length}`);
-
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);

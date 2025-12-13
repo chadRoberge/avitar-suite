@@ -7,27 +7,314 @@
       Inspection Settings
     </h1>
     <p class="avitar-page-header__subtitle">
-      Configure inspection types, workflows, and requirements
+      Configure inspection availability and manage inspectors
     </p>
   </div>
 </div>
 
-<div class="avitar-empty-state" style="margin-top: 4rem;">
-  <i class="fas fa-clipboard-check fa-4x avitar-text-muted avitar-mb-4"></i>
-  <h2 class="avitar-mb-3">Inspection Settings Coming Soon</h2>
-  <p class="avitar-text-muted avitar-text-lg avitar-mb-4" style="max-width: 600px; margin: 0 auto;">
-    Configure inspection types, scheduling workflows, checklists, and inspector assignments.
-  </p>
-  <div class="avitar-card" style="max-width: 500px; margin: 2rem auto;">
+<div class="avitar-container avitar-py-6">
+  {{! Tabs }}
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-tabs">
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'availability') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "availability")}}
+        >
+          <i class="fas fa-calendar-alt avitar-mr-2"></i>
+          Availability
+        </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'inspectors') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "inspectors")}}
+        >
+          <i class="fas fa-users avitar-mr-2"></i>
+          Inspectors
+          <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-ml-2">
+            {{this.activeInspectorsCount}}
+          </span>
+        </button>
+      </div>
+    </div>
+
     <div class="avitar-card__body">
-      <h4 class="avitar-mb-3">Planned Features:</h4>
-      <ul class="avitar-list avitar-list--simple">
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Inspection type configuration</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Custom checklists and forms</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Scheduling requirements</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Automated notifications</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Pass/fail criteria</li>
-      </ul>
+      {{#if (eq this.activeTab "availability")}}
+        {{! Availability Tab }}
+        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+          <div>
+            <h3 class="avitar-text-lg avitar-font-semibold">Inspection Time Slots</h3>
+            <p class="avitar-text-sm avitar-text-muted">
+              Define when inspections can be scheduled
+            </p>
+          </div>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.openAddTimeSlotModal}}
+          >
+            <i class="fas fa-plus avitar-mr-2"></i>
+            Add Time Slot
+          </button>
+        </div>
+
+        {{#if this.timeSlotsByDay.length}}
+          <div class="avitar-space-y-4">
+            {{#each this.timeSlotsByDay as |dayGroup|}}
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body">
+                  <h4 class="avitar-font-semibold avitar-mb-3">{{dayGroup.day}}</h4>
+                  <div class="avitar-space-y-2">
+                    {{#each dayGroup.slots as |slot|}}
+                      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-white avitar-rounded avitar-border avitar-border-gray-200">
+                        <div class="avitar-flex avitar-items-center avitar-gap-4">
+                          <div>
+                            <div class="avitar-font-medium">
+                              {{slot.startTime}} - {{slot.endTime}}
+                            </div>
+                            <div class="avitar-text-xs avitar-text-muted">
+                              Slot Duration: {{or slot.slotDuration 60}} minutes
+                            </div>
+                          </div>
+                        </div>
+                        <div class="avitar-flex avitar-gap-2">
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                            {{on "click" (fn this.editTimeSlot slot)}}
+                          >
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                            {{on "click" (fn this.removeTimeSlot slot.index)}}
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+
+          <div class="avitar-mt-6 avitar-flex avitar-justify-end">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.saveAvailability}}
+              disabled={{this.isLoading}}
+            >
+              {{#if this.isLoading}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Saving...
+              {{else}}
+                <i class="fas fa-save avitar-mr-2"></i>
+                Save Availability
+              {{/if}}
+            </button>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-8">
+            <i class="fas fa-calendar-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              No Time Slots Configured
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Add time slots to define when inspections can be scheduled
+            </p>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.openAddTimeSlotModal}}
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add Your First Time Slot
+            </button>
+          </div>
+        {{/if}}
+      {{else if (eq this.activeTab "inspectors")}}
+        {{! Inspectors Tab }}
+        <div class="avitar-mb-4">
+          <h3 class="avitar-text-lg avitar-font-semibold">Inspector Management</h3>
+          <p class="avitar-text-sm avitar-text-muted">
+            Configure inspector availability and capabilities
+          </p>
+        </div>
+
+        {{#if this.inspectors.length}}
+          <div class="avitar-space-y-4">
+            {{#each this.inspectors as |inspector|}}
+              <div class="avitar-card avitar-bg-gray-50">
+                <div class="avitar-card__body">
+                  <div class="avitar-flex avitar-items-start avitar-justify-between avitar-mb-4">
+                    <div class="avitar-flex avitar-items-center avitar-gap-3">
+                      <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-font-semibold avitar-text-lg">
+                        {{substring inspector.name 0 1}}
+                      </div>
+                      <div>
+                        <div class="avitar-font-semibold">{{inspector.name}}</div>
+                        <div class="avitar-text-sm avitar-text-muted">{{inspector.email}}</div>
+                      </div>
+                    </div>
+                    <div class="avitar-flex avitar-items-center avitar-gap-2">
+                      <span class="avitar-text-sm avitar-text-muted">Active</span>
+                      <label class="avitar-toggle">
+                        <input
+                          type="checkbox"
+                          checked={{inspector.isActive}}
+                          {{on "change" (fn this.toggleInspectorActive inspector)}}
+                        />
+                        <span class="avitar-toggle-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4 avitar-mb-4">
+                    <div>
+                      <label class="avitar-label">Max Inspections Per Day</label>
+                      <input
+                        type="number"
+                        class="avitar-input"
+                        value={{inspector.maxPerDay}}
+                        min="1"
+                        max="20"
+                        {{on "input" (fn this.updateInspectorMaxPerDay inspector)}}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="avitar-label avitar-mb-2">Inspection Types (leave empty for all types)</label>
+                    <div class="avitar-grid avitar-grid-cols-3 avitar-gap-2">
+                      {{#each this.inspectionTypeOptions as |typeOption|}}
+                        <label class="avitar-flex avitar-items-center avitar-gap-2">
+                          <input
+                            type="checkbox"
+                            class="avitar-checkbox"
+                            checked={{includes inspector.inspectionTypes typeOption.value}}
+                            {{on "change" (fn this.toggleInspectionType inspector typeOption.value)}}
+                          />
+                          <span class="avitar-text-sm">{{typeOption.label}}</span>
+                        </label>
+                      {{/each}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+
+          <div class="avitar-mt-6 avitar-flex avitar-justify-end">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.saveInspectors}}
+              disabled={{this.isLoading}}
+            >
+              {{#if this.isLoading}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Saving...
+              {{else}}
+                <i class="fas fa-save avitar-mr-2"></i>
+                Save Inspector Settings
+              {{/if}}
+            </button>
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-8">
+            <i class="fas fa-users fa-3x avitar-text-muted avitar-mb-4"></i>
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              No Inspectors Found
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Add users with the "Building Inspector" department to configure their settings
+            </p>
+          </div>
+        {{/if}}
+      {{/if}}
     </div>
   </div>
 </div>
+
+{{! Add/Edit Time Slot Modal }}
+{{#if this.showAddTimeSlotModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeTimeSlotModal}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-calendar-plus avitar-mr-2"></i>
+          {{if (eq this.editingTimeSlotIndex null) "Add Time Slot" "Edit Time Slot"}}
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeTimeSlotModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          <div>
+            <label class="avitar-label">Day of Week</label>
+            <select class="avitar-select" value={{this.newSlotDayOfWeek}} {{on "change" (fn this.updateField "newSlotDayOfWeek")}}>
+              {{#each this.daysOfWeek as |day|}}
+                <option value={{day.value}} selected={{eq this.newSlotDayOfWeek day.value}}>
+                  {{day.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+            <div>
+              <label class="avitar-label">Start Time</label>
+              <input
+                type="time"
+                class="avitar-input"
+                value={{this.newSlotStartTime}}
+                {{on "input" (fn this.updateField "newSlotStartTime")}}
+              />
+            </div>
+            <div>
+              <label class="avitar-label">End Time</label>
+              <input
+                type="time"
+                class="avitar-input"
+                value={{this.newSlotEndTime}}
+                {{on "input" (fn this.updateField "newSlotEndTime")}}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="avitar-label">Slot Duration (minutes)</label>
+            <input
+              type="number"
+              class="avitar-input"
+              value={{this.newSlotDuration}}
+              min="15"
+              max="480"
+              step="15"
+              {{on "input" (fn this.updateField "newSlotDuration")}}
+            />
+            <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+              How often inspection slots repeat within the time range (15-480 minutes)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.closeTimeSlotModal}}>
+          Cancel
+        </button>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveTimeSlot}}>
+          {{if (eq this.editingTimeSlotIndex null) "Add Time Slot" "Save Changes"}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

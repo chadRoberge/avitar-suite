@@ -14,11 +14,15 @@ class BuildingAssessmentCalculator {
 
     // Create ObjectId-based lookup maps for fast access
     this.featureCodeById = new Map(
-      this.buildingFeatureCodes.map(fc => [fc._id.toString(), fc])
+      this.buildingFeatureCodes.map((fc) => [fc._id.toString(), fc]),
     );
     this.buildingCodeById = new Map(
-      this.buildingCodes.map(bc => [bc._id.toString(), bc])
+      this.buildingCodes.map((bc) => [bc._id.toString(), bc]),
     );
+
+    // Initialize caches for feature lookups
+    this.featureCache = new Map();
+    this.codeCache = new Map();
   }
 
   /**
@@ -519,7 +523,9 @@ class BuildingAssessmentCalculator {
 
     // Verify the feature type matches (safety check)
     if (feature.featureType !== featureType) {
-      console.warn(`⚠️ Feature type mismatch: expected ${featureType}, got ${feature.featureType}`);
+      console.warn(
+        `⚠️ Feature type mismatch: expected ${featureType}, got ${feature.featureType}`,
+      );
       return 0;
     }
 

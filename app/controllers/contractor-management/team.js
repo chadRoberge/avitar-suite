@@ -88,8 +88,16 @@ export default class ContractorManagementTeamController extends Controller {
 
   get roleOptions() {
     return [
-      { value: 'employee', label: 'Employee', description: 'Standard team member' },
-      { value: 'admin', label: 'Admin', description: 'Can manage team and settings' },
+      {
+        value: 'employee',
+        label: 'Employee',
+        description: 'Standard team member',
+      },
+      {
+        value: 'admin',
+        label: 'Admin',
+        description: 'Can manage team and settings',
+      },
       {
         value: 'office_staff',
         label: 'Office Staff',
@@ -102,7 +110,7 @@ export default class ContractorManagementTeamController extends Controller {
   openAddMemberModal() {
     if (!this.hasTeamManagementFeature) {
       this.notifications.warning(
-        'Team management is a premium feature. Please upgrade your subscription.'
+        'Team management is a premium feature. Please upgrade your subscription.',
       );
       this.router.transitionTo('contractor-management.subscription');
       return;
@@ -110,7 +118,7 @@ export default class ContractorManagementTeamController extends Controller {
 
     if (!this.canAddMember) {
       this.notifications.warning(
-        `You've reached the maximum number of team members (${this.maxTeamMembers}) for your plan. Please upgrade to add more members.`
+        `You've reached the maximum number of team members (${this.maxTeamMembers}) for your plan. Please upgrade to add more members.`,
       );
       this.router.transitionTo('contractor-management.subscription');
       return;
@@ -137,7 +145,7 @@ export default class ContractorManagementTeamController extends Controller {
   togglePermission(permissionId) {
     if (this.newMemberPermissions.includes(permissionId)) {
       this.newMemberPermissions = this.newMemberPermissions.filter(
-        (p) => p !== permissionId
+        (p) => p !== permissionId,
       );
     } else {
       this.newMemberPermissions = [...this.newMemberPermissions, permissionId];
@@ -161,7 +169,7 @@ export default class ContractorManagementTeamController extends Controller {
           role: this.newMemberRole,
           title: this.newMemberTitle,
           permissions: this.newMemberPermissions,
-        }
+        },
       );
 
       this.notifications.success('Team member added successfully');
@@ -172,7 +180,7 @@ export default class ContractorManagementTeamController extends Controller {
     } catch (error) {
       console.error('Error adding team member:', error);
       this.notifications.error(
-        error.message || 'Failed to add team member. Please try again.'
+        error.message || 'Failed to add team member. Please try again.',
       );
     } finally {
       this.isLoading = false;
@@ -212,7 +220,7 @@ export default class ContractorManagementTeamController extends Controller {
           role: this.newMemberRole,
           title: this.newMemberTitle,
           permissions: this.newMemberPermissions,
-        }
+        },
       );
 
       this.notifications.success('Team member updated successfully');
@@ -223,7 +231,7 @@ export default class ContractorManagementTeamController extends Controller {
     } catch (error) {
       console.error('Error updating team member:', error);
       this.notifications.error(
-        error.message || 'Failed to update team member. Please try again.'
+        error.message || 'Failed to update team member. Please try again.',
       );
     } finally {
       this.isLoading = false;
@@ -234,7 +242,7 @@ export default class ContractorManagementTeamController extends Controller {
   async removeMember(member) {
     if (
       !confirm(
-        `Are you sure you want to remove ${member.user_id.first_name} ${member.user_id.last_name} from your team?`
+        `Are you sure you want to remove ${member.user_id.first_name} ${member.user_id.last_name} from your team?`,
       )
     ) {
       return;
@@ -244,7 +252,7 @@ export default class ContractorManagementTeamController extends Controller {
 
     try {
       await this.api.delete(
-        `/contractors/${this.contractor._id}/members/${member.user_id._id}`
+        `/contractors/${this.contractor._id}/members/${member.user_id._id}`,
       );
 
       this.notifications.success('Team member removed successfully');

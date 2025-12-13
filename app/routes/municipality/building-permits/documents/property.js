@@ -12,7 +12,10 @@ export default class MunicipalityBuildingPermitsDocumentsPropertyRoute extends R
   async model(params) {
     const { property_id } = params;
 
-    console.log('📄 Documents property route - Loading for property:', property_id);
+    console.log(
+      '📄 Documents property route - Loading for property:',
+      property_id,
+    );
 
     try {
       // Load property data
@@ -26,16 +29,33 @@ export default class MunicipalityBuildingPermitsDocumentsPropertyRoute extends R
 
       const municipalityId = this.municipality.currentMunicipality?.id;
 
-      console.log('📡 Fetching files and permits for municipality:', municipalityId, 'property:', property_id);
+      console.log(
+        '📡 Fetching files and permits for municipality:',
+        municipalityId,
+        'property:',
+        property_id,
+      );
 
       // Load files and permits for this property
       const [filesResponse, permitsResponse] = await Promise.all([
-        this.api.get(`/municipalities/${municipalityId}/files?propertyId=${property_id}&department=building-permits`),
-        this.api.get(`/municipalities/${municipalityId}/permits?propertyId=${property_id}`)
+        this.api.get(
+          `/municipalities/${municipalityId}/files?propertyId=${property_id}&department=building-permits`,
+        ),
+        this.api.get(
+          `/municipalities/${municipalityId}/permits?propertyId=${property_id}`,
+        ),
       ]);
 
-      console.log('✅ Files loaded:', filesResponse.files?.length || 0, 'files');
-      console.log('✅ Permits loaded:', permitsResponse.permits?.length || 0, 'permits');
+      console.log(
+        '✅ Files loaded:',
+        filesResponse.files?.length || 0,
+        'files',
+      );
+      console.log(
+        '✅ Permits loaded:',
+        permitsResponse.permits?.length || 0,
+        'permits',
+      );
 
       return {
         property,
@@ -52,7 +72,7 @@ export default class MunicipalityBuildingPermitsDocumentsPropertyRoute extends R
   }
 
   beforeModel() {
-    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+    if (!this.currentUser.hasModulePermission('building_permit', 'read')) {
       this.router.transitionTo('municipality.dashboard');
       throw new Error('You do not have permission to view building permits');
     }

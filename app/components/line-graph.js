@@ -56,7 +56,9 @@ export default class LineGraphComponent extends Component {
     const height = Math.max(200, width * 0.6);
 
     // Sort data by x field (ensuring numeric comparison)
-    const sortedData = [...validData].sort((a, b) => Number(a[xField]) - Number(b[xField]));
+    const sortedData = [...validData].sort(
+      (a, b) => Number(a[xField]) - Number(b[xField]),
+    );
 
     // Create scales (explicitly convert to numbers to ensure valid domains)
     const xScale = d3

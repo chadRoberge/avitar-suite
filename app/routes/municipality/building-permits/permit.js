@@ -12,15 +12,26 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
     const municipalityId = this.municipality.currentMunicipality?.id;
 
     // Check if we came from contractor dashboard
-    const fromContractorDashboard = sessionStorage.getItem('contractorDashboardReturn') === 'true';
+    const fromContractorDashboard =
+      sessionStorage.getItem('contractorDashboardReturn') === 'true';
 
     try {
       // Load permit with all related data
       const [permit, files, inspections, comments] = await Promise.all([
         this.api.get(`/municipalities/${municipalityId}/permits/${permit_id}`),
-        this.api.get(`/municipalities/${municipalityId}/files?permitId=${permit_id}`),
-        this.api.get(`/municipalities/${municipalityId}/permits/${permit_id}/inspections`).catch(() => ({ inspections: [] })),
-        this.api.get(`/municipalities/${municipalityId}/permits/${permit_id}/comments`).catch(() => ({ comments: [] }))
+        this.api.get(
+          `/municipalities/${municipalityId}/files?permitId=${permit_id}`,
+        ),
+        this.api
+          .get(
+            `/municipalities/${municipalityId}/permits/${permit_id}/inspections`,
+          )
+          .catch(() => ({ inspections: [] })),
+        this.api
+          .get(
+            `/municipalities/${municipalityId}/permits/${permit_id}/comments`,
+          )
+          .catch(() => ({ comments: [] })),
       ]);
 
       // Load property data if propertyId exists
@@ -28,10 +39,13 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
       if (permit.propertyId) {
         try {
           // Convert propertyId to string in case it's an ObjectId object
-          const propertyId = typeof permit.propertyId === 'object'
-            ? permit.propertyId._id || permit.propertyId.toString()
-            : permit.propertyId;
-          const propertyResponse = await this.api.get(`/properties/${propertyId}`);
+          const propertyId =
+            typeof permit.propertyId === 'object'
+              ? permit.propertyId._id || permit.propertyId.toString()
+              : permit.propertyId;
+          const propertyResponse = await this.api.get(
+            `/properties/${propertyId}`,
+          );
           property = propertyResponse.property || propertyResponse;
         } catch (error) {
           console.warn('Could not load property data for permit:', error);
@@ -44,7 +58,7 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
       return {
         permit: {
           ...permit,
-          property: property
+          property: property,
         },
         files: files.files || [],
         inspections: inspections.inspections || [],
@@ -54,7 +68,7 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
         fromContractorDashboard,
         municipality: {
           id: municipality?.id,
-          name: municipality?.name || 'Municipality'
+          name: municipality?.name || 'Municipality',
         },
       };
     } catch (error) {
@@ -83,7 +97,7 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
     }
 
     // For municipal staff, check module permissions
-    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+    if (!this.currentUser.hasModulePermission('building_permit', 'read')) {
       this.router.transitionTo('municipality.dashboard');
       throw new Error('You do not have permission to view building permits');
     }

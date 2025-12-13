@@ -102,12 +102,12 @@ const requireDepartmentModuleAccess = (moduleName) => {
       const departmentModules = {
         assessing: ['assessing'],
         tax: ['taxCollection'],
-        building: ['buildingPermits'],
+        building: ['building_permit'],
         clerk: ['townClerk'],
         motor_vehicle: ['motorVehicle'],
         finance: ['taxCollection', 'utilityBilling'],
-        code_enforcement: ['buildingPermits'],
-        planning: ['buildingPermits'],
+        code_enforcement: ['building_permit'],
+        planning: ['building_permit'],
         it: Object.values(MODULES), // IT can access all modules
         general: Object.values(MODULES), // General admin can access all modules
       };

@@ -16,7 +16,10 @@ export default class BuildingEditModalComponent extends Component {
   constructor() {
     super(...arguments);
 
-    console.log('🔍 Building Assessment received:', this.args.buildingAssessment);
+    console.log(
+      '🔍 Building Assessment received:',
+      this.args.buildingAssessment,
+    );
 
     // Initialize local building data from args
     if (this.args.buildingAssessment) {
@@ -24,11 +27,19 @@ export default class BuildingEditModalComponent extends Component {
       // Extract ObjectIds from fields (they might be populated objects or ObjectId strings)
       console.log('🔍 Frame value (raw):', this.args.buildingAssessment.frame);
       console.log('🔍 Frame type:', typeof this.args.buildingAssessment.frame);
-      console.log('🔍 Base Type value (raw):', this.args.buildingAssessment.base_type);
-      console.log('🔍 Base Type type:', typeof this.args.buildingAssessment.base_type);
+      console.log(
+        '🔍 Base Type value (raw):',
+        this.args.buildingAssessment.base_type,
+      );
+      console.log(
+        '🔍 Base Type type:',
+        typeof this.args.buildingAssessment.base_type,
+      );
 
       const frameId = this.extractObjectId(this.args.buildingAssessment.frame);
-      const baseTypeId = this.extractObjectId(this.args.buildingAssessment.base_type);
+      const baseTypeId = this.extractObjectId(
+        this.args.buildingAssessment.base_type,
+      );
 
       console.log('🔍 Extracted Frame ID:', frameId);
       console.log('🔍 Extracted Base Type ID:', baseTypeId);
@@ -36,21 +47,40 @@ export default class BuildingEditModalComponent extends Component {
       this.buildingData = {
         buildingModel: this.args.buildingAssessment.building_model || '',
         frame: frameId || '',
-        ceilingHeight: this.extractObjectId(this.args.buildingAssessment.ceiling_height) || '',
+        ceilingHeight:
+          this.extractObjectId(this.args.buildingAssessment.ceiling_height) ||
+          '',
         yearBuilt: this.args.buildingAssessment.year_built || '',
         baseType: baseTypeId || '',
-        qualityGrade: this.extractObjectId(this.args.buildingAssessment.quality_grade) || '',
-        storyHeight: this.extractObjectId(this.args.buildingAssessment.story_height) || '',
-        roofStyle: this.extractObjectId(this.args.buildingAssessment.roof_style) || '',
-        roofCover: this.extractObjectId(this.args.buildingAssessment.roof_cover) || '',
-        exteriorWall1: this.extractObjectId(this.args.buildingAssessment.exterior_wall_1) || '',
-        exteriorWall2: this.extractObjectId(this.args.buildingAssessment.exterior_wall_2) || '',
-        interiorWall1: this.extractObjectId(this.args.buildingAssessment.interior_wall_1) || '',
-        interiorWall2: this.extractObjectId(this.args.buildingAssessment.interior_wall_2) || '',
-        flooring1: this.extractObjectId(this.args.buildingAssessment.flooring_1) || '',
-        flooring2: this.extractObjectId(this.args.buildingAssessment.flooring_2) || '',
-        heatingFuel: this.extractObjectId(this.args.buildingAssessment.heating_fuel) || '',
-        heatingType: this.extractObjectId(this.args.buildingAssessment.heating_type) || '',
+        qualityGrade:
+          this.extractObjectId(this.args.buildingAssessment.quality_grade) ||
+          '',
+        storyHeight:
+          this.extractObjectId(this.args.buildingAssessment.story_height) || '',
+        roofStyle:
+          this.extractObjectId(this.args.buildingAssessment.roof_style) || '',
+        roofCover:
+          this.extractObjectId(this.args.buildingAssessment.roof_cover) || '',
+        exteriorWall1:
+          this.extractObjectId(this.args.buildingAssessment.exterior_wall_1) ||
+          '',
+        exteriorWall2:
+          this.extractObjectId(this.args.buildingAssessment.exterior_wall_2) ||
+          '',
+        interiorWall1:
+          this.extractObjectId(this.args.buildingAssessment.interior_wall_1) ||
+          '',
+        interiorWall2:
+          this.extractObjectId(this.args.buildingAssessment.interior_wall_2) ||
+          '',
+        flooring1:
+          this.extractObjectId(this.args.buildingAssessment.flooring_1) || '',
+        flooring2:
+          this.extractObjectId(this.args.buildingAssessment.flooring_2) || '',
+        heatingFuel:
+          this.extractObjectId(this.args.buildingAssessment.heating_fuel) || '',
+        heatingType:
+          this.extractObjectId(this.args.buildingAssessment.heating_type) || '',
         bedrooms: this.args.buildingAssessment.bedrooms || 0,
         fullBaths: this.args.buildingAssessment.full_baths || 0,
         halfBaths: this.args.buildingAssessment.half_baths || 0,
@@ -162,9 +192,9 @@ export default class BuildingEditModalComponent extends Component {
       results.forEach(({ type, codes }) => {
         // API returns codes directly as an array
         // Ensure _id is a string for comparison in templates
-        this.featureCodes[type] = (codes || []).map(code => ({
+        this.featureCodes[type] = (codes || []).map((code) => ({
           ...code,
-          _id: String(code._id)
+          _id: String(code._id),
         }));
       });
 
@@ -190,9 +220,9 @@ export default class BuildingEditModalComponent extends Component {
         `/municipalities/${this.municipality.currentMunicipality.id}/building-codes`,
       );
       // Ensure _id is a string for comparison in templates
-      this.buildingCodes = (response.buildingCodes || []).map(code => ({
+      this.buildingCodes = (response.buildingCodes || []).map((code) => ({
         ...code,
-        _id: String(code._id)
+        _id: String(code._id),
       }));
       console.log('Loaded building codes:', this.buildingCodes);
     } catch (error) {

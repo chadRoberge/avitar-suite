@@ -1,127 +1,21 @@
 {{page-title "Building Permits"}}
 
-{{! Action Buttons }}
-<div class="avitar-flex avitar-justify-end avitar-gap-3 avitar-mb-6">
-  <button
-    type="button"
-    class="avitar-btn avitar-btn--secondary"
-    {{on "click" this.refreshQueue}}
-  >
-    <i class="fas fa-sync-alt avitar-mr-2"></i>
-    Refresh
-  </button>
-
-  <button
-    type="button"
-    class="avitar-btn avitar-btn--primary"
-    {{on "click" this.createNewPermit}}
-  >
-    <i class="fas fa-plus avitar-mr-2"></i>
-    New Application
-  </button>
-</div>
-
-{{! Dashboard Stats Overview }}
-<div class="avitar-flex avitar-gap-6 avitar-mb-6">
-  {{! Submitted Applications }}
-  <div class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover" {{on "click" (fn this.selectTab "all")}}>
-    <div class="avitar-card__body">
-      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
-        <div class="avitar-stat__icon avitar-bg-primary-light avitar-text-primary">
-          <i class="fas fa-file-alt"></i>
-        </div>
-        <span class="avitar-badge avitar-badge--primary">New</span>
-      </div>
-      <div class="avitar-stat">
-        <div class="avitar-stat__value avitar-text-primary avitar-mb-1">
-          {{or this.stats.submitted 0}}
-        </div>
-        <div class="avitar-stat__label">Submitted</div>
-        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
-          Awaiting initial review
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {{! Under Review }}
-  <div class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover" {{on "click" (fn this.selectTab "myPermits")}}>
-    <div class="avitar-card__body">
-      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
-        <div class="avitar-stat__icon avitar-bg-info-light avitar-text-info">
-          <i class="fas fa-search"></i>
-        </div>
-        <span class="avitar-badge avitar-badge--info">In Progress</span>
-      </div>
-      <div class="avitar-stat">
-        <div class="avitar-stat__value avitar-text-info avitar-mb-1">
-          {{or this.stats.underReview 0}}
-        </div>
-        <div class="avitar-stat__label">Under Review</div>
-        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
-          Currently being processed
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {{! Needs Attention }}
-  <div class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover" {{on "click" (fn this.selectTab "needingAttention")}}>
-    <div class="avitar-card__body">
-      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
-        <div class="avitar-stat__icon avitar-bg-warning-light avitar-text-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <span class="avitar-badge avitar-badge--warning">Action Required</span>
-      </div>
-      <div class="avitar-stat">
-        <div class="avitar-stat__value avitar-text-warning avitar-mb-1">
-          {{or this.tabStats.needingAttention 0}}
-        </div>
-        <div class="avitar-stat__label">Needs Attention</div>
-        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
-          Missing info or on hold
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {{! Expiring Soon }}
-  <div class="avitar-flex-1 avitar-card avitar-card--stat avitar-card--hover" {{on "click" (fn this.selectTab "expiringSoon")}}>
-    <div class="avitar-card__body">
-      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-2">
-        <div class="avitar-stat__icon avitar-bg-danger-light avitar-text-danger">
-          <i class="fas fa-clock"></i>
-        </div>
-        <span class="avitar-badge avitar-badge--danger">Urgent</span>
-      </div>
-      <div class="avitar-stat">
-        <div class="avitar-stat__value avitar-text-danger avitar-mb-1">
-          {{or this.tabStats.expiringSoon 0}}
-        </div>
-        <div class="avitar-stat__label">Expiring Soon</div>
-        <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
-          Within 30 days
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-{{! Permits Management Section }}
-<div class="avitar-card">
-  <div class="avitar-card__header avitar-bg-gray-50">
-    <div class="avitar-tabs">
+<div class="avitar-container avitar-py-6">
+  {{! Tabs }}
+  <div class="avitar-card avitar-card--sticky-header avitar-mb-4">
+    <div class="avitar-card__header avitar-bg-gray-50 avitar-p-0">
+      <div class="avitar-tabs">
       <button
         type="button"
         class="avitar-tab {{if (eq this.selectedTab 'all') 'avitar-tab--active'}}"
         {{on "click" (fn this.selectTab "all")}}
       >
-        <i class="fas fa-list avitar-mr-1"></i>
         All Applications
-        <span class="avitar-badge avitar-badge--secondary avitar-ml-2">
-          {{this.tabStats.all}}
-        </span>
+        {{#if this.tabStats.all}}
+          <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-ml-2">
+            {{this.tabStats.all}}
+          </span>
+        {{/if}}
       </button>
 
       <button
@@ -129,11 +23,12 @@
         class="avitar-tab {{if (eq this.selectedTab 'myPermits') 'avitar-tab--active'}}"
         {{on "click" (fn this.selectTab "myPermits")}}
       >
-        <i class="fas fa-user avitar-mr-1"></i>
         My Assignments
-        <span class="avitar-badge avitar-badge--primary avitar-ml-2">
-          {{this.tabStats.myPermits}}
-        </span>
+        {{#if this.tabStats.myPermits}}
+          <span class="avitar-badge avitar-badge--sm avitar-badge--primary avitar-ml-2">
+            {{this.tabStats.myPermits}}
+          </span>
+        {{/if}}
       </button>
 
       <button
@@ -141,11 +36,12 @@
         class="avitar-tab {{if (eq this.selectedTab 'needingAttention') 'avitar-tab--active'}}"
         {{on "click" (fn this.selectTab "needingAttention")}}
       >
-        <i class="fas fa-exclamation-triangle avitar-mr-1"></i>
         Needs Action
-        <span class="avitar-badge avitar-badge--warning avitar-ml-2">
-          {{this.tabStats.needingAttention}}
-        </span>
+        {{#if this.tabStats.needingAttention}}
+          <span class="avitar-badge avitar-badge--sm avitar-badge--warning avitar-ml-2">
+            {{this.tabStats.needingAttention}}
+          </span>
+        {{/if}}
       </button>
 
       <button
@@ -153,18 +49,21 @@
         class="avitar-tab {{if (eq this.selectedTab 'expiringSoon') 'avitar-tab--active'}}"
         {{on "click" (fn this.selectTab "expiringSoon")}}
       >
-        <i class="fas fa-clock avitar-mr-1"></i>
         Expiring Soon
-        <span class="avitar-badge avitar-badge--danger avitar-ml-2">
-          {{this.tabStats.expiringSoon}}
-        </span>
+        {{#if this.tabStats.expiringSoon}}
+          <span class="avitar-badge avitar-badge--sm avitar-badge--danger avitar-ml-2">
+            {{this.tabStats.expiringSoon}}
+          </span>
+        {{/if}}
       </button>
+      </div>
     </div>
   </div>
 
-  <div class="avitar-card__body">
-    {{! Search and Filter Bar }}
-    <div class="avitar-mb-4">
+  {{! Main Card }}
+  <div class="avitar-card">
+    {{! Filters }}
+    <div class="avitar-card__header avitar-bg-gray-50">
       <div class="avitar-flex avitar-gap-3 avitar-items-end">
         {{! Search Input }}
         <div class="avitar-flex-1">
@@ -290,9 +189,12 @@
         </div>
       {{/if}}
     </div>
+    </div>
 
+    {{! Table Body }}
+    <div class="avitar-card__body avitar-p-0">
     {{! Results Summary }}
-    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3 avitar-pb-3 avitar-border-b">
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-p-4 avitar-pb-3 avitar-border-b">
       <div class="avitar-text-sm avitar-text-muted">
         <i class="fas fa-list-ul avitar-mr-1"></i>
         Showing <strong>{{this.displayedPermits.length}}</strong>
@@ -404,6 +306,17 @@
 
                 <td {{on "click" this.stopPropagation}}>
                   <div class="avitar-flex avitar-justify-center avitar-gap-1">
+                    {{#if (this.canReviewPermit permit)}}
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--primary"
+                        {{on "click" (fn this.reviewPermit permit)}}
+                        title="Review Permit"
+                      >
+                        {{{lnr-icon "clipboard"}}}
+                      </button>
+                    {{/if}}
+
                     <button
                       type="button"
                       class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--secondary"

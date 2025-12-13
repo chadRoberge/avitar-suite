@@ -1,6 +1,6 @@
 {{page-title "Subscription & Billing"}}
 
-<div class="avitar-container avitar-py-6">
+<div class="avitar-container avitar-pt-6 avitar-pb-6">
   {{! Header }}
   <div class="avitar-mb-6">
     <h1 class="avitar-text-3xl avitar-font-bold avitar-mb-2">Subscription & Billing</h1>
@@ -39,9 +39,6 @@
           <div class="avitar-flex-1">
             <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-4">
               <h3 class="avitar-text-2xl avitar-font-bold">{{this.currentPlan.name}}</h3>
-              {{#if this.currentPlan.popular}}
-                <span class="avitar-badge avitar-badge--success">Most Popular</span>
-              {{/if}}
               {{#if this.isCanceling}}
                 <span class="avitar-badge avitar-badge--warning">Canceling</span>
               {{/if}}
@@ -52,8 +49,10 @@
             {{#unless this.isFreePlan}}
               <div class="avitar-mb-4">
                 <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
-                  ${{this.currentPlan.price}}
-                  <span class="avitar-text-base avitar-text-muted avitar-font-normal">/month</span>
+                  ${{this.currentPlan.pricing.amount}}
+                  <span class="avitar-text-base avitar-text-muted avitar-font-normal">
+                    /{{this.currentPlan.pricing.interval}}
+                  </span>
                 </div>
               </div>
 
@@ -102,79 +101,33 @@
               <button
                 type="button"
                 class="avitar-btn avitar-btn--secondary"
-                {{on "click" this.viewBillingHistory}}
-              >
-                <i class="fas fa-file-invoice avitar-mr-2"></i>
-                Billing History
-              </button>
-
-              <button
-                type="button"
-                class="avitar-btn avitar-btn--secondary"
                 {{on "click" this.openPaymentMethods}}
               >
                 <i class="fas fa-credit-card avitar-mr-2"></i>
                 Payment Methods
               </button>
             {{/unless}}
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.viewBillingHistory}}
+            >
+              <i class="fas fa-file-invoice avitar-mr-2"></i>
+              Billing History
+            </button>
           </div>
         </div>
 
         {{! Current Plan Features }}
-        <div class="avitar-border-t avitar-pt-4 avitar-mt-4">
-          <h4 class="avitar-font-semibold avitar-mb-3">Your Plan Features</h4>
-          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-3">
-            <div class="avitar-flex avitar-items-center avitar-gap-2">
-              <i class="fas fa-users avitar-text-primary"></i>
-              <span class="avitar-text-sm">
-                {{this.getFeatureDisplay "max_team_members" this.currentPlan.features.max_team_members}} Team Members
-              </span>
+        <div class="avitar-text-left avitar-space-y-3">
+          <div class="avitar-text-sm avitar-font-semibold avitar-mb-2">Your Plan Features:</div>
+          {{#each this.currentPlan.features as |feature|}}
+            <div class="avitar-flex avitar-items-start avitar-gap-2">
+              <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
+              <span class="avitar-text-sm">{{feature}}</span>
             </div>
-            <div class="avitar-flex avitar-items-center avitar-gap-2">
-              <i class="fas fa-file-alt avitar-text-primary"></i>
-              <span class="avitar-text-sm">
-                {{this.getFeatureDisplay "max_permits_per_month" this.currentPlan.features.max_permits_per_month}} Permits/Month
-              </span>
-            </div>
-            {{#if this.currentPlan.features.team_management}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Team Management</span>
-              </div>
-            {{/if}}
-            {{#if this.currentPlan.features.stored_payment_methods}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Stored Payment Methods</span>
-              </div>
-            {{/if}}
-            {{#if this.currentPlan.features.advanced_reporting}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Advanced Reporting</span>
-              </div>
-            {{/if}}
-            {{#if this.currentPlan.features.priority_support}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Priority Support</span>
-              </div>
-            {{/if}}
-            {{#if this.currentPlan.features.api_access}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">API Access</span>
-              </div>
-            {{/if}}
-            {{#if (gt this.currentPlan.features.permit_fee_discount 0)}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-percentage avitar-text-primary"></i>
-                <span class="avitar-text-sm">
-                  {{this.currentPlan.features.permit_fee_discount}}% Permit Fee Discount
-                </span>
-              </div>
-            {{/if}}
-          </div>
+          {{/each}}
         </div>
       </div>
     </div>
@@ -191,108 +144,45 @@
         </h2>
 
         <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6">
-          {{#each this.availablePlans as |plan|}}
-            <div class="avitar-card {{if plan.popular 'avitar-border-primary avitar-border-2'}}">
-              {{#if plan.popular}}
-                <div class="avitar-bg-primary avitar-text-white avitar-text-center avitar-py-2 avitar-text-sm avitar-font-semibold">
-                  MOST POPULAR
-                </div>
-              {{/if}}
+          {{#each this.displayPlans as |plan|}}
+            {{#unless plan.isCurrent}}
+              <div class="avitar-card">
+                <div class="avitar-card__body avitar-text-center">
+                  <h3 class="avitar-text-2xl avitar-font-bold avitar-mb-2">{{plan.name}}</h3>
+                  <p class="avitar-text-sm avitar-text-muted avitar-mb-4">{{plan.description}}</p>
 
-              <div class="avitar-card__body avitar-text-center">
-                <h3 class="avitar-text-2xl avitar-font-bold avitar-mb-2">{{plan.name}}</h3>
-                <p class="avitar-text-sm avitar-text-muted avitar-mb-4">{{plan.tagline}}</p>
-
-                <div class="avitar-mb-6">
-                  <div class="avitar-text-4xl avitar-font-bold avitar-text-primary">
-                    ${{plan.price}}
-                  </div>
-                  <div class="avitar-text-sm avitar-text-muted">per month</div>
-                </div>
-
-                <button
-                  type="button"
-                  class="avitar-btn {{if plan.popular 'avitar-btn--primary' 'avitar-btn--outline-primary'}} avitar-w-full avitar-mb-6"
-                  {{on "click" (fn this.openUpgradeModal plan)}}
-                  disabled={{this.isLoading}}
-                >
-                  {{#if this.isFreePlan}}
-                    Get Started
-                  {{else}}
-                    Upgrade Now
-                  {{/if}}
-                </button>
-
-                <div class="avitar-text-left avitar-space-y-3">
-                  <div class="avitar-text-sm avitar-font-semibold avitar-mb-2">Features:</div>
-
-                  <div class="avitar-flex avitar-items-start avitar-gap-2">
-                    <i class="fas fa-users avitar-text-primary avitar-mt-1"></i>
-                    <span class="avitar-text-sm">
-                      {{this.getFeatureDisplay "max_team_members" plan.features.max_team_members}} Team Members
-                    </span>
+                  <div class="avitar-mb-6">
+                    <div class="avitar-text-4xl avitar-font-bold avitar-text-primary">
+                      {{plan.pricingText}}
+                    </div>
                   </div>
 
-                  <div class="avitar-flex avitar-items-start avitar-gap-2">
-                    <i class="fas fa-file-alt avitar-text-primary avitar-mt-1"></i>
-                    <span class="avitar-text-sm">
-                      {{this.getFeatureDisplay "max_permits_per_month" plan.features.max_permits_per_month}} Permits/Month
-                    </span>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--primary avitar-w-full avitar-mb-6"
+                    {{on "click" (fn this.openUpgradeModal plan)}}
+                    disabled={{this.isLoading}}
+                  >
+                    {{#if this.isFreePlan}}
+                      Get Started
+                    {{else}}
+                      Upgrade Now
+                    {{/if}}
+                  </button>
+
+                  <div class="avitar-text-left avitar-space-y-3">
+                    <div class="avitar-text-sm avitar-font-semibold avitar-mb-2">Features:</div>
+
+                    {{#each plan.featureList as |feature|}}
+                      <div class="avitar-flex avitar-items-start avitar-gap-2">
+                        <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
+                        <span class="avitar-text-sm">{{feature}}</span>
+                      </div>
+                    {{/each}}
                   </div>
-
-                  {{#if plan.features.team_management}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">Team Management</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if plan.features.stored_payment_methods}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">Stored Payment Methods</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if plan.features.advanced_reporting}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">Advanced Reporting</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if plan.features.priority_support}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">Priority Support</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if plan.features.api_access}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">API Access</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if plan.features.custom_branding}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
-                      <span class="avitar-text-sm">Custom Branding</span>
-                    </div>
-                  {{/if}}
-
-                  {{#if (gt plan.features.permit_fee_discount 0)}}
-                    <div class="avitar-flex avitar-items-start avitar-gap-2">
-                      <i class="fas fa-percentage avitar-text-primary avitar-mt-1"></i>
-                      <span class="avitar-text-sm">
-                        {{plan.features.permit_fee_discount}}% Permit Fee Discount
-                      </span>
-                    </div>
-                  {{/if}}
                 </div>
               </div>
-            </div>
+            {{/unless}}
           {{/each}}
         </div>
       </div>
@@ -302,14 +192,14 @@
 
 {{! Upgrade Confirmation Modal }}
 {{#if this.showUpgradeModal}}
-  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeUpgradeModal}}>
-    <div class="avitar-modal" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.cancelUpgrade}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
           <i class="fas fa-arrow-up avitar-mr-2"></i>
           Confirm Upgrade
         </h2>
-        <button type="button" class="avitar-modal__close" {{on "click" this.closeUpgradeModal}}>
+        <button type="button" class="avitar-modal__close" {{on "click" this.cancelUpgrade}}>
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -320,7 +210,7 @@
             <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Upgrading to</div>
             <div class="avitar-text-2xl avitar-font-bold">{{this.selectedPlan.name}}</div>
             <div class="avitar-text-3xl avitar-font-bold avitar-text-primary avitar-mt-2">
-              ${{this.selectedPlan.price}}/month
+              {{this.selectedPlan.pricingText}}
             </div>
           </div>
         </div>
@@ -334,25 +224,17 @@
         {{/unless}}
 
         <div class="avitar-space-y-2">
-          <h4 class="avitar-font-semibold">New Features:</h4>
+          <h4 class="avitar-font-semibold">Plan Features:</h4>
           <div class="avitar-space-y-2">
-            <div class="avitar-flex avitar-items-center avitar-gap-2">
-              <i class="fas fa-users avitar-text-primary"></i>
-              <span class="avitar-text-sm">
-                {{this.getFeatureDisplay "max_team_members" this.selectedPlan.features.max_team_members}} Team Members
-              </span>
-            </div>
-            {{#if this.selectedPlan.features.advanced_reporting}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Advanced Reporting</span>
-              </div>
-            {{/if}}
-            {{#if this.selectedPlan.features.priority_support}}
-              <div class="avitar-flex avitar-items-center avitar-gap-2">
-                <i class="fas fa-check avitar-text-success"></i>
-                <span class="avitar-text-sm">Priority Support</span>
-              </div>
+            {{#if this.selectedPlan.featureList.length}}
+              {{#each this.selectedPlan.featureList as |feature|}}
+                <div class="avitar-flex avitar-items-start avitar-gap-2">
+                  <i class="fas fa-check avitar-text-success avitar-mt-1"></i>
+                  <span class="avitar-text-sm">{{feature}}</span>
+                </div>
+              {{/each}}
+            {{else}}
+              <p class="avitar-text-sm avitar-text-muted">No additional features listed.</p>
             {{/if}}
           </div>
         </div>
@@ -362,7 +244,7 @@
         <button
           type="button"
           class="avitar-btn avitar-btn--secondary"
-          {{on "click" this.closeUpgradeModal}}
+          {{on "click" this.cancelUpgrade}}
           disabled={{this.isLoading}}
         >
           Cancel
@@ -389,7 +271,7 @@
 {{! Cancel Subscription Modal }}
 {{#if this.showCancelModal}}
   <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeCancelModal}}>
-    <div class="avitar-modal" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
           <i class="fas fa-exclamation-triangle avitar-mr-2 avitar-text-warning"></i>
@@ -459,3 +341,138 @@
     </div>
   </div>
 {{/if}}
+
+{{! Billing History Modal }}
+{{#if this.showBillingHistoryModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeBillingHistoryModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-file-invoice avitar-mr-2"></i>
+          Billing History
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeBillingHistoryModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{#if this.isLoadingInvoices}}
+          <div class="avitar-text-center avitar-py-8">
+            <i class="fas fa-spinner fa-spin fa-3x avitar-text-primary avitar-mb-4"></i>
+            <p class="avitar-text-muted">Loading billing history...</p>
+          </div>
+        {{else}}
+          {{#if this.billingInvoices.length}}
+            <div class="avitar-table-container">
+              <table class="avitar-table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Period</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each this.billingInvoices as |invoice|}}
+                    <tr>
+                      <td>
+                        <div class="avitar-font-medium">{{invoice.number}}</div>
+                      </td>
+                      <td>
+                        <div class="avitar-text-sm">
+                          {{date-format (multiply invoice.created 1000) "MMM DD, YYYY"}}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="avitar-text-sm avitar-text-muted">
+                          {{date-format (multiply invoice.period_start 1000) "MMM DD"}} - {{date-format (multiply invoice.period_end 1000) "MMM DD, YYYY"}}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="avitar-font-medium">
+                          ${{invoice.amount_paid}}
+                        </div>
+                      </td>
+                      <td>
+                        {{#if (eq invoice.status "paid")}}
+                          <span class="avitar-badge avitar-badge--success">Paid</span>
+                        {{else if (eq invoice.status "open")}}
+                          <span class="avitar-badge avitar-badge--warning">Open</span>
+                        {{else if (eq invoice.status "void")}}
+                          <span class="avitar-badge avitar-badge--secondary">Void</span>
+                        {{else if (eq invoice.status "uncollectible")}}
+                          <span class="avitar-badge avitar-badge--danger">Uncollectible</span>
+                        {{else}}
+                          <span class="avitar-badge">{{invoice.status}}</span>
+                        {{/if}}
+                      </td>
+                      <td>
+                        <div class="avitar-flex avitar-gap-2">
+                          {{#if invoice.invoice_pdf}}
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                              {{on "click" (fn this.downloadInvoice invoice)}}
+                              title="Download PDF"
+                            >
+                              <i class="fas fa-download"></i>
+                            </button>
+                          {{/if}}
+                          {{#if invoice.hosted_invoice_url}}
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                              {{on "click" (fn this.viewInvoiceOnline invoice)}}
+                              title="View Online"
+                            >
+                              <i class="fas fa-external-link-alt"></i>
+                            </button>
+                          {{/if}}
+                        </div>
+                      </td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              <div class="avitar-mb-4">
+                <i class="fas fa-receipt fa-3x avitar-text-muted"></i>
+              </div>
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Billing History</h3>
+              <p class="avitar-text-muted">You don't have any invoices yet.</p>
+            </div>
+          {{/if}}
+        {{/if}}
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeBillingHistoryModal}}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Stripe Payment Modal }}
+<StripePaymentModal
+  @isOpen={{this.showPaymentModal}}
+  @title={{this.paymentTitle}}
+  @description={{this.paymentDescription}}
+  @amount={{this.paymentAmount}}
+  @currency="USD"
+  @billingEmail={{this.billingEmail}}
+  @billingName={{this.billingName}}
+  @onClose={{this.closePaymentModal}}
+  @onPaymentMethodReady={{this.handlePaymentMethodReady}}
+/>

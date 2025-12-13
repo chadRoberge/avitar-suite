@@ -6,6 +6,7 @@ import { inject as service } from '@ember/service';
 export default class LandDetailsController extends Controller {
   @service api;
   @service assessing;
+  @service loading;
 
   @tracked isZoneModalOpen = false;
   @tracked editingZone = null;
@@ -552,7 +553,11 @@ export default class LandDetailsController extends Controller {
   @tracked isLandRecalculating = false;
   @tracked landRecalculationResult = null;
   @tracked landMassRecalcYear = new Date().getFullYear().toString();
-  @tracked landMassRecalcBatchSize = '50';
+  @tracked landMassRecalcBatchSize = '500'; // Increased default for optimized version
+  @tracked recalcProgress = null; // Real-time progress data
+  @tracked recalcJobId = null; // Current job ID
+  pollingInterval = null; // Progress polling interval
+  loadingRequestId = null; // Loading service request ID
 
   @action
   updateLandMassRecalcYear(event) {
@@ -587,7 +592,7 @@ export default class LandDetailsController extends Controller {
 
     if (
       !confirm(
-        'Are you sure you want to recalculate all land assessments? This will apply zone minimum acreage adjustments and may take several minutes.',
+        'Are you sure you want to recalculate all land assessments? This uses the OPTIMIZED calculation engine and may take 1-2 minutes for large municipalities.',
       )
     ) {
       return;
@@ -595,41 +600,152 @@ export default class LandDetailsController extends Controller {
 
     this.isLandRecalculating = true;
     this.landRecalculationResult = null;
+    this.recalcProgress = null;
+
+    // Show loading overlay with initial message
+    this.loadingRequestId = this.loading.startLoading(
+      '⚡ Starting optimized land recalculation...',
+    );
 
     try {
       const municipalityId = this.model.municipality.id;
       const year =
         parseInt(this.landMassRecalcYear) || new Date().getFullYear();
-      const batchSize = parseInt(this.landMassRecalcBatchSize) || 50;
+      const batchSize = parseInt(this.landMassRecalcBatchSize) || 500;
 
+      // Start the recalculation (returns immediately with jobId)
       const response = await this.api.post(
-        `/municipalities/${municipalityId}/land-assessments/mass-recalculate`,
+        `/municipalities/${municipalityId}/land-assessments/recalculate`,
         {
           effectiveYear: year,
           batchSize: batchSize,
-          includeZoneAdjustments: false, // Changed to false to force full recalculation without zone adjustments
         },
+        { showLoading: false }, // Don't show default loading, we're using custom progress
       );
 
-      this.landRecalculationResult = {
-        success: true,
-        result: response.result,
-      };
+      this.recalcJobId = response.jobId;
+      console.log('🚀 Recalculation started, jobId:', this.recalcJobId);
 
-      // Clear all land assessment caches to ensure UI shows updated data
-      this.assessing.clearAllLandAssessmentCaches();
+      // Update message
+      this.loading.setMessage('⚡ Recalculating land assessments...');
 
-      // Refresh status after successful recalculation
-      await this.refreshLandRecalculationStatus();
+      // Start polling for progress
+      this.startProgressPolling();
     } catch (error) {
-      console.error('Error during land mass recalculation:', error);
+      console.error('Error starting land mass recalculation:', error);
       this.landRecalculationResult = {
         success: false,
         message:
-          error.message || 'Mass recalculation failed. Please try again.',
+          error.message || 'Failed to start recalculation. Please try again.',
       };
-    } finally {
       this.isLandRecalculating = false;
+
+      // Stop loading on error
+      if (this.loadingRequestId) {
+        this.loading.stopLoading(this.loadingRequestId);
+        this.loadingRequestId = null;
+      }
+    }
+  }
+
+  /**
+   * Start polling for progress updates
+   */
+  startProgressPolling() {
+    // Clear any existing polling
+    this.stopProgressPolling();
+
+    // Poll every second
+    this.pollingInterval = setInterval(async () => {
+      try {
+        await this.checkProgress();
+      } catch (error) {
+        console.error('Error checking progress:', error);
+      }
+    }, 1000);
+  }
+
+  /**
+   * Stop progress polling
+   */
+  stopProgressPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+  }
+
+  /**
+   * Check current progress of recalculation
+   */
+  async checkProgress() {
+    if (!this.recalcJobId) return;
+
+    try {
+      const municipalityId = this.model.municipality.id;
+      const response = await this.api.get(
+        `/municipalities/${municipalityId}/land-assessments/recalculate/progress/${this.recalcJobId}`,
+        {},
+        { showLoading: false }, // Don't show loading for progress checks
+      );
+
+      this.recalcProgress = response.progress;
+
+      // Update loading service with progress data
+      if (response.progress) {
+        this.loading.setProgress({
+          percentage: response.progress.progress || 0,
+          processedItems: response.progress.processedCount || 0,
+          totalItems: response.progress.totalCount || 0,
+          currentPhase: `Processing at ${response.progress.rate || '0'}/sec`,
+          estimatedTimeRemaining: response.progress.eta || null,
+        });
+      }
+
+      // Check if job completed or failed
+      if (
+        response.progress.status === 'completed' ||
+        response.progress.status === 'failed'
+      ) {
+        this.stopProgressPolling();
+        this.isLandRecalculating = false;
+
+        // Stop loading and clear progress
+        if (this.loadingRequestId) {
+          this.loading.stopLoading(this.loadingRequestId);
+          this.loadingRequestId = null;
+        }
+        this.loading.clearProgress();
+
+        if (response.progress.status === 'completed') {
+          this.landRecalculationResult = {
+            success: true,
+            result: {
+              processed: response.progress.processedCount,
+              updated: response.progress.updatedCount,
+              errors: response.progress.errorCount,
+              duration: response.progress.duration,
+              rate: response.progress.rate,
+            },
+          };
+
+          // Clear all land assessment caches
+          this.assessing.clearAllLandAssessmentCaches();
+
+          // Refresh status
+          await this.refreshLandRecalculationStatus();
+        } else {
+          this.landRecalculationResult = {
+            success: false,
+            message:
+              response.progress.error ||
+              'Recalculation failed. Please try again.',
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error);
+      // Don't stop polling on fetch errors, might be temporary
     }
   }
 

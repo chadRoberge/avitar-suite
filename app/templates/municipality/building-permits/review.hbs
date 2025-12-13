@@ -1,0 +1,640 @@
+{{page-title (concat "Review Permit " @model.permit.permitNumber " - " @model.departmentName)}}
+
+{{! Two-column layout: Progress sidebar + Main content }}
+<div class="avitar-flex avitar-flex-row">
+  {{! Left Sidebar - Permit Info + Status Progress }}
+  <div class="avitar-flex-3" style="position: sticky; top: calc(var(--topbar-height) * 2); height: calc(100vh - calc(var(--topbar-height) * 2)); overflow-y: auto; border-right: 1px solid #e5e7eb; background: white;">
+    {{! Permit Information Header }}
+    <div class="avitar-p-2 avitar-border-b avitar-border-gray-200">
+      {{! Permit Number - Prominent }}
+      <div class="avitar-mb-1 avitar-pb-1 avitar-border-b avitar-border-gray-200">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Permit Number</div>
+        <div class="avitar-text-lg avitar-font-bold avitar-text-gray-900">
+          {{@model.permit.permitNumber}}
+        </div>
+      </div>
+      {{! Application Date }}
+      <div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Applied</div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{date-format @model.permit.applicationDate "MMM DD, YYYY"}}
+        </div>
+      </div>
+      {{! Property Address }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">
+          <i class="fas fa-map-marker-alt"></i>
+          Property Address
+        </div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{@model.permit.propertyAddress}}
+        </div>
+      </div>
+      {{! PID }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">PID</div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{or @model.permit.pidFormatted @model.permit.pidRaw "N/A"}}
+        </div>
+      </div>
+      {{! Total Fee }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Total Fee</div>
+        <div class="avitar-text-sm avitar-font-bold avitar-text-primary">
+          ${{this.totalFee}}
+        </div>
+      </div>
+    </div>
+    {{! Status Progress }}
+    <Contractor::PermitStatusProgress @permit={{@model.permit}} @steps={{this.permitStatusSteps}} @currentStepIndex={{this.currentStepIndex}} @departmentReviews={{this.departmentReviews}} />
+  </div>
+
+  {{! Right Content - Main Review Area }}
+  <main class="avitar-flex-10" style="background-color: #f9fafb; scrollbar-gutter: stable;">
+    <div class="avitar-container avitar-py-6">
+      {{! Reviewing Department Badge }}
+      <div class="avitar-mb-4">
+        <span class="avitar-badge avitar-badge--primary avitar-badge--lg">
+          <i class="fas fa-user-shield avitar-mr-2"></i>
+          Reviewing as: {{@model.departmentName}}
+        </span>
+      </div>
+
+      {{! Permit Application Details }}
+      <div class="avitar-card avitar-mb-6">
+        <div class="avitar-card__header avitar-bg-gray-50">
+          <h3 class="avitar-card__title">
+            <i class="fas fa-file-alt avitar-mr-2"></i>
+            Permit Application Details
+          </h3>
+        </div>
+        <div class="avitar-card__body avitar-space-y-6">
+          {{! Basic Information Section }}
+          <div>
+            <h4 class="avitar-text-sm avitar-font-bold avitar-text-muted avitar-mb-3 avitar-uppercase">Basic Information</h4>
+            <div class="avitar-space-y-2">
+              <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Permit Type</label>
+                <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.type}}</div>
+              </div>
+              {{#if @model.permit.subtype}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Subtype</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.subtype}}</div>
+                </div>
+              {{/if}}
+              <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Application Date</label>
+                <div class="avitar-text-sm avitar-font-medium avitar-flex-2">
+                  {{date-format @model.permit.applicationDate "MMM DD, YYYY"}}
+                </div>
+              </div>
+              <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Status</label>
+                <div class="avitar-flex-2">
+                  <span class="avitar-badge avitar-badge--{{if (eq @model.permit.status 'submitted') 'primary' (if (eq @model.permit.status 'under_review') 'warning' (if (eq @model.permit.status 'approved') 'success' 'secondary'))}}">
+                    {{@model.permit.status}}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {{! Applicant Information }}
+          <div>
+            <h4 class="avitar-text-sm avitar-font-bold avitar-text-muted avitar-mb-3 avitar-uppercase">Applicant Information</h4>
+            <div class="avitar-space-y-2">
+              <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Name</label>
+                <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.applicant.name}}</div>
+              </div>
+              {{#if @model.permit.applicant.email}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Email</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.applicant.email}}</div>
+                </div>
+              {{/if}}
+              {{#if @model.permit.applicant.phone}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Phone</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.applicant.phone}}</div>
+                </div>
+              {{/if}}
+              {{#if @model.permit.applicant.relationshipToProperty}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Relationship to Property</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.applicant.relationshipToProperty}}</div>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+
+          {{! Contractor Information }}
+          {{#if @model.permit.contractor.companyName}}
+            <div>
+              <h4 class="avitar-text-sm avitar-font-bold avitar-text-muted avitar-mb-3 avitar-uppercase">Contractor Information</h4>
+              <div class="avitar-space-y-2">
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Company Name</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.contractor.companyName}}</div>
+                </div>
+                {{#if @model.permit.contractor.licenseNumber}}
+                  <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                    <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">License Number</label>
+                    <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.contractor.licenseNumber}}</div>
+                  </div>
+                {{/if}}
+                {{#if @model.permit.contractor.contactName}}
+                  <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                    <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Contact Name</label>
+                    <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.contractor.contactName}}</div>
+                  </div>
+                {{/if}}
+                {{#if @model.permit.contractor.phone}}
+                  <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                    <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Phone</label>
+                    <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.contractor.phone}}</div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Project Details }}
+          <div>
+            <h4 class="avitar-text-sm avitar-font-bold avitar-text-muted avitar-mb-3 avitar-uppercase">Project Details</h4>
+            <div class="avitar-space-y-2">
+              <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Description</label>
+                <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.description}}</div>
+              </div>
+              {{#if @model.permit.scopeOfWork}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Scope of Work</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{@model.permit.scopeOfWork}}</div>
+                </div>
+              {{/if}}
+              {{#if @model.permit.estimatedValue}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Estimated Value</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{format-currency @model.permit.estimatedValue}}</div>
+                </div>
+              {{/if}}
+              {{#if @model.permit.squareFootage}}
+                <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                  <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">Square Footage</label>
+                  <div class="avitar-text-sm avitar-font-medium avitar-flex-2">{{number-format @model.permit.squareFootage}} sq ft</div>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+
+          {{! Custom Fields }}
+          {{#if this.hasCustomFields}}
+            <div>
+              <h4 class="avitar-text-sm avitar-font-bold avitar-text-muted avitar-mb-3 avitar-uppercase">Additional Information</h4>
+              <div class="avitar-space-y-2">
+                {{#each this.customFieldsArray as |field|}}
+                  <div class="avitar-flex avitar-flex-row avitar-gap-4">
+                    <label class="avitar-label avitar-text-xs avitar-flex-1 avitar-text-right">{{field.label}}</label>
+                    <div class="avitar-text-sm avitar-font-medium avitar-flex-2">
+                      {{field.value}}
+                      {{#if field.unit}}
+                        <span class="avitar-text-muted avitar-ml-1">{{field.unit}}</span>
+                      {{/if}}
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{! Review Decision Section }}
+      <div class="avitar-card">
+        <div class="avitar-card__header avitar-bg-gray-50">
+          <h3 class="avitar-card__title">
+            <i class="fas fa-gavel avitar-mr-2"></i>
+            {{@model.departmentName}} Review Decision
+          </h3>
+        </div>
+        <div class="avitar-card__body avitar-space-y-4">
+          {{! Current Status Badge }}
+          <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-3">
+            <span class="avitar-badge avitar-badge--{{if (eq @model.departmentReview.status 'pending') 'secondary' (if (eq @model.departmentReview.status 'approved') 'success' (if (eq @model.departmentReview.status 'rejected') 'danger' 'warning'))}}">
+              Current: {{@model.departmentReview.status}}
+            </span>
+          </div>
+
+          {{! Decision Buttons }}
+          <div>
+            <label class="avitar-label">Select Decision</label>
+            <div class="avitar-space-y-2">
+              {{#each this.reviewStatusOptions as |statusOption|}}
+                <button
+                  type="button"
+                  class="{{statusOption.class}} avitar-w-full avitar-justify-start {{if (eq this.reviewStatus statusOption.value) 'avitar-shadow-lg'}}"
+                  {{on "click" (fn this.selectReviewStatus statusOption.value)}}>
+                  <i class="fas {{statusOption.icon}} avitar-mr-2"></i>
+                  {{statusOption.label}}
+                  {{#if (eq this.reviewStatus statusOption.value)}}
+                    <i class="fas fa-check avitar-ml-auto"></i>
+                  {{/if}}
+                </button>
+              {{/each}}
+            </div>
+          </div>
+
+          {{! Review Notes }}
+          <div>
+            <label class="avitar-label">
+              Review Notes
+              {{#unless (eq this.reviewStatus 'approved')}}
+                <span class="avitar-text-danger">*</span>
+              {{/unless}}
+            </label>
+            <textarea
+              class="avitar-textarea"
+              rows="4"
+              placeholder="Enter your review notes and findings..."
+              value={{this.reviewNotes}}
+              {{on "input" this.updateReviewNotes}}></textarea>
+          </div>
+
+          {{! Conditions Section (for conditional approvals) }}
+          {{#if (or (eq this.reviewStatus 'conditionally_approved') (eq this.reviewStatus 'revisions_requested'))}}
+            <div>
+              <label class="avitar-label">Conditions / Requirements</label>
+
+              {{! Existing Conditions }}
+              {{#if this.conditions.length}}
+                <ul class="avitar-space-y-2 avitar-mb-3">
+                  {{#each this.conditions as |condition index|}}
+                    <li class="avitar-flex avitar-items-start avitar-gap-2 avitar-p-2 avitar-bg-gray-50 avitar-rounded">
+                      <i class="fas fa-exclamation-circle avitar-text-warning avitar-mt-1"></i>
+                      <span class="avitar-flex-1 avitar-text-sm">{{condition}}</span>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-danger"
+                        {{on "click" (fn this.removeCondition index)}}>
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </li>
+                  {{/each}}
+                </ul>
+              {{/if}}
+
+              {{! Add New Condition }}
+              <div class="avitar-flex avitar-gap-2">
+                <input
+                  type="text"
+                  class="avitar-input avitar-flex-1"
+                  placeholder="Add a condition..."
+                  value={{this.newCondition}}
+                  {{on "input" this.updateNewCondition}}
+                  {{on "keydown" this.handleConditionKeydown}} />
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary"
+                  {{on "click" this.addCondition}}>
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          {{/if}}
+
+          {{! Submit Button }}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary avitar-btn--lg avitar-w-full"
+            disabled={{or (not this.canSubmitReview) this.isSubmittingReview}}
+            {{on "click" this.submitReview}}>
+            {{#if this.isSubmittingReview}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Submitting...
+            {{else}}
+              <i class="fas fa-paper-plane avitar-mr-2"></i>
+              Submit Review
+            {{/if}}
+          </button>
+
+          {{! Guidelines Info }}
+          <div class="avitar-card avitar-bg-info-light avitar-border-info avitar-mt-4">
+            <div class="avitar-card__body avitar-p-3">
+              <div class="avitar-flex avitar-items-start avitar-gap-2">
+                <i class="fas fa-info-circle avitar-text-info avitar-mt-1"></i>
+                <div class="avitar-text-xs avitar-text-muted">
+                  <p class="avitar-font-semibold avitar-mb-1">Review Guidelines</p>
+                  <p>Ensure all documents meet code requirements. Add annotations to documents and use the chat for coordination.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Right Column - Documents & Discussion Tabs }}
+    <div class="avitar-flex-1">
+      <div class="avitar-card">
+        <div class="avitar-card__header avitar-bg-gray-50 avitar-p-0">
+          <div class="avitar-tabs">
+            <button
+              type="button"
+              class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}"
+              {{on "click" (fn this.selectTab 'documents')}}>
+              <i class="fas fa-file-alt avitar-mr-2"></i>
+              Documents
+              <span class="avitar-badge avitar-badge--sm avitar-ml-2">{{this.documents.length}}</span>
+            </button>
+            <button
+              type="button"
+              class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}"
+              {{on "click" (fn this.selectTab 'chat')}}>
+              <i class="fas fa-comments avitar-mr-2"></i>
+              Discussion
+              <span class="avitar-badge avitar-badge--sm avitar-ml-2">{{this.comments.length}}</span>
+            </button>
+          </div>
+        </div>
+
+        {{! Tab Content }}
+        <div class="avitar-card__body">
+          {{! Documents Tab }}
+          {{#if (eq this.activeTab 'documents')}}
+            <div class="avitar-space-y-4">
+              <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+                <h3 class="avitar-text-lg avitar-font-semibold">Permit Documents</h3>
+              </div>
+
+              {{#if this.documents.length}}
+                <div class="avitar-space-y-2">
+                  {{#each this.documents as |doc|}}
+                    <div class="avitar-flex avitar-items-center avitar-gap-4 avitar-p-3 avitar-bg-gray-50 avitar-rounded hover:avitar-bg-gray-100">
+                      {{! Document Icon }}
+                      <div class="avitar-w-10 avitar-h-10 avitar-rounded avitar-bg-primary-light avitar-text-primary avitar-flex avitar-items-center avitar-justify-center avitar-flex-shrink-0">
+                        {{#if (or (eq doc.fileType 'application/pdf') (includes doc.fileName '.pdf'))}}
+                          <i class="fas fa-file-pdf"></i>
+                        {{else if (includes doc.fileType 'image')}}
+                          <i class="fas fa-file-image"></i>
+                        {{else}}
+                          <i class="fas fa-file"></i>
+                        {{/if}}
+                      </div>
+
+                      {{! Document Title }}
+                      <div class="avitar-flex-1">
+                        <h4 class="avitar-font-semibold avitar-text-sm">
+                          {{or doc.displayName doc.fileName doc.originalName}}
+                        </h4>
+                        {{#if doc.category}}
+                          <p class="avitar-text-xs avitar-text-muted">{{doc.category}}</p>
+                        {{/if}}
+                      </div>
+
+                      {{! Upload Date }}
+                      <div class="avitar-text-sm avitar-text-muted avitar-flex-shrink-0">
+                        {{#if doc.uploadedAt}}
+                          {{date-format doc.uploadedAt "MMM DD, YYYY"}}
+                        {{else if doc.createdAt}}
+                          {{date-format doc.createdAt "MMM DD, YYYY"}}
+                        {{else}}
+                          --
+                        {{/if}}
+                      </div>
+
+                      {{! Action Buttons }}
+                      <div class="avitar-flex avitar-gap-2 avitar-flex-shrink-0">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          title="View Document"
+                          {{on "click" (fn this.viewDocument doc)}}>
+                          {{{lnr-icon "eye"}}}
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          title="Annotate Document"
+                          {{on "click" (fn this.openAnnotationModal doc)}}>
+                          {{{lnr-icon "pencil"}}}
+                        </button>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              {{else}}
+                <div class="avitar-empty-state avitar-py-8">
+                  <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+                  <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Documents</h3>
+                  <p class="avitar-text-muted">No documents have been uploaded for this permit yet.</p>
+                </div>
+              {{/if}}
+            </div>
+          {{/if}}
+
+          {{! Chat Tab }}
+          {{#if (eq this.activeTab 'chat')}}
+            <div class="avitar-space-y-4">
+              <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+                <h3 class="avitar-text-lg avitar-font-semibold">Department Discussion</h3>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary avitar-btn--sm"
+                  {{on "click" this.openCommentModal}}>
+                  <i class="fas fa-plus avitar-mr-2"></i>
+                  Add Comment
+                </button>
+              </div>
+
+              {{#if this.sortedComments.length}}
+                <div class="avitar-space-y-3">
+                  {{#each this.sortedComments as |comment|}}
+                    <div class="avitar-card avitar-bg-gray-50">
+                      <div class="avitar-card__body avitar-p-4">
+                        <div class="avitar-flex avitar-gap-3">
+                          {{! Avatar }}
+                          <div class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-font-semibold">
+                            {{substring comment.authorName 0 1}}
+                          </div>
+
+                          {{! Comment Content }}
+                          <div class="avitar-flex-1">
+                            <div class="avitar-flex avitar-items-start avitar-justify-between avitar-mb-2">
+                              <div>
+                                <span class="avitar-font-semibold avitar-text-sm">
+                                  {{comment.authorName}}
+                                </span>
+                                {{#if (eq comment.authorId this.currentUser.user._id)}}
+                                  <span class="avitar-badge avitar-badge--sm avitar-ml-2">You</span>
+                                {{/if}}
+                              </div>
+                              <span class="avitar-text-xs avitar-text-muted">
+                                {{date-format comment.createdAt "MMM DD, YYYY h:mm a"}}
+                              </span>
+                            </div>
+
+                            {{#if comment.visibility}}
+                              <span class="avitar-badge avitar-badge--sm avitar-badge--{{if (eq comment.visibility 'internal') 'warning' 'success'}} avitar-mb-2">
+                                {{comment.visibility}}
+                              </span>
+                            {{/if}}
+
+                            <p class="avitar-text-sm">{{comment.content}}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {{/each}}
+                </div>
+              {{else}}
+                <div class="avitar-empty-state avitar-py-8">
+                  <i class="fas fa-comments fa-3x avitar-text-muted avitar-mb-4"></i>
+                  <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Comments Yet</h3>
+                  <p class="avitar-text-muted avitar-mb-4">Start the discussion about this permit review.</p>
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--primary"
+                    {{on "click" this.openCommentModal}}>
+                    <i class="fas fa-plus avitar-mr-2"></i>
+                    Add First Comment
+                  </button>
+                </div>
+              {{/if}}
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    </main>
+  </div>
+
+{{! Comment Modal }}
+{{#if this.showCommentModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeCommentModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-comment avitar-mr-2"></i>
+          Add Comment
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeCommentModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div>
+          <label class="avitar-label">Comment</label>
+          <textarea
+            class="avitar-textarea"
+            rows="6"
+            placeholder="Enter your comment or question..."
+            value={{this.newComment}}
+            {{on "input" this.updateNewComment}}></textarea>
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+            This comment will be visible to other reviewers in the {{@model.departmentName}} department.
+          </p>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeCommentModal}}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          disabled={{this.isAddingComment}}
+          {{on "click" this.addComment}}>
+          {{#if this.isAddingComment}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Adding...
+          {{else}}
+            <i class="fas fa-paper-plane avitar-mr-2"></i>
+            Add Comment
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Document Annotation Modal }}
+{{#if this.showAnnotationModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeAnnotationModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-comment-alt avitar-mr-2"></i>
+          Annotate Document
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeAnnotationModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{#if this.selectedDocument}}
+          <div class="avitar-mb-4 avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+            <div class="avitar-flex avitar-items-center avitar-gap-3">
+              <i class="fas fa-file fa-2x avitar-text-primary"></i>
+              <div>
+                <p class="avitar-font-semibold">{{or this.selectedDocument.displayName this.selectedDocument.fileName this.selectedDocument.originalName}}</p>
+                <p class="avitar-text-xs avitar-text-muted">{{this.selectedDocument.category}}</p>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+
+        <div>
+          <label class="avitar-label">Annotation / Note</label>
+          <textarea
+            class="avitar-textarea"
+            rows="6"
+            placeholder="Enter your annotation, concern, or question about this document..."
+            value={{this.annotationText}}
+            {{on "input" this.updateAnnotationText}}></textarea>
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+            <i class="fas fa-info-circle"></i>
+            This annotation will be saved as a comment visible to all reviewers in your department.
+          </p>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeAnnotationModal}}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          disabled={{this.isAddingComment}}
+          {{on "click" this.saveAnnotation}}>
+          {{#if this.isAddingComment}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            Save Annotation
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Document Viewer Modal }}
+<BuildingPermits::DocumentViewerModal
+  @isOpen={{this.showDocumentViewer}}
+  @file={{this.selectedDocumentForViewing}}
+  @comments={{@model.comments}}
+  @onClose={{this.closeDocumentViewer}}
+/>

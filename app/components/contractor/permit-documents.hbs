@@ -1,0 +1,74 @@
+<div class="avitar-card">
+  <div class="avitar-card__header avitar-flex avitar-justify-between avitar-items-center">
+    <h3 class="avitar-card__title">
+      <i class="fas fa-file-alt avitar-mr-2"></i>
+      Documents
+    </h3>
+    {{#if @canUpload}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary avitar-btn--sm"
+        {{on "click" @onUpload}}
+      >
+        <i class="fas fa-upload avitar-mr-2"></i>
+        Upload Documents
+      </button>
+    {{/if}}
+  </div>
+  <div class="avitar-card__body">
+    {{#if @files.length}}
+      <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+        {{#each @files as |file|}}
+          <div class="avitar-card avitar-card--hover avitar-cursor-pointer" {{on "click" (fn @onDownload file)}}>
+            <div class="avitar-card__body avitar-p-4">
+              <div class="avitar-flex avitar-items-start avitar-gap-3">
+                <div class="avitar-flex-shrink-0">
+                  <div class="avitar-w-10 avitar-h-10 avitar-rounded avitar-bg-primary-light avitar-text-primary avitar-flex avitar-items-center avitar-justify-center">
+                    <i class="fas fa-file"></i>
+                  </div>
+                </div>
+                <div class="avitar-flex-1 avitar-min-w-0">
+                  <div class="avitar-font-medium avitar-truncate">
+                    {{file.displayName}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                    {{#if file.uploadedAt}}
+                      Uploaded {{date-format file.uploadedAt "MMM DD, YYYY"}}
+                    {{/if}}
+                  </div>
+                </div>
+                <div class="avitar-flex-shrink-0">
+                  <i class="fas fa-download avitar-text-gray-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="avitar-empty-state avitar-py-8">
+        <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+          No Documents Yet
+        </h3>
+        <p class="avitar-text-muted avitar-mb-4">
+          {{#if @canUpload}}
+            Upload documents related to this permit.
+          {{else}}
+            Documents will appear here once uploaded.
+          {{/if}}
+        </p>
+        {{#if @canUpload}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" @onUpload}}
+          >
+            <i class="fas fa-upload avitar-mr-2"></i>
+            Upload Your First Document
+          </button>
+        {{/if}}
+      </div>
+    {{/if}}
+  </div>
+</div>

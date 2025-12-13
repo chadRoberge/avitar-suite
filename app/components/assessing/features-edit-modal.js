@@ -28,10 +28,7 @@ export default class FeaturesEditModalComponent extends Component {
   async loadData() {
     this.isLoading = true;
     try {
-      await Promise.all([
-        this.loadFeatureCodes(),
-        this.loadFeatures(),
-      ]);
+      await Promise.all([this.loadFeatureCodes(), this.loadFeatures()]);
     } catch (error) {
       console.error('Error loading features data:', error);
       this.notifications.error('Failed to load features data');
@@ -88,7 +85,8 @@ export default class FeaturesEditModalComponent extends Component {
       // Initialize features with feature code data populated
       this.features = featuresArray.map((feature) => {
         // Extract the actual ID from the feature code (could be object or string)
-        const featureCodeData = feature.feature_code_id || feature.featureCodeId;
+        const featureCodeData =
+          feature.feature_code_id || feature.featureCodeId;
         const featureCodeId =
           typeof featureCodeData === 'object'
             ? featureCodeData._id || featureCodeData.id
@@ -114,7 +112,9 @@ export default class FeaturesEditModalComponent extends Component {
         };
       });
 
-      console.log(`Loaded ${this.features.length} features for card ${cardNumber}`);
+      console.log(
+        `Loaded ${this.features.length} features for card ${cardNumber}`,
+      );
     } catch (error) {
       console.error('Error loading features:', error);
       this.notifications.error('Failed to load features');
@@ -282,7 +282,9 @@ export default class FeaturesEditModalComponent extends Component {
       }
 
       // Clear features cache to ensure fresh data on next load
-      console.log(`🧹 Clearing features cache for property ${propertyId}, card ${cardNumber}`);
+      console.log(
+        `🧹 Clearing features cache for property ${propertyId}, card ${cardNumber}`,
+      );
       await this.clearFeaturesCache(propertyId, cardNumber);
 
       // Update the feature in the list
@@ -367,7 +369,9 @@ export default class FeaturesEditModalComponent extends Component {
         );
 
         // Clear features cache to ensure fresh data on next load
-        console.log(`🧹 Clearing features cache after delete for property ${propertyId}, card ${cardNumber}`);
+        console.log(
+          `🧹 Clearing features cache after delete for property ${propertyId}, card ${cardNumber}`,
+        );
         await this.clearFeaturesCache(propertyId, cardNumber);
 
         this.features = this.features.filter((f) => f !== feature);
@@ -449,24 +453,30 @@ export default class FeaturesEditModalComponent extends Component {
       });
 
       // Post-filter by card_number since IndexedDB compound index query might not work directly
-      const featuresForCard = cachedFeatures.filter(feature => {
+      const featuresForCard = cachedFeatures.filter((feature) => {
         // Card 1 includes features without card_number (legacy)
         if (cardNumber === 1) {
-          return feature.card_number === 1 ||
-                 feature.card_number === undefined ||
-                 feature.card_number === null;
+          return (
+            feature.card_number === 1 ||
+            feature.card_number === undefined ||
+            feature.card_number === null
+          );
         } else {
           return feature.card_number === cardNumber;
         }
       });
 
-      console.log(`🗑️ Found ${featuresForCard.length} cached features for property ${propertyId}, card ${cardNumber} (out of ${cachedFeatures.length} total features)`);
+      console.log(
+        `🗑️ Found ${featuresForCard.length} cached features for property ${propertyId}, card ${cardNumber} (out of ${cachedFeatures.length} total features)`,
+      );
 
       for (const feature of featuresForCard) {
         await this.indexedDb.delete('features', feature.id || feature._id);
       }
 
-      console.log(`✅ Cleared ${featuresForCard.length} features from IndexedDB cache for card ${cardNumber}`);
+      console.log(
+        `✅ Cleared ${featuresForCard.length} features from IndexedDB cache for card ${cardNumber}`,
+      );
     } catch (error) {
       console.error('Error clearing features cache:', error);
       // Don't throw - cache clearing is optional, shouldn't block the operation

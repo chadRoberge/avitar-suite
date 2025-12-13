@@ -282,11 +282,7 @@ export default class PermitDocumentModel extends Model {
   }
 
   get canPreview() {
-    return (
-      this.isImage ||
-      this.isPDF ||
-      this.processingStatus === 'completed'
-    );
+    return this.isImage || this.isPDF || this.processingStatus === 'completed';
   }
 
   get canDownload() {

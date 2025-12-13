@@ -13,6 +13,7 @@
 @import url("./components/property-record-modal.css");
 @import url("./components/exemption-edit-modal.css");
 @import url("./components/step-progress.css");
+@import url("./components/modules.css");
 
 /* ===============================================
    DESIGN TOKENS & CSS CUSTOM PROPERTIES
@@ -219,12 +220,22 @@ body {
   width: 100%;
 }
 
+/* Remove left padding for contractor permit pages with sidebar layout */
+.route-my-permits-permit .avitar-content {
+  padding-left: 0;
+}
+
 @media (width <= 768px) {
   .avitar-main--with-sidebar {
     margin-left: 0;
   }
 
   .avitar-content {
+    padding: var(--space-4);
+  }
+
+  /* Reset padding on mobile for contractor pages */
+  .route-my-permits-permit .avitar-content {
     padding: var(--space-4);
   }
 }
@@ -762,6 +773,15 @@ body {
   border: 1px solid var(--color-danger-light);
 }
 
+/* Sticky Header Variant */
+.avitar-card--sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--color-white);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 /* Dashboard Cards */
 .avitar-card--dashboard {
   text-align: center;
@@ -1229,6 +1249,191 @@ body {
 }
 
 /* ===============================================
+   BADGE SYSTEM
+   =============================================== */
+
+.avitar-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  border-radius: var(--radius-base);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all var(--transition-base);
+}
+
+/* Badge Sizes */
+.avitar-badge--xs {
+  padding: 0.125rem 0.375rem;
+  font-size: var(--font-size-xs);
+}
+
+.avitar-badge--sm {
+  padding: 0.25rem 0.625rem;
+  font-size: var(--font-size-sm);
+}
+
+.avitar-badge--lg {
+  padding: 0.5rem 1rem;
+  font-size: var(--font-size-base);
+}
+
+/* Pill Style Badge */
+.avitar-badge--pill {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-weight: 500;
+}
+
+.avitar-badge--pill.avitar-badge--sm {
+  padding: 0.25rem 0.625rem;
+}
+
+.avitar-badge--pill.avitar-badge--xs {
+  padding: 0.125rem 0.5rem;
+}
+
+.avitar-badge--pill.avitar-badge--lg {
+  padding: 0.375rem 1rem;
+}
+
+/* Primary Badge (Avitar Green) */
+.avitar-badge--primary {
+  background-color: var(--avitar-green-pale);
+  color: var(--avitar-green-dark);
+  border-color: var(--avitar-green);
+}
+
+/* Secondary Badge (Avitar Blue) */
+.avitar-badge--secondary {
+  background-color: var(--avitar-blue-pale);
+  color: var(--avitar-blue-dark);
+  border-color: var(--avitar-blue);
+}
+
+/* Success Badge (Green) */
+.avitar-badge--success {
+  background-color: #dcfce7;
+  color: #166534;
+  border-color: #22c55e;
+}
+
+/* Warning Badge (Yellow) */
+.avitar-badge--warning {
+  background-color: var(--avitar-yellow-pale);
+  color: var(--avitar-yellow-dark);
+  border-color: var(--avitar-yellow);
+}
+
+/* Danger Badge (Red) */
+.avitar-badge--danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #dc2626;
+}
+
+/* Info Badge (Blue) */
+.avitar-badge--info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #3b82f6;
+}
+
+/* Neutral Badge (Gray) */
+.avitar-badge--neutral {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+}
+
+/* Outline Badges */
+.avitar-badge--outline-primary {
+  background-color: transparent;
+  color: var(--avitar-green);
+  border-color: var(--avitar-green);
+}
+
+.avitar-badge--outline-secondary {
+  background-color: transparent;
+  color: var(--avitar-blue);
+  border-color: var(--avitar-blue);
+}
+
+.avitar-badge--outline-success {
+  background-color: transparent;
+  color: #22c55e;
+  border-color: #22c55e;
+}
+
+.avitar-badge--outline-warning {
+  background-color: transparent;
+  color: var(--avitar-yellow-dark);
+  border-color: var(--avitar-yellow);
+}
+
+.avitar-badge--outline-danger {
+  background-color: transparent;
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.avitar-badge--outline-info {
+  background-color: transparent;
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Interactive Badges (Clickable/Removable) */
+.avitar-badge--interactive {
+  cursor: pointer;
+  user-select: none;
+}
+
+.avitar-badge--interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.avitar-badge--interactive:active {
+  transform: translateY(0);
+}
+
+/* Badge with Icon */
+.avitar-badge i,
+.avitar-badge svg {
+  margin-right: 0.25rem;
+  font-size: 0.875em;
+}
+
+.avitar-badge i:last-child,
+.avitar-badge svg:last-child {
+  margin-right: 0;
+  margin-left: 0.25rem;
+}
+
+/* Badge Dot (Status indicator) */
+.avitar-badge--dot {
+  padding-left: 0.5rem;
+  position: relative;
+}
+
+.avitar-badge--dot::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentcolor;
+}
+
+/* ===============================================
    MODAL SYSTEM
    =============================================== */
 
@@ -1557,7 +1762,6 @@ body {
   display: block;
   font-weight: var(--font-weight-medium);
   color: var(--color-gray-700);
-  margin-bottom: var(--space-2);
   font-size: var(--font-size-sm);
 }
 
@@ -2550,6 +2754,69 @@ body {
     left: 0;
     background: inherit;
     z-index: 1;
+  }
+}
+
+/* ===============================================
+   TAB NAVIGATION COMPONENTS
+   =============================================== */
+
+.avitar-tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 2px solid var(--color-gray-200);
+  overflow: auto hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.avitar-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px; /* Offset parent border */
+}
+
+.avitar-tab:hover {
+  color: var(--color-gray-900);
+  background-color: var(--color-gray-50);
+}
+
+.avitar-tab--active {
+  color: var(--avitar-green);
+  border-bottom-color: var(--avitar-green);
+  font-weight: var(--font-weight-semibold);
+}
+
+.avitar-tab--active:hover {
+  background-color: var(--avitar-green-pale);
+}
+
+/* Disabled tab */
+.avitar-tab:disabled {
+  color: var(--color-gray-400);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.avitar-tab:disabled:hover {
+  background-color: transparent;
+}
+
+/* Mobile responsive */
+@media (width <= 768px) {
+  .avitar-tab {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
   }
 }
 
@@ -3572,7 +3839,6 @@ main.municipality-page.has-sidebar {
 }
 
 .property-sidebar__controls .avitar-label {
-  margin-bottom: var(--space-2);
   display: block;
 }
 
@@ -4230,7 +4496,7 @@ main.municipality-page.has-sidebar {
 }
 
 /* Responsive adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .avitar-breadcrumb {
     padding: var(--space-2) var(--space-4);
   }
@@ -4260,22 +4526,29 @@ main.municipality-page.has-sidebar {
 /* Adjust main content to account for double navigation height */
 .contractor-page {
   padding-top: calc(var(--topbar-height) * 2);
-  padding-left: var(--space-6);
-  padding-right: var(--space-6);
   transition: padding-top var(--transition-fast);
 }
 
 /* Responsive padding adjustments for contractor page */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .contractor-page {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
 }
 
-@media (min-width: 1280px) {
+@media (width >= 1280px) {
   .contractor-page {
     padding-left: var(--space-8);
     padding-right: var(--space-8);
   }
+}
+
+/* Text Decoration Utilities */
+.avitar-no-underline {
+  text-decoration: none !important;
+}
+
+.avitar-underline {
+  text-decoration: underline;
 }

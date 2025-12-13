@@ -3,31 +3,430 @@
 <div class="avitar-page-header">
   <div class="avitar-page-header__content">
     <h1 class="avitar-page-header__title">
-      <i class="fas fa-users avitar-mr-2"></i>
+      {{lnr-icon "users" class="avitar-mr-2"}}
       Users & Inspectors
     </h1>
     <p class="avitar-page-header__subtitle">
       Manage building department users, inspectors, and permissions
     </p>
   </div>
+
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openAddUserModal}}
+    >
+      {{lnr-icon "user-plus" class="avitar-mr-2"}}
+      Add User
+    </button>
+  </div>
 </div>
 
-<div class="avitar-empty-state" style="margin-top: 4rem;">
-  <i class="fas fa-users fa-4x avitar-text-muted avitar-mb-4"></i>
-  <h2 class="avitar-mb-3">User Management Coming Soon</h2>
-  <p class="avitar-text-muted avitar-text-lg avitar-mb-4" style="max-width: 600px; margin: 0 auto;">
-    Manage building department staff, inspectors, and their permissions for the permits module.
-  </p>
-  <div class="avitar-card" style="max-width: 500px; margin: 2rem auto;">
+{{! Stats Cards }}
+<div class="avitar-flex avitar-gap-4 avitar-mb-4">
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
     <div class="avitar-card__body">
-      <h4 class="avitar-mb-3">Planned Features:</h4>
-      <ul class="avitar-list avitar-list--simple">
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Inspector profiles and credentials</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Role-based permissions</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Inspection specialties</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Availability scheduling</li>
-        <li><i class="fas fa-check avitar-text-success avitar-mr-2"></i> Performance tracking</li>
-      </ul>
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Total Users</div>
+        <div class="avitar-stat__value">{{this.totalUsers}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Inspectors</div>
+        <div class="avitar-stat__value avitar-text-success">{{this.inspectorCount}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Administrators</div>
+        <div class="avitar-stat__value avitar-text-danger">{{this.adminCount}}</div>
+      </div>
     </div>
   </div>
 </div>
+
+{{! Users Table Card }}
+<div class="avitar-card">
+  <div class="avitar-card__header">
+    <h2 class="avitar-card__title">
+      {{lnr-icon "users" size=20}}
+      <span class="avitar-ml-2">Building Permits Users</span>
+    </h2>
+  </div>
+  <div class="avitar-card__body">
+    <Shared::UsersTable
+      @users={{this.filteredUsers}}
+      @municipalityId={{this.municipalityId}}
+      @context="module"
+      @module="building-permits"
+      @searchText={{this.searchText}}
+      @filterRole={{this.filterRole}}
+      @roleOptions={{this.roleOptions}}
+      @onSearchUpdate={{this.updateSearch}}
+      @onFilterUpdate={{this.setFilterRole}}
+      @onEdit={{this.openEditUserModal}}
+      @onRemove={{this.removeUser}}
+      @canModifyUser={{this.canModifyUser}}
+    />
+  </div>
+</div>
+
+{{! Add User Modal }}
+{{#if this.showAddUserModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeAddUserModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "user-plus" class="avitar-mr-2"}}
+          Add New User
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeAddUserModal}}>
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Basic Information }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Basic Information</h4>
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div>
+                <label class="avitar-label">
+                  First Name
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.formFirstName}}
+                  {{on "input" (fn this.updateFormField "formFirstName")}}
+                  placeholder="John"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">
+                  Last Name
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.formLastName}}
+                  {{on "input" (fn this.updateFormField "formLastName")}}
+                  placeholder="Doe"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">
+                  Email
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="email"
+                  class="avitar-input"
+                  value={{this.formEmail}}
+                  {{on "input" (fn this.updateFormField "formEmail")}}
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Phone</label>
+                <input
+                  type="tel"
+                  class="avitar-input"
+                  value={{this.formPhone}}
+                  {{on "input" (fn this.updateFormField "formPhone")}}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+            </div>
+          </div>
+
+          {{! Role & Permissions }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Role & Permissions</h4>
+            <div class="avitar-mb-4">
+              <label class="avitar-label">Role</label>
+              <select
+                class="avitar-select"
+                {{on "change" (fn this.updateFormField "formRole")}}
+              >
+                {{#each this.roleOptions as |roleOpt|}}
+                  <option
+                    value={{roleOpt.value}}
+                    selected={{eq this.formRole roleOpt.value}}
+                  >
+                    {{roleOpt.label}} - {{roleOpt.description}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <div>
+              <label class="avitar-label avitar-mb-2">Specific Permissions</label>
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2">
+                {{#each this.permissionOptions as |perm|}}
+                  <label class="avitar-flex avitar-items-center avitar-gap-2">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{includes this.formPermissions perm.value}}
+                      {{on "change" (fn this.togglePermission perm.value)}}
+                    />
+                    {{perm.label}}
+                  </label>
+                {{/each}}
+              </div>
+            </div>
+          </div>
+
+          {{! Inspector Specialties }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Inspector Specialties</h4>
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2">
+              {{#each this.specialtyOptions as |specialty|}}
+                <label class="avitar-flex avitar-items-center avitar-gap-2">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox"
+                    checked={{includes this.formSpecialties specialty}}
+                    {{on "change" (fn this.toggleSpecialty specialty)}}
+                  />
+                  {{specialty}}
+                </label>
+              {{/each}}
+            </div>
+          </div>
+
+          {{! Certifications }}
+          <div>
+            <label class="avitar-label">Certifications & Licenses</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              value={{this.formCertifications}}
+              {{on "input" (fn this.updateFormField "formCertifications")}}
+              placeholder="Enter certifications, licenses, and credentials..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeAddUserModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.addUser}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            {{lnr-icon "sync" class="avitar-mr-2"}}
+            Adding...
+          {{else}}
+            {{lnr-icon "check" class="avitar-mr-2"}}
+            Add User
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Edit User Modal }}
+{{#if this.showEditUserModal}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeEditUserModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "pencil" class="avitar-mr-2"}}
+          Edit User
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeEditUserModal}}>
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Basic Information }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Basic Information</h4>
+            <div class="avitar-alert avitar-alert--info avitar-mb-3">
+              {{lnr-icon "info" class="avitar-mr-2"}}
+              Email cannot be changed. Contact support if email needs to be updated.
+            </div>
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div>
+                <label class="avitar-label">
+                  First Name
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.formFirstName}}
+                  {{on "input" (fn this.updateFormField "formFirstName")}}
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">
+                  Last Name
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  class="avitar-input"
+                  value={{this.formLastName}}
+                  {{on "input" (fn this.updateFormField "formLastName")}}
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label">Email</label>
+                <input type="email" class="avitar-input" value={{this.formEmail}} disabled />
+              </div>
+
+              <div>
+                <label class="avitar-label">Phone</label>
+                <input
+                  type="tel"
+                  class="avitar-input"
+                  value={{this.formPhone}}
+                  {{on "input" (fn this.updateFormField "formPhone")}}
+                />
+              </div>
+            </div>
+          </div>
+
+          {{! Role & Permissions }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Role & Permissions</h4>
+            <div class="avitar-mb-4">
+              <label class="avitar-label">Role</label>
+              <select
+                class="avitar-select"
+                {{on "change" (fn this.updateFormField "formRole")}}
+              >
+                {{#each this.roleOptions as |roleOpt|}}
+                  <option
+                    value={{roleOpt.value}}
+                    selected={{eq this.formRole roleOpt.value}}
+                  >
+                    {{roleOpt.label}} - {{roleOpt.description}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <div>
+              <label class="avitar-label avitar-mb-2">Specific Permissions</label>
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2">
+                {{#each this.permissionOptions as |perm|}}
+                  <label class="avitar-flex avitar-items-center avitar-gap-2">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{includes this.formPermissions perm.value}}
+                      {{on "change" (fn this.togglePermission perm.value)}}
+                    />
+                    {{perm.label}}
+                  </label>
+                {{/each}}
+              </div>
+            </div>
+          </div>
+
+          {{! Inspector Specialties }}
+          <div>
+            <h4 class="avitar-font-semibold avitar-mb-3">Inspector Specialties</h4>
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-2">
+              {{#each this.specialtyOptions as |specialty|}}
+                <label class="avitar-flex avitar-items-center avitar-gap-2">
+                  <input
+                    type="checkbox"
+                    class="avitar-checkbox"
+                    checked={{includes this.formSpecialties specialty}}
+                    {{on "change" (fn this.toggleSpecialty specialty)}}
+                  />
+                  {{specialty}}
+                </label>
+              {{/each}}
+            </div>
+          </div>
+
+          {{! Certifications }}
+          <div>
+            <label class="avitar-label">Certifications & Licenses</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              value={{this.formCertifications}}
+              {{on "input" (fn this.updateFormField "formCertifications")}}
+              placeholder="Enter certifications, licenses, and credentials..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeEditUserModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.updateUser}}
+          disabled={{this.isLoading}}
+        >
+          {{#if this.isLoading}}
+            {{lnr-icon "sync" class="avitar-mr-2"}}
+            Updating...
+          {{else}}
+            {{lnr-icon "check" class="avitar-mr-2"}}
+            Update User
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

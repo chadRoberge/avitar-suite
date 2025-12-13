@@ -33,18 +33,28 @@ export default class PropertySidebarComponent extends Component {
     const currentRoute = this.router.currentRoute;
     if (currentRoute?.params?.property_id) {
       this.selectedPropertyId = currentRoute.params.property_id;
-      console.log('🎯 Initialized selected property from route:', this.selectedPropertyId);
+      console.log(
+        '🎯 Initialized selected property from route:',
+        this.selectedPropertyId,
+      );
     }
 
     // Only load properties if municipality changed or properties not loaded yet
     const currentMunicipalityId = this.municipality.currentMunicipality?.id;
-    if (!this.properties.length || this.lastMunicipalityId !== currentMunicipalityId) {
+    if (
+      !this.properties.length ||
+      this.lastMunicipalityId !== currentMunicipalityId
+    ) {
       this.lastMunicipalityId = currentMunicipalityId;
       this.loadProperties();
     }
 
     // Listen for background refresh completion
-    this.hybridApi.on('propertiesRefreshed', this, this.handlePropertiesRefreshed);
+    this.hybridApi.on(
+      'propertiesRefreshed',
+      this,
+      this.handlePropertiesRefreshed,
+    );
   }
 
   @action
@@ -57,7 +67,7 @@ export default class PropertySidebarComponent extends Component {
   get activeModule() {
     const currentRoute = this.router.currentRouteName;
     if (currentRoute.includes('assessing')) return 'assessing';
-    if (currentRoute.includes('building-permits')) return 'buildingPermits';
+    if (currentRoute.includes('building-permits')) return 'building_permit';
     if (currentRoute.includes('tax-collection')) return 'taxCollection';
     return null;
   }
@@ -118,7 +128,8 @@ export default class PropertySidebarComponent extends Component {
     // Update the global property selection service
     // Preserve cards data if re-selecting the same property
     const currentProperty = this.propertySelection.selectedProperty;
-    const isSameProperty = currentProperty && currentProperty.id === property.id;
+    const isSameProperty =
+      currentProperty && currentProperty.id === property.id;
 
     let propertyToSet = property;
     if (isSameProperty && currentProperty.cards && !property.cards) {
@@ -174,9 +185,14 @@ export default class PropertySidebarComponent extends Component {
                 { queryParams: this.router.currentRoute.queryParams },
               );
             }
-          } else if (moduleName === 'building-permits') {
+          } else if (moduleName === 'building_permit') {
             // Check if we're in a specific building permits view
-            const propertyViews = ['property-permits', 'inspections', 'documents', 'certificates'];
+            const propertyViews = [
+              'property-permits',
+              'inspections',
+              'documents',
+              'certificates',
+            ];
             const currentView = routeParts[2];
 
             if (propertyViews.includes(currentView)) {
@@ -185,9 +201,13 @@ export default class PropertySidebarComponent extends Component {
                 `municipality.building-permits.${currentView}.property`,
                 property.id,
               );
-            } else if (['queue', 'permits', 'applications'].includes(currentView)) {
+            } else if (
+              ['queue', 'permits', 'applications'].includes(currentView)
+            ) {
               // If in list views (non-property), stay there - just update selected property
-              console.log(`Selected property ${property.id} while in ${currentView} view`);
+              console.log(
+                `Selected property ${property.id} while in ${currentView} view`,
+              );
             } else {
               // Default to property permits view
               this.router.transitionTo(
@@ -283,8 +303,6 @@ export default class PropertySidebarComponent extends Component {
       // Use assessing service which implements local-first caching
       const response = await this.assessing.getProperties();
 
-      console.log('🏘️ Raw properties response:', response);
-
       // Handle different response formats (cached vs server)
       if (response?.properties) {
         // Server format: { success: true, properties: [...] }
@@ -296,8 +314,12 @@ export default class PropertySidebarComponent extends Component {
         this.properties = [];
       }
 
-      console.log(`🏘️ Loaded ${this.properties.length} properties`);
-      console.log('🏘️ First property sample:', this.properties[0]);
+      // Only log on silent refresh to confirm background updates
+      if (silent) {
+        console.log(
+          `🏘️ Background refresh: ${this.properties.length} properties`,
+        );
+      }
 
       // Reset query mode when loading fresh properties (only if not silent)
       if (!silent) {
@@ -323,8 +345,9 @@ export default class PropertySidebarComponent extends Component {
   }
 
   groupProperties() {
-    console.log(`🗂️ Starting groupProperties with ${this.properties.length} properties`);
-    console.log(`🗂️ Group by: ${this.groupBy}`);
+    // Removed debug logging - uncomment if needed for troubleshooting
+    // console.log(`🗂️ Starting groupProperties with ${this.properties.length} properties`);
+    // console.log(`🗂️ Group by: ${this.groupBy}`);
 
     const grouped = {};
 
@@ -332,36 +355,16 @@ export default class PropertySidebarComponent extends Component {
       case 'pid':
         this.properties.forEach((property, index) => {
           const map = property.mapNumber || 'Unknown';
-          if (index < 3) {
-            console.log(`🗂️ Property ${index}:`, {
-              id: property.id,
-              mapNumber: property.mapNumber,
-              lotSubDisplay: property.lotSubDisplay,
-              pid_formatted: property.pid_formatted,
-              pid_raw: property.pid_raw
-            });
-          }
+          // Removed debug logging for individual properties
           if (!grouped[map]) grouped[map] = [];
           grouped[map].push(property);
         });
 
-        console.log(`🗂️ Grouped into ${Object.keys(grouped).length} maps:`, Object.keys(grouped));
+        // Removed debug logging for grouped maps
 
         // Sort each map group by lot-sub display (server already formatted)
         Object.keys(grouped).forEach((map) => {
-          console.log(`🗂️ Map ${map} has ${grouped[map].length} properties`);
-
-          // Debug: Log all properties in Unknown map to identify what's being added
-          if (map === 'Unknown' && grouped[map].length > 0) {
-            console.log(`🔍 Unknown map properties:`, grouped[map].map(p => ({
-              id: p.id,
-              idType: typeof p.id,
-              mapNumber: p.mapNumber,
-              lotSubDisplay: p.lotSubDisplay,
-              pid_formatted: p.pid_formatted,
-              allKeys: Object.keys(p)
-            })));
-          }
+          // Removed debug logging for map property counts
 
           grouped[map].sort((a, b) => {
             // Use the lotSubDisplay from server or fallback to string comparison
@@ -454,13 +457,7 @@ export default class PropertySidebarComponent extends Component {
 
     this.groupedProperties = sortedGrouped;
 
-    console.log(`🗂️ Final grouped properties:`, {
-      totalGroups: Object.keys(this.groupedProperties).length,
-      groups: Object.keys(this.groupedProperties).map(key => ({
-        key,
-        count: this.groupedProperties[key].length
-      }))
-    });
+    // Removed debug logging for final grouped properties
   }
 
   extractLastName(ownerName) {
@@ -578,6 +575,10 @@ export default class PropertySidebarComponent extends Component {
     this.propertyPrefetch.clearPrefetchQueue();
 
     // Remove event listener
-    this.hybridApi.off('propertiesRefreshed', this, this.handlePropertiesRefreshed);
+    this.hybridApi.off(
+      'propertiesRefreshed',
+      this,
+      this.handlePropertiesRefreshed,
+    );
   }
 }

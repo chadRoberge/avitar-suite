@@ -77,20 +77,38 @@ class StorageService {
   }
 
   /**
-   * Generate organized file path with state: State/Municipality/Department/filename
+   * Generate organized file path with state: State/Municipality/Department/[folder]/filename
    * @param {string} filename - The file name
-   * @param {Object} organizationData - Contains state, municipality, department info
+   * @param {Object} organizationData - Contains state, municipality, department, folder info
    * @returns {string} - Organized file path
    */
   generateOrganizedPath(filename, organizationData = {}) {
-    const { state, municipality, municipalityId, propertyId, department } = organizationData;
+    const {
+      state,
+      municipality,
+      municipalityId,
+      propertyId,
+      department,
+      folder,
+    } = organizationData;
 
     const stateFolder = this.sanitizePathComponent(state || 'Unknown_State');
-    const municipalityFolder = this.sanitizePathComponent(municipality || municipalityId || 'Unknown_Municipality');
-    const departmentFolder = this.sanitizePathComponent(department || 'general');
+    const municipalityFolder = this.sanitizePathComponent(
+      municipality || municipalityId || 'Unknown_Municipality',
+    );
+    const departmentFolder = this.sanitizePathComponent(
+      department || 'general',
+    );
 
-    // Build path: State/Municipality/Department/[PropertyId]/filename
+    // Build path: State/Municipality/Department/[folder]/[PropertyId]/filename
     let pathParts = [stateFolder, municipalityFolder, departmentFolder];
+
+    // Add folder if provided (e.g., "/energy" becomes "energy")
+    if (folder && folder !== '/') {
+      const folderPath = folder.replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
+      const folderParts = folderPath.split('/').filter((p) => p); // Split and filter empty parts
+      pathParts.push(...folderParts.map((p) => this.sanitizePathComponent(p)));
+    }
 
     if (propertyId) {
       pathParts.push(this.sanitizePathComponent(propertyId));
@@ -146,15 +164,18 @@ class StorageService {
         },
       });
 
-      // Set appropriate ACL based on visibility
+      // Generate appropriate URL based on visibility
+      // Note: When uniform bucket-level access is enabled, we cannot set per-object ACLs
+      // Public files should have bucket-level IAM permissions configured
+      // Private files always get signed URLs
       if (metadata.visibility === 'public') {
-        await file.makePublic();
+        // For public files, use direct GCS URL (requires bucket-level IAM: allUsers -> Storage Object Viewer)
         result.gcsUrl = `https://storage.googleapis.com/${this.bucket.name}/${storagePath}`;
       } else {
-        // Generate a signed URL that expires in 1 hour
+        // For private files, generate a signed URL that expires in 7 days
         const [signedUrl] = await file.getSignedUrl({
           action: 'read',
-          expires: Date.now() + 60 * 60 * 1000, // 1 hour
+          expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
         });
         result.gcsUrl = signedUrl;
       }
@@ -163,7 +184,9 @@ class StorageService {
       return result;
     } catch (error) {
       console.error('GCS upload error:', error);
-      throw new Error(`Failed to upload file to Google Cloud Storage: ${error.message}`);
+      throw new Error(
+        `Failed to upload file to Google Cloud Storage: ${error.message}`,
+      );
     }
   }
 
@@ -183,7 +206,9 @@ class StorageService {
       return result;
     } catch (error) {
       console.error('Local upload error:', error);
-      throw new Error(`Failed to upload file to local storage: ${error.message}`);
+      throw new Error(
+        `Failed to upload file to local storage: ${error.message}`,
+      );
     }
   }
 
@@ -207,7 +232,9 @@ class StorageService {
       return buffer;
     } catch (error) {
       console.error('GCS download error:', error);
-      throw new Error(`Failed to download file from Google Cloud Storage: ${error.message}`);
+      throw new Error(
+        `Failed to download file from Google Cloud Storage: ${error.message}`,
+      );
     }
   }
 
@@ -217,7 +244,9 @@ class StorageService {
       return await fs.readFile(fullPath);
     } catch (error) {
       console.error('Local download error:', error);
-      throw new Error(`Failed to download file from local storage: ${error.message}`);
+      throw new Error(
+        `Failed to download file from local storage: ${error.message}`,
+      );
     }
   }
 
@@ -241,7 +270,9 @@ class StorageService {
       console.log(`✅ File deleted from GCS: ${storagePath}`);
     } catch (error) {
       console.error('GCS delete error:', error);
-      throw new Error(`Failed to delete file from Google Cloud Storage: ${error.message}`);
+      throw new Error(
+        `Failed to delete file from Google Cloud Storage: ${error.message}`,
+      );
     }
   }
 
@@ -252,7 +283,9 @@ class StorageService {
       console.log(`✅ File deleted from local storage: ${storagePath}`);
     } catch (error) {
       console.error('Local delete error:', error);
-      throw new Error(`Failed to delete file from local storage: ${error.message}`);
+      throw new Error(
+        `Failed to delete file from local storage: ${error.message}`,
+      );
     }
   }
 
@@ -264,7 +297,9 @@ class StorageService {
    */
   async getSignedUrl(storagePath, expiresIn = 60 * 60 * 1000) {
     if (this.storageType !== 'gcs') {
-      throw new Error('Signed URLs are only available for Google Cloud Storage');
+      throw new Error(
+        'Signed URLs are only available for Google Cloud Storage',
+      );
     }
 
     try {

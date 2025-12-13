@@ -30,10 +30,16 @@ export default class ContractorManagementRoute extends Route {
 
       const response = await this.api.get(`/contractors/${contractorId}`);
 
+      // Handle owner_user_id being either a string or a populated object
+      const ownerId =
+        typeof response.contractor.owner_user_id === 'object'
+          ? response.contractor.owner_user_id?._id
+          : response.contractor.owner_user_id;
+
       return {
         contractor: response.contractor,
         user: this.currentUser.user,
-        isOwner: response.contractor.owner_user_id === this.currentUser.user._id,
+        isOwner: ownerId === this.currentUser.user._id,
         needsOnboarding: false,
       };
     } catch (error) {

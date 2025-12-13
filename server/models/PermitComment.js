@@ -33,6 +33,24 @@ const permitCommentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Department that this comment is related to (optional - for department review comments)
+    department: {
+      type: String,
+      enum: [
+        'Building Inspector',
+        'Fire Marshal',
+        'Health Department',
+        'Planning & Zoning',
+        'Engineering',
+        'Conservation',
+        'Public Works',
+        'Code Enforcement',
+        'Electrical',
+        'Plumbing',
+        null,
+      ],
+      default: null,
+    },
     attachments: [
       {
         fileId: mongoose.Schema.Types.ObjectId,
@@ -43,7 +61,7 @@ const permitCommentSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Indexes for performance

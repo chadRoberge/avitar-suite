@@ -1,21 +1,217 @@
 {{page-title "All Permits"}}
 
-<div class="avitar-page-header">
-  <div class="avitar-page-header__content">
-    <h1 class="avitar-page-header__title">
-      <i class="fas fa-file-alt avitar-mr-2"></i>
-      All Permits
-    </h1>
-    <p class="avitar-page-header__subtitle">
-      View and manage all building permits
-    </p>
-  </div>
-</div>
+<div class="avitar-container avitar-py-6">
+  <div class="avitar-card">
+    {{! Filters }}
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-flex avitar-items-end avitar-gap-3">
+        {{! Filter Row }}
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-xs">Year</label>
+          <select class="avitar-select avitar-select--sm" value={{this.year}} {{on "change" this.setYear}}>
+            {{#each this.yearOptions as |yearOption|}}
+              <option value={{yearOption.value}} selected={{eq this.year yearOption.value}}>
+                {{yearOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
 
-<div class="avitar-empty-state">
-  <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-3"></i>
-  <h3 class="avitar-mb-2">Coming Soon</h3>
-  <p class="avitar-text-muted">
-    This feature is under development.
-  </p>
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-xs">Permit Type</label>
+          <select class="avitar-select avitar-select--sm" value={{this.permitTypeId}} {{on "change" this.setPermitType}}>
+            {{#each this.permitTypeOptions as |typeOption|}}
+              <option value={{typeOption.value}} selected={{eq this.permitTypeId typeOption.value}}>
+                {{typeOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-xs">Status</label>
+          <select class="avitar-select avitar-select--sm" value={{this.status}} {{on "change" this.setStatus}}>
+            {{#each this.statusOptions as |statusOption|}}
+              <option value={{statusOption.value}} selected={{eq this.status statusOption.value}}>
+                {{statusOption.label}}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+
+        <div class="avitar-flex-1">
+          <label class="avitar-label avitar-text-xs">Search</label>
+          <div class="avitar-flex avitar-gap-2">
+            <input
+              type="text"
+              class="avitar-input avitar-input--sm"
+              placeholder="Permit #, Address, Applicant..."
+              value={{this.search}}
+              {{on "input" this.updateSearch}}
+              {{on "keypress" (fn (mut this.performSearch))}}
+            />
+            {{#if this.search}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                {{on "click" this.clearSearch}}
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            {{/if}}
+          </div>
+        </div>
+
+        {{! Stats }}
+        <div class="avitar-text-sm avitar-text-muted avitar-whitespace-nowrap">
+          Showing {{@model.permits.length}} of {{@model.pagination.total}} permits
+        </div>
+      </div>
+    </div>
+
+    {{! Permits Table }}
+    <div class="avitar-card__body avitar-p-0">
+      {{#if @model.permits.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--hover">
+            <thead>
+              <tr>
+                <th>Permit Number</th>
+                <th>Property Address</th>
+                <th>Permit Type</th>
+                <th>Applicant</th>
+                <th>Application Date</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th class="avitar-text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each @model.permits as |permit|}}
+                <tr {{on "click" (fn this.viewPermit permit)}} style="cursor: pointer;">
+                  <td class="avitar-font-medium">
+                    {{permit.permitNumber}}
+                  </td>
+                  <td>
+                    {{#if permit.propertyId}}
+                      <div>{{permit.propertyId.location.address}}</div>
+                      <div class="avitar-text-xs avitar-text-muted">
+                        PID: {{permit.propertyId.pid_formatted}}
+                      </div>
+                    {{else}}
+                      <div>{{permit.propertyAddress}}</div>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{#if permit.permitTypeId}}
+                      {{permit.permitTypeId.name}}
+                      {{#if permit.permitTypeId.category}}
+                        <div class="avitar-text-xs avitar-text-muted">
+                          {{permit.permitTypeId.category}}
+                        </div>
+                      {{/if}}
+                    {{else}}
+                      <span class="avitar-text-muted">N/A</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{#if permit.applicantName}}
+                      {{permit.applicantName}}
+                    {{else if permit.submitted_by}}
+                      {{permit.submitted_by.first_name}} {{permit.submitted_by.last_name}}
+                    {{else}}
+                      <span class="avitar-text-muted">N/A</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{date-format permit.applicationDate "MMM DD, YYYY"}}
+                  </td>
+                  <td>
+                    <span class={{this.getStatusBadge permit.status}}>
+                      {{this.formatStatus permit.status}}
+                    </span>
+                  </td>
+                  <td>
+                    {{#if permit.assignedInspector}}
+                      <div class="avitar-text-sm">
+                        {{permit.assignedInspector.first_name}} {{permit.assignedInspector.last_name}}
+                      </div>
+                      <div class="avitar-text-xs avitar-text-muted">Inspector</div>
+                    {{else if permit.assignedReviewer}}
+                      <div class="avitar-text-sm">
+                        {{permit.assignedReviewer.first_name}} {{permit.assignedReviewer.last_name}}
+                      </div>
+                      <div class="avitar-text-xs avitar-text-muted">Reviewer</div>
+                    {{else}}
+                      <span class="avitar-text-muted">Unassigned</span>
+                    {{/if}}
+                  </td>
+                  <td class="avitar-text-right" {{on "click" this.stopPropagation}}>
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--sm avitar-btn--primary"
+                      {{on "click" (fn this.viewPermit permit)}}
+                    >
+                      <i class="fas fa-eye avitar-mr-2"></i>
+                      View
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        {{! Pagination }}
+        {{#if (gt @model.pagination.totalPages 1)}}
+          <div class="avitar-card__footer avitar-flex avitar-items-center avitar-justify-between">
+            <div class="avitar-text-sm avitar-text-muted">
+              Page {{@model.pagination.page}} of {{@model.pagination.totalPages}}
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                {{on "click" this.previousPage}}
+                disabled={{eq @model.pagination.page 1}}
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                {{on "click" this.nextPage}}
+                disabled={{eq @model.pagination.page @model.pagination.totalPages}}
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        {{/if}}
+      {{else}}
+        <div class="avitar-empty-state avitar-py-8">
+          <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+            No Permits Found
+          </h3>
+          <p class="avitar-text-muted avitar-mb-4">
+            {{#if this.search}}
+              No permits match your search criteria.
+            {{else}}
+              No permits found for the selected filters.
+            {{/if}}
+          </p>
+          {{#if this.search}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.clearSearch}}
+            >
+              Clear Search
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
 </div>

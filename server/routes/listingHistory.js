@@ -61,7 +61,8 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId, propertyId } = req.params;
-      const { visitDate, visitorCode, reasonCode, notes, card_number } = req.body;
+      const { visitDate, visitorCode, reasonCode, notes, card_number } =
+        req.body;
       const cardNumber = card_number || parseInt(req.query.card) || 1;
 
       // Validation
@@ -111,7 +112,8 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, propertyId, entryId } = req.params;
-      const { visitDate, visitorCode, reasonCode, notes, card_number } = req.body;
+      const { visitDate, visitorCode, reasonCode, notes, card_number } =
+        req.body;
       const cardNumber = card_number || parseInt(req.query.card) || 1;
 
       const listingEntry = await ListingHistory.findOne({

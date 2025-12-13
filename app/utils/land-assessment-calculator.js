@@ -246,9 +246,10 @@ class LandAssessmentCalculator {
    * Calculate complete property land assessment
    * @param {Object} landAssessment - Complete land assessment data
    * @param {Array} views - Property views data (optional)
+   * @param {Array} waterfronts - Property waterfront data (optional)
    * @returns {Object} Land assessment with calculated land lines and totals
    */
-  calculatePropertyAssessment(landAssessment, views = []) {
+  calculatePropertyAssessment(landAssessment, views = [], waterfronts = []) {
     const propertyData = {
       zoneId: landAssessment.zone,
       neighborhoodId: landAssessment.neighborhood,
@@ -285,8 +286,6 @@ class LandAssessmentCalculator {
     }
 
     // Calculate totals from the calculated land lines, views, and waterfronts
-    // TODO: Fetch waterfront data when waterfront functionality is implemented
-    const waterfronts = []; // Placeholder for future waterfront implementation
     const totals = this.calculateTotalsFromLandLines(
       calculatedLandLines,
       views,
@@ -352,20 +351,33 @@ class LandAssessmentCalculator {
 
     // Calculate WATERFRONT values (market value is always the true value)
     const waterfrontMarketValue = waterfronts.reduce((total, waterfront) => {
-      return total + (parseFloat(waterfront.calculatedValue) || 0);
+      return (
+        total +
+        (parseFloat(
+          waterfront.calculated_value || waterfront.calculatedValue,
+        ) || 0)
+      );
     }, 0);
 
-    // Waterfront assessed value: market value unless the specific waterfront is marked as current use
+    // Waterfront assessed value: use assessed_value if available, otherwise calculate from current_use flag
     const waterfrontAssessedValue = waterfronts.reduce((total, waterfront) => {
-      const marketValue = parseFloat(waterfront.calculatedValue) || 0;
-      // If this specific waterfront is current use, assessed value is 0, otherwise use market value
+      // Check if we have a pre-calculated assessed_value (from the modal)
+      if (waterfront.assessed_value !== undefined) {
+        return total + (parseFloat(waterfront.assessed_value) || 0);
+      }
+      // Fallback: calculate from current_use flag
+      const marketValue =
+        parseFloat(waterfront.calculated_value || waterfront.calculatedValue) ||
+        0;
       return total + (waterfront.current_use ? 0 : marketValue);
     }, 0);
 
     // Calculate TOTAL values
     const totalMarketValue =
       landDetailsMarketValue + viewMarketValue + waterfrontMarketValue;
-    const totalAssessedValue = totalMarketValue - landCurrentUseCredit;
+    // Total assessed = land assessed + view assessed + waterfront assessed
+    const totalAssessedValue =
+      landDetailsAssessedValue + viewAssessedValue + waterfrontAssessedValue;
 
     // CAMA Rule: Keep exact totals for current use precision (individual lines already rounded appropriately)
     const roundedLandDetailsMarketValue = Math.round(landDetailsMarketValue);

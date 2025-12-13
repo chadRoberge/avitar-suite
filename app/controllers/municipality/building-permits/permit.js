@@ -29,16 +29,16 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
       {
         label: 'Contractor Dashboard',
         route: 'my-permits.index',
-        icon: 'hard-hat'
+        icon: 'hard-hat',
       },
       {
         label: this.model.municipality?.name || 'Municipality',
-        icon: 'building'
+        icon: 'building',
       },
       {
         label: `Permit #${this.model.permit?.permitNumber || 'Loading...'}`,
-        icon: 'file-alt'
-      }
+        icon: 'file-alt',
+      },
     ];
 
     return items;
@@ -46,38 +46,115 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
 
   get permitStatusSteps() {
     return [
-      { key: 'draft', label: 'Draft', icon: 'edit' },
-      { key: 'submitted', label: 'Submitted', icon: 'paper-plane' },
-      { key: 'under_review', label: 'Under Review', icon: 'search' },
-      { key: 'approved', label: 'Approved', icon: 'check-circle' },
-      { key: 'inspections', label: 'Inspections', icon: 'clipboard-check' },
-      { key: 'completed', label: 'Completed', icon: 'flag-checkered' },
+      {
+        key: 'submitted',
+        label: 'Submitted',
+        status: 'submitted',
+        icon: 'paper-plane',
+      },
+      {
+        key: 'under_review',
+        label: 'Under Review',
+        status: 'under_review',
+        icon: 'search',
+      },
+      {
+        key: 'approved',
+        label: 'Approved',
+        status: 'approved',
+        icon: 'check-circle',
+      },
+      {
+        key: 'inspections',
+        label: 'Inspections',
+        status: 'inspections',
+        icon: 'clipboard-check',
+      },
+      {
+        key: 'completed',
+        label: 'Completed',
+        status: 'completed',
+        icon: 'flag-checkered',
+      },
     ];
   }
 
   get currentStepIndex() {
     const status = this.model.permit.status;
-    return this.permitStatusSteps.findIndex(step => step.key === status);
+    const statusMap = {
+      draft: -1,
+      submitted: 0,
+      under_review: 1,
+      approved: 2,
+      inspections: 3,
+      completed: 4,
+      issued: 4, // Issued = Completed
+      rejected: 1, // Show as under review
+      on_hold: 1, // Show as under review
+    };
+    return statusMap[status] ?? 0;
+  }
+
+  // Department reviews for progress indicator
+  get departmentReviews() {
+    const reviews = this.model.permit?.departmentReviews || [];
+    return reviews.map((review) => ({
+      department: review.department,
+      approved: review.status === 'approved',
+      reviewedAt: review.reviewedAt,
+      reviewedBy: review.reviewedBy,
+    }));
   }
 
   get privateComments() {
-    return this.comments.filter(c => c.visibility === 'private' || c.visibility === 'internal');
+    return this.comments.filter(
+      (c) => c.visibility === 'private' || c.visibility === 'internal',
+    );
   }
 
   get publicComments() {
-    return this.comments.filter(c => c.visibility === 'public');
+    return this.comments.filter((c) => c.visibility === 'public');
   }
 
   get displayedComments() {
-    return this.chatView === 'private' ? this.privateComments : this.publicComments;
+    return this.chatView === 'private'
+      ? this.privateComments
+      : this.publicComments;
   }
 
   get canEditPermit() {
     return this.currentUser.hasModulePermission(
       this.model.municipalityId,
-      'buildingPermits',
-      'update'
+      'building_permit',
+      'update',
     );
+  }
+
+  // Get departments assigned to this permit that the current user can review
+  get userReviewableDepartments() {
+    const permit = this.model.permit;
+    if (!permit?.departmentReviews || !permit.departmentReviews.length) {
+      return [];
+    }
+
+    // Get user's department for this municipality
+    const userDepartment =
+      this.currentUser?.currentMunicipalPermissions?.department;
+
+    if (!userDepartment) {
+      return [];
+    }
+
+    // Find reviews for this user's department that are pending or in_review
+    return permit.departmentReviews.filter(
+      (review) =>
+        review.department === userDepartment &&
+        ['pending', 'in_review'].includes(review.status),
+    );
+  }
+
+  get canReviewPermit() {
+    return this.userReviewableDepartments.length > 0;
   }
 
   @action
@@ -109,7 +186,7 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
           visibility: this.chatView,
           authorId: this.currentUser.user?._id,
           authorName: this.currentUser.user?.fullName,
-        }
+        },
       );
 
       console.log('Comment created:', comment);
@@ -184,12 +261,19 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
 
   @action
   editPermit() {
-    this.router.transitionTo('municipality.building-permits.edit', this.model.permitId);
+    this.router.transitionTo(
+      'municipality.building-permits.edit',
+      this.model.permitId,
+    );
   }
 
   @action
   async deleteFile(file) {
-    if (!confirm(`Are you sure you want to permanently delete "${file.displayName}"? This action cannot be undone.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete "${file.displayName}"? This action cannot be undone.`,
+      )
+    ) {
       return;
     }
 
@@ -197,7 +281,7 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
       await this.api.delete(`/files/${file._id}?hardDelete=true`);
 
       // Remove file from the tracked list
-      this.files = this.files.filter(f => f._id !== file._id);
+      this.files = this.files.filter((f) => f._id !== file._id);
       this.notifications.success('File permanently deleted');
     } catch (error) {
       console.error('Error deleting file:', error);
@@ -236,5 +320,22 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
       console.error('Error downloading file:', error);
       this.notifications.error('Failed to download file. Please try again.');
     }
+  }
+
+  @action
+  reviewPermit() {
+    if (!this.canReviewPermit) {
+      return;
+    }
+
+    // Get the first reviewable department (user should only be in one department)
+    const review = this.userReviewableDepartments[0];
+    const departmentName = review.department;
+
+    this.router.transitionTo(
+      'municipality.building-permits.review',
+      this.model.permitId,
+      departmentName,
+    );
   }
 }

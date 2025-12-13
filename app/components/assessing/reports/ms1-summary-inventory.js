@@ -127,7 +127,8 @@ export default class Ms1SummaryInventoryComponent extends Component {
       county: this.municipality.currentMunicipality?.county || '',
       assessor: this.reportData?.assessor || '',
       preparedBy: this.reportData?.preparedBy || '',
-      preparedDate: this.reportData?.preparedDate || new Date().toISOString().split('T')[0],
+      preparedDate:
+        this.reportData?.preparedDate || new Date().toISOString().split('T')[0],
     };
   }
 
@@ -136,12 +137,28 @@ export default class Ms1SummaryInventoryComponent extends Component {
 
     return {
       currentUse: this.reportData.land.currentUse || { acres: 0, value: 0 },
-      conservationRestriction: this.reportData.land.conservationRestriction || { acres: 0, value: 0 },
-      discretionaryEasements: this.reportData.land.discretionaryEasements || { acres: 0, value: 0 },
-      discretionaryPreservation: this.reportData.land.discretionaryPreservation || { acres: 0, value: 0 },
-      farmStructures: this.reportData.land.farmStructures || { acres: 0, value: 0 },
-      residentialLand: this.reportData.land.residential || { acres: 0, value: 0 },
-      commercialIndustrialLand: this.reportData.land.commercialIndustrial || { acres: 0, value: 0 },
+      conservationRestriction: this.reportData.land.conservationRestriction || {
+        acres: 0,
+        value: 0,
+      },
+      discretionaryEasements: this.reportData.land.discretionaryEasements || {
+        acres: 0,
+        value: 0,
+      },
+      discretionaryPreservation: this.reportData.land
+        .discretionaryPreservation || { acres: 0, value: 0 },
+      farmStructures: this.reportData.land.farmStructures || {
+        acres: 0,
+        value: 0,
+      },
+      residentialLand: this.reportData.land.residential || {
+        acres: 0,
+        value: 0,
+      },
+      commercialIndustrialLand: this.reportData.land.commercialIndustrial || {
+        acres: 0,
+        value: 0,
+      },
       totalLand: this.reportData.land.taxableTotal || { acres: 0, value: 0 },
       exemptLand: this.reportData.land.exempt || { acres: 0, value: 0 },
     };
@@ -185,10 +202,19 @@ export default class Ms1SummaryInventoryComponent extends Component {
       blind: this.reportData.exemptions.blind || { count: 0, value: 0 },
       elderly: this.reportData.exemptions.elderly || { count: 0, value: 0 },
       disabled: this.reportData.exemptions.disabled || { count: 0, value: 0 },
-      woodHeating: this.reportData.exemptions.woodHeating || { count: 0, value: 0 },
+      woodHeating: this.reportData.exemptions.woodHeating || {
+        count: 0,
+        value: 0,
+      },
       solarWind: this.reportData.exemptions.solarWind || { count: 0, value: 0 },
-      waterPollution: this.reportData.exemptions.waterPollution || { count: 0, value: 0 },
-      airPollution: this.reportData.exemptions.airPollution || { count: 0, value: 0 },
+      waterPollution: this.reportData.exemptions.waterPollution || {
+        count: 0,
+        value: 0,
+      },
+      airPollution: this.reportData.exemptions.airPollution || {
+        count: 0,
+        value: 0,
+      },
       totalExemptions: this.reportData.exemptions.total || 0,
     };
   }
@@ -197,15 +223,25 @@ export default class Ms1SummaryInventoryComponent extends Component {
     if (!this.reportData?.veteransCredits) return null;
 
     return {
-      standard: this.reportData.veteransCredits.standard || { count: 0, amount: 0 },
-      serviceConnectedDisability: this.reportData.veteransCredits.serviceConnectedDisability || { count: 0, amount: 0 },
-      allVeterans: this.reportData.veteransCredits.allVeterans || { count: 0, amount: 0 },
+      standard: this.reportData.veteransCredits.standard || {
+        count: 0,
+        amount: 0,
+      },
+      serviceConnectedDisability: this.reportData.veteransCredits
+        .serviceConnectedDisability || { count: 0, amount: 0 },
+      allVeterans: this.reportData.veteransCredits.allVeterans || {
+        count: 0,
+        amount: 0,
+      },
       total: this.reportData.veteransCredits.total || { count: 0, amount: 0 },
     };
   }
 
   get netValuation() {
-    return this.valuationBeforeExemptions - (this.exemptionsSummary?.totalExemptions || 0);
+    return (
+      this.valuationBeforeExemptions -
+      (this.exemptionsSummary?.totalExemptions || 0)
+    );
   }
 
   get currentUseDetails() {

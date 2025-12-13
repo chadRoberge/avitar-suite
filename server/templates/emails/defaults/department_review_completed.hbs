@@ -1,0 +1,136 @@
+---
+subject: {{department}} Review Completed - {{permitNumber}}
+---
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          {{!-- Header --}}
+          <tr>
+            <td style="background-color: {{statusColor reviewStatus}}; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">
+                {{#ifEquals reviewStatus 'approved'}}
+                  ✓ Review Approved
+                {{else}}
+                  {{#ifEquals reviewStatus 'rejected'}}
+                    ✗ Review Rejected
+                  {{else}}
+                    ⚠ Revisions Requested
+                  {{/ifEquals}}
+                {{/ifEquals}}
+              </h1>
+            </td>
+          </tr>
+
+          {{!-- Content --}}
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                The {{department}} department has completed their review of permit {{permitNumber}}.
+              </p>
+
+              {{!-- Review Summary --}}
+              <table width="100%" cellpadding="12" cellspacing="0" style="background-color: #f9fafb; border-radius: 6px; margin: 20px 0;">
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Permit Number:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{permitNumber}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Department:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    {{department}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Review Status:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #e5e7eb; color: #111827; font-size: 14px;">
+                    <span style="color: {{statusColor reviewStatus}}; font-weight: 600;">
+                      {{capitalize reviewStatus}}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="color: #6b7280; font-size: 14px;">
+                    <strong>Reviewed By:</strong>
+                  </td>
+                  <td style="color: #111827; font-size: 14px;">
+                    {{reviewedBy}}
+                  </td>
+                </tr>
+              </table>
+
+              {{#if conditions}}
+              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #92400e;">
+                  <strong>Conditions / Requirements:</strong>
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #92400e; font-size: 14px;">
+                  {{#each conditions}}
+                    <li style="margin: 5px 0;">{{this}}</li>
+                  {{/each}}
+                </ul>
+              </div>
+              {{/if}}
+
+              {{#ifEquals reviewStatus 'approved'}}
+              <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #065f46;">
+                  This department's review has been completed successfully.
+                  {{#if conditions}}
+                    Please ensure all conditions listed above are met.
+                  {{/if}}
+                </p>
+              </div>
+              {{/ifEquals}}
+
+              {{#ifEquals reviewStatus 'rejected'}}
+              <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #991b1b;">
+                  This department has rejected the permit application. Please review the conditions and comments for details on required changes.
+                </p>
+              </div>
+              {{/ifEquals}}
+
+              {{!-- Call to Action --}}
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="{{permitUrl}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                  View Permit Details
+                </a>
+              </div>
+
+              <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">
+                If you have questions about this review, please contact the {{department}} department or the permit coordinator.
+              </p>
+            </td>
+          </tr>
+
+          {{!-- Footer --}}
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                This is an automated notification from the Avitar Platform<br>
+                © 2025 Avitar. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { inject as service } from '@ember/service';
 
 export default class WaterfrontController extends Controller {
   @service api;
+  @service('current-user') currentUser;
 
   @tracked waterBodyUpdateCounter = 0;
   @tracked ladderUpdateCounter = 0;
@@ -315,7 +316,10 @@ export default class WaterfrontController extends Controller {
   async saveLadderEntry(entryData) {
     try {
       const municipalityId = this.model.municipality.id;
-      const waterBodyId = this.editingEntryWaterBody.id || this.editingEntryWaterBody._id || this.editingEntryWaterBody.stringId;
+      const waterBodyId =
+        this.editingEntryWaterBody.id ||
+        this.editingEntryWaterBody._id ||
+        this.editingEntryWaterBody.stringId;
 
       let savedEntry;
       if (entryData.id) {
@@ -436,8 +440,9 @@ export default class WaterfrontController extends Controller {
         const response = await this.api.put(url, attributeData);
         savedAttribute = response.waterfrontAttribute;
 
+        // Find and update the attribute (check both id and _id)
         const attributeIndex = this.model.waterfrontAttributes.findIndex(
-          (attr) => attr.id === attributeData.id,
+          (attr) => (attr.id || attr._id) === attributeData.id,
         );
         if (attributeIndex !== -1) {
           this.model.waterfrontAttributes[attributeIndex] = savedAttribute;
@@ -468,13 +473,15 @@ export default class WaterfrontController extends Controller {
     if (confirm(`Are you sure you want to delete "${attribute.name}"?`)) {
       try {
         const municipalityId = this.model.municipality.id;
+        const attributeId = attribute.id || attribute._id;
+
         await this.api.delete(
-          `/municipalities/${municipalityId}/waterfront-attributes/${attribute.id}`,
+          `/municipalities/${municipalityId}/waterfront-attributes/${attributeId}`,
         );
 
-        // Remove from local model
+        // Remove from local model (check both id and _id)
         const attributeIndex = this.model.waterfrontAttributes.findIndex(
-          (attr) => attr.id === attribute.id,
+          (attr) => (attr.id || attr._id) === attributeId,
         );
         if (attributeIndex !== -1) {
           this.model.waterfrontAttributes.splice(attributeIndex, 1);

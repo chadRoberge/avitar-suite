@@ -251,23 +251,17 @@
             Back
           </button>
 
-          {{#unless this.landCodesImportResults}}
-            {{#unless this.landCodesValidationResults}}
-              <button
-                type="button"
-                class="avitar-btn avitar-btn--primary"
-                {{on "click" this.validateLandCodes}}
-                disabled={{or this.isValidatingLandCodes (not this.landCodesFile)}}
-              >
-                {{#if this.isValidatingLandCodes}}
-                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
-                  Validating...
-                {{else}}
-                  <i class="fas fa-check-circle avitar-mr-2"></i>
-                  Validate File
-                {{/if}}
-              </button>
-            {{else}}
+          {{#if this.landCodesImportResults}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" (fn this.goToStep 3)}}
+            >
+              Continue to Building Codes
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            </button>
+          {{else}}
+            {{#if this.landCodesValidationResults}}
               {{#if this.landCodesValidationResults.valid}}
                 <button
                   type="button"
@@ -284,17 +278,23 @@
                   {{/if}}
                 </button>
               {{/if}}
-            {{/unless}}
-          {{else}}
-            <button
-              type="button"
-              class="avitar-btn avitar-btn--primary"
-              {{on "click" (fn this.goToStep 3)}}
-            >
-              Continue to Building Codes
-              <i class="fas fa-arrow-right avitar-ml-2"></i>
-            </button>
-          {{/unless}}
+            {{else}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.validateLandCodes}}
+                disabled={{or this.isValidatingLandCodes (not this.landCodesFile)}}
+              >
+                {{#if this.isValidatingLandCodes}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Validating...
+                {{else}}
+                  <i class="fas fa-check-circle avitar-mr-2"></i>
+                  Validate File
+                {{/if}}
+              </button>
+            {{/if}}
+          {{/if}}
         </div>
       </div>
     </div>
@@ -455,23 +455,17 @@
             Back
           </button>
 
-          {{#unless this.buildingCodesImportResults}}
-            {{#unless this.buildingCodesValidationResults}}
-              <button
-                type="button"
-                class="avitar-btn avitar-btn--primary"
-                {{on "click" this.validateBuildingCodes}}
-                disabled={{or this.isValidatingBuildingCodes (not this.buildingCodesFile)}}
-              >
-                {{#if this.isValidatingBuildingCodes}}
-                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
-                  Validating...
-                {{else}}
-                  <i class="fas fa-check-circle avitar-mr-2"></i>
-                  Validate File
-                {{/if}}
-              </button>
-            {{else}}
+          {{#if this.buildingCodesImportResults}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" (fn this.goToStep 4)}}
+            >
+              Continue to Property Data
+              <i class="fas fa-arrow-right avitar-ml-2"></i>
+            </button>
+          {{else}}
+            {{#if this.buildingCodesValidationResults}}
               {{#if this.buildingCodesValidationResults.valid}}
                 <button
                   type="button"
@@ -488,17 +482,23 @@
                   {{/if}}
                 </button>
               {{/if}}
-            {{/unless}}
-          {{else}}
-            <button
-              type="button"
-              class="avitar-btn avitar-btn--primary"
-              {{on "click" (fn this.goToStep 4)}}
-            >
-              Continue to Property Data
-              <i class="fas fa-arrow-right avitar-ml-2"></i>
-            </button>
-          {{/unless}}
+            {{else}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.validateBuildingCodes}}
+                disabled={{or this.isValidatingBuildingCodes (not this.buildingCodesFile)}}
+              >
+                {{#if this.isValidatingBuildingCodes}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Validating...
+                {{else}}
+                  <i class="fas fa-check-circle avitar-mr-2"></i>
+                  Validate File
+                {{/if}}
+              </button>
+            {{/if}}
+          {{/if}}
         </div>
       </div>
     </div>
@@ -676,7 +676,16 @@
         </div>
 
         <div class="avitar-form-actions avitar-mt-6">
-          {{#unless this.phase3Complete}}
+          {{#if this.phase3Complete}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.resetWizard}}
+            >
+              <i class="fas fa-redo avitar-mr-2"></i>
+              Start New Import
+            </button>
+          {{else}}
             <button
               type="button"
               class="avitar-btn avitar-btn--secondary avitar-mr-2"
@@ -706,16 +715,7 @@
                 Execute Phase 3
               {{/if}}
             </button>
-          {{else}}
-            <button
-              type="button"
-              class="avitar-btn avitar-btn--primary"
-              {{on "click" this.resetWizard}}
-            >
-              <i class="fas fa-redo avitar-mr-2"></i>
-              Start New Import
-            </button>
-          {{/unless}}
+          {{/if}}
         </div>
       </div>
     </div>

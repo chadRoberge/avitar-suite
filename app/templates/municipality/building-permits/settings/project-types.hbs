@@ -1,0 +1,506 @@
+{{page-title "Project Types"}}
+
+<div class="avitar-page-header">
+  <div class="avitar-page-header__content">
+    <h1 class="avitar-page-header__title">
+      <i class="fas fa-folder-open avitar-mr-2"></i>
+      Project Types
+    </h1>
+    <p class="avitar-page-header__subtitle">
+      Configure project types that group multiple permits together
+    </p>
+  </div>
+
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openCreateModal}}
+    >
+      <i class="fas fa-plus avitar-mr-2"></i>
+      New Project Type
+    </button>
+  </div>
+</div>
+
+{{! Stats Cards }}
+<div class="avitar-flex avitar-gap-4 avitar-mb-4">
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Total Types</div>
+        <div class="avitar-stat__value">{{@model.projectTypes.length}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Active</div>
+        <div class="avitar-stat__value avitar-text-success">{{this.activeCount}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Inactive</div>
+        <div class="avitar-stat__value avitar-text-muted">{{this.inactiveCount}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Filters }}
+<div class="avitar-card avitar-mb-4">
+  <div class="avitar-card__body">
+    <div class="avitar-filters">
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Search</label>
+        <input
+          type="text"
+          class="avitar-input"
+          placeholder="Search project types..."
+          value={{this.searchText}}
+          {{on "input" this.updateSearch}}
+        />
+      </div>
+
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Category</label>
+        <select
+          class="avitar-select"
+          {{on "change" this.setFilterCategory}}
+        >
+          {{#each this.categoryOptions as |categoryOption|}}
+            <option value={{categoryOption.value}} selected={{eq this.filterCategory categoryOption.value}}>
+              {{categoryOption.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Status</label>
+        <select
+          class="avitar-select"
+          {{on "change" this.setFilterStatus}}
+        >
+          <option value="all" selected={{eq this.filterStatus "all"}}>All Statuses</option>
+          <option value="active" selected={{eq this.filterStatus "active"}}>Active Only</option>
+          <option value="inactive" selected={{eq this.filterStatus "inactive"}}>Inactive Only</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Project Types List }}
+{{#if this.filteredProjectTypes.length}}
+  <div class="avitar-grid avitar-grid--2 avitar-gap-4">
+    {{#each this.filteredProjectTypes as |projectType|}}
+      <div class="avitar-card {{unless projectType.isActive 'avitar-card--muted'}}">
+        <div class="avitar-card__body avitar-py-3">
+          <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-flex-1">
+              <div class="avitar-icon-wrapper avitar-bg-primary-light" style="width: 2rem; height: 2rem; font-size: 0.875rem;">
+                <i class="fas fa-{{projectType.icon}}"></i>
+              </div>
+              <div class="avitar-flex-1 avitar-min-w-0">
+                <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1">
+                  <h3 class="avitar-font-semibold avitar-text-base avitar-truncate">
+                    {{projectType.name}}
+                  </h3>
+                  {{#unless projectType.isActive}}
+                    <span class="avitar-badge avitar-badge--secondary avitar-badge--sm avitar-badge--pill">Inactive</span>
+                  {{/unless}}
+                </div>
+                <p class="avitar-text-muted avitar-text-xs avitar-mb-2 avitar-line-clamp-2">
+                  {{projectType.description}}
+                </p>
+                <div class="avitar-flex avitar-flex-wrap avitar-gap-2">
+                  <span class="avitar-badge avitar-badge--info avitar-badge--sm avitar-badge--pill">
+                    {{projectType.category}}
+                  </span>
+                  {{#if projectType.permitTypeCount}}
+                    <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-badge--pill">
+                      <i class="fas fa-file-alt avitar-mr-1"></i>
+                      {{projectType.permitTypeCount}} permit types
+                    </span>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+              {{on "click" (fn this.openEditModal projectType)}}
+            >
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+
+          {{! Quick Info Grid }}
+          <div class="avitar-info-grid avitar-mb-3">
+            {{#if projectType.feeSchedule.baseAmount}}
+              <div class="avitar-info-item">
+                <span class="avitar-info-item__label">Base Fee</span>
+                <span class="avitar-info-item__value">${{projectType.feeSchedule.baseAmount}}</span>
+              </div>
+            {{/if}}
+            {{#if projectType.estimatedCompletionDays}}
+              <div class="avitar-info-item">
+                <span class="avitar-info-item__label">Est. Timeline</span>
+                <span class="avitar-info-item__value">{{projectType.estimatedCompletionDays}} days</span>
+              </div>
+            {{/if}}
+            {{#if projectType.requiredDocumentCount}}
+              <div class="avitar-info-item">
+                <span class="avitar-info-item__label">Required Docs</span>
+                <span class="avitar-info-item__value">{{projectType.requiredDocumentCount}}</span>
+              </div>
+            {{/if}}
+          </div>
+
+          {{! Actions }}
+          <div class="avitar-flex avitar-gap-2 avitar-pt-3 avitar-border-t avitar-border-gray-200">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-flex-1"
+              {{on "click" (fn this.openEditModal projectType)}}
+            >
+              <i class="fas fa-edit avitar-mr-2"></i>
+              Edit
+            </button>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--{{if projectType.isActive 'warning' 'success'}} avitar-btn--sm avitar-flex-1"
+              {{on "click" (fn this.toggleStatus projectType)}}
+            >
+              <i class="fas fa-{{if projectType.isActive 'pause' 'play'}} avitar-mr-2"></i>
+              {{if projectType.isActive "Deactivate" "Activate"}}
+            </button>
+
+            {{#unless projectType.isActive}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                {{on "click" (fn this.deleteProjectType projectType)}}
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            {{/unless}}
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  {{! Empty State }}
+  <div class="avitar-card">
+    <div class="avitar-card__body avitar-text-center avitar-py-12">
+      <div class="avitar-icon-wrapper avitar-icon-wrapper--lg avitar-bg-gray-100 avitar-mx-auto avitar-mb-4">
+        <i class="fas fa-folder-open avitar-text-gray-400"></i>
+      </div>
+      <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Project Types Found</h3>
+      <p class="avitar-text-muted avitar-mb-4">
+        {{#if this.searchText}}
+          No project types match your search criteria. Try adjusting your filters.
+        {{else}}
+          Get started by creating your first project type to group related permits together.
+        {{/if}}
+      </p>
+      {{#unless this.searchText}}
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.openCreateModal}}
+        >
+          <i class="fas fa-plus avitar-mr-2"></i>
+          Create Project Type
+        </button>
+      {{/unless}}
+    </div>
+  </div>
+{{/if}}
+
+{{! Create/Edit Project Type Modal }}
+{{#if this.isModalOpen}}
+  <div
+    class="avitar-modal-overlay avitar-modal-overlay--visible"
+    {{on "click" this.closeModal}}
+  >
+    <div
+      class="avitar-modal avitar-modal--lg"
+      {{on "click" this.stopPropagation}}
+      role="dialog"
+      aria-modal="true"
+    >
+      {{! Modal Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-folder-open avitar-mr-2"></i>
+          {{if this.isEditMode "Edit Project Type" "New Project Type"}}
+        </h2>
+        <button
+          type="button"
+          class="avitar-modal__close"
+          {{on "click" this.closeModal}}
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Modal Body }}
+      <div class="avitar-modal__body">
+        <form class="avitar-space-y-4">
+          {{! Basic Information Section }}
+          <div class="avitar-card">
+            <div class="avitar-card__header avitar-bg-gray-50">
+              <h3 class="avitar-card__title avitar-text-sm">
+                <i class="fas fa-info-circle avitar-mr-2"></i>
+                Basic Information
+              </h3>
+            </div>
+            <div class="avitar-card__body avitar-space-y-3">
+              <div>
+                <label class="avitar-label" for="project-type-name">
+                  Project Type Name
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="project-type-name"
+                  class="avitar-input"
+                  placeholder="e.g., New Home Construction"
+                  value={{this.formData.name}}
+                  {{on "input" (fn this.updateFormField "name")}}
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="avitar-label" for="project-type-description">
+                  Description
+                  <span class="avitar-text-danger">*</span>
+                </label>
+                <textarea
+                  id="project-type-description"
+                  class="avitar-input"
+                  rows="3"
+                  placeholder="Describe what this project type includes..."
+                  {{on "input" (fn this.updateFormField "description")}}
+                  required
+                >{{this.formData.description}}</textarea>
+              </div>
+
+              <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+                <div>
+                  <label class="avitar-label" for="project-type-category">
+                    Category
+                    <span class="avitar-text-danger">*</span>
+                  </label>
+                  <select
+                    id="project-type-category"
+                    class="avitar-select"
+                    {{on "change" (fn this.updateFormField "category")}}
+                    required
+                  >
+                    <option value="">Select category...</option>
+                    <option
+                      value="residential"
+                      selected={{eq this.formData.category "residential"}}
+                    >
+                      Residential
+                    </option>
+                    <option
+                      value="commercial"
+                      selected={{eq this.formData.category "commercial"}}
+                    >
+                      Commercial
+                    </option>
+                    <option
+                      value="industrial"
+                      selected={{eq this.formData.category "industrial"}}
+                    >
+                      Industrial
+                    </option>
+                    <option
+                      value="institutional"
+                      selected={{eq this.formData.category "institutional"}}
+                    >
+                      Institutional
+                    </option>
+                    <option
+                      value="mixed_use"
+                      selected={{eq this.formData.category "mixed_use"}}
+                    >
+                      Mixed Use
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="avitar-label" for="project-type-timeline">
+                    Estimated Timeline (days)
+                  </label>
+                  <input
+                    type="number"
+                    id="project-type-timeline"
+                    class="avitar-input"
+                    placeholder="90"
+                    min="1"
+                    value={{this.formData.estimatedCompletionDays}}
+                    {{on "input" (fn this.updateFormField "estimatedCompletionDays")}}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="avitar-label" for="project-type-icon">
+                  Icon (Font Awesome class name)
+                </label>
+                <input
+                  type="text"
+                  id="project-type-icon"
+                  class="avitar-input"
+                  placeholder="home"
+                  value={{this.formData.icon}}
+                  {{on "input" (fn this.updateFormField "icon")}}
+                />
+                <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                  Enter Font Awesome icon name (without "fa-" prefix). Example: home,
+                  building, hammer
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {{! Default Permit Types Section }}
+          <div class="avitar-card">
+            <div class="avitar-card__header avitar-bg-gray-50">
+              <h3 class="avitar-card__title avitar-text-sm">
+                <i class="fas fa-file-alt avitar-mr-2"></i>
+                Default Permit Types
+              </h3>
+            </div>
+            <div class="avitar-card__body">
+              <p class="avitar-text-sm avitar-text-muted avitar-mb-3">
+                Select the permits that will be automatically included when someone
+                creates this type of project.
+              </p>
+              {{#if @model.permitTypes.length}}
+                <div class="avitar-space-y-2">
+                  {{#each @model.permitTypes as |permitType|}}
+                    <label
+                      class="avitar-flex avitar-items-center avitar-gap-2 avitar-p-2 avitar-rounded avitar-border avitar-cursor-pointer hover:avitar-bg-gray-50"
+                    >
+                      <input
+                        type="checkbox"
+                        class="avitar-checkbox"
+                        checked={{includes
+                          this.formData.selectedPermitTypes
+                          permitType._id
+                        }}
+                        {{on "change" (fn this.togglePermitType permitType._id)}}
+                      />
+                      <div class="avitar-flex-1">
+                        <div class="avitar-font-medium avitar-text-sm">
+                          {{permitType.name}}
+                        </div>
+                        {{#if permitType.description}}
+                          <div class="avitar-text-xs avitar-text-muted">
+                            {{permitType.description}}
+                          </div>
+                        {{/if}}
+                      </div>
+                    </label>
+                  {{/each}}
+                </div>
+              {{else}}
+                <p class="avitar-text-sm avitar-text-muted avitar-text-center avitar-py-4">
+                  No permit types available. Create permit types first.
+                </p>
+              {{/if}}
+            </div>
+          </div>
+
+          {{! Fee Configuration Section }}
+          <div class="avitar-card">
+            <div class="avitar-card__header avitar-bg-gray-50">
+              <h3 class="avitar-card__title avitar-text-sm">
+                <i class="fas fa-dollar-sign avitar-mr-2"></i>
+                Fee Configuration
+              </h3>
+            </div>
+            <div class="avitar-card__body avitar-space-y-3">
+              <div>
+                <label class="avitar-label" for="project-base-fee">
+                  Base Fee
+                </label>
+                <input
+                  type="number"
+                  id="project-base-fee"
+                  class="avitar-input"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  value={{this.formData.feeSchedule.baseAmount}}
+                  {{on "input" (fn this.updateFeeField "baseAmount")}}
+                />
+                <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                  Optional base fee charged for the project in addition to individual
+                  permit fees.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {{! Active Status }}
+          <div class="avitar-flex avitar-items-center avitar-gap-2">
+            <input
+              type="checkbox"
+              id="project-type-active"
+              class="avitar-checkbox"
+              checked={{this.formData.isActive}}
+              {{on "change" this.toggleActive}}
+            />
+            <label class="avitar-label avitar-mb-0" for="project-type-active">
+              Active (available for contractors to use)
+            </label>
+          </div>
+        </form>
+      </div>
+
+      {{! Modal Footer }}
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeModal}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.submitForm}}
+          disabled={{this.isSaving}}
+        >
+          {{#if this.isSaving}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            <i class="fas fa-check avitar-mr-2"></i>
+            {{if this.isEditMode "Update" "Create"}}
+            Project Type
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

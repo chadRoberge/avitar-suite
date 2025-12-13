@@ -39,7 +39,7 @@ export default class MunicipalityBuildingPermitsSettingsPermitTypesController ex
         (t) =>
           t.name?.toLowerCase().includes(search) ||
           t.description?.toLowerCase().includes(search) ||
-          t.categories?.some(cat => cat.toLowerCase().includes(search)),
+          t.categories?.some((cat) => cat.toLowerCase().includes(search)),
       );
     }
 
@@ -128,7 +128,9 @@ export default class MunicipalityBuildingPermitsSettingsPermitTypesController ex
       this.closeModal();
 
       // Refresh the route
-      this.router.refresh('municipality.building-permits.settings.permit-types');
+      this.router.refresh(
+        'municipality.building-permits.settings.permit-types',
+      );
     } catch (error) {
       console.error('Error saving permit type:', error);
 
@@ -136,7 +138,9 @@ export default class MunicipalityBuildingPermitsSettingsPermitTypesController ex
       if (error.error === 'Duplicate permit type') {
         this.notifications.error('A permit type with this name already exists');
       } else if (error.error === 'Validation failed') {
-        this.notifications.error(error.message || 'Please check the form for errors');
+        this.notifications.error(
+          error.message || 'Please check the form for errors',
+        );
       } else {
         this.notifications.error('Failed to save permit type');
       }

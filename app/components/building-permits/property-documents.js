@@ -17,26 +17,21 @@ export default class PropertyDocumentsComponent extends Component {
 
   get documents() {
     const files = this.args.files || [];
-    console.log('📂 Component documents getter:', files.length, 'files');
     return files;
   }
 
   get permits() {
     const permits = this.args.permits || [];
-    console.log('📋 Component permits getter:', permits.length, 'permits');
     return permits;
   }
 
   get hasDocuments() {
     const hasFiles = this.documents.length > 0;
-    console.log('❓ hasDocuments:', hasFiles, '(documents:', this.documents.length, ')');
     return hasFiles;
   }
 
   get organizedDocuments() {
-    console.log('🗂️ organizedDocuments getter called');
-    console.log('  - documents:', this.documents.length);
-    console.log('  - permits:', this.permits.length);
+    // Removed verbose debug logging from getters
 
     const projects = [];
     const standalonePermits = [];
@@ -53,7 +48,8 @@ export default class PropertyDocumentsComponent extends Component {
         projectMap.set(permit._id, {
           ...permit,
           id: permit._id,
-          name: permit.projectName || `${permit.permitNumber} - ${permit.subtype}`,
+          name:
+            permit.projectName || `${permit.permitNumber} - ${permit.subtype}`,
           childPermits: [],
           files: [],
           totalFiles: 0,
@@ -81,7 +77,11 @@ export default class PropertyDocumentsComponent extends Component {
 
     // Organize files into their respective permits/projects
     this.documents.forEach((file) => {
-      if (file.isProjectFile && file.projectId && projectMap.has(file.projectId)) {
+      if (
+        file.isProjectFile &&
+        file.projectId &&
+        projectMap.has(file.projectId)
+      ) {
         // Project-level file
         const project = projectMap.get(file.projectId);
         project.files.push(file);
@@ -93,14 +93,18 @@ export default class PropertyDocumentsComponent extends Component {
           if (permit.projectId && projectMap.has(permit.projectId)) {
             // Find the child permit within the project
             const project = projectMap.get(permit.projectId);
-            const childPermit = project.childPermits.find((p) => p.id === permit._id);
+            const childPermit = project.childPermits.find(
+              (p) => p.id === permit._id,
+            );
             if (childPermit) {
               childPermit.files.push(file);
               project.totalFiles++;
             }
           } else {
             // Standalone permit
-            const standalonePermit = standalonePermits.find((p) => p.id === permit._id);
+            const standalonePermit = standalonePermits.find(
+              (p) => p.id === permit._id,
+            );
             if (standalonePermit) {
               standalonePermit.files.push(file);
             }
@@ -113,7 +117,9 @@ export default class PropertyDocumentsComponent extends Component {
     });
 
     return {
-      projects: Array.from(projectMap.values()).filter((p) => p.totalFiles > 0 || p.childPermits.length > 0),
+      projects: Array.from(projectMap.values()).filter(
+        (p) => p.totalFiles > 0 || p.childPermits.length > 0,
+      ),
       standalonePermits: standalonePermits.filter((p) => p.files.length > 0),
       otherFiles,
     };

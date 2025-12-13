@@ -11,6 +11,9 @@
         </div>
 
         <div class="avitar-modal__body">
+          {{! Trigger check for form updates }}
+          {{this.formInitializer}}
+
           <div class="avitar-alert avitar-alert--info avitar-mb-4">
             <div class="avitar-alert__icon">
               <i class="{{@attributeTypeIcon}}"></i>

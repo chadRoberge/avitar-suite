@@ -1,111 +1,129 @@
 {{page-title "Permit Details"}}
 
-{{! Breadcrumb Navigation (only show if coming from contractor dashboard) }}
-{{#if @model.fromContractorDashboard}}
-  <Shared::Breadcrumb @items={{this.breadcrumbItems}} />
-{{/if}}
-
-{{! Sticky Progress Bar }}
-<div class="avitar-permit-progress" style="position: sticky; top: 0; z-index: 100; background: white; border-bottom: 2px solid #e5e7eb; padding: 1rem 0; margin-bottom: 1.5rem;">
-  <div class="avitar-container">
-    <div class="avitar-flex avitar-items-center avitar-justify-between avitar-mb-3">
-      <div>
-        <h2 class="avitar-text-xl avitar-font-semibold">
+{{! Two-column layout: Progress sidebar + Main content }}
+<div class="avitar-flex avitar-flex-row">
+  {{! Left Sidebar - Permit Info + Status Progress }}
+  <div class="avitar-flex-3" style="position: sticky; top: calc(var(--topbar-height) * 2); height: calc(100vh - calc(var(--topbar-height) * 2)); overflow-y: auto; border-right: 1px solid #e5e7eb; background: white;">
+    {{! Permit Information Header }}
+    <div class="avitar-p-2 avitar-border-b avitar-border-gray-200">
+      {{! Permit Number - Prominent }}
+      <div class="avitar-mb-1 avitar-pb-1 avitar-border-b avitar-border-gray-200">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Permit Number</div>
+        <div class="avitar-text-lg avitar-font-bold avitar-text-gray-900">
           {{@model.permit.permitNumber}}
-          {{#if @model.permit.isProject}}
-            <span class="avitar-badge avitar-badge--primary avitar-ml-2">Project</span>
-          {{else}}
-            <span class="avitar-badge avitar-badge--secondary avitar-ml-2">Permit</span>
-          {{/if}}
-        </h2>
-        <p class="avitar-text-sm avitar-text-gray-600">
-          {{@model.permit.permitType}} - {{@model.permit.address}}
-        </p>
+        </div>
+        {{#if @model.permit.isProject}}
+          <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-mt-1">Project</span>
+        {{/if}}
       </div>
-      <div class="avitar-flex avitar-gap-2">
+      {{! Application Date }}
+      <div>
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Applied</div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{date-format @model.permit.applicationDate "MMM DD, YYYY"}}
+        </div>
+      </div>
+      {{! Property Address - Full Width }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">
+          <i class="fas fa-map-marker-alt"></i>
+          Property Address
+        </div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{@model.permit.address}}
+        </div>
+      </div>
+      {{! Permit Type }}
+      <div class="avitar-mt-1">
+        <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Permit Type</div>
+        <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
+          {{@model.permit.permitType}}
+        </div>
+      </div>
+    </div>
+    {{! Status Progress }}
+    <Contractor::PermitStatusProgress @permit={{@model.permit}} @steps={{this.permitStatusSteps}} @currentStepIndex={{this.currentStepIndex}} @departmentReviews={{this.departmentReviews}} />
+  </div>
+
+  {{! Right Content - Sticky Tabs + Scrollable Content }}
+  <main class="avitar-flex-10" style="background-color: #f9fafb; scrollbar-gutter: stable;">
+    {{! Action Buttons Bar }}
+    <div style="position: sticky; top: calc(var(--topbar-height) * 2); z-index: 10; background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem;">
+      <div class="avitar-flex avitar-gap-2 avitar-justify-end">
+        {{#if this.canReviewPermit}}
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.reviewPermit}}>
+            {{{lnr-icon "clipboard"}}}
+            <span class="avitar-ml-2">Review Permit</span>
+          </button>
+        {{/if}}
         <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.printPermit}}>
           <i class="fas fa-print avitar-mr-2"></i>
-          Print Permit
+          Print
         </button>
         <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.refreshData}}>
           <i class="fas fa-sync-alt avitar-mr-2"></i>
           Refresh
         </button>
         {{#if this.canEditPermit}}
-          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.editPermit}}>
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.editPermit}}>
             <i class="fas fa-edit avitar-mr-2"></i>
-            Edit Permit
+            Edit
           </button>
         {{/if}}
       </div>
     </div>
 
-    {{! Status Progress Steps }}
-    <div class="avitar-flex avitar-items-center avitar-gap-4 avitar-overflow-x-auto">
-      {{#each this.permitStatusSteps as |step index|}}
-        <div class="avitar-flex avitar-items-center avitar-gap-2" style="min-width: 150px;">
-          <div class="avitar-flex avitar-items-center avitar-gap-2 {{if (or (lt index this.currentStepIndex) (eq index this.currentStepIndex)) 'avitar-text-success' 'avitar-text-gray-400'}}">
-            <i class="fas fa-{{step.icon}} {{if (eq index this.currentStepIndex) 'fa-pulse'}}"></i>
-            <span class="avitar-font-medium avitar-text-sm">{{step.label}}</span>
-          </div>
-          {{#unless (eq index (sub this.permitStatusSteps.length 1))}}
-            <i class="fas fa-arrow-right avitar-text-gray-300"></i>
-          {{/unless}}
-        </div>
-      {{/each}}
+    {{! Sticky Tab Navigation }}
+    <div style="position: sticky; top: calc(var(--topbar-height) * 2 + 65px); z-index: 9; background: white; border-bottom: 1px solid #e5e7eb;">
+      <div class="avitar-tabs" style="overflow: visible;">
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab 'overview')}}
+        >
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          Overview
+        </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'inspections') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab 'inspections')}}
+        >
+          <i class="fas fa-clipboard-check avitar-mr-2"></i>
+          Inspections
+          {{#if @model.inspections.length}}
+            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.inspections.length}}</span>
+          {{/if}}
+        </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab 'documents')}}
+        >
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          Documents
+          {{#if @model.files.length}}
+            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.files.length}}</span>
+          {{/if}}
+        </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab 'chat')}}
+        >
+          <i class="fas fa-comments avitar-mr-2"></i>
+          Communications
+          {{#if @model.comments.length}}
+            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.comments.length}}</span>
+          {{/if}}
+        </button>
+      </div>
     </div>
-  </div>
-</div>
 
-{{! Main Content Area }}
-<div class="avitar-container">
-  {{! Tab Navigation }}
-  <div class="avitar-tabs avitar-mb-4">
-    <button
-      type="button"
-      class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}"
-      {{on "click" (fn this.setActiveTab 'overview')}}
-    >
-      <i class="fas fa-info-circle avitar-mr-2"></i>
-      Overview
-    </button>
-    <button
-      type="button"
-      class="avitar-tab {{if (eq this.activeTab 'inspections') 'avitar-tab--active'}}"
-      {{on "click" (fn this.setActiveTab 'inspections')}}
-    >
-      <i class="fas fa-clipboard-check avitar-mr-2"></i>
-      Inspections
-      {{#if @model.inspections.length}}
-        <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.inspections.length}}</span>
-      {{/if}}
-    </button>
-    <button
-      type="button"
-      class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}"
-      {{on "click" (fn this.setActiveTab 'documents')}}
-    >
-      <i class="fas fa-file-alt avitar-mr-2"></i>
-      Documents
-      {{#if @model.files.length}}
-        <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.files.length}}</span>
-      {{/if}}
-    </button>
-    <button
-      type="button"
-      class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}"
-      {{on "click" (fn this.setActiveTab 'chat')}}
-    >
-      <i class="fas fa-comments avitar-mr-2"></i>
-      Communications
-      {{#if @model.comments.length}}
-        <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.comments.length}}</span>
-      {{/if}}
-    </button>
-  </div>
-
-  {{! Overview Tab }}
-  {{#if (eq this.activeTab 'overview')}}
+    {{! Scrollable Tab Content }}
+    <div class="avitar-p-6">
+      {{! Overview Tab }}
+      {{#if (eq this.activeTab 'overview')}}
     <div class="avitar-flex avitar-gap-6" style="flex-wrap: wrap;">
       {{! Left Column - Permit Details }}
       <div class="avitar-flex-1" style="min-width: 400px;">
@@ -221,19 +239,25 @@
           </div>
           <div class="avitar-card__body">
             <div class="avitar-flex avitar-flex-col avitar-gap-2">
-              <button type="button" class="avitar-btn avitar-btn--primary" style="justify-content: flex-start;">
+              {{#if this.canReviewPermit}}
+                <button type="button" class="avitar-btn avitar-btn--primary" style="justify-content: flex-start;" {{on "click" this.reviewPermit}}>
+                  {{{lnr-icon "clipboard"}}}
+                  <span class="avitar-ml-2">Review Permit</span>
+                </button>
+              {{/if}}
+              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;">
                 <i class="fas fa-calendar-check avitar-mr-2"></i>
                 Schedule Inspection
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;">
+              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" this.openUploadModal}}>
                 <i class="fas fa-file-upload avitar-mr-2"></i>
                 Upload Document
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;">
+              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" (fn this.setActiveTab "chat")}}>
                 <i class="fas fa-comment avitar-mr-2"></i>
                 Add Comment
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;">
+              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" this.printPermit}}>
                 <i class="fas fa-print avitar-mr-2"></i>
                 Print Permit
               </button>
@@ -498,6 +522,8 @@
       </div>
     </div>
   {{/if}}
+    </div>
+  </main>
 </div>
 
 {{! Document Upload Modal }}
@@ -518,6 +544,7 @@
   @isOpen={{this.showViewerModal}}
   @onClose={{this.closeViewerModal}}
   @file={{this.selectedFile}}
+  @comments={{@model.comments}}
 />
 
 {{! Print Permit Modal }}

@@ -11,6 +11,9 @@
         </div>
 
         <div class="avitar-modal__body">
+          {{! Trigger check for form updates }}
+          {{this.formInitializer}}
+
           <form {{on "submit" this.handleSubmit}}>
             <div class="avitar-form-group">
               <label class="avitar-label" for="water-body-name">Water Body Name <span class="avitar-text-danger">*</span></label>
@@ -51,9 +54,9 @@
 
             <div class="avitar-form-group">
               <label class="avitar-label" for="water-body-type">Water Body Type <span class="avitar-text-danger">*</span></label>
-              <select 
+              <select
                 id="water-body-type"
-                class="avitar-select {{if this.typeError 'avitar-select--error'}}" 
+                class="avitar-select {{if this.typeError 'avitar-select--error'}}"
                 {{on "change" this.updateType}}
                 required
               >
@@ -69,6 +72,27 @@
               {{#if this.typeError}}
                 <div class="avitar-form-error">{{this.typeError}}</div>
               {{/if}}
+            </div>
+
+            <div class="avitar-form-group">
+              <label class="avitar-label" for="base-water-value">Base Waterfront Value <span class="avitar-text-danger">*</span></label>
+              <input
+                type="number"
+                id="base-water-value"
+                class="avitar-input {{if this.baseWaterValueError 'avitar-input--error'}}"
+                value={{this.baseWaterValue}}
+                {{on "input" this.updateBaseWaterValue}}
+                placeholder="Enter base waterfront value..."
+                step="0.01"
+                min="0"
+                required
+              />
+              {{#if this.baseWaterValueError}}
+                <div class="avitar-form-error">{{this.baseWaterValueError}}</div>
+              {{/if}}
+              <div class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Base dollar value that will be multiplied by frontage factors and waterfront attributes
+              </div>
             </div>
 
             {{#if this.generalError}}

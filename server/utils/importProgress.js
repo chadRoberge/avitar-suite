@@ -43,9 +43,10 @@ class ImportProgress {
 
   getProgress() {
     const elapsed = (this.lastUpdate || Date.now()) - this.startTime;
-    const percentage = this.totalItems > 0
-      ? Math.round((this.processedItems / this.totalItems) * 100)
-      : 0;
+    const percentage =
+      this.totalItems > 0
+        ? Math.round((this.processedItems / this.totalItems) * 100)
+        : 0;
 
     // Estimate time remaining
     let estimatedTimeRemaining = null;
@@ -111,7 +112,7 @@ module.exports = {
 
   // Cleanup old completed/failed imports (older than 1 hour)
   cleanup() {
-    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
     for (const [importId, progress] of progressStore.entries()) {
       if (progress.endTime && progress.endTime < oneHourAgo) {
         progressStore.delete(importId);
@@ -121,6 +122,9 @@ module.exports = {
 };
 
 // Run cleanup every 15 minutes
-setInterval(() => {
-  module.exports.cleanup();
-}, 15 * 60 * 1000);
+setInterval(
+  () => {
+    module.exports.cleanup();
+  },
+  15 * 60 * 1000,
+);

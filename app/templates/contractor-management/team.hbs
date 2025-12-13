@@ -1,6 +1,6 @@
 {{page-title "Team Management"}}
 
-<div>
+<div class="avitar-container avitar-pt-6 avitar-pb-6">
   {{#if this.needsOnboarding}}
     {{! Onboarding Required Message }}
     <div class="avitar-card avitar-bg-primary-light avitar-border-primary">
@@ -63,7 +63,7 @@
               Team Management is a Premium Feature
             </h3>
             <p class="avitar-text-muted avitar-mb-4">
-              Upgrade to the <strong>Professional</strong> or <strong>Enterprise</strong> plan to add team members, manage permissions, and enable collaborative permit management.
+              Upgrade to the <strong>Premium</strong> or <strong>Professional</strong> plan to add team members, manage permissions, and enable collaborative permit management.
             </p>
             <div class="avitar-flex avitar-gap-3">
               <LinkTo @route="contractor-management.subscription" class="avitar-btn avitar-btn--primary">
@@ -258,7 +258,7 @@
 {{! Add Member Modal }}
 {{#if this.showAddMemberModal}}
   <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeAddMemberModal}}>
-    <div class="avitar-modal avitar-modal--lg" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
           <i class="fas fa-user-plus avitar-mr-2"></i>
@@ -367,7 +367,7 @@
 {{! Edit Member Modal }}
 {{#if this.showEditMemberModal}}
   <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeEditMemberModal}}>
-    <div class="avitar-modal avitar-modal--lg" {{on "click" (fn this.stopPropagation)}} role="dialog" aria-modal="true">
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
           <i class="fas fa-user-edit avitar-mr-2"></i>

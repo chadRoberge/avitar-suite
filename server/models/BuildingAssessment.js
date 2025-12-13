@@ -30,30 +30,72 @@ const buildingAssessmentSchema = new mongoose.Schema(
     building_model: { type: String, trim: true },
     frame: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
     frame_height: { type: Number },
-    ceiling_height: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    ceiling_height: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
     year_built: { type: Number },
     base_type: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingCode' },
-    quality_grade: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    story_height: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    quality_grade: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    story_height: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Roof Details
-    roof_style: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    roof_cover: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    roof_style: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    roof_cover: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Wall Details
-    exterior_wall_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    exterior_wall_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    interior_wall_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    interior_wall_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    exterior_wall_1: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    exterior_wall_2: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    interior_wall_1: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    interior_wall_2: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Flooring
-    flooring_1: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    flooring_2: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    flooring_1: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    flooring_2: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Heating/Cooling
-    heating_fuel: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    heating_type: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    air_conditioning: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    heating_fuel: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    heating_type: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    air_conditioning: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Room Details
     bedrooms: { type: Number, default: 0 },
@@ -63,8 +105,14 @@ const buildingAssessmentSchema = new mongoose.Schema(
     fireplaces: { type: Number, default: 0 },
 
     // Additional Features
-    generator: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
-    condition: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
+    generator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
+    condition: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingFeatureCode',
+    },
 
     // Building Valuation
     base_rate: { type: Number, default: 0 },

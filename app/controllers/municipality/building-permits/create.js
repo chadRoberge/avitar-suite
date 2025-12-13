@@ -119,7 +119,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
       case 'per_sqft':
         const sqft = parseFloat(this.permit.squareFootage) || 0;
         const rate = parseFloat(schedule.perSqftRate) || 0;
-        return base + (sqft * rate);
+        return base + sqft * rate;
       case 'percentage':
         const value = parseFloat(this.permit.estimatedValue) || 0;
         return value * (base / 100);
@@ -136,7 +136,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     this.isLoadingPermitTypes = true;
     try {
       const response = await this.api.get(
-        `/municipalities/${this.municipalityId}/permit-types?status=active`
+        `/municipalities/${this.municipalityId}/permit-types?status=active`,
       );
       this.permitTypes = response.permitTypes || [];
     } catch (error) {
@@ -200,7 +200,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
 
     try {
       const data = await this.api.get(
-        `/municipalities/${this.municipalityId}/properties/search?q=${encodeURIComponent(searchText)}`
+        `/municipalities/${this.municipalityId}/properties/search?q=${encodeURIComponent(searchText)}`,
       );
       this.propertySearchResults = data.properties || [];
     } catch (error) {
@@ -255,7 +255,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     this.permit = {
       ...this.permit,
       applicant: this.permit.applicant ? { ...this.permit.applicant } : {},
-      location: this.permit.location ? { ...this.permit.location } : undefined
+      location: this.permit.location ? { ...this.permit.location } : undefined,
     };
 
     // Load property documents
@@ -274,7 +274,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     this.isLoadingPropertyDocuments = true;
     try {
       const response = await this.api.get(
-        `/municipalities/${this.municipalityId}/files?propertyId=${propertyId}`
+        `/municipalities/${this.municipalityId}/files?propertyId=${propertyId}`,
       );
       this.propertyDocuments = response.files || [];
     } catch (error) {
@@ -302,7 +302,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   @action
@@ -376,7 +376,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     if (!fileTypes || !Array.isArray(fileTypes)) {
       return '';
     }
-    return fileTypes.map(type => `.${type}`).join(',');
+    return fileTypes.map((type) => `.${type}`).join(',');
   }
 
   @action
@@ -397,7 +397,9 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
       });
     }
 
-    this.notifications.info(`${files.length} file(s) ready to upload with permit`);
+    this.notifications.info(
+      `${files.length} file(s) ready to upload with permit`,
+    );
   }
 
   async uploadPendingFiles(savedPermit) {
@@ -414,8 +416,11 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
       try {
         const formData = new FormData();
         formData.append('file', pending.file);
-        formData.append('propertyId', this.selectedProperty?._id || this.selectedProperty?.id);
-        formData.append('department', 'building-permits');
+        formData.append(
+          'propertyId',
+          this.selectedProperty?._id || this.selectedProperty?.id,
+        );
+        formData.append('department', 'building_permit');
         formData.append('category', pending.documentType);
         formData.append('displayName', pending.fileName);
         formData.append('description', `Document for ${pending.documentType}`);
@@ -433,7 +438,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
 
         await this.api.upload(
           `/municipalities/${this.municipalityId}/files/upload`,
-          formData
+          formData,
         );
 
         this.notifications.success(`${pending.fileName} uploaded successfully`);
@@ -454,7 +459,10 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     }
     this.permit.customFields[fieldId] = event.target.value;
     // Trigger reactivity - must update both customFields AND permit
-    this.permit = { ...this.permit, customFields: { ...this.permit.customFields } };
+    this.permit = {
+      ...this.permit,
+      customFields: { ...this.permit.customFields },
+    };
   }
 
   @action
@@ -485,7 +493,10 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
 
     this.permit.customFields[fieldId] = values;
     // Trigger reactivity - must update both customFields AND permit
-    this.permit = { ...this.permit, customFields: { ...this.permit.customFields } };
+    this.permit = {
+      ...this.permit,
+      customFields: { ...this.permit.customFields },
+    };
   }
 
   validateCurrentStep() {
@@ -505,7 +516,11 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
           this.errors.description = 'Description is required';
           isValid = false;
         }
-        if (this.permit.estimatedValue === null || this.permit.estimatedValue === undefined || this.permit.estimatedValue < 0) {
+        if (
+          this.permit.estimatedValue === null ||
+          this.permit.estimatedValue === undefined ||
+          this.permit.estimatedValue < 0
+        ) {
           this.errors.estimatedValue = 'Estimated value is required';
           isValid = false;
         }
@@ -522,7 +537,8 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
                 (Array.isArray(value) && value.length === 0);
 
               if (isEmpty) {
-                this.errors[`customField_${field.id}`] = `${field.label} is required`;
+                this.errors[`customField_${field.id}`] =
+                  `${field.label} is required`;
                 isValid = false;
               }
             }
@@ -545,7 +561,10 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
         // Check if required documents are uploaded
         if (this.selectedPermitType?.requiredDocuments?.length > 0) {
           const missingDocs = this.selectedPermitType.requiredDocuments.filter(
-            (doc) => !this.uploadedDocuments.some((uploaded) => uploaded.type === doc.name)
+            (doc) =>
+              !this.uploadedDocuments.some(
+                (uploaded) => uploaded.type === doc.name,
+              ),
           );
           if (missingDocs.length > 0) {
             this.errors.documents = `Missing required documents: ${missingDocs.map((d) => d.name).join(', ')}`;
@@ -578,7 +597,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
         {
           ...this.getPermitData(),
           status: 'submitted',
-        }
+        },
       );
 
       // Upload any pending files
@@ -587,7 +606,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
       this.notifications.success('Permit submitted successfully');
       this.router.transitionTo(
         'municipality.building-permits.permit',
-        savedPermit._id
+        savedPermit._id,
       );
     } catch (error) {
       console.error('Error submitting permit:', error);
@@ -607,7 +626,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
         {
           ...this.getPermitData(),
           status: 'draft',
-        }
+        },
       );
 
       // Upload any pending files
@@ -616,7 +635,7 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
       this.notifications.success('Permit saved as draft');
       this.router.transitionTo(
         'municipality.building-permits.edit',
-        savedPermit._id
+        savedPermit._id,
       );
     } catch (error) {
       console.error('Error saving permit:', error);
@@ -659,7 +678,11 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
 
   @action
   cancel() {
-    if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+    if (
+      confirm(
+        'Are you sure you want to cancel? Any unsaved changes will be lost.',
+      )
+    ) {
       this.router.transitionTo('municipality.building-permits.queue');
     }
   }

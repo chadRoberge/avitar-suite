@@ -15,7 +15,7 @@ export default class ModuleAccessService extends Service {
   MODULES = {
     ASSESSING: 'assessing',
     TAX_COLLECTION: 'taxCollection',
-    BUILDING_PERMITS: 'buildingPermits',
+    BUILDING_PERMITS: 'building_permit',
     TOWN_CLERK: 'townClerk',
     MOTOR_VEHICLE: 'motorVehicle',
     UTILITY_BILLING: 'utilityBilling',
@@ -34,7 +34,7 @@ export default class ModuleAccessService extends Service {
       AUTOMATED_REMINDERS: 'automatedReminders',
       LIENS_MANAGEMENT: 'liensManagement',
     },
-    buildingPermits: {
+    building_permit: {
       ONLINE_APPLICATIONS: 'onlineApplications',
       DIGITAL_PLAN_REVIEW: 'digitalPlanReview',
       INSPECTION_SCHEDULING: 'inspectionScheduling',
@@ -214,7 +214,7 @@ export default class ModuleAccessService extends Service {
         icon: 'dollar-sign',
         color: 'green',
       },
-      buildingPermits: {
+      building_permit: {
         name: 'Building Permits',
         description: 'Building permits, inspections, and code enforcement',
         icon: 'tool',

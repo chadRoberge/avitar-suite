@@ -100,7 +100,10 @@ class BuildingCodesImportService {
       const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0]; // Use first sheet
       const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+      const data = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        defval: '',
+      });
 
       console.log(`📋 Parsing building codes from sheet: ${sheetName}`);
       console.log(`   Total rows: ${data.length}`);
@@ -134,20 +137,31 @@ class BuildingCodesImportService {
 
       // Count feature codes by type
       const featureTypeCount = {};
-      result.buildingFeatureCodes.forEach(fc => {
-        featureTypeCount[fc.featureType] = (featureTypeCount[fc.featureType] || 0) + 1;
+      result.buildingFeatureCodes.forEach((fc) => {
+        featureTypeCount[fc.featureType] =
+          (featureTypeCount[fc.featureType] || 0) + 1;
       });
       result.stats.featureCodesByType = featureTypeCount;
 
-      console.log(`✅ Parsed ${result.stats.buildingCodesCount} building codes`);
-      console.log(`✅ Parsed ${result.stats.featureCodesCount} building feature codes`);
+      console.log(
+        `✅ Parsed ${result.stats.buildingCodesCount} building codes`,
+      );
+      console.log(
+        `✅ Parsed ${result.stats.featureCodesCount} building feature codes`,
+      );
       console.log('   Feature codes breakdown by type:');
-      for (const [type, count] of Object.entries(result.stats.featureCodesByType)) {
+      for (const [type, count] of Object.entries(
+        result.stats.featureCodesByType,
+      )) {
         console.log(`      - ${type}: ${count} codes`);
       }
-      console.log(`✅ Parsed ${result.stats.subAreaFactorsCount} sketch sub-area factors`);
+      console.log(
+        `✅ Parsed ${result.stats.subAreaFactorsCount} sketch sub-area factors`,
+      );
       if (result.miscellaneousPoints) {
-        console.log(`✅ Parsed building accessories: AC=${result.miscellaneousPoints.airConditioningPoints}, Kitchen=${result.miscellaneousPoints.extraKitchenPoints}, Fireplace=${result.miscellaneousPoints.fireplacePoints}, Generator=${result.miscellaneousPoints.generatorPoints}`);
+        console.log(
+          `✅ Parsed building accessories: AC=${result.miscellaneousPoints.airConditioningPoints}, Kitchen=${result.miscellaneousPoints.extraKitchenPoints}, Fireplace=${result.miscellaneousPoints.fireplacePoints}, Generator=${result.miscellaneousPoints.generatorPoints}`,
+        );
       }
 
       return result;
@@ -208,8 +222,14 @@ class BuildingCodesImportService {
       const rowText = row.join(' ').toLowerCase();
 
       // Stop if we hit another section header
-      const hitAnotherSection = Object.keys(this.sectionHeaders).some(headerKey =>
-        rowText.includes(headerKey) && !rowText.includes(Object.keys(this.sectionHeaders).find(k => config === this.sectionHeaders[k]))
+      const hitAnotherSection = Object.keys(this.sectionHeaders).some(
+        (headerKey) =>
+          rowText.includes(headerKey) &&
+          !rowText.includes(
+            Object.keys(this.sectionHeaders).find(
+              (k) => config === this.sectionHeaders[k],
+            ),
+          ),
       );
       if (hitAnotherSection) {
         console.log(`   📍 Row ${i}: Hit another section, stopping`);
@@ -218,8 +238,10 @@ class BuildingCodesImportService {
 
       // Look for data header row (Code | Description | ... or SA | Description | ...)
       if (!foundDataHeader) {
-        const hasCodeHeader = rowText.includes('code') && rowText.includes('description');
-        const hasSAHeader = rowText.includes('sa') && rowText.includes('description');
+        const hasCodeHeader =
+          rowText.includes('code') && rowText.includes('description');
+        const hasSAHeader =
+          rowText.includes('sa') && rowText.includes('description');
 
         if (hasCodeHeader || hasSAHeader) {
           foundDataHeader = true;
@@ -264,11 +286,13 @@ class BuildingCodesImportService {
       }
 
       // Skip header-like rows
-      if (code.toLowerCase() === 'code' || code.toLowerCase() === 'sa') continue;
+      if (code.toLowerCase() === 'code' || code.toLowerCase() === 'sa')
+        continue;
 
       // Parse the data row based on model type
       if (code) {
-        const numericValue = typeof value === 'number' ? value : (value ? parseFloat(value) : null);
+        const numericValue =
+          typeof value === 'number' ? value : value ? parseFloat(value) : null;
 
         if (config.model === 'BuildingCode') {
           // Building Base Rate Codes
@@ -293,20 +317,29 @@ class BuildingCodesImportService {
             sizeAdjustmentCategory = 'utility';
           }
 
-          const depreciation = row[3] ? (typeof row[3] === 'number' ? row[3] : parseFloat(row[3])) : 1.0;
+          const depreciation = row[3]
+            ? typeof row[3] === 'number'
+              ? row[3]
+              : parseFloat(row[3])
+            : 1.0;
 
           parsed.push({
             code: code,
-            description: config.saveDescriptionAsDisplayText ? description : (description || code),
-            displayText: config.saveDescriptionAsDisplayText ? description : code,
+            description: config.saveDescriptionAsDisplayText
+              ? description
+              : description || code,
+            displayText: config.saveDescriptionAsDisplayText
+              ? description
+              : code,
             depreciation: depreciation || 1.0,
             rate: numericValue || 0,
             buildingType: buildingType,
             sizeAdjustmentCategory: sizeAdjustmentCategory,
           });
 
-          console.log(`   📋 Building code: ${code} → ${buildingType}, rate: ${numericValue}`);
-
+          console.log(
+            `   📋 Building code: ${code} → ${buildingType}, rate: ${numericValue}`,
+          );
         } else if (config.model === 'BuildingFeatureCode') {
           // Building Feature Codes
           let displayText = code;
@@ -327,8 +360,9 @@ class BuildingCodesImportService {
             points: numericValue || 1.0,
           });
 
-          console.log(`   📋 Feature code (${config.featureType}): code=${code}, displayText=${displayText}, points: ${numericValue}`);
-
+          console.log(
+            `   📋 Feature code (${config.featureType}): code=${code}, displayText=${displayText}, points: ${numericValue}`,
+          );
         } else if (config.model === 'SketchSubAreaFactor') {
           // Sub Area Factors
           let displayText = code;
@@ -342,7 +376,8 @@ class BuildingCodesImportService {
           if (config.checkLivingSpace) {
             const descUpper = description.toUpperCase();
             // Check for " FIN" or " FINISHED" (with space before)
-            isLivingSpace = descUpper.includes(' FIN') || descUpper.includes(' FINISHED');
+            isLivingSpace =
+              descUpper.includes(' FIN') || descUpper.includes(' FINISHED');
           }
 
           parsed.push({
@@ -352,7 +387,9 @@ class BuildingCodesImportService {
             livingSpace: isLivingSpace,
           });
 
-          console.log(`   📐 Sub-area factor: ${displayText}, living space: ${isLivingSpace}, factor: ${numericValue}`);
+          console.log(
+            `   📐 Sub-area factor: ${displayText}, living space: ${isLivingSpace}, factor: ${numericValue}`,
+          );
         }
       }
     }
@@ -380,9 +417,11 @@ class BuildingCodesImportService {
       const row = data[i];
       const rowText = row.join(' ').toLowerCase();
 
-      if (rowText.includes('building accessories') ||
-          rowText.includes('building accessory') ||
-          rowText.includes('accessories')) {
+      if (
+        rowText.includes('building accessories') ||
+        rowText.includes('building accessory') ||
+        rowText.includes('accessories')
+      ) {
         accessoriesStartRow = i;
         console.log(`   Found Building Accessories section at row ${i}`);
         break;
@@ -395,7 +434,11 @@ class BuildingCodesImportService {
     }
 
     // Parse the next ~20 rows after the header for accessory items
-    for (let i = accessoriesStartRow + 1; i < Math.min(accessoriesStartRow + 20, data.length); i++) {
+    for (
+      let i = accessoriesStartRow + 1;
+      i < Math.min(accessoriesStartRow + 20, data.length);
+      i++
+    ) {
       const row = data[i];
 
       // Look for description in first few columns
@@ -416,16 +459,28 @@ class BuildingCodesImportService {
 
       if (points !== null) {
         // Match against known accessory types
-        if (description.includes('air') && (description.includes('condition') || description.includes('ac'))) {
+        if (
+          description.includes('air') &&
+          (description.includes('condition') || description.includes('ac'))
+        ) {
           accessories.airConditioningPoints = points;
           console.log(`   Found Air Conditioning: ${points} points`);
-        } else if (description.includes('kitchen') && description.includes('extra')) {
+        } else if (
+          description.includes('kitchen') &&
+          description.includes('extra')
+        ) {
           accessories.extraKitchenPoints = points;
           console.log(`   Found Extra Kitchen: ${points} points`);
-        } else if (description.includes('fireplace') || description.includes('fire place')) {
+        } else if (
+          description.includes('fireplace') ||
+          description.includes('fire place')
+        ) {
           accessories.fireplacePoints = points;
           console.log(`   Found Fireplace: ${points} points`);
-        } else if (description.includes('generator') || description.includes('gen')) {
+        } else if (
+          description.includes('generator') ||
+          description.includes('gen')
+        ) {
           accessories.generatorPoints = points;
           console.log(`   Found Generator: ${points} points`);
         }

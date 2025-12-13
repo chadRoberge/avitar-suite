@@ -1,17 +1,307 @@
-{{!-- Module Management Settings --}}
+{{page-title "Modules"}}
+
 <div class="avitar-content" style="padding: var(--spacing-6); background: var(--color-gray-50);">
-  <div class="avitar-card">
-    <div class="avitar-card__header">
-      <h1 class="avitar-card__title">Module Management</h1>
-      <div class="avitar-card__subtitle">Enable and configure available modules</div>
+  {{! Header with Title }}
+  <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-1">Module Management</h1>
+      <p class="avitar-text-sm avitar-text-muted">Manage and activate modules for your municipality</p>
     </div>
-    <div class="avitar-card__body">
-      <p class="avitar-text-muted">Enable or disable modules and configure their settings for your municipality.</p>
-      {{!-- Placeholder content - will be implemented later --}}
-      <div class="avitar-empty-state">
-        <i class="fas fa-puzzle-piece"></i>
-        <span>Module management settings coming soon</span>
+  </div>
+
+  {{! Stats Cards }}
+  <div class="avitar-flex avitar-gap-4 avitar-mb-4">
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Total Modules</div>
+          <div class="avitar-stat__value">{{this.model.modules.length}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Active Modules</div>
+          <div class="avitar-stat__value avitar-text-success">{{this.model.active_count}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat avitar-flex-1">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__label">Available Modules</div>
+          <div class="avitar-stat__value avitar-text-primary">{{this.availableModules.length}}</div>
+        </div>
       </div>
     </div>
   </div>
+
+  {{! Filters }}
+  <div class="avitar-card avitar-mb-4">
+    <div class="avitar-card__body">
+      <div class="avitar-flex avitar-gap-3">
+        {{! Search Input }}
+        <div class="avitar-flex-1">
+          <input
+            type="text"
+            class="avitar-input"
+            placeholder="Search modules..."
+            value={{this.searchText}}
+            {{on "input" this.updateSearch}}
+          />
+        </div>
+
+        {{! Status Filter }}
+        <div style="min-width: 200px;">
+          <select class="avitar-select" {{on "change" this.setFilterStatus}}>
+            <option value="all" selected={{eq this.filterStatus "all"}}>All Modules</option>
+            <option value="active" selected={{eq this.filterStatus "active"}}>Active Only</option>
+            <option value="available" selected={{eq this.filterStatus "available"}}>Available Only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{! Modules by Type }}
+  {{#if this.filteredModules.length}}
+    {{#each this.modulesByType as |moduleGroup|}}
+      {{! Module Type Header }}
+      <div class="avitar-mb-4">
+        <h2 class="avitar-text-xl avitar-font-bold avitar-mb-3">
+          {{moduleGroup.displayName}}
+        </h2>
+
+        {{! Flexbox Row of Module Cards }}
+        <div class="avitar-flex avitar-gap-6" style="flex-wrap: wrap; justify-content: center;">
+          {{#each moduleGroup.modules as |module|}}
+            <div class="avitar-card avitar-card--hover" style="position: relative; flex: 1 1 calc(33.333% - 1rem); min-width: 300px; max-width: calc(33.333% - 1rem);">
+              {{! Subscription Status Badge }}
+              {{#if module.is_active}}
+                <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
+                  <span class={{this.getModuleBadgeClass module}}>
+                    {{lnr-icon (get (this.getSubscriptionStatusBadge module) "icon") size=12}}
+                    <span class="avitar-ml-1">{{this.getModuleStatusText module}}</span>
+                  </span>
+                </div>
+              {{/if}}
+
+          <div class="avitar-card__body avitar-p-6">
+            {{! Module Icon }}
+            <div class="avitar-flex avitar-items-center avitar-mb-4">
+              <div class="avitar-w-16 avitar-h-16 avitar-rounded-lg avitar-bg-primary-light avitar-flex avitar-items-center avitar-justify-center">
+                {{lnr-icon (this.getModuleIcon module.module) size=32 class="avitar-text-primary"}}
+              </div>
+            </div>
+
+            {{! Module Name }}
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              {{module.name}}
+            </h3>
+
+            {{! Module Description }}
+            <p class="avitar-text-sm avitar-text-muted avitar-mb-4" style="min-height: 60px;">
+              {{module.description}}
+            </p>
+
+            {{! Pricing }}
+            <div class="avitar-mb-4" style="border-top: 1px solid var(--color-gray-200); border-bottom: 1px solid var(--color-gray-200); padding: 12px 0;">
+              {{#if module.calculated_pricing}}
+                {{! Show specific pricing for municipality's parcel count }}
+                <div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Your Pricing</div>
+                  <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                    {{this.formatPrice module.calculated_pricing}}
+                  </div>
+                  <div class="avitar-text-xs avitar-text-muted">
+                    Based on {{module.calculated_pricing.for_parcel_count}} parcels
+                  </div>
+                </div>
+              {{else if module.pricing_tiers}}
+                {{! Show tiered pricing examples }}
+                <div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mb-2">Pricing Examples:</div>
+                  {{#each module.pricing_tiers as |pricingTier|}}
+                    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-py-1">
+                      <div class="avitar-text-xs avitar-text-muted">
+                        {{pricingTier.parcel_count}} parcels
+                      </div>
+                      <div class="avitar-text-sm avitar-font-semibold avitar-text-primary">
+                        ${{pricingTier.amount}}/{{pricingTier.interval}}
+                      </div>
+                    </div>
+                  {{/each}}
+                  <div class="avitar-text-xs avitar-text-muted avitar-mt-2 avitar-italic">
+                    Add property data to see your exact pricing
+                  </div>
+                </div>
+              {{else}}
+                {{! Fallback to default pricing }}
+                <div>
+                  <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Pricing</div>
+                  <div class="avitar-text-lg avitar-font-bold avitar-text-primary">
+                    {{this.formatPrice module.pricing}}
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+
+            {{! Features List }}
+            {{#if module.features.length}}
+              <div class="avitar-mb-4">
+                <div class="avitar-text-xs avitar-font-semibold avitar-text-muted avitar-mb-2">Features Included:</div>
+                <ul class="avitar-text-xs avitar-text-muted" style="list-style: none; padding-left: 0;">
+                  {{#each module.features as |feature|}}
+                    <li style="margin-bottom: 6px; display: flex; align-items: start; gap: 8px;">
+                      <span style="color: var(--color-success); flex-shrink: 0; margin-top: 2px;">
+                        {{lnr-icon "check-circle" size=12}}
+                      </span>
+                      <span>{{feature}}</span>
+                    </li>
+                  {{/each}}
+                </ul>
+              </div>
+            {{else}}
+              <div class="avitar-mb-4">
+                <div class="avitar-text-xs avitar-text-muted avitar-italic">No features listed</div>
+              </div>
+            {{/if}}
+
+            {{! Action Buttons }}
+            <div class="avitar-flex avitar-gap-2 avitar-mt-4" style="border-top: 1px solid var(--color-gray-200); padding-top: 16px;">
+              {{#if module.is_active}}
+                {{! Active Module - Show Manage Button }}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-flex-1"
+                  {{on "click" (fn this.manageModule module)}}
+                >
+                  {{lnr-icon "settings" size=14}}
+                  <span class="avitar-ml-1">Manage</span>
+                </button>
+              {{else}}
+                {{! Available Module - Show Activate Button }}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary avitar-btn--sm avitar-flex-1"
+                  {{on "click" (fn this.activateModule module)}}
+                >
+                  {{lnr-icon "plus-circle" size=14}}
+                  <span class="avitar-ml-1">Activate</span>
+                </button>
+              {{/if}}
+            </div>
+
+            {{! Active Module Info }}
+            {{#if module.is_active}}
+              <div class="avitar-mt-3" style="border-top: 1px solid var(--color-gray-200); padding-top: 12px;">
+                <div class="avitar-text-xs avitar-text-muted">
+                  {{! Trial Information }}
+                  {{#if (eq module.access_level "trial")}}
+                    <div class="avitar-mb-2 avitar-p-2 avitar-rounded" style="background: var(--color-warning-light);">
+                      <div class="avitar-font-semibold avitar-text-warning">
+                        {{lnr-icon "clock" size=12}}
+                        <span class="avitar-ml-1">Trial Period</span>
+                      </div>
+                      <div class="avitar-mt-1">
+                        <span class="avitar-font-semibold">Started:</span>
+                        {{date-format module.trial_start "MMM DD, YYYY"}}
+                      </div>
+                      <div class="avitar-mt-1">
+                        <span class="avitar-font-semibold">Ends:</span>
+                        {{date-format module.trial_end "MMM DD, YYYY"}}
+                      </div>
+                      <div class="avitar-mt-1 avitar-font-semibold">
+                        {{module.trial_days_remaining}} days remaining
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{! Paid Subscription Information }}
+                  {{#if (eq module.access_level "full")}}
+                    <div class="avitar-mb-2">
+                      <div class="avitar-font-semibold avitar-text-success">
+                        {{lnr-icon "check-circle" size=12}}
+                        <span class="avitar-ml-1">Active Subscription</span>
+                      </div>
+                      {{#if module.current_period_end}}
+                        <div class="avitar-mt-1">
+                          <span class="avitar-font-semibold">Renews:</span>
+                          {{date-format module.current_period_end "MMM DD, YYYY"}}
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/if}}
+
+                  {{! Read-Only Warning }}
+                  {{#if (eq module.access_level "read-only")}}
+                    <div class="avitar-mb-2 avitar-p-2 avitar-rounded" style="background: var(--color-danger-light);">
+                      <div class="avitar-font-semibold avitar-text-danger">
+                        {{lnr-icon "alert-triangle" size=12}}
+                        <span class="avitar-ml-1">Read-Only Mode</span>
+                      </div>
+                      <div class="avitar-mt-1">
+                        Your trial has expired. Subscribe to continue editing.
+                      </div>
+                    </div>
+                  {{/if}}
+
+                  {{! General Info }}
+                  {{#if module.activated_date}}
+                    <div class="avitar-mt-1">
+                      <span class="avitar-font-semibold">Activated:</span>
+                      {{date-format module.activated_date "MMM DD, YYYY"}}
+                    </div>
+                  {{/if}}
+                  {{#if module.parcel_count_at_purchase}}
+                    <div class="avitar-mt-1">
+                      <span class="avitar-font-semibold">Parcel Count:</span>
+                      {{module.parcel_count_at_purchase}}
+                    </div>
+                  {{/if}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/each}}
+  {{else}}
+    {{! Empty State }}
+    <div class="avitar-card">
+      <div class="avitar-card__body">
+        <div class="avitar-empty-state avitar-py-12">
+          <div
+            class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-gray-100 avitar-flex avitar-items-center avitar-justify-center avitar-mx-auto avitar-mb-4"
+          >
+            {{lnr-icon "package" size=32 class="avitar-text-muted"}}
+          </div>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Modules Found</h3>
+          <p class="avitar-text-muted">
+            {{#if this.searchText}}
+              No modules match your search criteria.
+            {{else}}
+              There are no modules available at this time.
+            {{/if}}
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/if}}
 </div>
+
+{{! Trial Activation Modal }}
+<Municipality::TrialActivationModal
+  @showModal={{this.showTrialModal}}
+  @module={{this.selectedModule}}
+  @moduleIcon={{this.getModuleIcon this.selectedModule.module}}
+  @parcelCount={{this.model.municipality.parcel_count}}
+  @billingEmail={{or this.model.municipality.billing_email this.model.currentUser.email}}
+  @onClose={{this.closeTrialModal}}
+  @onSuccess={{this.handleTrialSuccess}}
+/>

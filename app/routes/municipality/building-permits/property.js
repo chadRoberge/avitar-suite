@@ -27,7 +27,7 @@ export default class MunicipalityBuildingPermitsPropertyRoute extends Route {
 
   beforeModel() {
     // Check if user has read access to building permits module
-    if (!this.currentUser.hasModulePermission('buildingPermits', 'read')) {
+    if (!this.currentUser.hasModulePermission('building_permit', 'read')) {
       this.router.transitionTo('municipality.dashboard');
       throw new Error('You do not have permission to view building permits');
     }

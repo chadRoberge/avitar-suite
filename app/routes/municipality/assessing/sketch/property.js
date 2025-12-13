@@ -75,7 +75,10 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
         const serviceProperty = this.propertySelection.selectedProperty;
         if (serviceProperty?.cards) {
           cleanProperty.cards = serviceProperty.cards;
-          console.log('🃏 Sketch route - Using cards data from service:', cleanProperty.cards);
+          console.log(
+            '🃏 Sketch route - Using cards data from service:',
+            cleanProperty.cards,
+          );
         }
       }
 
@@ -98,7 +101,9 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
         // Use nullish coalescing (??) for .value checks to handle 0 as a valid value
         const buildingValue =
           assessment?.building?.value ??
-          (typeof assessment?.building === 'number' ? assessment.building : null) ??
+          (typeof assessment?.building === 'number'
+            ? assessment.building
+            : null) ??
           assessment?.calculated_totals?.buildingValue ??
           assessment?.buildingValue ??
           0;
@@ -112,7 +117,9 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
 
         const featuresValue =
           assessment?.other_improvements?.value ??
-          (typeof assessment?.features === 'number' ? assessment.features : null) ??
+          (typeof assessment?.features === 'number'
+            ? assessment.features
+            : null) ??
           assessment?.calculated_totals?.featuresValue ??
           assessment?.featuresValue ??
           assessment?.otherValue ??
@@ -121,7 +128,8 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
         // Calculate CARD-SPECIFIC total from components
         // Only include land value for Card 1 (base land is parcel-level, only Card 1 gets it)
         const cardLandValue = parseInt(cardNumber) === 1 ? landValue : 0;
-        const cardTotalFromComponents = buildingValue + cardLandValue + featuresValue;
+        const cardTotalFromComponents =
+          buildingValue + cardLandValue + featuresValue;
         const cardProvidedTotal =
           assessment?.total_value ||
           assessment?.total ||
@@ -131,7 +139,10 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
           0;
 
         // Card-specific assessment total
-        const currentCardAssessment = Math.max(cardProvidedTotal, cardTotalFromComponents);
+        const currentCardAssessment = Math.max(
+          cardProvidedTotal,
+          cardTotalFromComponents,
+        );
 
         // PARCEL total (sum of all cards) - use assessment_summary if available
         const parcelTotalValue =
@@ -153,17 +164,31 @@ export default class MunicipalityAssessingSketchPropertyRoute extends Route {
         cleanProperty.assessed_value = parcelTotalValue;
         cleanProperty.tax_year = new Date().getFullYear();
       } else {
-        console.warn('⚠️ Sketch route - No assessment data found for card', cardNumber);
+        console.warn(
+          '⚠️ Sketch route - No assessment data found for card',
+          cardNumber,
+        );
         // Set card assessment to 0 if no data
         cleanProperty.current_card_assessment = 0;
         // Still use parcel total from assessment_summary
-        cleanProperty.assessed_value = property.assessment_summary?.total_value || property.assessed_value || 0;
+        cleanProperty.assessed_value =
+          property.assessment_summary?.total_value ||
+          property.assessed_value ||
+          0;
       }
 
       // Final preservation check: ensure cards data is not lost
       const currentProperty = this.propertySelection.selectedProperty;
-      if (currentProperty && currentProperty.id === cleanProperty.id && currentProperty.cards && !cleanProperty.cards) {
-        console.log('🃏 Sketch route final preservation - adding cards data for property', cleanProperty.id);
+      if (
+        currentProperty &&
+        currentProperty.id === cleanProperty.id &&
+        currentProperty.cards &&
+        !cleanProperty.cards
+      ) {
+        console.log(
+          '🃏 Sketch route final preservation - adding cards data for property',
+          cleanProperty.id,
+        );
         cleanProperty.cards = currentProperty.cards;
       }
 

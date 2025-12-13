@@ -37,7 +37,9 @@ export default class MunicipalityAssessingRevaluationSheetRoute extends Route {
   setupController(controller, model) {
     super.setupController(controller, model);
     // Set current sheet ID in parent controller for sidebar highlighting
-    const parentController = this.controllerFor('municipality.assessing.revaluation');
+    const parentController = this.controllerFor(
+      'municipality.assessing.revaluation',
+    );
     parentController.currentSheetId = model.sheet._id;
   }
 
@@ -45,7 +47,9 @@ export default class MunicipalityAssessingRevaluationSheetRoute extends Route {
     super.resetController(controller, isExiting);
     if (isExiting) {
       // Clear current sheet ID when leaving the route
-      const parentController = this.controllerFor('municipality.assessing.revaluation');
+      const parentController = this.controllerFor(
+        'municipality.assessing.revaluation',
+      );
       parentController.currentSheetId = null;
     }
   }

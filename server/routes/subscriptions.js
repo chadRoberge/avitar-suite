@@ -237,7 +237,9 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
       latest_invoice_type: typeof subscription.latest_invoice,
       latest_invoice_id: subscription.latest_invoice?.id,
       payment_intent_id: subscription.latest_invoice?.payment_intent?.id,
-      client_secret: subscription.latest_invoice?.payment_intent?.client_secret ? '✅ present' : '❌ missing',
+      client_secret: subscription.latest_invoice?.payment_intent?.client_secret
+        ? '✅ present'
+        : '❌ missing',
     });
 
     // Update contractor subscription with data from Stripe
@@ -331,13 +333,17 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
     if (!contractor.subscription?.stripe_subscription_id) {
       return res.status(400).json({
         success: false,
-        message: 'No active subscription found. Please create a subscription first.',
+        message:
+          'No active subscription found. Please create a subscription first.',
       });
     }
 
     // If payment method provided, attach it to customer (for Free → Paid upgrades)
     if (payment_method_id && contractor.subscription?.stripe_customer_id) {
-      console.log('🔵 [CHANGE_PLAN] Attaching payment method:', payment_method_id);
+      console.log(
+        '🔵 [CHANGE_PLAN] Attaching payment method:',
+        payment_method_id,
+      );
 
       await stripeService.attachPaymentMethod(
         payment_method_id,
@@ -349,7 +355,9 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
         payment_method_id,
       );
 
-      console.log('🟢 [CHANGE_PLAN] Payment method attached and set as default');
+      console.log(
+        '🟢 [CHANGE_PLAN] Payment method attached and set as default',
+      );
     }
 
     console.log('🔵 [CHANGE_PLAN] Updating subscription:', {

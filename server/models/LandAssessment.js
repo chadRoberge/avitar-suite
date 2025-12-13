@@ -67,6 +67,10 @@ const landAssessmentSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: 'LandUseDetail',
         },
+        topography_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'PropertyAttribute',
+        },
         // Legacy fields (kept for backward compatibility during migration)
         land_use_code: String, // Specific code like "R1", "R1A", "COM", etc.
         land_use_type: String, // Category: "RES", "COM", "IND", "AG", "EX", "MXU"

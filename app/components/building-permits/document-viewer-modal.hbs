@@ -1,6 +1,10 @@
 {{#if @isOpen}}
-  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
-    <div class="avitar-modal avitar-modal--xl" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible"
+       style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;"
+       {{on "click" this.close}}>
+    <div class="avitar-modal avitar-modal--xl"
+         style="position: relative; z-index: 10000;"
+         {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
           <i class="fas fa-file-alt avitar-mr-2"></i>
@@ -17,32 +21,84 @@
         </div>
       </div>
 
-      <div class="avitar-modal__body" style="padding: 0; max-height: 80vh; overflow: hidden;">
-        {{#if this.canPreview}}
-          {{#if this.isPDF}}
-            <iframe
-              src={{this.computedFileUrl}}
-              style="width: 100%; height: 80vh; border: none;"
-              title={{@file.displayName}}
-            ></iframe>
-          {{else if this.isImage}}
-            <div style="text-align: center; padding: 1rem; background: #f9fafb; overflow: auto; max-height: 80vh;">
-              <img
+      <div class="avitar-modal__body avitar-flex" style="padding: 0; max-height: 80vh; overflow: hidden;">
+        {{! Main document viewer area }}
+        <div class="avitar-flex-1 avitar-bg-gray-50" style="overflow: auto;">
+          {{#if this.canPreview}}
+            {{#if this.isPDF}}
+              <iframe
                 src={{this.computedFileUrl}}
-                alt={{@file.displayName}}
-                style="max-width: 100%; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
-              />
+                style="width: 100%; height: 80vh; border: none;"
+                title={{@file.displayName}}
+              ></iframe>
+            {{else if this.isImage}}
+              <div class="avitar-flex avitar-items-center avitar-justify-center avitar-p-4" style="height: 80vh; overflow: auto;">
+                <img
+                  src={{this.computedFileUrl}}
+                  alt={{@file.displayName}}
+                  class="avitar-shadow-lg"
+                  style="max-width: 100%; height: auto; transform: scale({{div this.zoomLevel 100}}); transition: transform 0.2s ease;"
+                />
+              </div>
+            {{/if}}
+          {{else}}
+            <div class="avitar-alert avitar-alert--info avitar-m-4">
+              <i class="fas fa-info-circle avitar-mr-2"></i>
+              Preview not available for this file type. Please download the file to view it.
+              <div class="avitar-mt-3">
+                <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.download}}>
+                  {{{lnr-icon "download"}}}
+                  Download {{@file.displayName}}
+                </button>
+              </div>
             </div>
           {{/if}}
-        {{else}}
-          <div class="avitar-alert avitar-alert--info" style="margin: 1rem;">
-            <i class="fas fa-info-circle avitar-mr-2"></i>
-            Preview not available for this file type. Please download the file to view it.
-            <div class="avitar-mt-3">
-              <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.download}}>
-                {{{lnr-icon "download"}}}
-                Download {{@file.displayName}}
-              </button>
+        </div>
+
+        {{! Annotations panel - semi-transparent, becomes opaque on hover }}
+        {{#if this.hasAnnotations}}
+          <div
+            class="document-annotations-panel avitar-border-l avitar-border-gray-200 avitar-p-4"
+            style="width: 320px; background: {{if this.annotationPanelHovered 'rgba(255, 255, 255, 1)' 'rgba(255, 255, 255, 0.85)'}}; overflow-y: auto; transition: background-color 0.3s ease, opacity 0.3s ease; opacity: {{if this.annotationPanelHovered '1' '0.7'}};"
+            {{on "mouseenter" (fn this.setAnnotationPanelHovered true)}}
+            {{on "mouseleave" (fn this.setAnnotationPanelHovered false)}}
+          >
+            <div class="avitar-pb-2 avitar-border-b avitar-border-primary avitar-mb-4" style="position: sticky; top: 0; background: white; z-index: 1;">
+              <h3 class="avitar-text-sm avitar-font-semibold">
+                <i class="fas fa-comment-dots avitar-mr-2 avitar-text-primary"></i>
+                Annotations ({{this.documentAnnotations.length}})
+              </h3>
+            </div>
+
+            <div class="avitar-space-y-3">
+              {{#each this.documentAnnotations as |annotation|}}
+                <div class="avitar-bg-gray-50 avitar-border avitar-border-gray-200 avitar-rounded avitar-p-3">
+                  <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-mb-2">
+                    <div class="avitar-w-8 avitar-h-8 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center" style="flex-shrink: 0;">
+                      <i class="fas fa-user avitar-text-xs"></i>
+                    </div>
+                    <div class="avitar-flex-1">
+                      <div class="avitar-text-xs avitar-font-semibold">
+                        {{annotation.authorName}}
+                      </div>
+                      <div class="avitar-text-xs avitar-text-muted">
+                        {{date-format annotation.createdAt "MMM DD, YYYY hh:mm A"}}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-text-sm">
+                    {{this.getAnnotationText annotation}}
+                  </div>
+                  {{#if (eq annotation.visibility "internal")}}
+                    <div class="avitar-mt-2">
+                      <span class="avitar-badge avitar-badge--warning avitar-badge--sm">
+                        <i class="fas fa-lock avitar-mr-1"></i>
+                        Internal Only
+                      </span>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/each}}
             </div>
           </div>
         {{/if}}
@@ -50,16 +106,54 @@
 
       <div class="avitar-modal__footer">
         <div class="avitar-flex avitar-items-center avitar-justify-between avitar-w-full">
-          <div class="avitar-text-sm avitar-text-gray-600">
+          <div class="avitar-text-sm avitar-text-muted">
             <p><strong>Type:</strong> {{@file.category}}</p>
             <p><strong>Uploaded:</strong> {{date-format @file.uploadedAt "MMM DD, YYYY"}} by {{@file.uploadedByName}}</p>
             {{#if @file.description}}
               <p><strong>Description:</strong> {{@file.description}}</p>
             {{/if}}
           </div>
-          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.close}}>
-            Close
-          </button>
+
+          <div class="avitar-flex avitar-items-center avitar-gap-3">
+            {{! Zoom controls - only show for images }}
+            {{#if this.isImage}}
+              <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-border-r avitar-border-gray-300 avitar-pr-3">
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                  {{on "click" this.zoomOut}}
+                  disabled={{eq this.zoomLevel 50}}
+                  title="Zoom Out"
+                >
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <span class="avitar-text-sm avitar-font-medium" style="min-width: 50px; text-align: center;">
+                  {{this.zoomLevel}}%
+                </span>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                  {{on "click" this.zoomIn}}
+                  disabled={{eq this.zoomLevel 200}}
+                  title="Zoom In"
+                >
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                  {{on "click" this.resetZoom}}
+                  title="Reset Zoom"
+                >
+                  <i class="fas fa-compress-arrows-alt"></i>
+                </button>
+              </div>
+            {{/if}}
+
+            <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.close}}>
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>

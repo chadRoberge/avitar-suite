@@ -10,6 +10,8 @@ export default class BuildingPermitsDocumentViewerModalComponent extends Compone
   @tracked isLoading = false;
   @tracked error = null;
   @tracked fileUrl = null;
+  @tracked zoomLevel = 100; // Zoom level as percentage
+  @tracked annotationPanelHovered = false;
 
   get shouldLoadFile() {
     return this.args.isOpen && this.args.file;
@@ -45,8 +47,65 @@ export default class BuildingPermitsDocumentViewerModalComponent extends Compone
     return this.isPDF || this.isImage;
   }
 
+  // Get annotations for this specific document
+  get documentAnnotations() {
+    if (!this.args.comments || !this.args.file) return [];
+
+    const fileName =
+      this.args.file.displayName ||
+      this.args.file.fileName ||
+      this.args.file.originalName;
+
+    // Filter comments that are document annotations for this file
+    return this.args.comments.filter((comment) => {
+      const content = comment.content || '';
+      return (
+        content.startsWith('📄 Document Annotation') &&
+        content.includes(fileName)
+      );
+    });
+  }
+
+  get hasAnnotations() {
+    return this.documentAnnotations.length > 0;
+  }
+
+  // Parse annotation content to remove the prefix
+  getAnnotationText(comment) {
+    const content = comment.content || '';
+    const match = content.match(/📄 Document Annotation \([^)]+\): (.+)/);
+    return match ? match[1] : content;
+  }
+
+  @action
+  zoomIn() {
+    if (this.zoomLevel < 200) {
+      this.zoomLevel += 25;
+    }
+  }
+
+  @action
+  zoomOut() {
+    if (this.zoomLevel > 50) {
+      this.zoomLevel -= 25;
+    }
+  }
+
+  @action
+  resetZoom() {
+    this.zoomLevel = 100;
+  }
+
+  @action
+  setAnnotationPanelHovered(value) {
+    this.annotationPanelHovered = value;
+  }
+
   @action
   close() {
+    // Reset zoom when closing
+    this.zoomLevel = 100;
+    this.annotationPanelHovered = false;
     if (this.args.onClose) {
       this.args.onClose();
     }

@@ -47,11 +47,11 @@ const permitTypeSchema = new mongoose.Schema(
       ],
       default: [],
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return Array.isArray(v) && v.length > 0;
         },
-        message: 'At least one category must be selected'
-      }
+        message: 'At least one category must be selected',
+      },
     },
 
     // Computed: Is this a project (multiple categories)?
@@ -91,7 +91,7 @@ const permitTypeSchema = new mongoose.Schema(
       },
       perSqftRate: {
         type: Number,
-        default: 0.50,
+        default: 0.5,
         min: 0,
       },
       formula: String, // For custom calculations
@@ -101,7 +101,7 @@ const permitTypeSchema = new mongoose.Schema(
       },
     },
 
-    // Department review requirements
+    // Department review requirements (Category 4: Department-Specific Requirements)
     departmentReviews: [
       {
         departmentName: {
@@ -116,6 +116,8 @@ const permitTypeSchema = new mongoose.Schema(
             'Conservation',
             'Public Works',
             'Code Enforcement',
+            'Electrical',
+            'Plumbing',
           ],
         },
         isRequired: {
@@ -127,7 +129,89 @@ const permitTypeSchema = new mongoose.Schema(
           default: 1,
           min: 1,
         },
-        requiredDocuments: [String], // Array of document names
+        // Required documents specific to this department
+        requiredDocuments: [
+          {
+            name: {
+              type: String,
+              required: true,
+            },
+            description: String,
+            fileTypes: [String], // ['pdf', 'dwg', 'jpg']
+            isMandatory: {
+              type: Boolean,
+              default: true,
+            },
+          },
+        ],
+        // Review checklist/template for this department
+        reviewChecklist: [
+          {
+            id: String,
+            question: {
+              type: String,
+              required: true,
+            },
+            category: String, // e.g., "Safety", "Compliance", "Technical"
+            responseType: {
+              type: String,
+              enum: ['yes_no', 'pass_fail', 'text', 'number', 'rating'],
+              default: 'yes_no',
+            },
+            isRequired: {
+              type: Boolean,
+              default: false,
+            },
+            order: {
+              type: Number,
+              default: 0,
+            },
+            helpText: String,
+          },
+        ],
+        // Custom data fields this department needs to collect
+        customFields: [
+          {
+            id: String,
+            label: {
+              type: String,
+              required: true,
+            },
+            fieldType: {
+              type: String,
+              enum: [
+                'text',
+                'number',
+                'currency',
+                'date',
+                'select',
+                'multiselect',
+                'textarea',
+              ],
+              required: true,
+            },
+            options: [String], // For select/multiselect
+            unit: String, // e.g., "feet", "PSI", "degrees"
+            isRequired: {
+              type: Boolean,
+              default: false,
+            },
+            validationRules: {
+              min: Number,
+              max: Number,
+              regex: String,
+            },
+            order: {
+              type: Number,
+              default: 0,
+            },
+          },
+        ],
+        // Estimated review time for this department (in business days)
+        estimatedReviewDays: {
+          type: Number,
+          default: 5,
+        },
       },
     ],
 
@@ -145,7 +229,15 @@ const permitTypeSchema = new mongoose.Schema(
         type: {
           type: String,
           required: true,
-          enum: ['text', 'textarea', 'number', 'currency', 'select', 'checkbox', 'date'],
+          enum: [
+            'text',
+            'textarea',
+            'number',
+            'currency',
+            'select',
+            'checkbox',
+            'date',
+          ],
         },
         placeholder: String,
         required: {
@@ -222,6 +314,55 @@ const permitTypeSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // Inspection scheduling requirements
+    inspectionSettings: {
+      requiredInspections: [
+        {
+          type: {
+            type: String,
+            enum: [
+              'foundation',
+              'framing',
+              'rough_electrical',
+              'rough_plumbing',
+              'rough_mechanical',
+              'insulation',
+              'drywall',
+              'final_electrical',
+              'final_plumbing',
+              'final_mechanical',
+              'final',
+              'occupancy',
+              'fire',
+              'other',
+            ],
+            required: true,
+          },
+          bufferDays: {
+            type: Number,
+            default: 1,
+            min: 0,
+            max: 30,
+          },
+          estimatedMinutes: {
+            type: Number,
+            default: 60,
+            min: 15,
+            max: 480, // 8 hours max
+          },
+          required: {
+            type: Boolean,
+            default: true,
+          },
+          description: String,
+        },
+      ],
+      requiresMultipleInspections: {
+        type: Boolean,
+        default: false,
+      },
+    },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

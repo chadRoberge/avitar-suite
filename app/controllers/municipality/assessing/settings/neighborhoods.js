@@ -1038,6 +1038,12 @@ export default class NeighborhoodsController extends Controller {
   }
 
   @action
+  saveTaxationCategories() {
+    // Wrapper action for the save button
+    return this.saveLandTaxationSettings(this.model.landTaxationCategories);
+  }
+
+  @action
   resetLandTaxationSettings(originalData) {
     this.model.landTaxationCategories = [...originalData];
     this.model = { ...this.model };

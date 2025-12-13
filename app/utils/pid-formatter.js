@@ -203,5 +203,7 @@ export function applyPidFormattingBulk(properties, municipality) {
     return properties;
   }
 
-  return properties.map((property) => applyPidFormatting(property, municipality));
+  return properties.map((property) =>
+    applyPidFormatting(property, municipality),
+  );
 }

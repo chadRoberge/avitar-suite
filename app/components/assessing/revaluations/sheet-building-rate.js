@@ -58,10 +58,13 @@ export default class AssessingRevaluationsSheetBuildingRateComponent extends Com
       // Calculate days from base date
       const saleDate = new Date(sale.sale_date);
       const baseDateObj = new Date(baseDate);
-      const daysDiff = Math.floor((baseDateObj - saleDate) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(
+        (baseDateObj - saleDate) / (1000 * 60 * 60 * 24),
+      );
 
       // Calculate adjusted price
-      const adjustedPrice = sale.sale_price * (1 + (daysDiff * annualTrend) / 365);
+      const adjustedPrice =
+        sale.sale_price * (1 + (daysDiff * annualTrend) / 365);
 
       // Adjustment factors (these would come from the sale data or sheet settings)
       const zoneAdj = sale.adjustments?.zone || 1.0;
@@ -84,14 +87,19 @@ export default class AssessingRevaluationsSheetBuildingRateComponent extends Com
       // Calculate excess values
       const excessAcres = Math.max(0, (sale.acreage || 0) - this.siteAcreage);
       const excessAcValue = excessAcres * this.excessAcreageValue;
-      const excessFFValue = ((sale.excess_frontage || 0) * this.excessFootFrontage);
+      const excessFFValue =
+        (sale.excess_frontage || 0) * this.excessFootFrontage;
 
       // Features value (would come from property features)
       const featuresValue = sale.features_value || 0;
 
       // Building residual value
       const buildingResidualValue =
-        adjustedPrice - adjSiteValue - featuresValue - excessAcValue - excessFFValue;
+        adjustedPrice -
+        adjSiteValue -
+        featuresValue -
+        excessAcValue -
+        excessFFValue;
 
       // Building rate (from property data)
       const buildingRate = sale.building_rate || 1.0;

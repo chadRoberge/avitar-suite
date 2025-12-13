@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const File = require('../models/File');
 const Municipality = require('../models/Municipality');
+const PermitDocument = require('../models/PermitDocument');
 const storageService = require('../services/storageService');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -56,20 +57,20 @@ const checkDepartmentPermission = (action) => {
 
     // Map department to module name
     const moduleMap = {
-      'assessing': 'assessing',
-      'building-permits': 'buildingPermits',
-      'code-enforcement': 'codeEnforcement',
-      'tax-collection': 'taxCollection',
-      'general': 'general',
+      assessing: 'assessing',
+      building_permit: 'building_permit',
+      code_enforcement: 'codeEnforcement',
+      tax_collection: 'taxCollection',
+      general: 'general',
     };
 
     const moduleName = moduleMap[department] || department;
 
     // Check module permission
     if (!req.user.hasModulePermission(municipalityId, moduleName, action)) {
-      return res
-        .status(403)
-        .json({ error: `Insufficient permissions to ${action} files in ${department}` });
+      return res.status(403).json({
+        error: `Insufficient permissions to ${action} files in ${department}`,
+      });
     }
 
     next();
@@ -100,7 +101,9 @@ router.post(
 
       // Only contractors can upload verification files
       if (req.user.global_role !== 'contractor') {
-        return res.status(403).json({ error: 'Only contractors can upload verification files' });
+        return res
+          .status(403)
+          .json({ error: 'Only contractors can upload verification files' });
       }
 
       if (!req.user.contractor_id) {
@@ -156,7 +159,9 @@ router.post(
         gcsUrl: uploadResult.gcsUrl,
         localPath: uploadResult.localPath,
         folder: '/licenseDocuments',
-        tags: ['contractor_verification', category || 'license'].filter(Boolean),
+        tags: ['contractor_verification', category || 'license'].filter(
+          Boolean,
+        ),
         visibility: 'private',
         category: category || 'license',
         uploadedBy: req.user._id,
@@ -218,23 +223,59 @@ router.post(
 
       // Check department permission
       const moduleMap = {
-        'assessing': 'assessing',
-        'building-permits': 'buildingPermits',
-        'code-enforcement': 'codeEnforcement',
-        'tax-collection': 'taxCollection',
-        'general': 'general',
+        assessing: 'assessing',
+        building_permit: 'building_permit',
+        code_enforcement: 'codeEnforcement',
+        tax_collection: 'taxCollection',
+        general: 'general',
       };
 
       const moduleName = moduleMap[department] || department;
 
+      // Allow contractors to upload files for their own permits
+      let hasPermission = false;
+
+      // Avitar staff always have permission
       if (
-        req.user.global_role !== 'avitar_staff' &&
-        req.user.global_role !== 'avitar_admin' &&
-        !req.user.hasModulePermission(municipalityId, moduleName, 'create')
+        req.user.global_role === 'avitar_staff' ||
+        req.user.global_role === 'avitar_admin'
       ) {
-        return res
-          .status(403)
-          .json({ error: `Insufficient permissions to upload files in ${department}` });
+        hasPermission = true;
+      }
+      // Contractors can upload to building_permit department
+      else if (
+        req.user.global_role === 'contractor' &&
+        department === 'building_permit'
+      ) {
+        // If permitId is provided, verify ownership
+        if (permitId) {
+          const Permit = require('../models/Permit');
+          const permit = await Permit.findById(permitId);
+
+          if (
+            permit &&
+            permit.contractor_id &&
+            permit.contractor_id.toString() ===
+              req.user.contractor_id?.toString()
+          ) {
+            hasPermission = true;
+          }
+        } else {
+          // No permitId means they're uploading during permit creation - allow it
+          hasPermission = true;
+        }
+      }
+      // Municipal staff need module permissions
+      else if (
+        req.user.hasModulePermission(municipalityId, moduleName, 'create')
+      ) {
+        hasPermission = true;
+      }
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          error: `Insufficient permissions to upload files in ${department}`,
+        });
       }
 
       // Fetch municipality data for organized path
@@ -248,13 +289,14 @@ router.post(
       const fileExtension = req.file.originalname.split('.').pop();
       const fileName = `${timestamp}-${req.file.originalname}`;
 
-      // Generate organized storage path with state
+      // Generate organized storage path with state and folder
       const storagePath = storageService.generateOrganizedPath(fileName, {
         state: municipality.state,
         municipality: municipality.name,
         municipalityId,
         propertyId,
         department,
+        folder,
       });
 
       // Upload to storage
@@ -308,6 +350,53 @@ router.post(
 
       await file.save();
 
+      // Create PermitDocument record if permitId is provided
+      if (permitId && permitId !== 'undefined' && permitId !== 'null') {
+        try {
+          // Map category to valid PermitDocument type enum
+          const typeMap = {
+            application: 'application',
+            site_plan: 'site_plan',
+            floor_plan: 'floor_plan',
+            elevation: 'elevation',
+            survey: 'survey',
+            structural_calc: 'structural_calc',
+            approval_letter: 'approval_letter',
+            inspection_report: 'inspection_report',
+            certificate_of_occupancy: 'certificate_of_occupancy',
+            photo: 'photo',
+            correspondence: 'correspondence',
+            invoice: 'invoice',
+            receipt: 'receipt',
+          };
+
+          const permitDocument = new PermitDocument({
+            permitId: permitId,
+            fileId: file._id,
+            municipalityId: municipalityId,
+            type: typeMap[category] || 'other',
+            filename: file.fileName,
+            originalFilename: file.originalName,
+            url: file.gcsUrl || file.localPath,
+            size: file.fileSize,
+            mimeType: file.fileType,
+            uploadedBy: req.user._id,
+            uploadedByName: req.user.fullName,
+            title: displayName || file.displayName,
+            description: description,
+            isActive: true,
+          });
+          await permitDocument.save();
+          console.log(
+            `Created PermitDocument linking permit ${permitId} to file ${file._id}`,
+          );
+        } catch (pdError) {
+          console.error('Failed to create PermitDocument:', pdError);
+          // Don't fail the entire upload - file is already saved
+          // Just log the error and continue
+        }
+      }
+
       // Populate before returning
       await file.populate([
         { path: 'uploadedBy', select: 'first_name last_name email' },
@@ -342,6 +431,7 @@ router.get(
         category,
         visibility,
         search,
+        permitId,
         limit = 100,
         offset = 0,
       } = req.query;
@@ -372,24 +462,89 @@ router.get(
         query.visibility = visibility;
       }
 
-      if (search) {
-        query.$or = [
-          { fileName: { $regex: search, $options: 'i' } },
-          { displayName: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { tags: { $in: [new RegExp(search, 'i')] } },
-        ];
+      let files;
+      let total;
+
+      // If querying by permitId, use PermitDocument join collection
+      if (permitId && permitId !== 'undefined' && permitId !== 'null') {
+        // Convert to ObjectId if it's a valid ObjectId string
+        const mongoose = require('mongoose');
+        const permitObjectId = mongoose.Types.ObjectId.isValid(permitId)
+          ? new mongoose.Types.ObjectId(permitId)
+          : permitId;
+
+        // Query PermitDocument collection to find file associations
+        const permitDocQuery = {
+          permitId: permitObjectId,
+          isActive: true,
+        };
+
+        const permitDocs = await PermitDocument.find(permitDocQuery)
+          .populate({
+            path: 'fileId',
+            populate: [
+              { path: 'uploadedBy', select: 'first_name last_name email' },
+              { path: 'propertyId', select: 'pid_formatted location.address' },
+            ],
+          })
+          .sort({ createdAt: -1 })
+          .lean();
+
+        // Extract files from populated permitDocs and filter by municipality
+        files = permitDocs
+          .filter(
+            (pd) =>
+              pd.fileId &&
+              pd.fileId.municipalityId?.toString() === query.municipalityId,
+          )
+          .map((pd) => pd.fileId);
+
+        // Apply additional filters (search, category, etc.)
+        if (category) {
+          files = files.filter((f) => f.category === category);
+        }
+        if (visibility) {
+          files = files.filter((f) => f.visibility === visibility);
+        }
+        if (search) {
+          const searchLower = search.toLowerCase();
+          files = files.filter(
+            (f) =>
+              f.fileName?.toLowerCase().includes(searchLower) ||
+              f.displayName?.toLowerCase().includes(searchLower) ||
+              f.description?.toLowerCase().includes(searchLower) ||
+              f.tags?.some((tag) => tag.toLowerCase().includes(searchLower)),
+          );
+        }
+
+        total = files.length;
+
+        // Apply pagination
+        files = files.slice(
+          parseInt(offset),
+          parseInt(offset) + parseInt(limit),
+        );
+      } else {
+        // No permitId - query File collection directly as before
+        if (search) {
+          query.$or = [
+            { fileName: { $regex: search, $options: 'i' } },
+            { displayName: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { tags: { $in: [new RegExp(search, 'i')] } },
+          ];
+        }
+
+        files = await File.find(query)
+          .populate('uploadedBy', 'first_name last_name email')
+          .populate('propertyId', 'pid_formatted location.address')
+          .sort({ uploadedAt: -1 })
+          .limit(parseInt(limit))
+          .skip(parseInt(offset))
+          .lean();
+
+        total = await File.countDocuments(query);
       }
-
-      const files = await File.find(query)
-        .populate('uploadedBy', 'first_name last_name email')
-        .populate('propertyId', 'pid_formatted location.address')
-        .sort({ uploadedAt: -1 })
-        .limit(parseInt(limit))
-        .skip(parseInt(offset))
-        .lean();
-
-      const total = await File.countDocuments(query);
 
       res.json({
         files,
@@ -652,5 +807,237 @@ router.delete('/files/:fileId', authenticateToken, async (req, res) => {
     });
   }
 });
+
+/**
+ * ==========================================
+ * CONTRACTOR DOCUMENT LIBRARY ROUTES
+ * ==========================================
+ */
+
+/**
+ * POST /api/contractors/:contractorId/files/upload
+ * Upload files to contractor's document library
+ */
+router.post(
+  '/contractors/:contractorId/files/upload',
+  authenticateToken,
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      const { contractorId } = req.params;
+      const {
+        folder = '/',
+        description,
+        tags,
+        visibility = 'private',
+      } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Verify user has access to this contractor
+      if (
+        req.user.global_role !== 'avitar_staff' &&
+        req.user.global_role !== 'avitar_admin' &&
+        req.user.contractor_id?.toString() !== contractorId
+      ) {
+        return res
+          .status(403)
+          .json({ error: 'Access denied to this contractor' });
+      }
+
+      // Get contractor info
+      const Contractor = require('../models/Contractor');
+      const contractor = await Contractor.findById(contractorId);
+      if (!contractor) {
+        return res.status(404).json({ error: 'Contractor not found' });
+      }
+
+      const state = contractor.business_info?.address?.state || 'Unknown';
+
+      // Generate unique file name
+      const timestamp = Date.now();
+      const fileExtension = req.file.originalname.split('.').pop();
+      const fileName = `${timestamp}-${req.file.originalname}`;
+
+      // Generate storage path for contractor files with folder support
+      const storagePath = storageService.generateOrganizedPath(fileName, {
+        state: state,
+        municipality: 'Contractors',
+        municipalityId: contractorId.toString(),
+        department: 'documents',
+        folder: folder,
+      });
+
+      // Upload to storage
+      const uploadResult = await storageService.uploadFile(
+        req.file.buffer,
+        storagePath,
+        req.file.mimetype,
+      );
+
+      // Parse tags
+      let parsedTags = [];
+      if (tags) {
+        if (typeof tags === 'string') {
+          try {
+            parsedTags = JSON.parse(tags);
+          } catch {
+            parsedTags = tags
+              .split(',')
+              .map((t) => t.trim())
+              .filter((t) => t);
+          }
+        } else if (Array.isArray(tags)) {
+          parsedTags = tags;
+        }
+      }
+
+      // Create file record
+      const file = new File({
+        contractorId: contractor._id,
+        contractorName: contractor.company_name,
+        department: 'contractor',
+        fileName: fileName,
+        displayName: req.file.originalname,
+        originalName: req.file.originalname,
+        fileType: req.file.mimetype,
+        fileExtension: fileExtension,
+        fileSize: req.file.size,
+        storageType: uploadResult.storageType,
+        storagePath: uploadResult.storagePath,
+        gcsUrl: uploadResult.gcsUrl,
+        localPath: uploadResult.localPath,
+        folder: folder,
+        tags: parsedTags,
+        visibility: visibility,
+        description: description,
+        uploadedBy: req.user._id,
+        uploadedByName:
+          req.user.fullName || `${req.user.first_name} ${req.user.last_name}`,
+      });
+
+      await file.save();
+
+      res.status(201).json({ file });
+    } catch (error) {
+      console.error('Error uploading contractor file:', error);
+      res.status(500).json({
+        error: 'Failed to upload file',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/contractors/:contractorId/files
+ * Get files for a contractor
+ */
+router.get(
+  '/contractors/:contractorId/files',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { contractorId } = req.params;
+      const { folder, category, visibility, search } = req.query;
+
+      // Verify user has access to this contractor
+      if (
+        req.user.global_role !== 'avitar_staff' &&
+        req.user.global_role !== 'avitar_admin' &&
+        req.user.contractor_id?.toString() !== contractorId
+      ) {
+        return res
+          .status(403)
+          .json({ error: 'Access denied to this contractor' });
+      }
+
+      const query = {
+        contractorId: contractorId,
+        department: 'contractor',
+        isActive: true,
+      };
+
+      // Apply filters
+      if (folder) query.folder = folder;
+      if (category) query.category = category;
+      if (visibility) query.visibility = visibility;
+
+      // Apply search
+      if (search) {
+        query.$or = [
+          { fileName: { $regex: search, $options: 'i' } },
+          { displayName: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { tags: { $in: [new RegExp(search, 'i')] } },
+        ];
+      }
+
+      const files = await File.find(query).sort({ uploadedAt: -1 });
+
+      res.json({ files });
+    } catch (error) {
+      console.error('Error fetching contractor files:', error);
+      res.status(500).json({
+        error: 'Failed to fetch files',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/contractors/:contractorId/files/folders
+ * Get folder structure for contractor files
+ */
+router.get(
+  '/contractors/:contractorId/files/folders',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { contractorId } = req.params;
+
+      // Verify user has access to this contractor
+      if (
+        req.user.global_role !== 'avitar_staff' &&
+        req.user.global_role !== 'avitar_admin' &&
+        req.user.contractor_id?.toString() !== contractorId
+      ) {
+        return res
+          .status(403)
+          .json({ error: 'Access denied to this contractor' });
+      }
+
+      // Get all unique folders for this contractor
+      const folders = await File.distinct('folder', {
+        contractorId: contractorId,
+        department: 'contractor',
+        isActive: true,
+      });
+
+      // Build folder structure with file counts
+      const folderStructure = {};
+      for (const folder of folders) {
+        const fileCount = await File.countDocuments({
+          contractorId: contractorId,
+          department: 'contractor',
+          folder: folder,
+          isActive: true,
+        });
+        folderStructure[folder] = { fileCount };
+      }
+
+      res.json({ folders: folderStructure });
+    } catch (error) {
+      console.error('Error fetching contractor folders:', error);
+      res.status(500).json({
+        error: 'Failed to fetch folders',
+        message: error.message,
+      });
+    }
+  },
+);
 
 module.exports = router;

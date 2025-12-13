@@ -71,15 +71,7 @@
 
   <div class="avitar-card__body">
     {{! Check if property is selected }}
-    {{#unless this.selectedProperty}}
-      <div class="avitar-alert avitar-alert--warning">
-        <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
-        <div>
-          <h4 class="avitar-font-medium avitar-mb-2">No Property Selected</h4>
-          <p>Please select a property from the property tree on the left before creating a permit application.</p>
-        </div>
-      </div>
-    {{else}}
+    {{#if this.selectedProperty}}
       {{! Step 1: Select Permit Type }}
       {{#if (eq this.currentStep 1)}}
       <div class="avitar-mb-4">
@@ -826,7 +818,15 @@
         {{/if}}
       </div>
     {{/if}}
-    {{/unless}}
+    {{else}}
+      <div class="avitar-alert avitar-alert--warning">
+        <i class="fas fa-exclamation-triangle avitar-mr-2"></i>
+        <div>
+          <h4 class="avitar-font-medium avitar-mb-2">No Property Selected</h4>
+          <p>Please select a property from the property tree on the left before creating a permit application.</p>
+        </div>
+      </div>
+    {{/if}}
 
     {{! Navigation Buttons }}
     {{#if this.selectedProperty}}
@@ -846,7 +846,7 @@
         </div>
 
         <div style="display: flex; gap: 0.75rem;">
-          {{#if (not this.isLastStep)}}
+          {{#unless this.isLastStep}}
             <button
               type="button"
               class="avitar-btn avitar-btn--secondary"
@@ -861,7 +861,7 @@
                 Save Draft
               {{/if}}
             </button>
-          {{/if}}
+          {{/unless}}
 
           {{#if this.isLastStep}}
             <button

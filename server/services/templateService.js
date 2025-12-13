@@ -13,7 +13,7 @@ class TemplateService {
     this.templateCache = new Map();
     this.defaultTemplatesPath = path.join(
       __dirname,
-      '../templates/emails/defaults'
+      '../templates/emails/defaults',
     );
 
     // Register Handlebars helpers
@@ -89,7 +89,7 @@ class TemplateService {
     if (municipalityId) {
       template = await MunicipalityEmailTemplate.getTemplate(
         municipalityId,
-        templateType
+        templateType,
       );
     }
 
@@ -134,7 +134,7 @@ class TemplateService {
     // Try to load from file
     const templatePath = path.join(
       this.defaultTemplatesPath,
-      `${templateType}.hbs`
+      `${templateType}.hbs`,
     );
 
     try {
@@ -192,8 +192,7 @@ class TemplateService {
       permit_approved: 'Permit Approved - {{permitNumber}}',
       permit_rejected: 'Permit Rejected - {{permitNumber}}',
       permit_under_review: 'Permit Under Review - {{permitNumber}}',
-      permit_revision_requested:
-        'Revision Requested - {{permitNumber}}',
+      permit_revision_requested: 'Revision Requested - {{permitNumber}}',
       permit_pending_payment: 'Payment Required - {{permitNumber}}',
       permit_issued: 'Permit Issued - {{permitNumber}}',
       inspection_scheduled: 'Inspection Scheduled - {{permitNumber}}',
@@ -222,7 +221,7 @@ class TemplateService {
           .map(
             ([key, value]) => `
           <p><strong>${key}:</strong> ${value}</p>
-        `
+        `,
           )
           .join('')}
         <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
@@ -243,15 +242,20 @@ class TemplateService {
    */
   renderSMSTemplate({ templateType, data }) {
     const templates = {
-      permit_approved: 'Permit {{permitNumber}} approved. Check email for details.',
-      permit_rejected: 'Permit {{permitNumber}} rejected. Check email for details.',
+      permit_approved:
+        'Permit {{permitNumber}} approved. Check email for details.',
+      permit_rejected:
+        'Permit {{permitNumber}} rejected. Check email for details.',
       permit_under_review: 'Permit {{permitNumber}} is under review.',
-      permit_revision_requested: 'Revision requested for permit {{permitNumber}}. Check email.',
-      inspection_scheduled: 'Inspection scheduled on {{inspectionDate}}. Check email.',
+      permit_revision_requested:
+        'Revision requested for permit {{permitNumber}}. Check email.',
+      inspection_scheduled:
+        'Inspection scheduled on {{inspectionDate}}. Check email.',
       inspection_reminder: 'Inspection tomorrow at {{inspectionTime}}.',
       inspection_passed: 'Inspection passed for permit {{permitNumber}}!',
       inspection_failed: 'Inspection failed. Check email for corrections.',
-      license_expiration: 'Your license expires in {{daysUntilExpiration}} days. Renew soon.',
+      license_expiration:
+        'Your license expires in {{daysUntilExpiration}} days. Renew soon.',
     };
 
     const template = templates[templateType] || 'You have a new notification.';
@@ -262,7 +266,12 @@ class TemplateService {
   /**
    * Preview template with sample data
    */
-  async previewTemplate({ municipalityId, templateType, customSubject, customBody }) {
+  async previewTemplate({
+    municipalityId,
+    templateType,
+    customSubject,
+    customBody,
+  }) {
     // Sample data by template type
     const sampleData = this.getSampleData(templateType);
 
@@ -317,11 +326,15 @@ class TemplateService {
         rejectedDate: now.toLocaleDateString(),
         reviewerName: 'Jane Doe',
         reviewNotes: 'All requirements met. Approved for construction.',
-        rejectionReason: 'Missing structural plans. Please resubmit with complete documentation.',
-        revisionNotes: 'Please revise the foundation plans to comply with setback requirements.',
+        rejectionReason:
+          'Missing structural plans. Please resubmit with complete documentation.',
+        revisionNotes:
+          'Please revise the foundation plans to comply with setback requirements.',
         paymentAmount: '$250.00',
         issuedDate: now.toLocaleDateString(),
-        expirationDate: new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        expirationDate: new Date(
+          now.getTime() + 180 * 24 * 60 * 60 * 1000,
+        ).toLocaleDateString(),
       };
     }
 
@@ -339,7 +352,8 @@ class TemplateService {
         inspectorPhone: '(555) 123-4567',
         inspectorNotes: 'Foundation meets all code requirements.',
         failureReason: 'Rebar spacing does not meet code requirements.',
-        correctionRequired: 'Adjust rebar spacing to 12 inches on center and request re-inspection.',
+        correctionRequired:
+          'Adjust rebar spacing to 12 inches on center and request re-inspection.',
         cancellationReason: 'Weather conditions unsafe for inspection.',
       };
     }
@@ -349,7 +363,9 @@ class TemplateService {
         daysUntilExpiration: 30,
         licenseType: 'General Contractor',
         licenseNumber: 'GC-12345',
-        expirationDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        expirationDate: new Date(
+          now.getTime() + 30 * 24 * 60 * 60 * 1000,
+        ).toLocaleDateString(),
         renewalUrl: 'https://avitar.com/renew-license',
       };
     }

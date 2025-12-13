@@ -7,7 +7,8 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/municipalities';
+const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/municipalities';
 
 async function migrateLadderValueToFactor() {
   try {
@@ -21,7 +22,7 @@ async function migrateLadderValueToFactor() {
     // Count documents that need migration (have 'value' but not 'factor')
     const needsMigration = await collection.countDocuments({
       value: { $exists: true },
-      factor: { $exists: false }
+      factor: { $exists: false },
     });
 
     console.log(`Found ${needsMigration} ladder entries that need migration`);
@@ -36,8 +37,8 @@ async function migrateLadderValueToFactor() {
     const result = await collection.updateMany(
       { value: { $exists: true } },
       {
-        $rename: { value: 'factor' }
-      }
+        $rename: { value: 'factor' },
+      },
     );
 
     console.log(`Migration complete!`);
@@ -47,7 +48,7 @@ async function migrateLadderValueToFactor() {
     // Verify migration
     const remaining = await collection.countDocuments({
       value: { $exists: true },
-      factor: { $exists: false }
+      factor: { $exists: false },
     });
 
     console.log(`Verification: ${remaining} entries still need migration`);

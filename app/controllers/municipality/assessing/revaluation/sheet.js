@@ -113,18 +113,31 @@ export default class MunicipalityAssessingRevaluationSheetController extends Con
       const updateData = {
         sheet_name: this.sheetName,
         sheet_settings: {
-          depreciation_rate: isNaN(parsedDepreciation) ? 1.25 : parsedDepreciation,
-          buildable_site_value: isNaN(parsedSiteValue) ? 290000 : parsedSiteValue,
+          depreciation_rate: isNaN(parsedDepreciation)
+            ? 1.25
+            : parsedDepreciation,
+          buildable_site_value: isNaN(parsedSiteValue)
+            ? 290000
+            : parsedSiteValue,
           site_acreage: isNaN(parsedSiteAcreage) ? 2.0 : parsedSiteAcreage,
-          excess_foot_frontage: isNaN(parsedExcessFootage) ? 160 : parsedExcessFootage,
-          excess_acreage_value: isNaN(parsedExcessAcreage) ? 10000 : parsedExcessAcreage,
+          excess_foot_frontage: isNaN(parsedExcessFootage)
+            ? 160
+            : parsedExcessFootage,
+          excess_acreage_value: isNaN(parsedExcessAcreage)
+            ? 10000
+            : parsedExcessAcreage,
           base_date: new Date(this.baseDate).toISOString(),
-          annual_trend: isNaN(parsedAnnualTrend) ? 0.144 : parsedAnnualTrend / 100, // Convert percentage to decimal
+          annual_trend: isNaN(parsedAnnualTrend)
+            ? 0.144
+            : parsedAnnualTrend / 100, // Convert percentage to decimal
         },
       };
 
       console.log('Saving sheet settings:', updateData);
-      console.log('Sheet settings details:', JSON.stringify(updateData.sheet_settings, null, 2));
+      console.log(
+        'Sheet settings details:',
+        JSON.stringify(updateData.sheet_settings, null, 2),
+      );
 
       const response = await this.api.put(
         `/revaluations/${this.model.revaluation._id}/sheets/${this.model.sheet._id}`,
@@ -152,7 +165,11 @@ export default class MunicipalityAssessingRevaluationSheetController extends Con
 
   @action
   async deleteSheet() {
-    if (!confirm(`Are you sure you want to delete "${this.model.sheet.sheet_name}"?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${this.model.sheet.sheet_name}"?`,
+      )
+    ) {
       return;
     }
 
@@ -164,7 +181,9 @@ export default class MunicipalityAssessingRevaluationSheetController extends Con
       this.notifications.success('Sheet deleted successfully');
 
       // Navigate back to the index route and refresh parent to update sidebar
-      await this.router.transitionTo('municipality.assessing.revaluation.index');
+      await this.router.transitionTo(
+        'municipality.assessing.revaluation.index',
+      );
       this.router.refresh('municipality.assessing.revaluation');
     } catch (error) {
       console.error('Error deleting sheet:', error);

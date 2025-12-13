@@ -143,7 +143,6 @@ export default class IndexedDbService extends Service {
         changeLog: '++id, collection, documentId, operation, timestamp, userId',
       });
 
-
       // Define schema version 5 - Add dedicated collections for municipality attribute endpoints
       this.db.version(5).stores({
         // Core data stores (same as v4)
@@ -184,10 +183,8 @@ export default class IndexedDbService extends Service {
           '++id, municipalityId, code, displayText, _lastSynced, _syncState',
         land_taxation_categories:
           '++id, municipalityId, name, _lastSynced, _syncState',
-        land_ladders:
-          '++id, municipalityId, zoneId, _lastSynced, _syncState',
-        current_use_settings:
-          '++id, municipalityId, _lastSynced, _syncState',
+        land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
         acreage_discount_settings:
           '++id, municipalityId, _lastSynced, _syncState',
         sketch_sub_area_factors:
@@ -247,10 +244,8 @@ export default class IndexedDbService extends Service {
           '++id, municipalityId, code, displayText, _lastSynced, _syncState',
         land_taxation_categories:
           '++id, municipalityId, name, _lastSynced, _syncState',
-        land_ladders:
-          '++id, municipalityId, zoneId, _lastSynced, _syncState',
-        current_use_settings:
-          '++id, municipalityId, _lastSynced, _syncState',
+        land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
         acreage_discount_settings:
           '++id, municipalityId, _lastSynced, _syncState',
         sketch_sub_area_factors:
@@ -315,10 +310,8 @@ export default class IndexedDbService extends Service {
           '++id, municipalityId, code, displayText, _lastSynced, _syncState',
         land_taxation_categories:
           '++id, municipalityId, name, _lastSynced, _syncState',
-        land_ladders:
-          '++id, municipalityId, zoneId, _lastSynced, _syncState',
-        current_use_settings:
-          '++id, municipalityId, _lastSynced, _syncState',
+        land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
         acreage_discount_settings:
           '++id, municipalityId, _lastSynced, _syncState',
         sketch_sub_area_factors:
@@ -381,8 +374,75 @@ export default class IndexedDbService extends Service {
       });
 
       // Define schema version 8 - Force clear properties cache to fix stale ObjectIds after import
-      this.db.version(8).stores({
-        // Same schema as v7
+      this.db
+        .version(8)
+        .stores({
+          // Same schema as v7
+          municipalities: '++id, name, code, _lastSynced, _syncState',
+          properties:
+            '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+          assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          land_assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          views:
+            '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+          sketches:
+            '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+          features:
+            '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+          exemptions:
+            '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+          exemptionTypes:
+            '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+          viewAttributes:
+            '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+          zoneBaseValues:
+            '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+          topology_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          site_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          driveway_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          road_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          land_use_details:
+            '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+          land_taxation_categories:
+            '++id, municipalityId, name, _lastSynced, _syncState',
+          land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+          current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
+          acreage_discount_settings:
+            '++id, municipalityId, _lastSynced, _syncState',
+          sketch_sub_area_factors:
+            '++id, municipalityId, _lastSynced, _syncState',
+          syncQueue:
+            '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+          metadata: '++key, value, lastUpdated',
+          deltas:
+            '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+          conflicts:
+            '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+          changeLog:
+            '++id, collection, documentId, operation, timestamp, userId',
+        })
+        .upgrade(async (trans) => {
+          // Clear all properties to force fresh fetch with correct ObjectIds
+          console.log(
+            '🔄 Version 8 upgrade: Clearing all properties cache to fix stale ObjectIds',
+          );
+          await trans.table('properties').clear();
+          await trans.table('assessments').clear();
+          await trans.table('land_assessments').clear();
+          console.log(
+            '✅ Properties cache cleared - will fetch fresh data from server',
+          );
+        });
+
+      // Version 9: Add waterfront-related collections
+      this.db.version(9).stores({
+        // All previous collections
         municipalities: '++id, name, code, _lastSynced, _syncState',
         properties:
           '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
@@ -416,14 +476,19 @@ export default class IndexedDbService extends Service {
           '++id, municipalityId, code, displayText, _lastSynced, _syncState',
         land_taxation_categories:
           '++id, municipalityId, name, _lastSynced, _syncState',
-        land_ladders:
-          '++id, municipalityId, zoneId, _lastSynced, _syncState',
-        current_use_settings:
-          '++id, municipalityId, _lastSynced, _syncState',
+        land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+        current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
         acreage_discount_settings:
           '++id, municipalityId, _lastSynced, _syncState',
         sketch_sub_area_factors:
           '++id, municipalityId, _lastSynced, _syncState',
+        // New waterfront collections
+        water_bodies:
+          '++id, municipalityId, name, waterBodyType, _lastSynced, _syncState',
+        waterfront_attributes:
+          '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+        water_body_ladders:
+          '++id, municipalityId, waterBodyId, frontage, [municipalityId+waterBodyId], _lastSynced, _syncState',
         syncQueue:
           '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
         metadata: '++key, value, lastUpdated',
@@ -432,14 +497,75 @@ export default class IndexedDbService extends Service {
         conflicts:
           '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
         changeLog: '++id, collection, documentId, operation, timestamp, userId',
-      }).upgrade(async (trans) => {
-        // Clear all properties to force fresh fetch with correct ObjectIds
-        console.log('🔄 Version 8 upgrade: Clearing all properties cache to fix stale ObjectIds');
-        await trans.table('properties').clear();
-        await trans.table('assessments').clear();
-        await trans.table('land_assessments').clear();
-        console.log('✅ Properties cache cleared - will fetch fresh data from server');
       });
+
+      // Define schema version 10 - Clear land assessment cache for nested object format
+      this.db
+        .version(10)
+        .stores({
+          // Same schema as v9
+          municipalities: '++id, name, code, _lastSynced, _syncState',
+          properties:
+            '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+          assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          land_assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          views:
+            '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+          sketches:
+            '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+          features:
+            '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+          exemptions:
+            '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+          exemptionTypes:
+            '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+          viewAttributes:
+            '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+          zoneBaseValues:
+            '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+          topology_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          site_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          driveway_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          road_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          land_use_details:
+            '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+          land_taxation_categories:
+            '++id, municipalityId, name, _lastSynced, _syncState',
+          land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+          current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
+          acreage_discount_settings:
+            '++id, municipalityId, _lastSynced, _syncState',
+          sketch_sub_area_factors:
+            '++id, municipalityId, _lastSynced, _syncState',
+          water_bodies:
+            '++id, municipalityId, name, waterBodyType, _lastSynced, _syncState',
+          waterfront_attributes:
+            '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+          water_body_ladders:
+            '++id, municipalityId, waterBodyId, frontage, [municipalityId+waterBodyId], _lastSynced, _syncState',
+          syncQueue:
+            '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+          metadata: '++key, value, lastUpdated',
+          deltas:
+            '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+          conflicts:
+            '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+          changeLog:
+            '++id, collection, documentId, operation, timestamp, userId',
+        })
+        .upgrade(async (trans) => {
+          // Clear land_assessments collection to force refresh with new nested object format
+          console.log(
+            '🔄 IndexedDB v10 upgrade: Clearing land assessments cache for nested object format',
+          );
+          await trans.table('land_assessments').clear();
+        });
 
       await this.db.open();
       this.isReady = true;

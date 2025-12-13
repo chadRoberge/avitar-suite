@@ -1,0 +1,204 @@
+{{! Search and Filter Controls }}
+<div class="avitar-flex avitar-gap-3 avitar-mb-4">
+  {{! Search Input }}
+  <div class="avitar-flex-1">
+    <input
+      type="text"
+      class="avitar-input"
+      placeholder="Search by name or email..."
+      value={{@searchText}}
+      {{on "input" this.handleSearchUpdate}}
+    />
+  </div>
+
+  {{! Role Filter }}
+  <div style="min-width: 200px;">
+    <select class="avitar-select" {{on "change" this.handleFilterUpdate}}>
+      <option value="all" selected={{eq @filterRole "all"}}>All Roles</option>
+      {{#each @roleOptions as |roleOption|}}
+        <option
+          value={{roleOption.value}}
+          selected={{eq @filterRole roleOption.value}}
+        >
+          {{roleOption.label}}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+</div>
+
+{{! Users List - Flexbox Card Layout }}
+{{#if @users.length}}
+  <div class="avitar-space-y-3">
+    {{#each @users as |user|}}
+      <div
+        class="avitar-card avitar-card--hover"
+        {{on "click" (fn this.viewUser user)}}
+        style="cursor: pointer;"
+      >
+        <div class="avitar-card__body avitar-p-4">
+          <div class="avitar-flex avitar-gap-4 avitar-items-start">
+            {{! User Avatar }}
+            <div class="avitar-flex-shrink-0">
+              <div
+                class="avitar-w-14 avitar-h-14 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-text-xl avitar-font-bold"
+              >
+                {{substring user.first_name 0 1}}{{substring
+                  user.last_name
+                  0
+                  1
+                }}
+              </div>
+            </div>
+
+            {{! User Info }}
+            <div class="avitar-flex-1 avitar-min-w-0">
+              {{! Name }}
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+                {{user.first_name}}
+                {{user.last_name}}
+              </h3>
+
+              {{! Contact Info with Icons }}
+              <div class="avitar-flex avitar-flex-wrap avitar-gap-x-6 avitar-gap-y-1 avitar-mb-3">
+                <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm">
+                  {{lnr-icon "envelope" size=14}}
+                  <a
+                    href="mailto:{{user.email}}"
+                    class="avitar-text-primary hover:avitar-underline"
+                    {{on "click" this.stopPropagation}}
+                  >
+                    {{user.email}}
+                  </a>
+                </div>
+
+                {{#if user.phone}}
+                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm avitar-text-muted">
+                    {{lnr-icon "phone" size=14}}
+                    <span>{{user.phone}}</span>
+                  </div>
+                {{/if}}
+
+                {{#if user.last_login}}
+                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm avitar-text-muted">
+                    {{lnr-icon "clock" size=14}}
+                    <span>Last login:
+                      {{date-format user.last_login "MMM DD, YYYY"}}</span>
+                  </div>
+                {{/if}}
+              </div>
+
+              {{! Role and Context-Specific Info }}
+              <div class="avitar-flex avitar-flex-wrap avitar-gap-4 avitar-items-center">
+                {{#if (eq @context "module")}}
+                  {{! Module Context - Show Module and Role }}
+                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm">
+                    <span class="avitar-font-medium">{{this.formatModuleName
+                        @module
+                      }}:</span>
+                    <span
+                      class={{this.getUserRoleBadgeClass
+                        (this.getUserRole user)
+                      }}
+                    >
+                      {{this.getUserRole user}}
+                    </span>
+                  </div>
+
+                  {{! Show Specialties if available }}
+                  {{#if (this.getUserSpecialties user)}}
+                    <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-text-sm">
+                      <span class="avitar-font-medium">Specialties:</span>
+                      <div class="avitar-flex avitar-flex-wrap avitar-gap-1">
+                        {{#each (this.getUserSpecialties user) as |specialty|}}
+                          <span
+                            class="avitar-badge avitar-badge--sm avitar-badge--secondary"
+                          >
+                            {{specialty}}
+                          </span>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                {{else}}
+                  {{! Municipal Context - Show Municipal Role }}
+                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm">
+                    <span class="avitar-font-medium">Role:</span>
+                    <span
+                      class={{this.getUserRoleBadgeClass
+                        (this.getUserRole user)
+                      }}
+                    >
+                      {{this.getUserRole user}}
+                    </span>
+                  </div>
+
+                  {{! Show Modules if available }}
+                  {{#if (this.getUserModules user)}}
+                    <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-text-sm">
+                      <span class="avitar-font-medium">Modules:</span>
+                      <div class="avitar-flex avitar-flex-wrap avitar-gap-1">
+                        {{#each (this.getUserModules user) as |moduleName|}}
+                          <span
+                            class="avitar-badge avitar-badge--sm avitar-badge--info"
+                          >
+                            {{this.formatModuleName moduleName}}
+                          </span>
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                {{/if}}
+              </div>
+            </div>
+
+            {{! Action Buttons }}
+            <div
+              class="avitar-flex avitar-gap-2 avitar-flex-shrink-0"
+              {{on "click" this.stopPropagation}}
+            >
+              {{#if (@canModifyUser user)}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                  {{on "click" (fn this.handleEdit user)}}
+                  title="Edit user"
+                >
+                  {{lnr-icon "pencil" size=14}}
+                  <span class="avitar-ml-1">Edit</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                  {{on "click" (fn this.handleRemove user)}}
+                  title="Remove user"
+                >
+                  {{lnr-icon "trash" size=14}}
+                  <span class="avitar-ml-1">Remove</span>
+                </button>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  {{! Empty State }}
+  <div class="avitar-empty-state avitar-py-12">
+    <div
+      class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-gray-100 avitar-flex avitar-items-center avitar-justify-center avitar-mx-auto avitar-mb-4"
+    >
+      {{lnr-icon "users" size=32 class="avitar-text-muted"}}
+    </div>
+    <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Users Found</h3>
+    <p class="avitar-text-muted">
+      {{#if @searchText}}
+        No users match your search criteria.
+      {{else}}
+        There are no users to display.
+      {{/if}}
+    </p>
+  </div>
+{{/if}}

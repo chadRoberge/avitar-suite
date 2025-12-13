@@ -30,7 +30,7 @@ export default class AssessingRevaluationsPrintBuildingRateComponent extends Com
       const revaluationId = this.args.revaluation._id;
       const sheetId = this.args.sheet._id;
       const response = await this.api.get(
-        `/revaluations/${revaluationId}/sheets/${sheetId}/sales`
+        `/revaluations/${revaluationId}/sheets/${sheetId}/sales`,
       );
       this.sales = response.sales || [];
     } catch (error) {
@@ -46,7 +46,10 @@ export default class AssessingRevaluationsPrintBuildingRateComponent extends Com
   }
 
   get baseYear() {
-    return this.args.revaluation?.global_settings?.base_year || new Date().getFullYear();
+    return (
+      this.args.revaluation?.global_settings?.base_year ||
+      new Date().getFullYear()
+    );
   }
 
   get depreciationRate() {
@@ -130,14 +133,19 @@ export default class AssessingRevaluationsPrintBuildingRateComponent extends Com
       // Calculate excess values
       const excessAcres = Math.max(0, (sale.acreage || 0) - this.siteAcreage);
       const excessAcValue = excessAcres * this.excessAcreageValue;
-      const excessFFValue = (sale.excess_frontage || 0) * this.excessFootFrontage;
+      const excessFFValue =
+        (sale.excess_frontage || 0) * this.excessFootFrontage;
 
       // Features value (would come from property features)
       const featuresValue = sale.features_value || 0;
 
       // Building residual value
       const buildingResidualValue =
-        adjustedPrice - adjSiteValue - featuresValue - excessAcValue - excessFFValue;
+        adjustedPrice -
+        adjSiteValue -
+        featuresValue -
+        excessAcValue -
+        excessFFValue;
 
       // Building rate (from property data)
       const buildingRate = sale.building_rate || 1.0;

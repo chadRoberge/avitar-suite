@@ -99,9 +99,9 @@
     </div>
 
     {{! Add page break for print after each sheet except the last }}
-    {{#unless (eq index (sub this.sheetsWithSales.length 1))}}
+    {{#if (not-eq index (sub this.sheetsWithSales.length 1))}}
       <div class="print-only avitar-my-8" style="page-break-after: always;"></div>
-    {{/unless}}
+    {{/if}}
   {{else}}
     <div class="avitar-card">
       <div class="avitar-card__body">

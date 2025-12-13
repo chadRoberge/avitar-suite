@@ -103,29 +103,44 @@ export default class LocalApiService extends Service {
         if (cached && cached.length > 0) {
           // Check for corrupted cache where API response object was cached as single item
           // This happens when {success: true, properties: [...]} was cached instead of individual items
-          if (cached.length === 1 && cached[0].properties && Array.isArray(cached[0].properties)) {
-            console.warn(`🧹 Detected corrupted localStorage cache in ${collection} - clearing and refetching`);
+          if (
+            cached.length === 1 &&
+            cached[0].properties &&
+            Array.isArray(cached[0].properties)
+          ) {
+            console.warn(
+              `🧹 Detected corrupted localStorage cache in ${collection} - clearing and refetching`,
+            );
             // Clear the corrupted collection
             this.localStorage.clearCollection(collection);
             // Force network fetch
             if (!this.isOnline) {
-              throw new Error(`Corrupted cache detected for ${endpoint} and device is offline`);
+              throw new Error(
+                `Corrupted cache detected for ${endpoint} and device is offline`,
+              );
             }
             // Don't return here - fall through to network request below
           } else {
             // Check for incomplete property cache (missing required fields like mapNumber, lotSubDisplay)
             // Instead of refetching, apply PID formatting on-the-fly
-            if (collection === 'properties' && endpoint.includes('/municipalities/')) {
+            if (
+              collection === 'properties' &&
+              endpoint.includes('/municipalities/')
+            ) {
               const sampleProperty = cached[0];
               if (!sampleProperty.mapNumber || !sampleProperty.lotSubDisplay) {
-                console.log(`🔧 Applying PID formatting to ${cached.length} cached properties (localStorage)`);
+                console.log(
+                  `🔧 Applying PID formatting to ${cached.length} cached properties (localStorage)`,
+                );
                 // Apply PID formatting to all cached properties
                 const municipality = this.municipality.currentMunicipality;
                 if (municipality && municipality.pid_format) {
                   cached = applyPidFormattingBulk(cached, municipality);
                   console.log(`✅ PID formatting applied successfully`);
                 } else {
-                  console.warn('⚠️ Municipality PID format not available - properties may not group correctly');
+                  console.warn(
+                    '⚠️ Municipality PID format not available - properties may not group correctly',
+                  );
                 }
               }
             }
@@ -166,20 +181,30 @@ export default class LocalApiService extends Service {
         let dataToCache = response;
         let dataToReturn = response;
 
-        if (response && typeof response === 'object' && !Array.isArray(response)) {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response)
+        ) {
           // Check if this is a wrapped response with a data property
           if (response.properties && Array.isArray(response.properties)) {
             // Extract the properties array for caching
             dataToCache = response.properties;
-            console.log(`🔍 Extracted ${dataToCache.length} items from response.properties for caching`);
+            console.log(
+              `🔍 Extracted ${dataToCache.length} items from response.properties for caching`,
+            );
           } else if (response.features && Array.isArray(response.features)) {
             // Extract features array
             dataToCache = response.features;
-            console.log(`🔍 Extracted ${dataToCache.length} items from response.features for caching`);
+            console.log(
+              `🔍 Extracted ${dataToCache.length} items from response.features for caching`,
+            );
           } else if (response.sketches && Array.isArray(response.sketches)) {
             // Extract sketches array
             dataToCache = response.sketches;
-            console.log(`🔍 Extracted ${dataToCache.length} items from response.sketches for caching`);
+            console.log(
+              `🔍 Extracted ${dataToCache.length} items from response.sketches for caching`,
+            );
           }
         }
 
@@ -198,7 +223,9 @@ export default class LocalApiService extends Service {
             dirty: false,
           });
         } else if (collection && Array.isArray(dataToCache)) {
-          console.log(`Caching array response for collection: ${collection} (${dataToCache.length} items)`);
+          console.log(
+            `Caching array response for collection: ${collection} (${dataToCache.length} items)`,
+          );
           this.localStorage.setCollection(collection, dataToCache, {
             source: 'server',
             dirty: false,
@@ -573,7 +600,7 @@ export default class LocalApiService extends Service {
       // Map municipality-scoped attribute endpoints to their own collections
       // Each endpoint gets its own collection to prevent cache collisions
       const municipalityResourceMap = {
-        'properties': 'properties',
+        properties: 'properties',
         'topology-attributes': 'topology_attributes',
         'site-attributes': 'site_attributes',
         'driveway-attributes': 'driveway_attributes',

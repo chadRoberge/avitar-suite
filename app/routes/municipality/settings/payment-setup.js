@@ -9,30 +9,67 @@ export default class MunicipalitySettingsPaymentSetupRoute extends Route {
   @service router;
 
   async beforeModel() {
+    console.log('🔍 [PAYMENT-SETUP] beforeModel called');
+
     // Check if user has admin permission for this municipality
     const municipalityId = this.municipality.currentMunicipality?.id;
+    console.log('🔍 [PAYMENT-SETUP] Municipality ID:', municipalityId);
 
     if (!municipalityId) {
+      console.log('❌ [PAYMENT-SETUP] No municipality ID found');
       this.notifications.error('Municipality not found');
       this.router.transitionTo('municipality-select');
       return;
     }
 
     // Check if user is admin or Avitar staff
-    const userPerm = this.currentUser.user.municipal_permissions?.find(
-      (perm) => perm.municipality_id === municipalityId,
+    console.log(
+      '🔍 [PAYMENT-SETUP] User permissions:',
+      this.currentUser.user.municipal_permissions,
     );
+    console.log(
+      '🔍 [PAYMENT-SETUP] User global_role:',
+      this.currentUser.user.global_role,
+    );
+
+    const userPerm = this.currentUser.user.municipal_permissions?.find(
+      (perm) => {
+        // Handle both string IDs and object IDs
+        const permMunicipalityId =
+          typeof perm.municipality_id === 'object'
+            ? perm.municipality_id?._id || perm.municipality_id?.id
+            : perm.municipality_id;
+
+        console.log(
+          '🔍 [PAYMENT-SETUP] Checking perm:',
+          permMunicipalityId?.toString(),
+          'vs',
+          municipalityId?.toString(),
+        );
+        return permMunicipalityId?.toString() === municipalityId?.toString();
+      },
+    );
+
+    console.log('🔍 [PAYMENT-SETUP] Found user permission:', userPerm);
 
     const isAvitarStaff = ['avitar_admin', 'avitar_staff'].includes(
       this.currentUser.user.global_role,
     );
     const isMunicipalAdmin = userPerm && userPerm.role === 'admin';
 
+    console.log('🔍 [PAYMENT-SETUP] isAvitarStaff:', isAvitarStaff);
+    console.log('🔍 [PAYMENT-SETUP] isMunicipalAdmin:', isMunicipalAdmin);
+
     if (!isAvitarStaff && !isMunicipalAdmin) {
+      console.log(
+        '❌ [PAYMENT-SETUP] Permission denied - redirecting to municipality.settings',
+      );
       this.notifications.error('Only administrators can manage payment setup');
       this.router.transitionTo('municipality.settings');
       return;
     }
+
+    console.log('✅ [PAYMENT-SETUP] Permission check passed');
   }
 
   async model() {

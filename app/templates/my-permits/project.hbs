@@ -1,0 +1,269 @@
+{{page-title @model.project.projectName}}
+
+{{! Breadcrumb }}
+<div class="avitar-container avitar-py-4">
+  <nav class="avitar-breadcrumb">
+    <button type="button" class="avitar-breadcrumb__link" {{on "click" this.goBack}}>
+      <i class="fas fa-arrow-left avitar-mr-2"></i>
+      My Permits
+    </button>
+    <span class="avitar-breadcrumb__separator">/</span>
+    <span class="avitar-breadcrumb__current">{{@model.project.projectName}}</span>
+  </nav>
+</div>
+
+{{! Project Header }}
+<div class="avitar-bg-primary avitar-text-white avitar-py-6 avitar-mb-6">
+  <div class="avitar-container">
+    <div class="avitar-flex avitar-justify-between avitar-items-start">
+      <div class="avitar-flex-1">
+        <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-2">
+          <h1 class="avitar-text-3xl avitar-font-bold">
+            {{@model.project.projectName}}
+          </h1>
+          <span class={{this.projectStatusBadge.class}}>
+            <i class="fas fa-{{this.projectStatusBadge.icon}} avitar-mr-1"></i>
+            {{this.projectStatusBadge.text}}
+          </span>
+        </div>
+
+        <div class="avitar-flex avitar-gap-6 avitar-text-sm avitar-opacity-90">
+          <div>
+            <i class="fas fa-hashtag avitar-mr-1"></i>
+            {{@model.project.permitNumber}}
+          </div>
+          {{#if @model.property}}
+            <div>
+              <i class="fas fa-map-marker-alt avitar-mr-1"></i>
+              {{@model.property.location.address}}
+            </div>
+          {{/if}}
+          <div>
+            <i class="fas fa-calendar avitar-mr-1"></i>
+            Created {{date-format @model.project.createdAt "MMM DD, YYYY"}}
+          </div>
+        </div>
+
+        {{#if @model.project.projectDescription}}
+          <p class="avitar-mt-3 avitar-text-sm avitar-opacity-90">
+            {{@model.project.projectDescription}}
+          </p>
+        {{/if}}
+      </div>
+
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--white"
+        {{on "click" this.addPermitToProject}}
+      >
+        <i class="fas fa-plus avitar-mr-2"></i>
+        Add Permit to Project
+      </button>
+    </div>
+
+    {{! Progress Bar }}
+    {{#if @model.project.projectStats}}
+      <div class="avitar-mt-4">
+        <div class="avitar-flex avitar-justify-between avitar-text-xs avitar-mb-1">
+          <span>Overall Progress</span>
+          <span>{{this.projectProgress}}%</span>
+        </div>
+        <div class="avitar-w-full avitar-bg-white avitar-bg-opacity-30 avitar-rounded-full avitar-h-2">
+          <div
+            class="avitar-bg-white avitar-h-2 avitar-rounded-full avitar-transition-all"
+            style="width: {{this.projectProgress}}%"
+          ></div>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>
+
+{{! Stats Cards }}
+<div class="avitar-container avitar-mb-6">
+  <div class="avitar-grid avitar-grid-cols-4 avitar-gap-4">
+    <div class="avitar-card avitar-card--stat">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__value">
+            {{@model.project.projectStats.totalChildren}}
+          </div>
+          <div class="avitar-stat__label">Total Permits</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__value avitar-text-success">
+            {{@model.project.projectStats.completedChildren}}
+          </div>
+          <div class="avitar-stat__label">Completed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__value avitar-text-primary">
+            ${{@model.project.projectTotalFee}}
+          </div>
+          <div class="avitar-stat__label">Total Fee</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card avitar-card--stat">
+      <div class="avitar-card__body">
+        <div class="avitar-stat">
+          <div class="avitar-stat__value">
+            {{#if @model.project.projectStats.totalProjectValue}}
+              ${{@model.project.projectStats.totalProjectValue}}
+            {{else}}
+              N/A
+            {{/if}}
+          </div>
+          <div class="avitar-stat__label">Project Value</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Child Permits List }}
+<div class="avitar-container">
+  <div class="avitar-card">
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <h2 class="avitar-card__title">
+          <i class="fas fa-file-alt avitar-mr-2"></i>
+          Project Permits
+        </h2>
+
+        <div class="avitar-flex avitar-gap-3">
+          <select
+            class="avitar-select avitar-select--sm"
+            {{on "change" this.setFilterStatus}}
+          >
+            {{#each this.statusOptions as |statusOption|}}
+              <option
+                value={{statusOption.value}}
+                selected={{eq this.filterStatus statusOption.value}}
+              >
+                {{statusOption.label}}
+              </option>
+            {{/each}}
+          </select>
+
+          <select class="avitar-select avitar-select--sm" {{on "change" this.setSortBy}}>
+            <option value="date_desc" selected={{eq this.sortBy "date_desc"}}>
+              Newest First
+            </option>
+            <option value="date_asc" selected={{eq this.sortBy "date_asc"}}>
+              Oldest First
+            </option>
+            <option value="status" selected={{eq this.sortBy "status"}}>
+              By Status
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{#if this.filteredChildPermits.length}}
+        <div class="avitar-space-y-3">
+          {{#each this.filteredChildPermits as |permit|}}
+            <div
+              class="avitar-card avitar-card--hover avitar-bg-gray-50"
+              {{on "click" (fn this.viewPermit permit)}}
+              role="button"
+            >
+              <div class="avitar-card__body avitar-py-3">
+                <div class="avitar-flex avitar-justify-between avitar-items-start">
+                  <div class="avitar-flex-1">
+                    <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1">
+                      <h3 class="avitar-font-semibold">
+                        {{permit.permitNumber}}
+                      </h3>
+                      <span class={{permit.statusBadge.class}}>
+                        <i class="fas fa-{{permit.statusBadge.icon}} avitar-mr-1"></i>
+                        {{permit.statusBadge.text}}
+                      </span>
+                      {{#if permit.canEdit}}
+                        <span class="avitar-badge avitar-badge--info avitar-badge--sm">
+                          <i class="fas fa-edit avitar-mr-1"></i>
+                          Editable
+                        </span>
+                      {{/if}}
+                    </div>
+
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-2">
+                      {{permit.description}}
+                    </div>
+
+                    <div class="avitar-flex avitar-gap-4 avitar-text-xs avitar-text-muted">
+                      <div>
+                        <i class="fas fa-tag avitar-mr-1"></i>
+                        Type: {{permit.type}}
+                      </div>
+                      {{#if permit.estimatedValue}}
+                        <div>
+                          <i class="fas fa-dollar-sign avitar-mr-1"></i>
+                          Value: ${{permit.estimatedValue}}
+                        </div>
+                      {{/if}}
+                      <div>
+                        <i class="fas fa-calendar avitar-mr-1"></i>
+                        {{date-format permit.createdAt "MMM DD, YYYY"}}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                    {{on "click" (fn this.viewPermit permit)}}
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      {{else}}
+        {{! Empty State }}
+        <div class="avitar-text-center avitar-py-12">
+          <div
+            class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-gray-100 avitar-mx-auto avitar-flex avitar-items-center avitar-justify-center avitar-mb-4"
+          >
+            <i class="fas fa-file-alt fa-2x avitar-text-gray-400"></i>
+          </div>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+            No Permits Found
+          </h3>
+          <p class="avitar-text-muted avitar-mb-4">
+            {{#if (eq this.filterStatus "all")}}
+              This project doesn't have any permits yet.
+            {{else}}
+              No permits match the selected filter.
+            {{/if}}
+          </p>
+          {{#if (eq this.filterStatus "all")}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.addPermitToProject}}
+            >
+              <i class="fas fa-plus avitar-mr-2"></i>
+              Add First Permit
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>

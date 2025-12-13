@@ -20,10 +20,10 @@ const waterBodySchema = new mongoose.Schema({
     maxlength: 200,
   },
   baseWaterValue: {
-      type: Number,
-      default: 0,
-      min: [0, 'Base water value must be positive'],
-    },
+    type: Number,
+    default: 0,
+    min: [0, 'Base water value must be positive'],
+  },
   waterBodyType: {
     type: String,
     required: true,

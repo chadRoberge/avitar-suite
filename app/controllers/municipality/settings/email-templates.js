@@ -43,7 +43,7 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
       templates = templates.filter(
         (t) =>
           t.name?.toLowerCase().includes(search) ||
-          t.description?.toLowerCase().includes(search)
+          t.description?.toLowerCase().includes(search),
       );
     }
 
@@ -95,7 +95,7 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
     try {
       await this.api.put(
         `/municipalities/${this.municipality.currentMunicipality.id}/email-templates/${this.selectedTemplate._id}`,
-        templateData
+        templateData,
       );
 
       this.notifications.success('Email template saved successfully');
@@ -106,7 +106,7 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
     } catch (error) {
       console.error('Error saving template:', error);
       this.notifications.error(
-        error.message || 'Failed to save email template'
+        error.message || 'Failed to save email template',
       );
     } finally {
       this.isLoading = false;
@@ -122,11 +122,11 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
         `/municipalities/${this.municipality.currentMunicipality.id}/email-templates/${template._id}`,
         {
           is_active: !template.is_active,
-        }
+        },
       );
 
       this.notifications.success(
-        `Template ${!template.is_active ? 'activated' : 'deactivated'}`
+        `Template ${!template.is_active ? 'activated' : 'deactivated'}`,
       );
 
       // Refresh templates
@@ -143,7 +143,7 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
   async resetToDefault(template) {
     if (
       !confirm(
-        'Are you sure you want to reset this template to its default content? This cannot be undone.'
+        'Are you sure you want to reset this template to its default content? This cannot be undone.',
       )
     ) {
       return;
@@ -153,7 +153,7 @@ export default class MunicipalitySettingsEmailTemplatesController extends Contro
 
     try {
       await this.api.post(
-        `/municipalities/${this.municipality.currentMunicipality.id}/email-templates/${template._id}/reset`
+        `/municipalities/${this.municipality.currentMunicipality.id}/email-templates/${template._id}/reset`,
       );
 
       this.notifications.success('Template reset to default');

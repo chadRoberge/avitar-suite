@@ -85,6 +85,7 @@
     "edition": "octane"
   },
   "dependencies": {
+    "@ember/render-modifiers": "^3.0.0",
     "@google-cloud/storage": "^7.17.3",
     "@sendgrid/mail": "^8.1.6",
     "@stripe/stripe-js": "^8.5.2",

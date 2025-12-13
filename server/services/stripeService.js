@@ -139,7 +139,7 @@ async function createSubscription(
       payment_behavior: 'error_if_incomplete', // Throw error with payment_intent if incomplete
       payment_settings: {
         save_default_payment_method: 'on_subscription',
-        payment_method_types: ['card']
+        payment_method_types: ['card'],
       },
       expand: ['latest_invoice.payment_intent'], // Expand in creation
     };
@@ -152,19 +152,26 @@ async function createSubscription(
     let subscription;
     try {
       subscription = await stripe.subscriptions.create(subscriptionData);
-      console.log('🟢 [CREATE_SUB] Subscription created successfully without error');
+      console.log(
+        '🟢 [CREATE_SUB] Subscription created successfully without error',
+      );
     } catch (error) {
       // If error_if_incomplete throws, the error contains payment_intent details
-      console.log('🟡 [CREATE_SUB] Subscription creation threw error (expected for incomplete):', {
-        type: error.type,
-        code: error.code,
-        message: error.message,
-      });
+      console.log(
+        '🟡 [CREATE_SUB] Subscription creation threw error (expected for incomplete):',
+        {
+          type: error.type,
+          code: error.code,
+          message: error.message,
+        },
+      );
 
       if (error.type === 'StripeCardError' && error.payment_intent) {
         console.log('🟡 [CREATE_SUB] Error contains payment_intent:', {
           payment_intent_id: error.payment_intent.id,
-          client_secret: error.payment_intent.client_secret ? 'present' : 'missing',
+          client_secret: error.payment_intent.client_secret
+            ? 'present'
+            : 'missing',
         });
 
         // Get the subscription that was created
@@ -179,7 +186,10 @@ async function createSubscription(
           subscription.latest_invoice = {
             payment_intent: error.payment_intent,
           };
-          console.log('🟢 [CREATE_SUB] Retrieved subscription from error:', subscription.id);
+          console.log(
+            '🟢 [CREATE_SUB] Retrieved subscription from error:',
+            subscription.id,
+          );
         } else {
           throw error;
         }
@@ -193,16 +203,21 @@ async function createSubscription(
       id: subscription.id,
       status: subscription.status,
       latest_invoice_type: typeof subscription.latest_invoice,
-      has_latest_invoice_object: typeof subscription.latest_invoice === 'object',
+      has_latest_invoice_object:
+        typeof subscription.latest_invoice === 'object',
       latest_invoice_id: subscription.latest_invoice?.id,
       payment_intent_in_response: !!subscription.latest_invoice?.payment_intent,
     });
 
     // If payment_intent not in response, retrieve invoice separately
-    if (subscription.latest_invoice && !subscription.latest_invoice.payment_intent) {
-      const invoiceId = typeof subscription.latest_invoice === 'string'
-        ? subscription.latest_invoice
-        : subscription.latest_invoice.id;
+    if (
+      subscription.latest_invoice &&
+      !subscription.latest_invoice.payment_intent
+    ) {
+      const invoiceId =
+        typeof subscription.latest_invoice === 'string'
+          ? subscription.latest_invoice
+          : subscription.latest_invoice.id;
 
       console.log('🔵 [CREATE_SUB] Retrieving invoice separately:', invoiceId);
 
@@ -227,8 +242,11 @@ async function createSubscription(
       id: subscription.id,
       status: subscription.status,
       payment_intent_id: subscription.latest_invoice?.payment_intent?.id,
-      payment_intent_status: subscription.latest_invoice?.payment_intent?.status,
-      client_secret: subscription.latest_invoice?.payment_intent?.client_secret ? '✅ present' : '❌ missing',
+      payment_intent_status:
+        subscription.latest_invoice?.payment_intent?.status,
+      client_secret: subscription.latest_invoice?.payment_intent?.client_secret
+        ? '✅ present'
+        : '❌ missing',
     });
 
     return subscription;
@@ -510,14 +528,20 @@ async function getAvailableModules() {
       expand: ['data.default_price'],
     });
 
-    console.log('📦 Stripe Products Response:', JSON.stringify(products, null, 2));
+    console.log(
+      '📦 Stripe Products Response:',
+      JSON.stringify(products, null, 2),
+    );
 
     // Filter products that have the 'module' metadata
     const moduleProducts = products.data.filter(
       (product) => product.metadata && product.metadata.module,
     );
 
-    console.log('🔍 Filtered Module Products:', JSON.stringify(moduleProducts, null, 2));
+    console.log(
+      '🔍 Filtered Module Products:',
+      JSON.stringify(moduleProducts, null, 2),
+    );
 
     // For each product, get its prices
     const modulesWithPricing = await Promise.all(
@@ -548,6 +572,7 @@ async function getAvailableModules() {
 
         return {
           id: product.id,
+          stripe_product_id: product.id, // Add explicit stripe_product_id for matching
           name: product.name,
           description: product.description || '',
           module: product.metadata.module,
@@ -555,7 +580,7 @@ async function getAvailableModules() {
           image: product.images?.[0] || null,
           features: [
             // Include marketing features
-            ...(product.marketing_features || []).map(f => f.name),
+            ...(product.marketing_features || []).map((f) => f.name),
             // Include metadata features if present
             ...(product.metadata.features
               ? product.metadata.features.split(',').map((f) => f.trim())
@@ -566,7 +591,10 @@ async function getAvailableModules() {
       }),
     );
 
-    console.log('✅ Final Modules with Pricing:', JSON.stringify(modulesWithPricing, null, 2));
+    console.log(
+      '✅ Final Modules with Pricing:',
+      JSON.stringify(modulesWithPricing, null, 2),
+    );
 
     return modulesWithPricing;
   } catch (error) {
@@ -696,6 +724,59 @@ async function getPriceIdForModule(moduleName, parcelCount) {
 }
 
 /**
+ * Get price, product ID, and tier for a module based on parcel count
+ * Returns { priceId, productId, tier } or null if not found
+ */
+async function getPriceDataForModule(moduleName, parcelCount) {
+  try {
+    // Get all products for this module
+    const products = await stripe.products.list({
+      active: true,
+      limit: 100,
+    });
+
+    const moduleProducts = products.data.filter(
+      (p) => p.metadata && p.metadata.module === moduleName,
+    );
+
+    // Find prices for these products and check tiered limits
+    for (const product of moduleProducts) {
+      const prices = await stripe.prices.list({
+        product: product.id,
+        active: true,
+      });
+
+      // Check metadata for parcel limits
+      for (const price of prices.data) {
+        const minParcels = parseInt(price.metadata?.min_parcels || 0);
+        const maxParcels = parseInt(
+          price.metadata?.max_parcels || Number.MAX_SAFE_INTEGER,
+        );
+
+        if (parcelCount >= minParcels && parcelCount <= maxParcels) {
+          // Get tier from product metadata
+          const tier = product.metadata?.tier || 'basic';
+
+          return {
+            priceId: price.id,
+            productId: product.id,
+            tier: tier,
+          };
+        }
+      }
+    }
+
+    console.warn(
+      `No price found for module ${moduleName} with ${parcelCount} parcels`,
+    );
+    return null;
+  } catch (error) {
+    console.error('Error getting price data for module:', error);
+    throw new Error('Failed to get price for module');
+  }
+}
+
+/**
  * Calculate price for a specific quantity from Stripe price tiers
  * This properly handles both volume and graduated tiered pricing
  */
@@ -715,8 +796,13 @@ async function calculatePriceForQuantity(priceId, quantity) {
     let totalAmount = 0;
 
     if (price.billing_scheme === 'tiered' && price.tiers) {
-      console.log(`  [calculatePrice] Tiers mode: ${price.tiers_mode}, quantity: ${quantity}`);
-      console.log(`  [calculatePrice] Tiers:`, JSON.stringify(price.tiers, null, 2));
+      console.log(
+        `  [calculatePrice] Tiers mode: ${price.tiers_mode}, quantity: ${quantity}`,
+      );
+      console.log(
+        `  [calculatePrice] Tiers:`,
+        JSON.stringify(price.tiers, null, 2),
+      );
 
       if (price.tiers_mode === 'volume') {
         // Volume pricing: entire quantity is charged at one tier's rate
@@ -725,14 +811,20 @@ async function calculatePriceForQuantity(priceId, quantity) {
             // Found the matching tier - apply BOTH flat and unit amounts
             if (tier.flat_amount) {
               totalAmount += tier.flat_amount / 100;
-              console.log(`  [calculatePrice] Adding flat amount: $${tier.flat_amount / 100}`);
+              console.log(
+                `  [calculatePrice] Adding flat amount: $${tier.flat_amount / 100}`,
+              );
             }
             if (tier.unit_amount) {
               const unitCost = (tier.unit_amount * quantity) / 100;
               totalAmount += unitCost;
-              console.log(`  [calculatePrice] Adding unit cost: ${quantity} × $${tier.unit_amount / 100} = $${unitCost}`);
+              console.log(
+                `  [calculatePrice] Adding unit cost: ${quantity} × $${tier.unit_amount / 100} = $${unitCost}`,
+              );
             }
-            console.log(`  [calculatePrice] Volume tier matched (up_to: ${tier.up_to}), total: $${totalAmount}`);
+            console.log(
+              `  [calculatePrice] Volume tier matched (up_to: ${tier.up_to}), total: $${totalAmount}`,
+            );
             break;
           }
         }
@@ -749,12 +841,16 @@ async function calculatePriceForQuantity(priceId, quantity) {
             // Apply BOTH flat and unit amounts for this tier
             if (tier.flat_amount) {
               totalAmount += tier.flat_amount / 100;
-              console.log(`  [calculatePrice] Tier flat: $${tier.flat_amount / 100}`);
+              console.log(
+                `  [calculatePrice] Tier flat: $${tier.flat_amount / 100}`,
+              );
             }
             if (tier.unit_amount) {
               const tierCost = (tier.unit_amount * tierQuantity) / 100;
               totalAmount += tierCost;
-              console.log(`  [calculatePrice] Tier unit: ${tierQuantity} × $${tier.unit_amount / 100} = $${tierCost}`);
+              console.log(
+                `  [calculatePrice] Tier unit: ${tierQuantity} × $${tier.unit_amount / 100} = $${tierCost}`,
+              );
             }
           }
 
@@ -768,9 +864,14 @@ async function calculatePriceForQuantity(priceId, quantity) {
     } else if (price.unit_amount) {
       // Simple per-unit pricing
       totalAmount = (price.unit_amount * quantity) / 100;
-      console.log(`  [calculatePrice] Simple pricing: ${quantity} × $${price.unit_amount / 100} = $${totalAmount}`);
+      console.log(
+        `  [calculatePrice] Simple pricing: ${quantity} × $${price.unit_amount / 100} = $${totalAmount}`,
+      );
     } else {
-      console.log(`  [calculatePrice] ⚠️  No pricing found! Full price object:`, JSON.stringify(price, null, 2));
+      console.log(
+        `  [calculatePrice] ⚠️  No pricing found! Full price object:`,
+        JSON.stringify(price, null, 2),
+      );
     }
 
     console.log(`  [calculatePrice] Final total: $${totalAmount}\n`);
@@ -785,7 +886,10 @@ async function calculatePriceForQuantity(priceId, quantity) {
  * Get tiered pricing for a module at specific parcel counts
  * Used when municipality doesn't have parcel data yet
  */
-async function getTieredPricingForModule(moduleName, parcelCounts = [1000, 2000, 3500]) {
+async function getTieredPricingForModule(
+  moduleName,
+  parcelCounts = [1000, 2000, 3500],
+) {
   try {
     const products = await stripe.products.list({
       active: true,
@@ -880,7 +984,10 @@ async function updateSubscriptionParcelCount(subscriptionId, parcelCount) {
  */
 async function createStandardConnectedAccount(municipality) {
   try {
-    console.log('🔵 Creating Stripe Standard Connected Account for:', municipality.name);
+    console.log(
+      '🔵 Creating Stripe Standard Connected Account for:',
+      municipality.name,
+    );
 
     const account = await stripe.accounts.create({
       type: 'standard',
@@ -981,14 +1088,16 @@ function calculatePlatformFees(baseAmount, platformFeePercentage = 5) {
   const baseAmountCents = Math.round(baseAmount * 100);
 
   // Calculate Avitar platform fee (e.g., 5% of base)
-  const avitarFeeCents = Math.round(baseAmountCents * (platformFeePercentage / 100));
+  const avitarFeeCents = Math.round(
+    baseAmountCents * (platformFeePercentage / 100),
+  );
 
   // Stripe fee: 2.9% + $0.30
   // But we need to calculate this on the TOTAL charged (base + avitar fee + stripe fee)
   // Formula: total = (base + avitar_fee + 30) / (1 - 0.029)
   const totalBeforeStripeFee = baseAmountCents + avitarFeeCents;
   const totalWithStripeFee = Math.round(
-    (totalBeforeStripeFee + 30) / (1 - 0.029)
+    (totalBeforeStripeFee + 30) / (1 - 0.029),
   );
   const stripeFeeCents = totalWithStripeFee - totalBeforeStripeFee;
 
@@ -996,15 +1105,113 @@ function calculatePlatformFees(baseAmount, platformFeePercentage = 5) {
   const totalChargeCents = baseAmountCents + avitarFeeCents + stripeFeeCents;
 
   return {
-    baseAmount: baseAmountCents / 100,           // $100.00
-    avitarFee: avitarFeeCents / 100,             // $5.00
-    stripeFee: stripeFeeCents / 100,             // ~$3.20
-    totalCharge: totalChargeCents / 100,         // $108.20
+    baseAmount: baseAmountCents / 100, // $100.00
+    avitarFee: avitarFeeCents / 100, // $5.00
+    stripeFee: stripeFeeCents / 100, // ~$3.20
+    totalCharge: totalChargeCents / 100, // $108.20
     baseAmountCents,
     avitarFeeCents,
     stripeFeeCents,
     totalChargeCents,
   };
+}
+
+/**
+ * Calculate building permit payment breakdown
+ * - Municipality receives the full permit fee
+ * - Customer pays permit fee + processing fees (Avitar 1.25% + Stripe 2.9% + $0.30)
+ */
+function calculatePermitPayment(permitFee) {
+  // Permit fee is what municipality receives (e.g., $100)
+  const permitFeeCents = Math.round(permitFee * 100);
+
+  // Avitar convenience fee: 1.25% of permit fee
+  const avitarFeeCents = Math.round(permitFeeCents * 0.0125);
+
+  // Stripe fee: 2.9% + $0.30
+  // Calculate on total amount (permit + avitar + stripe)
+  // Formula: total = (permit + avitar + 30) / (1 - 0.029)
+  const totalBeforeStripeFee = permitFeeCents + avitarFeeCents;
+  const totalWithStripeFee = Math.round(
+    (totalBeforeStripeFee + 30) / (1 - 0.029),
+  );
+  const stripeFeeCents = totalWithStripeFee - totalBeforeStripeFee;
+
+  // Total processing fees (Avitar + Stripe)
+  const processingFeesCents = avitarFeeCents + stripeFeeCents;
+
+  // Total amount customer pays
+  const totalAmountCents = permitFeeCents + processingFeesCents;
+
+  return {
+    // Dollar amounts
+    permitFee: permitFeeCents / 100, // e.g., $100.00
+    avitarFee: avitarFeeCents / 100, // e.g., $1.25
+    stripeFee: stripeFeeCents / 100, // e.g., $3.19
+    processingFees: processingFeesCents / 100, // e.g., $4.44 (Avitar + Stripe)
+    totalAmount: totalAmountCents / 100, // e.g., $104.44
+
+    // Cents amounts (for Stripe API)
+    permitFeeCents,
+    avitarFeeCents,
+    stripeFeeCents,
+    processingFeesCents,
+    totalAmountCents,
+  };
+}
+
+/**
+ * Get charges for a Connected Account within a date range
+ */
+async function getChargesForAccount(accountId, startDate, endDate) {
+  try {
+    console.log('🔵 Fetching charges for account:', accountId);
+    console.log('🔵 Date range:', {
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+    });
+
+    const charges = await stripe.charges.list(
+      {
+        created: {
+          gte: Math.floor(startDate.getTime() / 1000),
+          lte: Math.floor(endDate.getTime() / 1000),
+        },
+        limit: 100,
+      },
+      {
+        stripeAccount: accountId,
+      },
+    );
+
+    console.log('🟢 Retrieved charges:', charges.data.length);
+
+    return charges.data;
+  } catch (error) {
+    console.error('❌ Error fetching charges for account:', error);
+    throw new Error('Failed to fetch charges from Stripe');
+  }
+}
+
+/**
+ * Create a login link for Stripe Express Dashboard
+ */
+async function createLoginLink(accountId) {
+  try {
+    console.log('🔵 Creating login link for account:', accountId);
+
+    const loginLink = await stripe.accounts.createLoginLink(accountId);
+
+    console.log('🟢 Login link created:', {
+      url: loginLink.url,
+      created: new Date(loginLink.created * 1000).toISOString(),
+    });
+
+    return loginLink;
+  } catch (error) {
+    console.error('❌ Error creating login link:', error);
+    throw new Error('Failed to create Stripe Express Dashboard login link');
+  }
 }
 
 module.exports = {
@@ -1033,6 +1240,7 @@ module.exports = {
   createModuleTrialSubscription,
   convertTrialToAnnual,
   getPriceIdForModule,
+  getPriceDataForModule,
   calculatePriceForQuantity,
   getTieredPricingForModule,
   updateSubscriptionParcelCount,
@@ -1042,4 +1250,7 @@ module.exports = {
   getAccountStatus,
   refreshAccountLink,
   calculatePlatformFees,
+  calculatePermitPayment,
+  getChargesForAccount,
+  createLoginLink,
 };

@@ -1,0 +1,74 @@
+<div class="avitar-card">
+  <div class="avitar-card__header">
+    <h3 class="avitar-card__title">
+      <i class="fas fa-info-circle avitar-mr-2"></i>
+      Permit Details
+    </h3>
+  </div>
+  <div class="avitar-card__body">
+    {{! Primary Information - 3 Column Grid }}
+    <div class="avitar-flex avitar-flex-row avitar-mb-6">
+      <div class="avitar-flex-1">
+        <label class="avitar-label">Permit Type</label>
+        <p class="avitar-font-medium avitar-m-0"><uppercase>{{@permit.type}}</uppercase></p>
+      </div>
+
+      <div class="avitar-flex-1">
+        <label class="avitar-label">Status</label>
+        <span class="avitar-badge avitar-badge--{{if (eq @permit.status 'approved') 'success' (if (eq @permit.status 'submitted') 'primary' 'warning')}}">
+          {{@permit.status}}
+        </span>
+      </div>
+
+      <div class="avitar-flex-1">
+        <label class="avitar-label">Estimated Value</label>
+        <p class="avitar-font-medium avitar-m-0">{{format-currency @permit.estimatedValue}}</p>
+      </div>
+
+      {{#if @permit.squareFootage}}
+        <div class="avitar-flex-1">
+          <label class="avitar-label">Square Footage</label>
+          <p class="avitar-font-medium avitar-m-0">{{@permit.squareFootage}} sq ft</p>
+        </div>
+      {{/if}}
+    </div>
+
+    {{! Description }}
+    {{#if @permit.description}}
+      <div class="avitar-mb-6">
+        <label class="avitar-label">Project Description</label>
+        <p class="avitar-font-medium avitar-m-0">{{@permit.description}}</p>
+      </div>
+    {{/if}}
+
+    {{! Scope of Work }}
+    {{#if @permit.scopeOfWork}}
+      <div class="avitar-mb-6">
+        <label class="avitar-label">Scope of Work</label>
+        <p class="avitar-font-medium avitar-m-0">{{@permit.scopeOfWork}}</p>
+      </div>
+    {{/if}}
+
+    {{! Display fees if any }}
+    {{#if @permit.fees.length}}
+      <div class="avitar-mt-2 avitar-pt-2 avitar-border-t">
+        <h4 class="avitar-text-lg avitar-font-semibold avitar-mb-4">Fees</h4>
+        <div class="avitar-space-y-2">
+          {{#each @permit.fees as |fee|}}
+            <div class="avitar-flex avitar-justify-between avitar-items-center">
+              <div>
+                <div class="avitar-font-medium">{{fee.description}}</div>
+                {{#if fee.paid}}
+                  <span class="avitar-badge avitar-badge--success avitar-badge--sm avitar-mt-1">Paid</span>
+                {{else}}
+                  <span class="avitar-badge avitar-badge--warning avitar-badge--sm avitar-mt-1">Unpaid</span>
+                {{/if}}
+              </div>
+              <div class="avitar-font-semibold">{{format-currency fee.amount}}</div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>

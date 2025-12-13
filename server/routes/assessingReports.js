@@ -492,7 +492,8 @@ router.post(
       const mongoose = require('mongoose');
 
       const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
-      const assessmentYear = parameters.assessment_year || new Date().getFullYear();
+      const assessmentYear =
+        parameters.assessment_year || new Date().getFullYear();
 
       // Get municipality information
       const municipality = await Municipality.findById(municipalityObjectId);
@@ -503,7 +504,9 @@ router.post(
         });
       }
 
-      console.log(`📋 Generating MS-1 report for ${municipality.name}, year ${assessmentYear}...`);
+      console.log(
+        `📋 Generating MS-1 report for ${municipality.name}, year ${assessmentYear}...`,
+      );
 
       // ===== LAND VALUATION AGGREGATION =====
       // Join LandAssessment with PropertyTreeNode to get property_class
@@ -542,7 +545,10 @@ router.post(
         },
       ]);
 
-      console.log('Land aggregation results:', JSON.stringify(landAggregation, null, 2));
+      console.log(
+        'Land aggregation results:',
+        JSON.stringify(landAggregation, null, 2),
+      );
 
       // Map land types to MS-1 categories
       const landData = {
@@ -559,14 +565,17 @@ router.post(
       };
 
       landAggregation.forEach((item) => {
-        const propertyClass = item._id?.propertyClass?.toUpperCase() || 'UNKNOWN';
+        const propertyClass =
+          item._id?.propertyClass?.toUpperCase() || 'UNKNOWN';
         const isExempt = item._id?.isExempt || false;
         const acres = item.totalAcres || 0;
         const marketValue = item.totalMarketValue || 0;
         const taxableValue = item.totalTaxableValue || 0;
         const currentUseCredit = item.totalCurrentUseCredit || 0;
 
-        console.log(`Processing: Class=${propertyClass}, Exempt=${isExempt}, Acres=${acres}, Value=${taxableValue}`);
+        console.log(
+          `Processing: Class=${propertyClass}, Exempt=${isExempt}, Acres=${acres}, Value=${taxableValue}`,
+        );
 
         // Current Use (RSA 79-A) - properties with current use credit
         if (currentUseCredit > 0) {
@@ -585,8 +594,12 @@ router.post(
             landData.residential.value += taxableValue;
             landData.taxableTotal.acres += acres;
             landData.taxableTotal.value += taxableValue;
-          } else if (propertyClass === 'C' || propertyClass === 'COMMERCIAL' ||
-                     propertyClass === 'I' || propertyClass === 'INDUSTRIAL') {
+          } else if (
+            propertyClass === 'C' ||
+            propertyClass === 'COMMERCIAL' ||
+            propertyClass === 'I' ||
+            propertyClass === 'INDUSTRIAL'
+          ) {
             landData.commercialIndustrial.acres += acres;
             landData.commercialIndustrial.value += taxableValue;
             landData.taxableTotal.acres += acres;
@@ -638,7 +651,10 @@ router.post(
         },
       ]);
 
-      console.log('Building aggregation results:', JSON.stringify(buildingAggregation, null, 2));
+      console.log(
+        'Building aggregation results:',
+        JSON.stringify(buildingAggregation, null, 2),
+      );
 
       const buildingData = {
         residential: 0,
@@ -650,11 +666,14 @@ router.post(
       };
 
       buildingAggregation.forEach((item) => {
-        const propertyClass = item._id?.propertyClass?.toUpperCase() || 'UNKNOWN';
+        const propertyClass =
+          item._id?.propertyClass?.toUpperCase() || 'UNKNOWN';
         const isExempt = item._id?.isExempt || false;
         const value = item.totalValue || 0;
 
-        console.log(`Building: Class=${propertyClass}, Exempt=${isExempt}, Value=${value}`);
+        console.log(
+          `Building: Class=${propertyClass}, Exempt=${isExempt}, Value=${value}`,
+        );
 
         if (isExempt) {
           buildingData.exempt += value;
@@ -662,11 +681,18 @@ router.post(
           if (propertyClass === 'R' || propertyClass === 'RESIDENTIAL') {
             buildingData.residential += value;
             buildingData.taxableTotal += value;
-          } else if (propertyClass === 'C' || propertyClass === 'COMMERCIAL' ||
-                     propertyClass === 'I' || propertyClass === 'INDUSTRIAL') {
+          } else if (
+            propertyClass === 'C' ||
+            propertyClass === 'COMMERCIAL' ||
+            propertyClass === 'I' ||
+            propertyClass === 'INDUSTRIAL'
+          ) {
             buildingData.commercialIndustrial += value;
             buildingData.taxableTotal += value;
-          } else if (propertyClass === 'M' || propertyClass === 'MANUFACTURED') {
+          } else if (
+            propertyClass === 'M' ||
+            propertyClass === 'MANUFACTURED'
+          ) {
             buildingData.manufacturedHousing += value;
             buildingData.taxableTotal += value;
           } else if (propertyClass !== 'U') {
@@ -678,7 +704,10 @@ router.post(
         buildingData.total += value;
       });
 
-      console.log('Final building data:', JSON.stringify(buildingData, null, 2));
+      console.log(
+        'Final building data:',
+        JSON.stringify(buildingData, null, 2),
+      );
 
       // ===== UTILITIES VALUATION =====
       // Get utilities (property_class = 'U')
@@ -716,17 +745,26 @@ router.post(
         },
       ]);
 
-      console.log('Utilities aggregation results:', JSON.stringify(utilitiesAggregation, null, 2));
+      console.log(
+        'Utilities aggregation results:',
+        JSON.stringify(utilitiesAggregation, null, 2),
+      );
 
       const utilitiesData = {
-        electricCompanies: utilitiesAggregation.map(item => ({
+        electricCompanies: utilitiesAggregation.map((item) => ({
           name: item._id || 'Unknown Utility',
           value: item.totalValue || 0,
         })),
-        total: utilitiesAggregation.reduce((sum, item) => sum + (item.totalValue || 0), 0),
+        total: utilitiesAggregation.reduce(
+          (sum, item) => sum + (item.totalValue || 0),
+          0,
+        ),
       };
 
-      console.log('Final utilities data:', JSON.stringify(utilitiesData, null, 2));
+      console.log(
+        'Final utilities data:',
+        JSON.stringify(utilitiesData, null, 2),
+      );
 
       // ===== EXEMPTIONS AGGREGATION =====
       const PropertyExemption = require('../models/PropertyExemption');
@@ -767,7 +805,10 @@ router.post(
         },
       ]);
 
-      console.log('Exemptions aggregation results:', JSON.stringify(exemptionsAggregation, null, 2));
+      console.log(
+        'Exemptions aggregation results:',
+        JSON.stringify(exemptionsAggregation, null, 2),
+      );
 
       const exemptionsData = {
         blind: { count: 0, value: 0 },
@@ -799,7 +840,10 @@ router.post(
         exemptionsData.total += value;
       });
 
-      console.log('Final exemptions data:', JSON.stringify(exemptionsData, null, 2));
+      console.log(
+        'Final exemptions data:',
+        JSON.stringify(exemptionsData, null, 2),
+      );
 
       // ===== VETERAN'S CREDITS =====
       const veteransCreditsAggregation = await PropertyExemption.aggregate([
@@ -842,7 +886,10 @@ router.post(
         },
       ]);
 
-      console.log('Veterans credits aggregation results:', JSON.stringify(veteransCreditsAggregation, null, 2));
+      console.log(
+        'Veterans credits aggregation results:',
+        JSON.stringify(veteransCreditsAggregation, null, 2),
+      );
 
       const veteransCreditsData = {
         standard: { count: 0, amount: 0 },
@@ -856,7 +903,10 @@ router.post(
         const count = item.count || 0;
         const amount = item.totalAmount || 0;
 
-        if (subcategory.includes('service') || subcategory.includes('disability')) {
+        if (
+          subcategory.includes('service') ||
+          subcategory.includes('disability')
+        ) {
           veteransCreditsData.serviceConnectedDisability.count += count;
           veteransCreditsData.serviceConnectedDisability.amount += amount;
         } else if (subcategory.includes('all')) {
@@ -871,7 +921,10 @@ router.post(
         veteransCreditsData.total.amount += amount;
       });
 
-      console.log('Final veterans credits data:', JSON.stringify(veteransCreditsData, null, 2));
+      console.log(
+        'Final veterans credits data:',
+        JSON.stringify(veteransCreditsData, null, 2),
+      );
 
       // ===== CURRENT USE DETAILS =====
       const currentUseProperties = await PropertyTreeNode.find({
@@ -903,20 +956,32 @@ router.post(
 
       // ===== MUNICIPAL ADOPTION QUESTIONS =====
       const municipalAdoptions = {
-        deafDisabledExemption: municipality.adopted_exemptions?.includes('deaf_disabled') || false,
-        elderlyExemption: municipality.adopted_exemptions?.includes('elderly') || false,
-        commercialConstructionExemption: municipality.adopted_exemptions?.includes('commercial_construction') || false,
-        communityRevitalizationIncentive: municipality.adopted_incentives?.includes('community_revitalization') || false,
+        deafDisabledExemption:
+          municipality.adopted_exemptions?.includes('deaf_disabled') || false,
+        elderlyExemption:
+          municipality.adopted_exemptions?.includes('elderly') || false,
+        commercialConstructionExemption:
+          municipality.adopted_exemptions?.includes(
+            'commercial_construction',
+          ) || false,
+        communityRevitalizationIncentive:
+          municipality.adopted_incentives?.includes(
+            'community_revitalization',
+          ) || false,
       };
 
       // ===== DISCRETIONARY EASEMENTS & FARM STRUCTURES =====
       const discretionaryEasements = {
-        adopted: municipality.adopted_easements?.includes('discretionary_preservation') || false,
+        adopted:
+          municipality.adopted_easements?.includes(
+            'discretionary_preservation',
+          ) || false,
         count: 0,
       };
 
       const farmStructures = {
-        adopted: municipality.adopted_exemptions?.includes('farm_structures') || false,
+        adopted:
+          municipality.adopted_exemptions?.includes('farm_structures') || false,
       };
 
       // ===== PILOT PAYMENTS =====
@@ -941,7 +1006,9 @@ router.post(
         pilotPayments: pilotPayments,
       };
 
-      console.log(`✓ MS-1 report generated successfully for ${municipality.name}`);
+      console.log(
+        `✓ MS-1 report generated successfully for ${municipality.name}`,
+      );
 
       res.json({
         success: true,
@@ -979,7 +1046,8 @@ router.post(
       // For now, return a placeholder response
       res.status(501).json({
         success: false,
-        message: 'PDF export not yet implemented. Please use browser print function.',
+        message:
+          'PDF export not yet implemented. Please use browser print function.',
       });
     } catch (error) {
       console.error('Error exporting MS-1 report:', error);

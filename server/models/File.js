@@ -2,15 +2,22 @@ const mongoose = require('mongoose');
 
 const fileSchema = new mongoose.Schema(
   {
-    // Municipality reference
+    // Municipality reference (optional - not required for contractor-owned files)
     municipalityId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Municipality',
-      required: true,
       index: true,
     },
     municipalityName: String, // Denormalized for path generation
     state: String, // State abbreviation (e.g., 'NH', 'VT')
+
+    // Contractor reference (for contractor-owned files)
+    contractorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Contractor',
+      index: true,
+    },
+    contractorName: String, // Denormalized for display
 
     // Property reference (optional - some files may be municipality-wide)
     propertyId: {
@@ -24,10 +31,11 @@ const fileSchema = new mongoose.Schema(
       type: String,
       enum: [
         'assessing',
-        'building-permits',
-        'code-enforcement',
-        'tax-collection',
+        'building_permit',
+        'code_enforcement',
+        'tax_collection',
         'general',
+        'contractor', // Contractor's own document library
         'other',
       ],
       required: true,
@@ -108,7 +116,7 @@ const fileSchema = new mongoose.Schema(
       ref: 'PermitInspection',
     },
 
-    // Project/Permit organization (for building-permits department)
+    // Project/Permit organization (for building_permit department)
     permitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Permit',
@@ -170,8 +178,21 @@ const fileSchema = new mongoose.Schema(
 fileSchema.index({ municipalityId: 1, propertyId: 1, department: 1 });
 fileSchema.index({ municipalityId: 1, department: 1, folder: 1 });
 fileSchema.index({ municipalityId: 1, propertyId: 1, isActive: 1 });
+fileSchema.index({ contractorId: 1, department: 1, folder: 1 }); // Contractor-scoped queries
+fileSchema.index({ contractorId: 1, isActive: 1 }); // Contractor file listing
 // Note: storagePath already has unique: true in schema, so no need to create another index here
 fileSchema.index({ uploadedAt: -1 });
+
+// Validation: Require either municipalityId or contractorId
+fileSchema.pre('validate', function (next) {
+  if (!this.municipalityId && !this.contractorId) {
+    next(
+      new Error('File must belong to either a municipality or a contractor'),
+    );
+  } else {
+    next();
+  }
+});
 
 // Virtual for full URL
 fileSchema.virtual('url').get(function () {
@@ -263,10 +284,7 @@ fileSchema.statics.getFolderStructure = async function (
 };
 
 // Method to create new version
-fileSchema.methods.createNewVersion = async function (
-  newFileData,
-  uploadedBy,
-) {
+fileSchema.methods.createNewVersion = async function (newFileData, uploadedBy) {
   // Mark current version as not latest
   this.isLatestVersion = false;
   await this.save();

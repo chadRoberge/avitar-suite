@@ -1,0 +1,348 @@
+{{page-title "Inspection Details"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Back Button }}
+  <div class="avitar-mb-4">
+    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.goBack}}>
+      {{lnr-icon "arrow-left" class="avitar-mr-2"}}
+      Back to Inspections
+    </button>
+  </div>
+
+  {{! Inspection Header }}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header">
+      <div class="avitar-flex avitar-justify-between avitar-items-start">
+        <div>
+          <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+            {{this.formatInspectionType this.inspection.type}} Inspection
+          </h1>
+          <div class="avitar-flex avitar-gap-4 avitar-text-sm avitar-text-muted">
+            {{#if this.inspection.permitId}}
+              <div>
+                {{lnr-icon "file-empty" class="avitar-mr-1"}}
+                Permit: {{this.inspection.permitId.permitNumber}}
+              </div>
+            {{/if}}
+            {{#if this.inspection.propertyId}}
+              <div>
+                {{lnr-icon "map-marker" class="avitar-mr-1"}}
+                {{this.inspection.propertyId.location.address}}
+              </div>
+            {{/if}}
+          </div>
+        </div>
+        <div class="avitar-flex avitar-gap-2">
+          <span class={{this.getStatusBadge this.inspection.status}}>
+            {{this.formatStatus this.inspection.status}}
+          </span>
+          {{#if this.inspection.result}}
+            <span class={{this.getStatusBadge this.inspection.result}}>
+              {{this.formatStatus this.inspection.result}}
+            </span>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    <div class="avitar-card__body">
+      <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6">
+        {{! Scheduled Date/Time }}
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Scheduled Date & Time</div>
+          <div class="avitar-font-semibold">
+            {{this.formatDate this.inspection.scheduledDate}}
+          </div>
+          {{#if this.inspection.scheduledTimeSlot}}
+            <div class="avitar-text-sm avitar-text-muted">
+              {{this.inspection.scheduledTimeSlot}}
+            </div>
+          {{/if}}
+        </div>
+
+        {{! Inspector }}
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Inspector</div>
+          {{#if this.inspection.inspector}}
+            <div class="avitar-font-semibold">
+              {{this.inspection.inspector.first_name}} {{this.inspection.inspector.last_name}}
+            </div>
+            <div class="avitar-text-sm avitar-text-muted">
+              {{this.inspection.inspector.email}}
+            </div>
+          {{else}}
+            <div class="avitar-text-muted">Not Assigned</div>
+          {{/if}}
+        </div>
+
+        {{! Completed Date }}
+        <div>
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Completed Date</div>
+          {{#if this.inspection.completedAt}}
+            <div class="avitar-font-semibold">
+              {{this.formatDate this.inspection.completedAt}}
+            </div>
+            <div class="avitar-text-sm avitar-text-muted">
+              {{this.formatTime this.inspection.completedAt}}
+            </div>
+          {{else}}
+            <div class="avitar-text-muted">Not Completed</div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{! Inspection Comments }}
+      {{#if this.inspection.comments}}
+        <div class="avitar-mt-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+          <div class="avitar-text-xs avitar-text-muted avitar-mb-2">Inspector Comments</div>
+          <div class="avitar-text-sm">{{this.inspection.comments}}</div>
+        </div>
+      {{/if}}
+    </div>
+
+    <div class="avitar-card__footer avitar-flex avitar-gap-2">
+      {{#if this.inspection.permitId}}
+        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.viewPermit}}>
+          {{lnr-icon "file-empty" class="avitar-mr-2"}}
+          View Permit
+        </button>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+    {{! Left Column - Photos and Notes }}
+    <div class="avitar-space-y-6">
+      {{! Photos Section }}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h2 class="avitar-card__title">
+            {{lnr-icon "camera" class="avitar-mr-2"}}
+            Photos
+          </h2>
+        </div>
+        <div class="avitar-card__body">
+          {{! Upload Photo Form }}
+          <div class="avitar-mb-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+            <label class="avitar-label avitar-mb-2">Upload Photo</label>
+            <input
+              type="file"
+              class="avitar-input avitar-mb-2"
+              accept="image/*"
+              capture="environment"
+              {{on "change" this.handlePhotoSelect}}
+              disabled={{this.isUploadingPhoto}}
+            />
+            <input
+              type="text"
+              class="avitar-input avitar-mb-2"
+              placeholder="Caption (optional)"
+              value={{this.photoCaption}}
+              {{on "input" this.updatePhotoCaption}}
+              disabled={{this.isUploadingPhoto}}
+            />
+            {{#if this.isUploadingPhoto}}
+              <div class="avitar-text-sm avitar-text-muted">
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Uploading photo...
+              </div>
+            {{/if}}
+          </div>
+
+          {{! Photos Grid }}
+          {{#if this.inspection.photos.length}}
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              {{#each this.inspection.photos as |photo|}}
+                <div class="avitar-card avitar-card--sm">
+                  <img src={{photo.url}} alt={{photo.caption}} class="avitar-w-full avitar-h-48 avitar-object-cover avitar-rounded-t" />
+                  {{#if photo.caption}}
+                    <div class="avitar-p-2 avitar-text-xs">
+                      {{photo.caption}}
+                    </div>
+                  {{/if}}
+                  <div class="avitar-p-2 avitar-text-xs avitar-text-muted avitar-border-t">
+                    {{this.formatDate photo.uploadedAt}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-6">
+              {{lnr-icon "camera" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
+              <p class="avitar-text-muted">No photos uploaded yet</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{! Notes Section }}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h2 class="avitar-card__title">
+            {{lnr-icon "file-add" class="avitar-mr-2"}}
+            Notes
+          </h2>
+        </div>
+        <div class="avitar-card__body">
+          {{! Add Note Form }}
+          <div class="avitar-mb-4">
+            <label class="avitar-label avitar-mb-2">Add Note</label>
+            <textarea
+              class="avitar-input avitar-mb-2"
+              rows="3"
+              placeholder="Write a note about this inspection..."
+              value={{this.noteContent}}
+              {{on "input" this.updateNoteContent}}
+              disabled={{this.isAddingNote}}
+            ></textarea>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary avitar-btn--sm"
+              {{on "click" this.addNote}}
+              disabled={{or this.isAddingNote (not this.noteContent)}}
+            >
+              {{#if this.isAddingNote}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Adding...
+              {{else}}
+                {{lnr-icon "plus-circle" class="avitar-mr-2"}}
+                Add Note
+              {{/if}}
+            </button>
+          </div>
+
+          {{! Notes List }}
+          {{#if this.inspection.notes.length}}
+            <div class="avitar-space-y-3">
+              {{#each this.inspection.notes as |note|}}
+                <div class="avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+                  <div class="avitar-text-sm avitar-mb-2">{{note.content}}</div>
+                  <div class="avitar-text-xs avitar-text-muted">
+                    {{#if note.createdBy}}
+                      {{note.createdBy.first_name}} {{note.createdBy.last_name}} •
+                    {{/if}}
+                    {{this.formatDate note.createdAt}} at {{this.formatTime note.createdAt}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-6">
+              {{lnr-icon "file-add" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
+              <p class="avitar-text-muted">No notes added yet</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{! Right Column - Status Updates and History }}
+    <div class="avitar-space-y-6">
+      {{! Update Status Section }}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h2 class="avitar-card__title">
+            {{lnr-icon "pencil" class="avitar-mr-2"}}
+            Update Status
+          </h2>
+        </div>
+        <div class="avitar-card__body">
+          <div class="avitar-space-y-4">
+            <div>
+              <label class="avitar-label">Status</label>
+              <select class="avitar-select" value={{this.selectedStatus}} {{on "change" this.setStatus}}>
+                <option value="">Select Status...</option>
+                {{#each this.statusOptions as |statusOption|}}
+                  <option value={{statusOption.value}}>
+                    {{statusOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <div>
+              <label class="avitar-label">Result</label>
+              <select class="avitar-select" value={{this.selectedResult}} {{on "change" this.setResult}}>
+                {{#each this.resultOptions as |resultOption|}}
+                  <option value={{resultOption.value}}>
+                    {{resultOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+
+            <div>
+              <label class="avitar-label">Comments</label>
+              <textarea
+                class="avitar-input"
+                rows="4"
+                placeholder="Add comments about this status change..."
+                value={{this.statusComments}}
+                {{on "input" this.updateStatusComments}}
+              ></textarea>
+            </div>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary avitar-w-full"
+              {{on "click" this.updateInspectionStatus}}
+              disabled={{or this.isUpdatingStatus (not this.selectedStatus)}}
+            >
+              {{#if this.isUpdatingStatus}}
+                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                Updating...
+              {{else}}
+                {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
+                Update Status
+              {{/if}}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {{! History Section }}
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h2 class="avitar-card__title">
+            {{lnr-icon "history" class="avitar-mr-2"}}
+            History
+          </h2>
+        </div>
+        <div class="avitar-card__body">
+          {{#if this.inspection.history.length}}
+            <div class="avitar-space-y-3">
+              {{#each this.inspection.history as |historyItem|}}
+                <div class="avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+                  <div class="avitar-font-semibold avitar-text-sm avitar-mb-1">
+                    {{this.formatStatus historyItem.action}}
+                  </div>
+                  {{#if historyItem.details}}
+                    <div class="avitar-text-xs avitar-text-muted avitar-mb-2">
+                      {{#if historyItem.details.reason}}
+                        Reason: {{historyItem.details.reason}}
+                      {{/if}}
+                      {{#if historyItem.details.newStatus}}
+                        Status changed to {{this.formatStatus historyItem.details.newStatus}}
+                      {{/if}}
+                    </div>
+                  {{/if}}
+                  <div class="avitar-text-xs avitar-text-muted">
+                    {{#if historyItem.performedBy}}
+                      {{historyItem.performedBy.first_name}} {{historyItem.performedBy.last_name}} •
+                    {{/if}}
+                    {{this.formatDate historyItem.performedAt}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-6">
+              {{lnr-icon "history" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
+              <p class="avitar-text-muted">No history available</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

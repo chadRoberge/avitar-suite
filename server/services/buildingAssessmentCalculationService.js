@@ -60,13 +60,18 @@ class BuildingAssessmentCalculationService {
 
       // Debug: Log sample building codes
       if (buildingCodes.length > 0) {
-        console.log('Sample building codes:', buildingCodes.slice(0, 3).map(bc => ({
-          baseType: bc.base_type,
-          displayName: bc.display_name,
-          isActive: bc.isActive
-        })));
+        console.log(
+          'Sample building codes:',
+          buildingCodes.slice(0, 3).map((bc) => ({
+            baseType: bc.base_type,
+            displayName: bc.display_name,
+            isActive: bc.isActive,
+          })),
+        );
       } else {
-        console.warn('⚠️  WARNING: No building codes loaded! Buildings will have 0 base rate.');
+        console.warn(
+          '⚠️  WARNING: No building codes loaded! Buildings will have 0 base rate.',
+        );
       }
 
       return true;

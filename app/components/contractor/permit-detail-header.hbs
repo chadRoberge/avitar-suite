@@ -1,0 +1,38 @@
+<div class="avitar-bg-white avitar-border-b avitar-border-gray-200 avitar-py-4 avitar-mb-6">
+  <div class="avitar-container">
+    <div class="avitar-flex avitar-justify-between avitar-items-center">
+      <div>
+        <h1 class="avitar-text-2xl avitar-font-bold avitar-text-gray-900">
+          {{@permit.permitNumber}}
+        </h1>
+        <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+          {{@permit.permitType}} - {{@permit.propertyAddress}}
+        </p>
+      </div>
+
+      <div class="avitar-flex avitar-gap-2">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" @onPrint}}
+        >
+          <i class="fas fa-print avitar-mr-2"></i>
+          Print
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" @onRefresh}}
+          disabled={{@isLoading}}
+        >
+          {{#if @isLoading}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+          {{else}}
+            <i class="fas fa-sync-alt avitar-mr-2"></i>
+          {{/if}}
+          Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

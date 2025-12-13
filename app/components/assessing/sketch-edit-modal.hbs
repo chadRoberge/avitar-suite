@@ -22,7 +22,7 @@
               <i class="fas fa-circle"></i>
               Circle
             </button>
-            <button 
+            <button
               type="button"
               class="avitar-btn avitar-btn--sm {{if (eq this.drawingMode 'polygon') 'avitar-btn--primary' 'avitar-btn--secondary'}}"
               {{on "click" (fn this.setDrawingMode "polygon")}}
@@ -30,7 +30,15 @@
               <i class="fas fa-draw-polygon"></i>
               Polygon
             </button>
-            
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--sm {{if (eq this.drawingMode 'arc-segment') 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+              {{on "click" (fn this.setDrawingMode "arc-segment")}}
+            >
+              <i class="fas fa-bezier-curve"></i>
+              Arc Segment
+            </button>
+
             {{!-- Clear Selection Button --}}
             {{#if this.selectedShape}}
               <div class="avitar-border-l avitar-pl-2">
@@ -52,6 +60,11 @@
                   <div class="avitar-text-sm avitar-text-muted avitar-px-2 avitar-flex avitar-items-center">
                     <i class="fas fa-info-circle avitar-mr-1"></i>
                     Left click: add vertex | Right click: complete
+                  </div>
+                {{else if (eq this.drawingMode "arc-segment")}}
+                  <div class="avitar-text-sm avitar-text-muted avitar-px-2 avitar-flex avitar-items-center">
+                    <i class="fas fa-info-circle avitar-mr-1"></i>
+                    Click 1: arc start | Click 2: arc end | Click 3: set radius
                   </div>
                 {{/if}}
                 <button 
@@ -302,6 +315,103 @@
             </div>
           </div>
         </form>
+
+        {{!-- Tool Instructions Section --}}
+        {{#if this.drawingMode}}
+          <div class="avitar-border-t avitar-bg-gray-50 avitar-p-4 avitar-mt-4">
+            <div class="avitar-text-sm">
+              {{#if (eq this.drawingMode "rectangle")}}
+                <div class="avitar-flex avitar-items-start avitar-gap-3">
+                  <div class="avitar-flex-shrink-0 avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                    <i class="fas fa-square"></i>
+                  </div>
+                  <div>
+                    <div class="avitar-font-semibold avitar-mb-1">Rectangle Tool Instructions:</div>
+                    <ol class="avitar-list-decimal avitar-ml-4 avitar-space-y-1">
+                      <li><strong>First click:</strong> Click on the canvas to set one corner of the rectangle</li>
+                      <li><strong>Move mouse:</strong> Watch the preview rectangle follow your cursor</li>
+                      <li><strong>Second click:</strong> Click to set the opposite corner and create the rectangle</li>
+                    </ol>
+                    <div class="avitar-mt-2 avitar-text-muted">
+                      <i class="fas fa-lightbulb avitar-mr-1"></i>
+                      <strong>Tip:</strong> The rectangle will automatically snap to the grid (10 pixels = 1 foot)
+                    </div>
+                  </div>
+                </div>
+              {{else if (eq this.drawingMode "circle")}}
+                <div class="avitar-flex avitar-items-start avitar-gap-3">
+                  <div class="avitar-flex-shrink-0 avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                    <i class="fas fa-circle"></i>
+                  </div>
+                  <div>
+                    <div class="avitar-font-semibold avitar-mb-1">Circle Tool Instructions:</div>
+                    <ol class="avitar-list-decimal avitar-ml-4 avitar-space-y-1">
+                      <li><strong>First click:</strong> Click on the canvas to set the center point of the circle</li>
+                      <li><strong>Move mouse:</strong> Watch the preview circle expand from the center</li>
+                      <li><strong>Second click:</strong> Click to set the radius and create the circle</li>
+                    </ol>
+                    <div class="avitar-mt-2 avitar-text-muted">
+                      <i class="fas fa-lightbulb avitar-mr-1"></i>
+                      <strong>Tip:</strong> The radius will snap to grid increments for precise measurements
+                    </div>
+                  </div>
+                </div>
+              {{else if (eq this.drawingMode "polygon")}}
+                <div class="avitar-flex avitar-items-start avitar-gap-3">
+                  <div class="avitar-flex-shrink-0 avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                    <i class="fas fa-draw-polygon"></i>
+                  </div>
+                  <div>
+                    <div class="avitar-font-semibold avitar-mb-1">Polygon Tool Instructions:</div>
+                    <ol class="avitar-list-decimal avitar-ml-4 avitar-space-y-1">
+                      <li><strong>Left click:</strong> Add vertices to create your custom shape (minimum 3 points)</li>
+                      <li><strong>Hold Shift:</strong> Constrain lines to be perpendicular to the previous segment (90° angles)</li>
+                      <li><strong>Right click:</strong> Complete the polygon and close the shape</li>
+                    </ol>
+                    <div class="avitar-mt-2 avitar-text-muted">
+                      <i class="fas fa-lightbulb avitar-mr-1"></i>
+                      <strong>Tip:</strong> Each vertex snaps to the grid. The start point is marked with a red dot. Use Shift for perfectly perpendicular walls.
+                    </div>
+                  </div>
+                </div>
+              {{else if (eq this.drawingMode "arc-segment")}}
+                <div class="avitar-flex avitar-items-start avitar-gap-3">
+                  <div class="avitar-flex-shrink-0 avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                    <i class="fas fa-bezier-curve"></i>
+                  </div>
+                  <div>
+                    <div class="avitar-font-semibold avitar-mb-1">Arc Segment Tool Instructions:</div>
+                    <div class="avitar-mb-2 avitar-text-muted avitar-italic">
+                      This tool adds curved edges to polygons and rectangles. Rectangles will be automatically converted to polygons when you add an arc.
+                    </div>
+
+                    <div class="avitar-mb-3">
+                      <div class="avitar-font-semibold avitar-text-sm avitar-mb-1">Creating a New Arc:</div>
+                      <ol class="avitar-list-decimal avitar-ml-4 avitar-space-y-1">
+                        <li><strong>First click:</strong> Click on a polygon or rectangle edge where you want the arc to start</li>
+                        <li><strong>Second click:</strong> Click on the same or another edge where the arc should end</li>
+                        <li><strong>Third click:</strong> Click where you want the arc to curve - this sets both the radius and direction</li>
+                      </ol>
+                    </div>
+
+                    <div class="avitar-mb-2">
+                      <div class="avitar-font-semibold avitar-text-sm avitar-mb-1">Editing an Existing Arc:</div>
+                      <ul class="avitar-list-disc avitar-ml-4">
+                        <li>Click on an arc segment to open the arc value editor</li>
+                        <li>Enter a positive or negative value to adjust the curve</li>
+                      </ul>
+                    </div>
+
+                    <div class="avitar-mt-2 avitar-text-muted">
+                      <i class="fas fa-lightbulb avitar-mr-1"></i>
+                      <strong>Tip:</strong> The arc curves toward whichever side of the line you click. Positive values = curve right, negative values = curve left. Watch the red preview!
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        {{/if}}
       </div>
 
       <div class="avitar-modal__footer">

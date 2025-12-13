@@ -14,7 +14,8 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   @tracked isActive = true;
   @tracked baseAmount = 0;
   @tracked calculationType = 'flat';
-  @tracked perSqftRate = 0.50; // Default rate per square foot
+  @tracked perSqftRate = 0.5; // Default rate per square foot
+  @tracked percentageRate = 2.5; // Default percentage rate (e.g., 2.5%)
   @tracked formula = '';
   @tracked linkedScheduleId = null;
   @tracked departmentReviews = [];
@@ -62,7 +63,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
     pool: 'For swimming pools, hot tubs, and spas',
     deck: 'For decks, patios, and outdoor structures',
     foundation: 'For foundation work and structural repairs',
-    other: 'For permit types that don\'t fit other categories',
+    other: "For permit types that don't fit other categories",
   };
 
   get formData() {
@@ -78,6 +79,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
         baseAmount: parseFloat(this.baseAmount) || 0,
         calculationType: this.calculationType,
         perSqftRate: parseFloat(this.perSqftRate) || 0,
+        percentageRate: parseFloat(this.percentageRate) || 0,
         formula: this.formula,
         linkedScheduleId: this.linkedScheduleId,
       },
@@ -143,7 +145,8 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
       this.isActive = pt.isActive !== undefined ? pt.isActive : true;
       this.baseAmount = pt.feeSchedule?.baseAmount || 0;
       this.calculationType = pt.feeSchedule?.calculationType || 'flat';
-      this.perSqftRate = pt.feeSchedule?.perSqftRate || 0.50;
+      this.perSqftRate = pt.feeSchedule?.perSqftRate || 0.5;
+      this.percentageRate = pt.feeSchedule?.percentageRate || 2.5;
       this.formula = pt.feeSchedule?.formula || '';
       this.linkedScheduleId = pt.feeSchedule?.linkedScheduleId || null;
       this.departmentReviews = [...(pt.departmentReviews || [])];
@@ -234,27 +237,40 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
 
     switch (this.calculationType) {
       case 'flat':
-        examples.push(
-          { description: 'Any size home', sqft: 'N/A', fee: base.toFixed(2) }
-        );
+        examples.push({
+          description: 'Any size home',
+          sqft: 'N/A',
+          fee: base.toFixed(2),
+        });
         break;
       case 'per_sqft':
         const rate = parseFloat(this.perSqftRate) || 0;
-        [1500, 2500, 3500].forEach(sqft => {
-          const fee = base + (sqft * rate);
-          examples.push({ description: `${sqft} sq ft home`, sqft, fee: fee.toFixed(2) });
+        [1500, 2500, 3500].forEach((sqft) => {
+          const fee = base + sqft * rate;
+          examples.push({
+            description: `${sqft} sq ft home`,
+            sqft,
+            fee: fee.toFixed(2),
+          });
         });
         break;
       case 'percentage':
-        [150000, 300000, 500000].forEach(value => {
-          const fee = value * (base / 100);
-          examples.push({ description: `$${value.toLocaleString()} value`, sqft: 'N/A', fee: fee.toFixed(2) });
+        const percentageRate = parseFloat(this.percentageRate) || 0;
+        [150000, 300000, 500000].forEach((value) => {
+          const fee = value * (percentageRate / 100);
+          examples.push({
+            description: `$${value.toLocaleString()} value`,
+            sqft: 'N/A',
+            fee: fee.toFixed(2),
+          });
         });
         break;
       case 'custom':
-        examples.push(
-          { description: 'Based on formula', sqft: 'Varies', fee: 'Calculated' }
-        );
+        examples.push({
+          description: 'Based on formula',
+          sqft: 'Varies',
+          fee: 'Calculated',
+        });
         break;
     }
 
@@ -335,7 +351,9 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
 
   @action
   removeDepartment(index) {
-    this.departmentReviews = this.departmentReviews.filter((_, i) => i !== index);
+    this.departmentReviews = this.departmentReviews.filter(
+      (_, i) => i !== index,
+    );
     // Reorder remaining departments
     this.reorderDepartments();
   }
@@ -344,7 +362,10 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   moveDepartmentUp(index) {
     if (index > 0) {
       const departments = [...this.departmentReviews];
-      [departments[index - 1], departments[index]] = [departments[index], departments[index - 1]];
+      [departments[index - 1], departments[index]] = [
+        departments[index],
+        departments[index - 1],
+      ];
       this.departmentReviews = departments;
       this.reorderDepartments();
     }
@@ -354,7 +375,10 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   moveDepartmentDown(index) {
     if (index < this.departmentReviews.length - 1) {
       const departments = [...this.departmentReviews];
-      [departments[index], departments[index + 1]] = [departments[index + 1], departments[index]];
+      [departments[index], departments[index + 1]] = [
+        departments[index + 1],
+        departments[index],
+      ];
       this.departmentReviews = departments;
       this.reorderDepartments();
     }
@@ -371,7 +395,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
       dept.requiredDocuments = [...requiredDocs, docName];
     } else {
       // Remove document
-      dept.requiredDocuments = requiredDocs.filter(d => d !== docName);
+      dept.requiredDocuments = requiredDocs.filter((d) => d !== docName);
     }
 
     departments[deptIndex] = dept;
@@ -416,7 +440,9 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
 
   @action
   removeRequiredDocument(index) {
-    this.requiredDocuments = this.requiredDocuments.filter((_, i) => i !== index);
+    this.requiredDocuments = this.requiredDocuments.filter(
+      (_, i) => i !== index,
+    );
   }
 
   @action
@@ -445,7 +471,9 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
 
   @action
   removeSuggestedDocument(index) {
-    this.suggestedDocuments = this.suggestedDocuments.filter((_, i) => i !== index);
+    this.suggestedDocuments = this.suggestedDocuments.filter(
+      (_, i) => i !== index,
+    );
   }
 
   @action
@@ -496,25 +524,36 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
 
   @action
   updateNewFormField(field, event) {
-    if (field === 'required') {
-      this.newFormField[field] = event.target.checked;
-    } else {
-      this.newFormField[field] = event.target.value;
-    }
+    const value =
+      field === 'required' ? event.target.checked : event.target.value;
+
+    // Create a new object to trigger reactivity
+    this.newFormField = {
+      ...this.newFormField,
+      [field]: value,
+    };
   }
 
   @action
   addFieldOption(event) {
     event.preventDefault();
     if (this.newFieldOption.trim()) {
-      this.newFormField.options = [...this.newFormField.options, this.newFieldOption.trim()];
+      // Create a new object to trigger reactivity
+      this.newFormField = {
+        ...this.newFormField,
+        options: [...this.newFormField.options, this.newFieldOption.trim()],
+      };
       this.newFieldOption = '';
     }
   }
 
   @action
   removeFieldOption(index) {
-    this.newFormField.options = this.newFormField.options.filter((_, i) => i !== index);
+    // Create a new object to trigger reactivity
+    this.newFormField = {
+      ...this.newFormField,
+      options: this.newFormField.options.filter((_, i) => i !== index),
+    };
   }
 
   @action
@@ -526,7 +565,10 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   moveFieldUp(index) {
     if (index > 0) {
       const newFields = [...this.customFormFields];
-      [newFields[index - 1], newFields[index]] = [newFields[index], newFields[index - 1]];
+      [newFields[index - 1], newFields[index]] = [
+        newFields[index],
+        newFields[index - 1],
+      ];
       // Update order values
       this.customFormFields = newFields.map((field, idx) => ({
         ...field,
@@ -539,7 +581,10 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   moveFieldDown(index) {
     if (index < this.customFormFields.length - 1) {
       const newFields = [...this.customFormFields];
-      [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]];
+      [newFields[index], newFields[index + 1]] = [
+        newFields[index + 1],
+        newFields[index],
+      ];
       // Update order values
       this.customFormFields = newFields.map((field, idx) => ({
         ...field,
@@ -552,7 +597,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   toggleCategory(categoryValue) {
     if (this.categories.includes(categoryValue)) {
       // Remove category
-      this.categories = this.categories.filter(c => c !== categoryValue);
+      this.categories = this.categories.filter((c) => c !== categoryValue);
     } else {
       // Add category
       this.categories = [...this.categories, categoryValue];
@@ -562,6 +607,42 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   @action
   stopPropagation(event) {
     event.stopPropagation();
+  }
+
+  // Template file management
+  @tracked showFileBrowserModal = false;
+
+  @action
+  openFileBrowser() {
+    this.showFileBrowserModal = true;
+  }
+
+  @action
+  closeFileBrowser() {
+    this.showFileBrowserModal = false;
+  }
+
+  @action
+  selectTemplateFiles(selectedFiles) {
+    // Add selected files to templateFiles array (avoiding duplicates)
+    const existingIds = this.templateFiles.map((f) => f._id || f.id);
+    const newFiles = selectedFiles.filter(
+      (f) => !existingIds.includes(f._id || f.id),
+    );
+
+    this.templateFiles = [...this.templateFiles, ...newFiles];
+    this.closeFileBrowser();
+  }
+
+  @action
+  removeTemplateFile(index) {
+    this.templateFiles = this.templateFiles.filter((_, i) => i !== index);
+  }
+
+  @action
+  downloadTemplateFile(file) {
+    const fileId = file._id || file.id;
+    window.open(`/api/files/${fileId}/download`, '_blank');
   }
 
   @action

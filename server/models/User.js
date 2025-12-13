@@ -46,13 +46,30 @@ const userSchema = new mongoose.Schema(
     },
     sms_carrier: {
       type: String,
-      enum: ['verizon', 'att', 'tmobile', 'sprint', 'us_cellular', 'boost', 'cricket', 'metro_pcs', 'other'],
+      enum: [
+        'verizon',
+        'att',
+        'tmobile',
+        'sprint',
+        'us_cellular',
+        'boost',
+        'cricket',
+        'metro_pcs',
+        'other',
+      ],
     },
 
     // Global role for system-wide permissions
     global_role: {
       type: String,
-      enum: ['avitar_staff', 'avitar_admin', 'avitar_assessor', 'municipal_user', 'citizen', 'contractor'],
+      enum: [
+        'avitar_staff',
+        'avitar_admin',
+        'avitar_assessor',
+        'municipal_user',
+        'citizen',
+        'contractor',
+      ],
       default: 'citizen',
     },
 
@@ -60,7 +77,6 @@ const userSchema = new mongoose.Schema(
     contractor_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Contractor',
-      index: true,
       sparse: true, // Only contractors will have this
     },
 
@@ -79,6 +95,24 @@ const userSchema = new mongoose.Schema(
           type: String,
           enum: ['admin', 'department_head', 'staff', 'readonly', 'contractor'],
           required: true,
+        },
+
+        // Department assignment (for permit reviews and workflows)
+        // This is municipality-specific - same user can be in different departments for different municipalities
+        department: {
+          type: String,
+          enum: [
+            'Building Inspector',
+            'Fire Marshal',
+            'Health Department',
+            'Planning & Zoning',
+            'Engineering',
+            'Public Works',
+            'Conservation',
+            'Electrical',
+            'Plumbing',
+            'Other',
+          ],
         },
 
         // Module-specific permissions
@@ -183,6 +217,93 @@ const userSchema = new mongoose.Schema(
       type: String,
       select: false,
     },
+
+    // Login session tracking
+    loginSessions: [
+      {
+        loginDate: {
+          type: Date,
+          required: true,
+          default: Date.now,
+        },
+        logoutDate: {
+          type: Date,
+        },
+        ipAddress: {
+          type: String,
+        },
+        deviceName: {
+          type: String,
+        },
+        browser: {
+          type: String,
+        },
+        operatingSystem: {
+          type: String,
+        },
+        location: {
+          type: String, // Approximate location based on IP
+        },
+        sessionActive: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    ],
+
+    // Permission change audit log
+    permissionChangeHistory: [
+      {
+        timestamp: {
+          type: Date,
+          required: true,
+          default: Date.now,
+        },
+        changedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        changedByName: {
+          type: String, // Denormalized for display
+        },
+        changeType: {
+          type: String,
+          enum: [
+            'module_added',
+            'module_removed',
+            'module_updated',
+            'role_changed',
+            'department_changed',
+            'permission_granted',
+            'permission_revoked',
+            'municipality_added',
+            'municipality_removed',
+          ],
+        },
+        municipalityId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Municipality',
+        },
+        municipalityName: {
+          type: String,
+        },
+        moduleName: {
+          type: String,
+        },
+        field: {
+          type: String,
+        },
+        oldValue: {
+          type: mongoose.Schema.Types.Mixed,
+        },
+        newValue: {
+          type: mongoose.Schema.Types.Mixed,
+        },
+        description: {
+          type: String, // Human-readable description
+        },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -204,6 +325,7 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ 'municipal_permissions.municipality_id': 1 });
 userSchema.index({ global_role: 1 });
 userSchema.index({ is_active: 1 });
+userSchema.index({ contractor_id: 1 }, { sparse: true });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

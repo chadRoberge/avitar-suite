@@ -233,7 +233,10 @@ router.get(
 
       // Debug: Log first sale to check field paths
       if (salesAggregation.length > 0) {
-        console.log('📊 Sample sale data:', JSON.stringify(salesAggregation[0], null, 2));
+        console.log(
+          '📊 Sample sale data:',
+          JSON.stringify(salesAggregation[0], null, 2),
+        );
       }
 
       res.json({

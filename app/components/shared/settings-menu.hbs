@@ -73,16 +73,30 @@
         </LinkTo>
       </li>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.settings.payment-setup"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-credit-card avitar-sidebar__nav-icon"></i>
-          <span>Payment Setup</span>
-        </LinkTo>
-      </li>
+      {{! Conditionally show Payment Setup or Payment Info }}
+      {{#if this.isPaymentSetupComplete}}
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.settings.payment-info"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            <i class="fas fa-chart-line avitar-sidebar__nav-icon"></i>
+            <span>Payment Info</span>
+          </LinkTo>
+        </li>
+      {{else}}
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.settings.payment-setup"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            <i class="fas fa-credit-card avitar-sidebar__nav-icon"></i>
+            <span>Payment Setup</span>
+          </LinkTo>
+        </li>
+      {{/if}}
     </ul>
   </div>
 </nav>

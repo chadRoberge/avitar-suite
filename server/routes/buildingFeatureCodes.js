@@ -122,6 +122,7 @@ router.post(
       console.log('No duplicate found, creating new feature code...');
 
       const buildingFeatureCode = new BuildingFeatureCode({
+        code: displayText.trim(), // Use displayText as the code
         description: description.trim(),
         displayText: displayText.trim(),
         points: parseInt(points, 10),
@@ -203,6 +204,7 @@ router.put(
       const buildingFeatureCode = await BuildingFeatureCode.findOneAndUpdate(
         { _id: codeId, municipalityId, isActive: true },
         {
+          code: displayText.trim(), // Keep code in sync with displayText
           description: description.trim(),
           displayText: displayText.trim(),
           points: parseInt(points, 10),

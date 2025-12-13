@@ -143,7 +143,8 @@ export default class ImportController extends Controller {
     } catch (error) {
       console.error('Error parsing file:', error);
       this.notifications.error(
-        error.message || 'Failed to parse Excel file. Please check the file format.',
+        error.message ||
+          'Failed to parse Excel file. Please check the file format.',
       );
     } finally {
       this.isUploading = false;
@@ -196,7 +197,8 @@ export default class ImportController extends Controller {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Validation failed: ${response.status} ${response.statusText}`,
+          errorData.error ||
+            `Validation failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -206,7 +208,9 @@ export default class ImportController extends Controller {
       this.notifications.success('Land codes file validated successfully');
     } catch (error) {
       console.error('Error validating land codes:', error);
-      this.notifications.error(error.message || 'Failed to validate land codes file');
+      this.notifications.error(
+        error.message || 'Failed to validate land codes file',
+      );
     } finally {
       this.isValidatingLandCodes = false;
     }
@@ -241,7 +245,8 @@ export default class ImportController extends Controller {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Upload failed: ${response.status} ${response.statusText}`,
+          errorData.error ||
+            `Upload failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -249,46 +254,82 @@ export default class ImportController extends Controller {
       this.landCodesImportResults = result.results;
 
       // Calculate totals for success message
-      const totalZones = result.results.zones.created + result.results.zones.updated;
-      const totalLadders = result.results.landLadders.created + result.results.landLadders.updated;
-      const totalLandUseCodes = result.results.landUseCodes.created + result.results.landUseCodes.updated;
-      const totalNeighborhoodCodes = result.results.neighborhoodCodes.created + result.results.neighborhoodCodes.updated;
-      const totalSiteConditions = result.results.siteAttributes.created + result.results.siteAttributes.updated;
-      const totalRoadTypes = result.results.roadAttributes.created + result.results.roadAttributes.updated;
-      const totalDrivewayTypes = result.results.drivewayAttributes.created + result.results.drivewayAttributes.updated;
-      const totalCurrentUseCodes = result.results.currentUseCodes.created + result.results.currentUseCodes.updated;
-      const totalViewAttributes = result.results.viewAttributes.created + result.results.viewAttributes.updated;
-      const totalWaterBodies = result.results.waterBodies.created + result.results.waterBodies.updated;
-      const totalWaterBodyLadders = result.results.waterBodyLadders.created + result.results.waterBodyLadders.updated;
-      const totalWaterfrontAttributes = result.results.waterfrontAttributes.created + result.results.waterfrontAttributes.updated;
+      const totalZones =
+        result.results.zones.created + result.results.zones.updated;
+      const totalLadders =
+        result.results.landLadders.created + result.results.landLadders.updated;
+      const totalLandUseCodes =
+        result.results.landUseCodes.created +
+        result.results.landUseCodes.updated;
+      const totalNeighborhoodCodes =
+        result.results.neighborhoodCodes.created +
+        result.results.neighborhoodCodes.updated;
+      const totalSiteConditions =
+        result.results.siteAttributes.created +
+        result.results.siteAttributes.updated;
+      const totalRoadTypes =
+        result.results.roadAttributes.created +
+        result.results.roadAttributes.updated;
+      const totalDrivewayTypes =
+        result.results.drivewayAttributes.created +
+        result.results.drivewayAttributes.updated;
+      const totalCurrentUseCodes =
+        result.results.currentUseCodes.created +
+        result.results.currentUseCodes.updated;
+      const totalViewAttributes =
+        result.results.viewAttributes.created +
+        result.results.viewAttributes.updated;
+      const totalWaterBodies =
+        result.results.waterBodies.created + result.results.waterBodies.updated;
+      const totalWaterBodyLadders =
+        result.results.waterBodyLadders.created +
+        result.results.waterBodyLadders.updated;
+      const totalWaterfrontAttributes =
+        result.results.waterfrontAttributes.created +
+        result.results.waterfrontAttributes.updated;
 
       // Show warnings if any categories had errors
       if (result.warnings && result.warnings.length > 0) {
-        result.warnings.forEach(warning => {
+        result.warnings.forEach((warning) => {
           this.notifications.warning(warning);
         });
       }
 
       // Show errors if present
       if (result.hasErrors && result.totalErrors > 0) {
-        this.notifications.error(`Import completed with ${result.totalErrors} errors. Check console for details.`);
+        this.notifications.error(
+          `Import completed with ${result.totalErrors} errors. Check console for details.`,
+        );
         console.error('Land codes import errors:', result.results);
       }
 
       // Build detailed success message
       const importedItems = [];
       if (totalZones > 0) importedItems.push(`${totalZones} zones`);
-      if (totalLadders > 0) importedItems.push(`${totalLadders} land ladder tiers`);
-      if (totalLandUseCodes > 0) importedItems.push(`${totalLandUseCodes} land use codes`);
-      if (totalNeighborhoodCodes > 0) importedItems.push(`${totalNeighborhoodCodes} neighborhood codes`);
-      if (totalSiteConditions > 0) importedItems.push(`${totalSiteConditions} site/topography modifiers`);
-      if (totalRoadTypes > 0) importedItems.push(`${totalRoadTypes} road types`);
-      if (totalDrivewayTypes > 0) importedItems.push(`${totalDrivewayTypes} driveway types`);
-      if (totalCurrentUseCodes > 0) importedItems.push(`${totalCurrentUseCodes} current use codes`);
-      if (totalViewAttributes > 0) importedItems.push(`${totalViewAttributes} view attributes`);
-      if (totalWaterBodies > 0) importedItems.push(`${totalWaterBodies} water bodies`);
-      if (totalWaterBodyLadders > 0) importedItems.push(`${totalWaterBodyLadders} water body ladder tiers`);
-      if (totalWaterfrontAttributes > 0) importedItems.push(`${totalWaterfrontAttributes} waterfront attributes`);
+      if (totalLadders > 0)
+        importedItems.push(`${totalLadders} land ladder tiers`);
+      if (totalLandUseCodes > 0)
+        importedItems.push(`${totalLandUseCodes} land use codes`);
+      if (totalNeighborhoodCodes > 0)
+        importedItems.push(`${totalNeighborhoodCodes} neighborhood codes`);
+      if (totalSiteConditions > 0)
+        importedItems.push(`${totalSiteConditions} site/topography modifiers`);
+      if (totalRoadTypes > 0)
+        importedItems.push(`${totalRoadTypes} road types`);
+      if (totalDrivewayTypes > 0)
+        importedItems.push(`${totalDrivewayTypes} driveway types`);
+      if (totalCurrentUseCodes > 0)
+        importedItems.push(`${totalCurrentUseCodes} current use codes`);
+      if (totalViewAttributes > 0)
+        importedItems.push(`${totalViewAttributes} view attributes`);
+      if (totalWaterBodies > 0)
+        importedItems.push(`${totalWaterBodies} water bodies`);
+      if (totalWaterBodyLadders > 0)
+        importedItems.push(`${totalWaterBodyLadders} water body ladder tiers`);
+      if (totalWaterfrontAttributes > 0)
+        importedItems.push(
+          `${totalWaterfrontAttributes} waterfront attributes`,
+        );
 
       // Show success message
       if (importedItems.length > 0) {
@@ -296,7 +337,9 @@ export default class ImportController extends Controller {
           `Land codes imported: ${importedItems.join(', ')}`,
         );
       } else {
-        this.notifications.warning('No land codes were imported. Check validation results and server logs.');
+        this.notifications.warning(
+          'No land codes were imported. Check validation results and server logs.',
+        );
       }
     } catch (error) {
       console.error('Error importing land codes:', error);
@@ -355,7 +398,8 @@ export default class ImportController extends Controller {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Validation failed: ${response.status} ${response.statusText}`,
+          errorData.error ||
+            `Validation failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -365,7 +409,9 @@ export default class ImportController extends Controller {
       this.notifications.success('Building codes file validated successfully');
     } catch (error) {
       console.error('Error validating building codes:', error);
-      this.notifications.error(error.message || 'Failed to validate building codes file');
+      this.notifications.error(
+        error.message || 'Failed to validate building codes file',
+      );
     } finally {
       this.isValidatingBuildingCodes = false;
     }
@@ -400,7 +446,8 @@ export default class ImportController extends Controller {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Upload failed: ${response.status} ${response.statusText}`,
+          errorData.error ||
+            `Upload failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -412,11 +459,13 @@ export default class ImportController extends Controller {
 
       this.notifications.success(
         `Building codes imported: ${result.results.buildingCodesCreated + result.results.buildingCodesUpdated} building codes, ` +
-        `${result.results.featureCodesCreated + result.results.featureCodesUpdated} feature codes`,
+          `${result.results.featureCodesCreated + result.results.featureCodesUpdated} feature codes`,
       );
     } catch (error) {
       console.error('Error importing building codes:', error);
-      this.notifications.error(error.message || 'Failed to import building codes');
+      this.notifications.error(
+        error.message || 'Failed to import building codes',
+      );
     } finally {
       this.isExecutingBuildingCodes = false;
     }
@@ -449,7 +498,9 @@ export default class ImportController extends Controller {
   @action
   async executePhase1() {
     if (!this.phase1ValidationResults?.isValid) {
-      this.notifications.error('Please fix validation errors before proceeding');
+      this.notifications.error(
+        'Please fix validation errors before proceeding',
+      );
       return;
     }
 
@@ -489,19 +540,20 @@ export default class ImportController extends Controller {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       // Remove keys that contain the municipality ID or are property/assessment related
-      if (key && (
-        key.includes(municipalityId) ||
-        key.includes('property-') ||
-        key.includes('assessment-') ||
-        key.includes('building-') ||
-        key.includes('land-') ||
-        key.includes('parcel-')
-      )) {
+      if (
+        key &&
+        (key.includes(municipalityId) ||
+          key.includes('property-') ||
+          key.includes('assessment-') ||
+          key.includes('building-') ||
+          key.includes('land-') ||
+          key.includes('parcel-'))
+      ) {
         keysToRemove.push(key);
       }
     }
 
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
       console.log(`Removing localStorage key: ${key}`);
       localStorage.removeItem(key);
     });
@@ -522,13 +574,21 @@ export default class ImportController extends Controller {
       for (const table of tables) {
         try {
           // Delete all records for this municipality
-          const count = await table.where('municipalityId').equals(municipalityId).delete();
+          const count = await table
+            .where('municipalityId')
+            .equals(municipalityId)
+            .delete();
           totalRecordsDeleted += count;
           if (count > 0) {
-            console.log(`  ✅ Deleted ${count} records from IndexedDB table: ${table.name}`);
+            console.log(
+              `  ✅ Deleted ${count} records from IndexedDB table: ${table.name}`,
+            );
           }
         } catch (error) {
-          console.warn(`  ⚠️  Could not clear IndexedDB table ${table.name}:`, error);
+          console.warn(
+            `  ⚠️  Could not clear IndexedDB table ${table.name}:`,
+            error,
+          );
         }
       }
 
@@ -538,7 +598,9 @@ export default class ImportController extends Controller {
         await this.indexedDb.db.table('deltas').clear();
         await this.indexedDb.db.table('conflicts').clear();
         await this.indexedDb.db.table('changeLog').clear();
-        console.log('  ✅ Cleared sync queue, deltas, conflicts, and changeLog');
+        console.log(
+          '  ✅ Cleared sync queue, deltas, conflicts, and changeLog',
+        );
       } catch (error) {
         console.warn('  ⚠️  Could not clear sync tables:', error);
       }
@@ -550,35 +612,37 @@ export default class ImportController extends Controller {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && (
-        key.includes('property-cache') ||
-        key.includes('assessment-cache') ||
-        key.includes(`municipality-${municipalityId}`) ||
-        key.includes('property-') ||
-        key.includes('assessment-') ||
-        key.includes('building-') ||
-        key.includes('land-') ||
-        key.includes('parcel-')
-      )) {
+      if (
+        key &&
+        (key.includes('property-cache') ||
+          key.includes('assessment-cache') ||
+          key.includes(`municipality-${municipalityId}`) ||
+          key.includes('property-') ||
+          key.includes('assessment-') ||
+          key.includes('building-') ||
+          key.includes('land-') ||
+          key.includes('parcel-'))
+      ) {
         keysToRemove.push(key);
       }
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
     console.log(`🧹 Cleared ${keysToRemove.length} localStorage keys`);
 
     // Clear session storage
     const sessionKeysToRemove = [];
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);
-      if (key && (
-        key.includes('currentProperty') ||
-        key.includes('propertyView') ||
-        key.includes('assessmentView')
-      )) {
+      if (
+        key &&
+        (key.includes('currentProperty') ||
+          key.includes('propertyView') ||
+          key.includes('assessmentView'))
+      ) {
         sessionKeysToRemove.push(key);
       }
     }
-    sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+    sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
     console.log(`🧹 Cleared ${sessionKeysToRemove.length} sessionStorage keys`);
   }
 
@@ -653,7 +717,9 @@ export default class ImportController extends Controller {
   @action
   async executePhase2() {
     if (!this.phase2ValidationResults?.isValid) {
-      this.notifications.error('Please fix validation errors before proceeding');
+      this.notifications.error(
+        'Please fix validation errors before proceeding',
+      );
       return;
     }
 
@@ -737,7 +803,9 @@ export default class ImportController extends Controller {
   async executePhase3() {
     // Use phase3 state variables but same backend endpoints
     if (!this.phase3ValidationResults?.isValid) {
-      this.notifications.error('Please fix validation errors before proceeding');
+      this.notifications.error(
+        'Please fix validation errors before proceeding',
+      );
       return;
     }
 
@@ -807,7 +875,7 @@ export default class ImportController extends Controller {
         // Update the global loading message with progress
         if (progress.percentage !== undefined) {
           this.loading.setMessage(
-            `Importing properties: ${progress.processedItems}/${progress.totalItems} (${progress.percentage}%)`
+            `Importing properties: ${progress.processedItems}/${progress.totalItems} (${progress.percentage}%)`,
           );
         }
 
@@ -836,8 +904,12 @@ export default class ImportController extends Controller {
 
               // Clear IndexedDB
               if (this.indexedDb.db) {
-                this.indexedDb.db.tables.forEach(table => {
-                  table.clear().catch(err => console.warn(`Could not clear ${table.name}:`, err));
+                this.indexedDb.db.tables.forEach((table) => {
+                  table
+                    .clear()
+                    .catch((err) =>
+                      console.warn(`Could not clear ${table.name}:`, err),
+                    );
                 });
               }
 
@@ -903,7 +975,9 @@ export default class ImportController extends Controller {
     const files = Array.from(event.target.files || []);
 
     // Filter for .vdf files only
-    const vdfFiles = files.filter(file => file.name.toLowerCase().endsWith('.vdf'));
+    const vdfFiles = files.filter((file) =>
+      file.name.toLowerCase().endsWith('.vdf'),
+    );
 
     if (vdfFiles.length === 0) {
       this.notifications.error('Please select VDF files (.vdf extension)');
@@ -911,7 +985,9 @@ export default class ImportController extends Controller {
     }
 
     if (vdfFiles.length !== files.length) {
-      this.notifications.warning(`${files.length - vdfFiles.length} non-VDF files were ignored`);
+      this.notifications.warning(
+        `${files.length - vdfFiles.length} non-VDF files were ignored`,
+      );
     }
 
     this.vdfFiles = vdfFiles;
@@ -932,7 +1008,7 @@ export default class ImportController extends Controller {
       const formData = new FormData();
 
       // Add all VDF files
-      this.vdfFiles.forEach(file => {
+      this.vdfFiles.forEach((file) => {
         formData.append('files', file);
       });
 
@@ -957,7 +1033,8 @@ export default class ImportController extends Controller {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.error || `Upload failed: ${response.status} ${response.statusText}`,
+          errorData.error ||
+            `Upload failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -972,8 +1049,8 @@ export default class ImportController extends Controller {
       if (successCount > 0) {
         this.notifications.success(
           `Successfully imported ${successCount} sketch(es)` +
-          (errorCount > 0 ? ` (${errorCount} errors)` : '') +
-          (skippedCount > 0 ? ` (${skippedCount} skipped)` : '')
+            (errorCount > 0 ? ` (${errorCount} errors)` : '') +
+            (skippedCount > 0 ? ` (${skippedCount} skipped)` : ''),
         );
       } else if (errorCount > 0 || skippedCount > 0) {
         this.notifications.warning('No sketches were imported');
@@ -982,17 +1059,18 @@ export default class ImportController extends Controller {
       // Show info about newly created description codes
       if (result.results.newDescriptionCodes?.length > 0) {
         this.notifications.info(
-          `Created ${result.results.newDescriptionCodes.length} new description code(s): ${result.results.newDescriptionCodes.join(', ')}`
+          `Created ${result.results.newDescriptionCodes.length} new description code(s): ${result.results.newDescriptionCodes.join(', ')}`,
         );
       }
 
       // Clear the file input
       this.vdfFiles = [];
-      const fileInput = document.querySelector('input[type="file"][accept=".vdf"]');
+      const fileInput = document.querySelector(
+        'input[type="file"][accept=".vdf"]',
+      );
       if (fileInput) {
         fileInput.value = '';
       }
-
     } catch (error) {
       console.error('Error uploading VDF files:', error);
       this.notifications.error(error.message || 'Failed to import VDF files');

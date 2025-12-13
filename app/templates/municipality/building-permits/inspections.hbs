@@ -1,21 +1,357 @@
 {{page-title "Inspections"}}
 
-<div class="avitar-page-header">
-  <div class="avitar-page-header__content">
-    <h1 class="avitar-page-header__title">
-      <i class="fas fa-clipboard-check avitar-mr-2"></i>
-      Inspections
-    </h1>
-    <p class="avitar-page-header__subtitle">
-      Schedule and manage building inspections
-    </p>
+<div class="avitar-container avitar-py-6">
+  {{! Tabs }}
+  <div class="avitar-card avitar-card--sticky-header avitar-mb-4">
+    <div class="avitar-card__header avitar-bg-gray-50 avitar-p-0">
+      <div class="avitar-tabs">
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.tab 'today') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "today")}}
+        >
+          Today
+          {{#if this.todayCount}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--primary avitar-ml-2">
+              {{this.todayCount}}
+            </span>
+          {{/if}}
+        </button>
+
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.tab 'all') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "all")}}
+        >
+          All Inspections
+          {{#if this.allCount}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-ml-2">
+              {{this.allCount}}
+            </span>
+          {{/if}}
+        </button>
+
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.tab 'my') 'avitar-tab--active'}}"
+          {{on "click" (fn this.selectTab "my")}}
+        >
+          My Inspections
+          {{#if this.myCount}}
+            <span class="avitar-badge avitar-badge--sm avitar-badge--info avitar-ml-2">
+              {{this.myCount}}
+            </span>
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {{! Main Card }}
+  <div class="avitar-card">
+    {{! Filters }}
+    <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-flex avitar-flex-col avitar-gap-3">
+        {{! First Row - Date Range and Dropdowns }}
+        <div class="avitar-flex avitar-items-end avitar-gap-3">
+          <div class="avitar-flex-1">
+            <label class="avitar-label avitar-text-xs">Date From</label>
+            <input
+              type="date"
+              class="avitar-input avitar-input--sm"
+              value={{this.dateFrom}}
+              {{on "change" this.setDateFrom}}
+            />
+          </div>
+
+          <div class="avitar-flex-1">
+            <label class="avitar-label avitar-text-xs">Date To</label>
+            <input
+              type="date"
+              class="avitar-input avitar-input--sm"
+              value={{this.dateTo}}
+              {{on "change" this.setDateTo}}
+            />
+          </div>
+
+          <div class="avitar-flex-1">
+            <label class="avitar-label avitar-text-xs">Inspector</label>
+            <select
+              class="avitar-select avitar-select--sm"
+              value={{this.inspector}}
+              {{on "change" this.setInspector}}
+            >
+              {{#each this.inspectorOptions as |inspectorOption|}}
+                <option
+                  value={{inspectorOption.value}}
+                  selected={{eq this.inspector inspectorOption.value}}
+                >
+                  {{inspectorOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="avitar-flex-1">
+            <label class="avitar-label avitar-text-xs">Status</label>
+            <select
+              class="avitar-select avitar-select--sm"
+              value={{this.status}}
+              {{on "change" this.setStatus}}
+            >
+              {{#each this.statusOptions as |statusOption|}}
+                <option
+                  value={{statusOption.value}}
+                  selected={{eq this.status statusOption.value}}
+                >
+                  {{statusOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          <div class="avitar-flex-1">
+            <label class="avitar-label avitar-text-xs">Type</label>
+            <select
+              class="avitar-select avitar-select--sm"
+              value={{this.type}}
+              {{on "change" this.setType}}
+            >
+              {{#each this.typeOptions as |typeOption|}}
+                <option
+                  value={{typeOption.value}}
+                  selected={{eq this.type typeOption.value}}
+                >
+                  {{typeOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+
+        {{! Second Row - Search and Actions }}
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <div class="avitar-flex-1">
+            <div class="avitar-flex avitar-gap-2">
+              <input
+                type="text"
+                class="avitar-input avitar-input--sm"
+                placeholder="Search by property address or permit number..."
+                value={{this.search}}
+                {{on "input" this.updateSearch}}
+                {{on "keypress" (fn (mut this.performSearch))}}
+              />
+              {{#if this.search}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                  {{on "click" this.clearSearch}}
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              {{/if}}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+            {{on "click" this.clearFilters}}
+          >
+            <i class="fas fa-redo avitar-mr-2"></i>
+            Clear Filters
+          </button>
+
+          {{! Stats }}
+          <div class="avitar-text-sm avitar-text-muted avitar-whitespace-nowrap">
+            Showing {{@model.inspections.length}} of {{@model.pagination.total}} inspections
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Inspections Table }}
+    <div class="avitar-card__body avitar-p-0">
+      {{#if @model.inspections.length}}
+        <div class="avitar-table-container">
+          <table class="avitar-table avitar-table--hover">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Permit Number</th>
+                <th>Property Address</th>
+                <th>Scheduled Date & Time</th>
+                <th>Inspector</th>
+                <th>Status</th>
+                <th class="avitar-text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each @model.inspections as |inspection|}}
+                <tr {{on "click" (fn this.viewInspection inspection)}} style="cursor: pointer;">
+                  <td class="avitar-font-medium">
+                    {{this.formatInspectionType inspection.type}}
+                  </td>
+                  <td>
+                    {{#if inspection.permitId}}
+                      <span class="avitar-font-medium">
+                        {{inspection.permitId.permitNumber}}
+                      </span>
+                      {{#if inspection.permitId.permitTypeId}}
+                        <div class="avitar-text-xs avitar-text-muted">
+                          {{inspection.permitId.permitTypeId.name}}
+                        </div>
+                      {{/if}}
+                    {{else}}
+                      <span class="avitar-text-muted">N/A</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{#if inspection.propertyId}}
+                      <div>{{inspection.propertyId.location.address}}</div>
+                      <div class="avitar-text-xs avitar-text-muted">
+                        PID: {{inspection.propertyId.pid_formatted}}
+                      </div>
+                    {{else if inspection.permitId.propertyAddress}}
+                      <div>{{inspection.permitId.propertyAddress}}</div>
+                    {{else}}
+                      <span class="avitar-text-muted">N/A</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{#if inspection.scheduledDate}}
+                      <div class="avitar-font-medium">
+                        {{this.formatDate inspection.scheduledDate}}
+                      </div>
+                      {{#if inspection.scheduledTimeSlot}}
+                        <div class="avitar-text-xs avitar-text-muted">
+                          {{inspection.scheduledTimeSlot}}
+                        </div>
+                      {{/if}}
+                    {{else}}
+                      <span class="avitar-text-muted">Not Scheduled</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    {{#if inspection.inspector}}
+                      <div class="avitar-text-sm">
+                        {{inspection.inspector.first_name}} {{inspection.inspector.last_name}}
+                      </div>
+                      <div class="avitar-text-xs avitar-text-muted">
+                        {{inspection.inspector.email}}
+                      </div>
+                    {{else}}
+                      <span class="avitar-text-muted">Unassigned</span>
+                    {{/if}}
+                  </td>
+                  <td>
+                    <span class={{this.getStatusBadge inspection.status}}>
+                      {{this.formatStatus inspection.status}}
+                    </span>
+                  </td>
+                  <td class="avitar-text-right" {{on "click" this.stopPropagation}}>
+                    <div class="avitar-flex avitar-gap-2 avitar-justify-end">
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--sm avitar-btn--primary"
+                        {{on "click" (fn this.viewInspection inspection)}}
+                        title="View Details"
+                      >
+                        {{lnr-icon "eye"}}
+                      </button>
+
+                      {{#if (or (eq inspection.status "scheduled") (eq inspection.status "in_progress"))}}
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                          {{on "click" (fn this.openRescheduleModal inspection)}}
+                          title="Reschedule"
+                        >
+                          {{lnr-icon "calendar-full"}}
+                        </button>
+                      {{/if}}
+
+                      {{#if inspection.permitId}}
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--ghost"
+                          {{on "click" (fn this.viewPermit inspection.permitId._id)}}
+                          title="View Permit"
+                        >
+                          <i class="fas fa-file-alt"></i>
+                        </button>
+                      {{/if}}
+                    </div>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        {{! Pagination }}
+        {{#if (gt @model.pagination.totalPages 1)}}
+          <div class="avitar-card__footer avitar-flex avitar-items-center avitar-justify-between">
+            <div class="avitar-text-sm avitar-text-muted">
+              Page {{@model.pagination.page}} of {{@model.pagination.totalPages}}
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                {{on "click" this.previousPage}}
+                disabled={{eq @model.pagination.page 1}}
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                {{on "click" this.nextPage}}
+                disabled={{eq @model.pagination.page @model.pagination.totalPages}}
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        {{/if}}
+      {{else}}
+        {{! Empty State }}
+        <div class="avitar-empty-state avitar-py-8">
+          <i class="fas fa-clipboard-check fa-3x avitar-text-muted avitar-mb-4"></i>
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+            No Inspections Found
+          </h3>
+          <p class="avitar-text-muted avitar-mb-4">
+            {{#if this.search}}
+              No inspections match your search criteria.
+            {{else if (eq this.tab "today")}}
+              No inspections scheduled for today.
+            {{else if (eq this.tab "my")}}
+              You have no active inspections assigned.
+            {{else}}
+              No inspections found for the selected filters.
+            {{/if}}
+          </p>
+          {{#if (or this.search this.dateFrom this.dateTo this.inspector this.status this.type)}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.clearFilters}}
+            >
+              Clear Filters
+            </button>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
   </div>
 </div>
 
-<div class="avitar-empty-state">
-  <i class="fas fa-clipboard-check fa-3x avitar-text-muted avitar-mb-3"></i>
-  <h3 class="avitar-mb-2">Coming Soon</h3>
-  <p class="avitar-text-muted">
-    This feature is under development.
-  </p>
-</div>
+{{! Reschedule Modal }}
+<Municipal::RescheduleInspectionModal
+  @inspection={{this.selectedInspection}}
+  @isOpen={{this.showRescheduleModal}}
+  @onClose={{this.closeRescheduleModal}}
+  @onReschedule={{this.handleRescheduleComplete}}
+/>

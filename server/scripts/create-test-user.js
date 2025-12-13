@@ -52,7 +52,7 @@ async function createTestUser() {
       console.log('Creating new test user...');
       user = new User({
         email: 'admin@test.com',
-        password: 'password123!',
+        password: 'avitarStaff123!',
         first_name: 'Admin',
         last_name: 'User',
         phone: '16035550123',
@@ -150,7 +150,6 @@ async function createTestUser() {
 
     // Also create an Avitar staff user
     let avitarUser = await User.findOne({ email: 'staff@avitar.com' });
-
 
     if (!avitarUser) {
       console.log('\nCreating Avitar staff user...');
