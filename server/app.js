@@ -269,7 +269,7 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
       `🔗 Client URL: ${process.env.CLIENT_URL || 'http://localhost:4202'}`,
     );
 
-    // Initialize change streams for real-time sync
+    // Initialize change streams for real-time sync (not supported in serverless)
     try {
       await initializeChangeStreams(process.env.MONGODB_URI, 'avitar-suite');
       console.log('🔄 MongoDB Change Streams initialized');
@@ -277,6 +277,9 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
       console.error('❌ Failed to initialize change streams:', error);
     }
   });
+} else {
+  console.log('🔄 Running in serverless mode (Vercel)');
+  console.log('⚠️  Change streams disabled in serverless environment');
 }
 
 // Graceful shutdown
