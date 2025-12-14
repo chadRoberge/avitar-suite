@@ -8,6 +8,18 @@ export default class MunicipalityController extends Controller {
   @tracked isLoading = false;
   @tracked municipality = null;
 
+  get shouldShowPropertySidebar() {
+    const routeName = this.router.currentRouteName;
+
+    // Show sidebar only on assessing routes and building-permits find route
+    return (
+      routeName?.startsWith('municipality.assessing') &&
+      !routeName?.startsWith('municipality.assessing.settings') &&
+      !routeName?.startsWith('municipality.assessing.reports') &&
+      !routeName?.startsWith('municipality.assessing.revaluation')
+    ) || routeName === 'municipality.building-permits.find';
+  }
+
   get isOnSettingsRoute() {
     return (
       this.router.currentRouteName?.startsWith('municipality.settings') ||
