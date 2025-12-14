@@ -4,10 +4,11 @@ import { inject as service } from '@ember/service';
 export default class MunicipalityBuildingPermitsFindRoute extends Route {
   @service('hybrid-api') hybridApi;
   @service('current-user') currentUser;
+  @service municipality;
   @service router;
 
   async model() {
-    const municipalityId = this.currentUser.selectedMunicipality?.id;
+    const municipalityId = this.municipality.currentMunicipality?.id;
 
     if (!municipalityId) {
       console.error('No municipality selected');

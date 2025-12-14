@@ -6,6 +6,7 @@ import { action } from '@ember/object';
 export default class MunicipalityBuildingPermitsFindController extends Controller {
   @service('hybrid-api') hybridApi;
   @service('current-user') currentUser;
+  @service municipality;
   @service router;
 
   @tracked searchQuery = '';
@@ -117,7 +118,7 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
     this.selectedProperty = property;
     this.isLoadingPermits = true;
 
-    const municipalityId = this.currentUser.selectedMunicipality?.id;
+    const municipalityId = this.municipality.currentMunicipality?.id;
 
     try {
       // Load permits and projects for this property
