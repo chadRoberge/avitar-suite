@@ -297,6 +297,11 @@ export default class MunicipalityService extends Service {
         icon: 'tool',
         children: [
           {
+            title: 'Find',
+            route: 'municipality.building-permits.find',
+            icon: 'search',
+          },
+          {
             title: 'Queue',
             route: 'municipality.building-permits.queue',
             icon: 'clipboard-list',
@@ -329,16 +334,6 @@ export default class MunicipalityService extends Service {
             title: 'Applications',
             route: 'municipality.building-permits.applications',
             icon: 'inbox',
-          },
-          {
-            title: 'Documents',
-            route: 'municipality.building-permits.documents',
-            icon: 'folder-open',
-          },
-          {
-            title: 'Certificates',
-            route: 'municipality.building-permits.certificates',
-            icon: 'certificate',
           },
           {
             title: 'Reports',
