@@ -1223,6 +1223,18 @@ export default class HybridApiService extends Service.extend(Evented) {
     if (parts.length >= 3 && parts[0] === 'municipalities') {
       const resourceName = parts[2];
 
+      // Don't cache permits/projects when filtered by propertyId
+      // These are property-specific queries that change frequently
+      if (resourceName === 'permits' || resourceName === 'projects') {
+        const urlParams = new URLSearchParams(endpoint.split('?')[1] || '');
+        if (urlParams.has('propertyId')) {
+          console.log(
+            `🎯 Property-filtered ${resourceName} query detected - not caching (always fetch fresh)`,
+          );
+          return null; // Don't cache - always fetch from network
+        }
+      }
+
       // Map municipality-scoped attribute endpoints to their own collections
       // Each endpoint gets its own collection to prevent cache collisions
       const municipalityResourceMap = {
@@ -1240,7 +1252,8 @@ export default class HybridApiService extends Service.extend(Evented) {
         'water-bodies': 'water_bodies',
         'waterfront-attributes': 'waterfront_attributes',
         'water-body-ladders': 'water_body_ladders',
-        permits: 'permits', // Building permits module
+        permits: 'permits', // Building permits module (all permits)
+        projects: 'projects', // Building permits projects (all projects)
       };
 
       if (municipalityResourceMap[resourceName]) {
