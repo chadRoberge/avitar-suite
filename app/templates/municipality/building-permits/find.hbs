@@ -1,130 +1,112 @@
 {{page-title "Find Properties - Building Permits"}}
 
-<div class="building-permits-find">
-
+<div class="avitar-container avitar-py-6">
   {{#if this.selectedProperty}}
-    {{!-- Property Permits/Projects List View --}}
-    <div class="building-permits-find__permits-list">
-
-      {{!-- Back Button --}}
-      <div class="building-permits-find__back-button">
-        <button
-          type="button"
-          class="avitar-btn avitar-btn--secondary"
-          {{on "click" this.backToProperties}}
-        >
-          <i class="fas fa-arrow-left"></i>
-          Back to Properties
-        </button>
+    {{!-- Property Info Card --}}
+    <div class="avitar-card avitar-mb-4">
+      <div class="avitar-card__header avitar-bg-gray-50">
+        <h2 class="avitar-card__title">
+          <i class="fas fa-home avitar-mr-2"></i>
+          {{this.selectedProperty.location.address}}
+        </h2>
       </div>
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4">
+          <div>
+            <p class="avitar-text-sm avitar-text-muted avitar-mb-1">PID</p>
+            <p class="avitar-font-medium">{{this.selectedProperty.pid_formatted}}</p>
+          </div>
+          <div>
+            <p class="avitar-text-sm avitar-text-muted avitar-mb-1">Owner</p>
+            <p class="avitar-font-medium">{{this.selectedProperty.owner.primary_name}}</p>
+          </div>
+          <div>
+            <p class="avitar-text-sm avitar-text-muted avitar-mb-1">Zone</p>
+            <p class="avitar-font-medium">{{this.selectedProperty.zone.code}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      {{!-- Property Header --}}
-      <div class="building-permits-find__property-header">
-        <h3 class="building-permits-find__property-name">
-          {{this.getDisplayName this.selectedProperty}}
+    {{!-- Permits and Projects Card --}}
+    <div class="avitar-card">
+      <div class="avitar-card__header avitar-bg-gray-50">
+        <h3 class="avitar-card__title">
+          <i class="fas fa-clipboard-list avitar-mr-2"></i>
+          Permits & Projects
         </h3>
-        <p class="building-permits-find__property-info">
-          PID: {{this.selectedProperty.pid}}
-        </p>
       </div>
 
-      {{!-- Loading State --}}
       {{#if this.isLoadingPermits}}
-        <div class="building-permits-find__loading">
-          <i class="fas fa-spinner fa-spin"></i>
-          Loading permits and projects...
+        <div class="avitar-card__body avitar-text-center avitar-py-8">
+          <i class="fas fa-spinner fa-spin fa-2x avitar-mb-3"></i>
+          <p class="avitar-text-muted">Loading permits and projects...</p>
+        </div>
+      {{else if this.displayedPermitsAndProjects.length}}
+        <div class="avitar-card__body avitar-p-0">
+          <table class="avitar-table avitar-table--hover">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Number</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.displayedPermitsAndProjects as |item|}}
+                <tr class="avitar-cursor-pointer" {{on "click" (fn this.viewPermit item)}}>
+                  <td>
+                    <span class="avitar-badge avitar-badge--{{if (eq item.type 'permit') 'primary' 'secondary'}}">
+                      {{if (eq item.type "permit") "Permit" "Project"}}
+                    </span>
+                  </td>
+                  <td class="avitar-font-medium">{{item.permitNumber}}</td>
+                  <td>{{item.description}}</td>
+                  <td>
+                    {{#if item.status}}
+                      <span class="avitar-badge avitar-badge--{{if (eq item.status 'approved') 'success' 'warning'}}">
+                        {{item.status}}
+                      </span>
+                    {{/if}}
+                  </td>
+                  <td class="avitar-text-sm avitar-text-muted">
+                    {{date-format (or item.created_at item.createdAt) "MM/DD/YYYY"}}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--sm avitar-btn--ghost avitar-btn--primary"
+                      {{on "click" (fn this.viewPermit item)}}
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
         </div>
       {{else}}
-        {{!-- Permits/Projects List --}}
-        {{#if this.displayedPermitsAndProjects.length}}
-          <div class="building-permits-find__items">
-            {{#each this.displayedPermitsAndProjects as |item|}}
-              <div
-                class="building-permits-find__item"
-                {{on "click" (fn this.viewPermit item)}}
-              >
-                <div class="building-permits-find__item-header">
-                  <span class="building-permits-find__item-type avitar-badge avitar-badge--{{if (eq item.type 'permit') 'primary' 'secondary'}}">
-                    {{if (eq item.type "permit") "Permit" "Project"}}
-                  </span>
-                  {{#if item.status}}
-                    <span class="building-permits-find__item-status avitar-badge avitar-badge--{{if (eq item.status 'approved') 'success' 'warning'}}">
-                      {{item.status}}
-                    </span>
-                  {{/if}}
-                </div>
-                <div class="building-permits-find__item-info">
-                  <p class="building-permits-find__item-description">
-                    {{item.description}}
-                  </p>
-                  <p class="building-permits-find__item-date">
-                    Created: {{date-format (or item.created_at item.createdAt) "MM/DD/YYYY"}}
-                  </p>
-                </div>
-                <i class="fas fa-chevron-right building-permits-find__item-arrow"></i>
-              </div>
-            {{/each}}
-          </div>
-        {{else}}
-          <div class="building-permits-find__empty">
-            <i class="fas fa-folder-open"></i>
-            <p>No permits or projects found for this property.</p>
-          </div>
-        {{/if}}
+        <div class="avitar-card__body avitar-text-center avitar-py-8">
+          <i class="fas fa-folder-open fa-3x avitar-text-muted avitar-mb-3"></i>
+          <h4 class="avitar-font-medium avitar-mb-2">No Permits or Projects</h4>
+          <p class="avitar-text-muted">This property has no permits or projects on record.</p>
+        </div>
       {{/if}}
     </div>
-
   {{else}}
-    {{!-- Property Tree Search View --}}
-    <div class="building-permits-find__search">
-
-      {{!-- Search Controls --}}
-      <div class="building-permits-find__controls">
-        <div class="building-permits-find__search-input">
-          <i class="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Search by PID, address, or owner..."
-            value={{this.searchQuery}}
-            {{on "input" this.updateSearchQuery}}
-            class="avitar-input"
-          />
-        </div>
-
-        <div class="building-permits-find__group-by">
-          <label>Group by:</label>
-          <select
-            class="avitar-select"
-            value={{this.groupBy}}
-            {{on "change" this.updateGroupBy}}
-          >
-            <option value="pid">Map (PID)</option>
-            <option value="street">Street</option>
-            <option value="lastname">Owner Last Name</option>
-          </select>
-        </div>
+    {{!-- No Property Selected --}}
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center avitar-py-8">
+        <i class="fas fa-search fa-3x avitar-text-muted avitar-mb-3"></i>
+        <h3 class="avitar-text-xl avitar-font-semibold avitar-mb-2">Select a Property</h3>
+        <p class="avitar-text-muted">
+          Use the property tree on the left to select a property and view its permits and projects.
+        </p>
       </div>
-
-      {{!-- Property Tree --}}
-      <div class="building-permits-find__tree">
-        <Shared::PropertyTree
-          @groupedProperties={{this.groupedProperties}}
-          @groupBy={{this.groupBy}}
-          @selectedPropertyId={{this.selectedProperty.id}}
-          @onSelectProperty={{this.selectProperty}}
-          @getDisplayName={{this.getDisplayName}}
-          @getSecondaryInfo={{this.getSecondaryInfo}}
-        />
-      </div>
-
-      {{!-- Empty State --}}
-      {{#unless this.filteredProperties.length}}
-        <div class="building-permits-find__empty">
-          <i class="fas fa-search"></i>
-          <p>No properties found matching your search.</p>
-        </div>
-      {{/unless}}
     </div>
   {{/if}}
-
 </div>

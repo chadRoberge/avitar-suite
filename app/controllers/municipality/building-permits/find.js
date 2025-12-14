@@ -2,81 +2,43 @@ import Controller from '@ember/controller';
 import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
+import { observe } from '@ember/object/observers';
 
 export default class MunicipalityBuildingPermitsFindController extends Controller {
   @service('hybrid-api') hybridApi;
   @service('current-user') currentUser;
   @service municipality;
   @service router;
+  @service('property-selection') propertySelection;
 
-  @tracked searchQuery = '';
-  @tracked groupBy = 'pid'; // 'pid', 'street', or 'lastname'
-  @tracked selectedProperty = null;
+  queryParams = ['property_id'];
+
+  @tracked property_id = null;
   @tracked permits = [];
   @tracked projects = [];
   @tracked isLoadingPermits = false;
 
-  get filteredProperties() {
-    const properties = this.model?.properties || [];
-    const query = this.searchQuery.toLowerCase().trim();
+  constructor() {
+    super(...arguments);
 
-    if (!query) {
-      return properties;
-    }
-
-    return properties.filter((property) => {
-      const pid = (property.pid || '').toLowerCase();
-      const address = (property.address || '').toLowerCase();
-      const owner = (property.owner || '').toLowerCase();
-
-      return (
-        pid.includes(query) ||
-        address.includes(query) ||
-        owner.includes(query)
-      );
-    });
+    // Watch for property selection changes
+    this.addObserver('propertySelection.selectedProperty', this, this.onPropertyChange);
   }
 
-  get groupedProperties() {
-    const properties = this.filteredProperties;
-    const grouped = {};
+  onPropertyChange() {
+    const property = this.propertySelection.selectedProperty;
+    if (property) {
+      this.property_id = property.id;
+      this.loadPermitsForProperty(property.id);
+    } else {
+      this.property_id = null;
+      this.permits = [];
+      this.projects = [];
+    }
+  }
 
-    properties.forEach((property) => {
-      let key;
-
-      switch (this.groupBy) {
-        case 'pid':
-          // Group by map number (first part of PID)
-          key = property.pid ? property.pid.split('-')[0] : 'Unknown';
-          break;
-        case 'street':
-          // Group by street name
-          if (property.address) {
-            const parts = property.address.split(' ');
-            key = parts.length > 1 ? parts.slice(1).join(' ') : 'Unknown/Vacant';
-          } else {
-            key = 'Unknown/Vacant';
-          }
-          break;
-        case 'lastname':
-          // Group by owner last name initial
-          if (property.owner) {
-            key = property.owner.charAt(0).toUpperCase();
-          } else {
-            key = 'Unknown';
-          }
-          break;
-        default:
-          key = 'Unknown';
-      }
-
-      if (!grouped[key]) {
-        grouped[key] = [];
-      }
-      grouped[key].push(property);
-    });
-
-    return grouped;
+  get selectedProperty() {
+    return this.propertySelection.selectedProperty;
   }
 
   get displayedPermitsAndProjects() {
@@ -93,41 +55,24 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
     });
   }
 
-  @action
-  updateSearchQuery(event) {
-    this.searchQuery = event.target.value;
-  }
+  async loadPermitsForProperty(propertyId) {
+    if (!propertyId) {
+      this.permits = [];
+      this.projects = [];
+      return;
+    }
 
-  @action
-  updateGroupBy(event) {
-    this.groupBy = event.target.value;
-  }
-
-  @action
-  getDisplayName(property) {
-    return property.address || property.pid || 'Unknown Property';
-  }
-
-  @action
-  getSecondaryInfo(property) {
-    return property.owner || 'No owner information';
-  }
-
-  @action
-  async selectProperty(property) {
-    this.selectedProperty = property;
     this.isLoadingPermits = true;
-
     const municipalityId = this.municipality.currentMunicipality?.id;
 
     try {
       // Load permits and projects for this property
       const [permitsResponse, projectsResponse] = await Promise.allSettled([
         this.hybridApi.get(
-          `/municipalities/${municipalityId}/properties/${property.id}/permits`,
+          `/municipalities/${municipalityId}/properties/${propertyId}/permits`,
         ),
         this.hybridApi.get(
-          `/municipalities/${municipalityId}/properties/${property.id}/projects`,
+          `/municipalities/${municipalityId}/properties/${propertyId}/projects`,
         ),
       ]);
 
@@ -145,13 +90,6 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
     } finally {
       this.isLoadingPermits = false;
     }
-  }
-
-  @action
-  backToProperties() {
-    this.selectedProperty = null;
-    this.permits = [];
-    this.projects = [];
   }
 
   @action

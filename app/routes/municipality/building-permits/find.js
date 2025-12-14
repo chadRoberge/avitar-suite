@@ -5,7 +5,14 @@ export default class MunicipalityBuildingPermitsFindRoute extends Route {
   @service('hybrid-api') hybridApi;
   @service('current-user') currentUser;
   @service municipality;
+  @service('property-selection') propertySelection;
   @service router;
+
+  queryParams = {
+    property_id: {
+      refreshModel: false
+    }
+  };
 
   async model() {
     const municipalityId = this.municipality.currentMunicipality?.id;
@@ -16,20 +23,17 @@ export default class MunicipalityBuildingPermitsFindRoute extends Route {
       throw new Error('No municipality selected');
     }
 
-    try {
-      // Load all properties for the municipality (basic info only)
-      const response = await this.hybridApi.get(
-        `/municipalities/${municipalityId}/properties`,
-      );
+    return {
+      municipalityId,
+    };
+  }
 
-      return {
-        properties: response.properties || response || [],
-        municipalityId,
-      };
-    } catch (error) {
-      console.error('Failed to load properties:', error);
-      this.router.transitionTo('municipality.building-permits');
-      throw error;
+  setupController(controller, model) {
+    super.setupController(controller, model);
+
+    // Load permits for the selected property
+    if (this.propertySelection.selectedProperty) {
+      controller.loadPermitsForProperty(this.propertySelection.selectedProperty.id);
     }
   }
 
