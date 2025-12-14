@@ -59,23 +59,42 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
     const municipalityId = this.municipality.currentMunicipality?.id;
 
     try {
-      // Load permits and projects for this property
+      // Load permits for this property using query parameter
+      // Note: Projects endpoint doesn't support propertyId filtering yet
       const [permitsResponse, projectsResponse] = await Promise.allSettled([
         this.hybridApi.get(
-          `/municipalities/${municipalityId}/properties/${propertyId}/permits`,
+          `/municipalities/${municipalityId}/permits?propertyId=${propertyId}`,
         ),
         this.hybridApi.get(
-          `/municipalities/${municipalityId}/properties/${propertyId}/projects`,
+          `/municipalities/${municipalityId}/projects?propertyId=${propertyId}`,
         ),
       ]);
 
-      this.permits = permitsResponse.status === 'fulfilled'
-        ? (permitsResponse.value.permits || permitsResponse.value || [])
-        : [];
+      // Extract permits array from response, ensuring it's always an array
+      if (permitsResponse.status === 'fulfilled') {
+        const response = permitsResponse.value;
+        this.permits = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.permits)
+          ? response.permits
+          : [];
+      } else {
+        console.warn('Failed to load permits:', permitsResponse.reason);
+        this.permits = [];
+      }
 
-      this.projects = projectsResponse.status === 'fulfilled'
-        ? (projectsResponse.value.projects || projectsResponse.value || [])
-        : [];
+      // Extract projects array from response, ensuring it's always an array
+      if (projectsResponse.status === 'fulfilled') {
+        const response = projectsResponse.value;
+        this.projects = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.projects)
+          ? response.projects
+          : [];
+      } else {
+        console.warn('Failed to load projects:', projectsResponse.reason);
+        this.projects = [];
+      }
     } catch (error) {
       console.error('Failed to load permits/projects:', error);
       this.permits = [];

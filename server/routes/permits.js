@@ -834,7 +834,7 @@ router.get(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const { status = 'all', search = '' } = req.query;
+      const { status = 'all', search = '', propertyId } = req.query;
 
       // Build query for projects (permits where isProject = true)
       const query = {
@@ -842,6 +842,11 @@ router.get(
         isProject: true,
         isActive: true,
       };
+
+      // Filter by propertyId if provided
+      if (propertyId) {
+        query.propertyId = propertyId;
+      }
 
       // Filter by status if not 'all'
       if (status !== 'all') {
