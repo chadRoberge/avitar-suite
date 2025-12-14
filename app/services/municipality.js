@@ -297,14 +297,14 @@ export default class MunicipalityService extends Service {
         icon: 'tool',
         children: [
           {
+            title: 'Dashboard',
+            route: 'municipality.building-permits.queue',
+            icon: 'tachometer-alt',
+          },
+          {
             title: 'Find',
             route: 'municipality.building-permits.find',
             icon: 'search',
-          },
-          {
-            title: 'Queue',
-            route: 'municipality.building-permits.queue',
-            icon: 'clipboard-list',
           },
           {
             title: 'All Permits',
@@ -317,11 +317,6 @@ export default class MunicipalityService extends Service {
             icon: 'folder-open',
           },
           {
-            title: 'New Permit',
-            route: 'municipality.building-permits.create',
-            icon: 'plus-circle',
-          },
-          {
             title: 'Inspections',
             route: 'municipality.building-permits.inspections',
             icon: 'clipboard-check',
@@ -329,11 +324,6 @@ export default class MunicipalityService extends Service {
               this.inspectionsTodayCount > 0
                 ? this.inspectionsTodayCount
                 : null,
-          },
-          {
-            title: 'Applications',
-            route: 'municipality.building-permits.applications',
-            icon: 'inbox',
           },
           {
             title: 'Reports',

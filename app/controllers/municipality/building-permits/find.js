@@ -107,9 +107,9 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   @action
   viewPermit(permit) {
     if (permit.type === 'permit') {
-      this.router.transitionTo('municipality.building-permits.permit', permit.id);
+      this.router.transitionTo('municipality.building-permits.permit', permit._id);
     } else {
-      this.router.transitionTo('municipality.building-permits.project', permit.id);
+      this.router.transitionTo('municipality.building-permits.project', permit._id);
     }
   }
 }
