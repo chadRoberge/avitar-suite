@@ -1,8 +1,8 @@
-{{!-- Property Tree Group Component --}}
+{{!-- Shared Property Tree Group Component --}}
 <div class="property-tree-group">
-  
+
   {{!-- Group Header --}}
-  <div 
+  <div
     class="property-tree-group__header"
     {{on "click" this.toggleExpanded}}
   >
@@ -10,32 +10,32 @@
     <i class="fas fa-{{this.groupIcon}} property-tree-group__icon"></i>
     <span class="property-tree-group__title">{{this.groupTitle}}</span>
     <span class="property-tree-group__count avitar-badge avitar-badge--secondary">
-      {{this.args.properties.length}}
+      {{@properties.length}}
     </span>
   </div>
 
   {{!-- Group Properties --}}
   {{#if this.isExpanded}}
     <div class="property-tree-group__content">
-      {{#each this.args.properties as |property|}}
-        <div class="property-tree-item {{if (eq property.id this.args.selectedPropertyId) 'property-tree-item--selected'}}">
-          
+      {{#each @properties as |property|}}
+        <div class="property-tree-item {{if (eq property.id @selectedPropertyId) 'property-tree-item--selected'}}">
+
           {{!-- Property Main Info --}}
-          <div 
+          <div
             class="property-tree-item__main"
             {{on "click" (fn this.selectProperty property)}}
           >
             <div class="property-tree-item__info">
               <div class="property-tree-item__name">
-                {{this.args.getDisplayName property}}
+                {{@getDisplayName property}}
               </div>
               <div class="property-tree-item__secondary">
-                {{this.args.getSecondaryInfo property}}
+                {{@getSecondaryInfo property}}
               </div>
             </div>
-            
+
             {{!-- Selected Property Indicator --}}
-            {{#if (eq property.id this.args.selectedPropertyId)}}
+            {{#if (eq property.id @selectedPropertyId)}}
               <div class="property-tree-item__current">
                 <i class="fas fa-check-circle"></i>
               </div>

@@ -1,0 +1,14 @@
+{{!-- Shared Property Tree Component --}}
+<div class="property-tree">
+  {{#each-in @groupedProperties as |groupKey properties|}}
+    <Shared::PropertyTreeGroup
+      @groupKey={{groupKey}}
+      @properties={{properties}}
+      @groupBy={{@groupBy}}
+      @selectedPropertyId={{@selectedPropertyId}}
+      @onSelectProperty={{@onSelectProperty}}
+      @getDisplayName={{@getDisplayName}}
+      @getSecondaryInfo={{@getSecondaryInfo}}
+    />
+  {{/each-in}}
+</div>

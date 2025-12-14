@@ -97,6 +97,7 @@ Router.map(function () {
     // Building Permits Module
     this.route('building-permits', function () {
       // Non-property routes (queue/list views)
+      this.route('find'); // Find properties with PID tree
       this.route('queue'); // Work queue for municipal staff
       this.route('permits'); // All permits list
       this.route('applications'); // All applications list
@@ -108,12 +109,6 @@ Router.map(function () {
         this.route('property', { path: '/:property_id' });
       });
       this.route('inspections', function () {
-        this.route('property', { path: '/:property_id' });
-      });
-      this.route('documents', function () {
-        this.route('property', { path: '/:property_id' });
-      });
-      this.route('certificates', function () {
         this.route('property', { path: '/:property_id' });
       });
 

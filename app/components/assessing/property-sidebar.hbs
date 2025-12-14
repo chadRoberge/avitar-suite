@@ -128,19 +128,14 @@
           <p>No properties found</p>
         </div>
       {{else}}
-        <div class="property-tree">
-          {{#each-in this.filteredGroupedProperties as |groupKey properties|}}
-            <Assessing::PropertyTreeGroup 
-              @groupKey={{groupKey}}
-              @properties={{properties}}
-              @groupBy={{this.groupBy}}
-              @selectedPropertyId={{this.selectedPropertyId}}
-              @onSelectProperty={{this.selectProperty}}
-              @getDisplayName={{this.getPropertyDisplayName}}
-              @getSecondaryInfo={{this.getPropertySecondaryInfo}}
-            />
-          {{/each-in}}
-        </div>
+        <Shared::PropertyTree
+          @groupedProperties={{this.filteredGroupedProperties}}
+          @groupBy={{this.groupBy}}
+          @selectedPropertyId={{this.selectedPropertyId}}
+          @onSelectProperty={{this.selectProperty}}
+          @getDisplayName={{this.getPropertyDisplayName}}
+          @getSecondaryInfo={{this.getPropertySecondaryInfo}}
+        />
       {{/if}}
     </div>
 
