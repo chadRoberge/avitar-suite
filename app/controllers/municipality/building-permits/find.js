@@ -16,24 +16,22 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   @tracked permits = [];
   @tracked projects = [];
   @tracked isLoadingPermits = false;
-  @tracked _lastPropertyId = null;
 
   get selectedProperty() {
-    const property = this.propertySelection.selectedProperty;
+    return this.propertySelection.selectedProperty;
+  }
 
-    // Auto-load permits when property changes
-    if (property && property.id !== this._lastPropertyId) {
-      this._lastPropertyId = property.id;
+  @action
+  onPropertyChanged(element, [property]) {
+    // Called when property selection changes
+    if (property) {
       this.property_id = property.id;
       this.loadPermitsForProperty(property.id);
-    } else if (!property && this._lastPropertyId) {
-      this._lastPropertyId = null;
+    } else {
       this.property_id = null;
       this.permits = [];
       this.projects = [];
     }
-
-    return property;
   }
 
   get displayedPermitsAndProjects() {

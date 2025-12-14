@@ -1,6 +1,6 @@
 {{page-title "Find Properties - Building Permits"}}
 
-<div class="avitar-container avitar-py-6">
+<div class="avitar-container avitar-py-6" {{did-update this.onPropertyChanged this.selectedProperty}}>
   {{#if this.selectedProperty}}
     {{!-- Property Info Card --}}
     <div class="avitar-card avitar-mb-4">
