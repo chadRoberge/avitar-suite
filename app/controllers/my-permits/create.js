@@ -6,7 +6,7 @@ import { debounce } from '@ember/runloop';
 
 export default class MyPermitsCreateController extends Controller {
   @service router;
-  @service api;
+  @service('hybrid-api') hybridApi;
   @service notifications;
   @service('current-user') currentUser;
 
@@ -222,7 +222,7 @@ export default class MyPermitsCreateController extends Controller {
 
     // Load permit types for this municipality
     try {
-      const response = await this.api.get(
+      const response = await this.hybridApi.get(
         `/municipalities/${municipality.id}/permit-types`,
       );
 
@@ -251,7 +251,7 @@ export default class MyPermitsCreateController extends Controller {
     this.searchingProperties = true;
 
     try {
-      const response = await this.api.get(
+      const response = await this.hybridApi.get(
         `/municipalities/${this.selectedMunicipality.id}/properties/search`,
         {
           q: this.propertySearchText,
@@ -293,14 +293,14 @@ export default class MyPermitsCreateController extends Controller {
     if (this.selectedMunicipality) {
       try {
         // Load existing projects for this property
-        const projectsResponse = await this.api.get(
+        const projectsResponse = await this.hybridApi.get(
           `/municipalities/${this.selectedMunicipality.id}/permits?propertyId=${property._id || property.id}&isProject=true`,
         );
         this.existingProjects = projectsResponse.permits || [];
 
         // Load project types for this municipality (if not already loaded)
         if (this.projectTypes.length === 0) {
-          const projectTypesResponse = await this.api.get(
+          const projectTypesResponse = await this.hybridApi.get(
             `/municipalities/${this.selectedMunicipality.id}/project-types?status=active`,
           );
           this.projectTypes = projectTypesResponse.projectTypes || [];
@@ -580,7 +580,7 @@ export default class MyPermitsCreateController extends Controller {
       };
 
       // Create project with child permits
-      const response = await this.api.post(
+      const response = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/projects`,
         projectData,
       );
@@ -595,7 +595,7 @@ export default class MyPermitsCreateController extends Controller {
       if (totalProjectFee === 0) {
         // No fee - mark project as submitted directly
         console.log('🔵 No project fee - submitting project directly...');
-        await this.api.put(`/permits/${this.savedPermitId}`, {
+        await this.hybridApi.put(`/permits/${this.savedPermitId}`, {
           status: 'submitted',
         });
 
@@ -619,7 +619,7 @@ export default class MyPermitsCreateController extends Controller {
 
       // Create payment intent for project
       console.log('🔵 Creating payment intent for project...');
-      const paymentIntent = await this.api.post(
+      const paymentIntent = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/create-payment-intent`,
       );
 
@@ -688,7 +688,7 @@ export default class MyPermitsCreateController extends Controller {
       };
 
       console.log('🔵 Saving permit linked to project...');
-      const permitResponse = await this.api.post(
+      const permitResponse = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits`,
         permitData,
       );
@@ -699,7 +699,7 @@ export default class MyPermitsCreateController extends Controller {
 
       // Calculate payment for this permit
       console.log('🔵 Calculating payment...');
-      const paymentCalc = await this.api.post(
+      const paymentCalc = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/calculate-payment`,
       );
 
@@ -711,7 +711,7 @@ export default class MyPermitsCreateController extends Controller {
       if (totalAmount === 0) {
         // No fee - submit directly
         console.log('🔵 No permit fee - submitting permit directly...');
-        await this.api.put(`/permits/${this.savedPermitId}`, {
+        await this.hybridApi.put(`/permits/${this.savedPermitId}`, {
           status: 'submitted',
         });
 
@@ -735,7 +735,7 @@ export default class MyPermitsCreateController extends Controller {
 
       // Create payment intent
       console.log('🔵 Creating payment intent...');
-      const paymentIntent = await this.api.post(
+      const paymentIntent = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/create-payment-intent`,
       );
 
@@ -794,14 +794,14 @@ export default class MyPermitsCreateController extends Controller {
       if (this.savedPermitId) {
         console.log('🔵 Updating existing draft permit...');
         // Use non-municipality-scoped endpoint for contractors updating their own drafts
-        permitResponse = await this.api.put(
+        permitResponse = await this.hybridApi.put(
           `/permits/${this.savedPermitId}`,
           permitData,
         );
         console.log('🟢 Draft permit updated:', this.savedPermitId);
       } else {
         console.log('🔵 Saving permit as draft...');
-        permitResponse = await this.api.post(
+        permitResponse = await this.hybridApi.post(
           `/municipalities/${this.selectedMunicipality.id}/permits`,
           permitData,
         );
@@ -812,7 +812,7 @@ export default class MyPermitsCreateController extends Controller {
 
       // Step 2: Calculate payment
       console.log('🔵 Calculating payment...');
-      const paymentCalc = await this.api.post(
+      const paymentCalc = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/calculate-payment`,
       );
 
@@ -828,7 +828,7 @@ export default class MyPermitsCreateController extends Controller {
         console.log(
           '🔵 No permit fee - submitting permit directly without payment...',
         );
-        await this.api.put(`/permits/${this.savedPermitId}`, {
+        await this.hybridApi.put(`/permits/${this.savedPermitId}`, {
           status: 'submitted',
         });
 
@@ -853,7 +853,7 @@ export default class MyPermitsCreateController extends Controller {
 
       // Step 3: Create payment intent
       console.log('🔵 Creating payment intent...');
-      const paymentIntent = await this.api.post(
+      const paymentIntent = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/create-payment-intent`,
       );
 
@@ -901,7 +901,7 @@ export default class MyPermitsCreateController extends Controller {
         documentFileIds, // Send file IDs to attach to permit
       };
 
-      const response = await this.api.post(
+      const response = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits`,
         permitData,
       );
@@ -953,7 +953,7 @@ export default class MyPermitsCreateController extends Controller {
     this.searchingProperties = true;
 
     try {
-      const response = await this.api.get(
+      const response = await this.hybridApi.get(
         `/municipalities/${this.selectedMunicipality.id}/properties`,
       );
 
@@ -1253,7 +1253,7 @@ export default class MyPermitsCreateController extends Controller {
         formData.append('department', 'building_permit');
         formData.append('visibility', 'private');
 
-        const response = await this.api.upload(
+        const response = await this.hybridApi.upload(
           `/municipalities/${this.selectedMunicipality.id}/files/upload`,
           formData,
         );
@@ -1313,7 +1313,7 @@ export default class MyPermitsCreateController extends Controller {
       console.log('🔵 Confirming payment with backend...', paymentIntent);
 
       // Confirm payment with backend
-      const response = await this.api.post(
+      const response = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/confirm-payment`,
         {
           paymentIntentId: this.paymentIntentId,
@@ -1357,7 +1357,7 @@ export default class MyPermitsCreateController extends Controller {
     try {
       // Create new payment intent
       console.log('🔵 Creating new payment intent...');
-      const paymentIntent = await this.api.post(
+      const paymentIntent = await this.hybridApi.post(
         `/municipalities/${this.selectedMunicipality.id}/permits/${this.savedPermitId}/create-payment-intent`,
       );
 

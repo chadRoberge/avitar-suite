@@ -3,7 +3,7 @@ import { inject as service } from '@ember/service';
 
 export default class MyPermitsCreateRoute extends Route {
   @service('current-user') currentUser;
-  @service api;
+  @service('hybrid-api') hybridApi;
 
   setupController(controller, model) {
     super.setupController(controller, model);
@@ -46,7 +46,7 @@ export default class MyPermitsCreateRoute extends Route {
         const munId =
           controller.selectedMunicipality.id ||
           controller.selectedMunicipality._id;
-        this.api
+        this.hybridApi
           .get(`/municipalities/${munId}/permit-types`)
           .then((response) => {
             controller.permitTypes = (response.permitTypes || []).map((pt) => ({
@@ -107,15 +107,15 @@ export default class MyPermitsCreateRoute extends Route {
     let draftPermit = null;
 
     try {
-      // Fetch all active municipalities
-      const municipalitiesResponse = await this.api.get(
+      // Fetch all active municipalities using local-first strategy
+      const municipalitiesResponse = await this.hybridApi.get(
         '/municipalities?active=true',
       );
       municipalities = municipalitiesResponse.municipalities || [];
 
       // If contractor, also fetch contractor info for license data
       if (this.currentUser.isContractor && user.contractor_id) {
-        const contractorResponse = await this.api.get(
+        const contractorResponse = await this.hybridApi.get(
           `/contractors/${user.contractor_id}`,
         );
         contractor = contractorResponse.contractor;
@@ -126,8 +126,8 @@ export default class MyPermitsCreateRoute extends Route {
       if (draftPermitId) {
         console.log('📝 Loading draft permit:', draftPermitId);
 
-        // Load the draft permit
-        const draftResponse = await this.api.get(`/permits/${draftPermitId}`);
+        // Load the draft permit using local-first strategy
+        const draftResponse = await this.hybridApi.get(`/permits/${draftPermitId}`);
         draftPermit = draftResponse;
 
         // Clear the session storage flag

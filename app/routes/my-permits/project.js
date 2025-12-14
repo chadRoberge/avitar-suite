@@ -2,7 +2,7 @@ import Route from '@ember/routing/route';
 import { inject as service } from '@ember/service';
 
 export default class MyPermitsProjectRoute extends Route {
-  @service api;
+  @service('hybrid-api') hybridApi;
   @service('current-user') currentUser;
   @service router;
   @service notifications;
@@ -16,11 +16,11 @@ export default class MyPermitsProjectRoute extends Route {
 
   async model(params) {
     try {
-      // Fetch the project (which is a permit with isProject=true)
-      const projectResponse = await this.api.get(
+      // Fetch the project (which is a permit with isProject=true) using local-first strategy
+      const projectResponse = await this.hybridApi.get(
         `/permits/${params.project_id}`,
       );
-      const project = projectResponse.permit;
+      const project = projectResponse.permit || projectResponse;
 
       // Verify this is actually a project
       if (!project.isProject) {
@@ -29,26 +29,29 @@ export default class MyPermitsProjectRoute extends Route {
         return;
       }
 
-      // Fetch all child permits for this project
+      // Fetch all child permits for this project using local-first strategy
       let childPermits = [];
       if (project.childPermits && project.childPermits.length > 0) {
-        // Fetch each child permit
+        // Fetch each child permit with Promise.allSettled for resilience
         const childPermitPromises = project.childPermits.map((childPermitId) =>
-          this.api
+          this.hybridApi
             .get(`/permits/${childPermitId}`)
-            .then((response) => response.permit),
+            .then((response) => response.permit || response),
         );
-        childPermits = await Promise.all(childPermitPromises);
+        const results = await Promise.allSettled(childPermitPromises);
+        childPermits = results
+          .filter((result) => result.status === 'fulfilled')
+          .map((result) => result.value);
       }
 
-      // Fetch property details
+      // Fetch property details using local-first strategy
       let property = null;
       if (project.propertyId) {
         try {
-          const propertyResponse = await this.api.get(
+          const propertyResponse = await this.hybridApi.get(
             `/municipalities/${project.municipalityId}/properties/${project.propertyId}`,
           );
-          property = propertyResponse.property;
+          property = propertyResponse.property || propertyResponse;
         } catch (error) {
           console.error('Error loading property:', error);
         }

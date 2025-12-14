@@ -5,7 +5,7 @@ import { inject as service } from '@ember/service';
 
 export default class MyPermitsPermitController extends Controller {
   @service router;
-  @service api;
+  @service('hybrid-api') hybridApi;
   @service notifications;
   @service('current-user') currentUser;
 
@@ -153,7 +153,7 @@ export default class MyPermitsPermitController extends Controller {
       const municipalityId =
         this.permit.municipalityId?._id || this.permit.municipalityId;
 
-      await this.api.post(
+      await this.hybridApi.post(
         `/municipalities/${municipalityId}/permits/${this.permit._id}/inspections`,
         inspectionData,
       );
@@ -200,7 +200,7 @@ export default class MyPermitsPermitController extends Controller {
         formData.append('department', 'building_permit');
         formData.append('permitId', this.permit._id);
 
-        await this.api.upload(`/permits/${this.permit._id}/files`, formData);
+        await this.hybridApi.upload(`/permits/${this.permit._id}/files`, formData);
       }
 
       this.notifications.success(
@@ -262,7 +262,7 @@ export default class MyPermitsPermitController extends Controller {
       const municipalityId =
         this.permit.municipalityId?._id || this.permit.municipalityId;
 
-      await this.api.post(
+      await this.hybridApi.post(
         `/municipalities/${municipalityId}/permits/${this.permit._id}/comments`,
         {
           text: this.newCommentText.trim(),

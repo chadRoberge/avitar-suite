@@ -3,7 +3,7 @@ import { inject as service } from '@ember/service';
 
 export default class MyPermitsRoute extends Route {
   @service('current-user') currentUser;
-  @service api;
+  @service('hybrid-api') hybridApi;
   @service router;
 
   async beforeModel() {
@@ -20,8 +20,8 @@ export default class MyPermitsRoute extends Route {
 
   async model() {
     try {
-      // Fetch all permits accessible by this user
-      const response = await this.api.get('/permits/my-permits');
+      // Fetch all permits accessible by this user using local-first strategy
+      const response = await this.hybridApi.get('/permits/my-permits');
 
       return {
         permits: response.permits || [],

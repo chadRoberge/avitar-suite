@@ -7,7 +7,7 @@ export default class MyPermitsIndexController extends Controller {
   @service router;
   @service('current-user') currentUser;
   @service notifications;
-  @service api;
+  @service('hybrid-api') hybridApi;
 
   @tracked selectedTab = 'all';
   @tracked searchText = '';
@@ -374,7 +374,7 @@ export default class MyPermitsIndexController extends Controller {
     }
 
     try {
-      await this.api.delete(`/permits/${permit._id}`);
+      await this.hybridApi.delete(`/permits/${permit._id}`);
       this.notifications.success('Draft permit deleted successfully');
       // Refresh the parent route to reload permits list
       this.router.refresh('my-permits');
