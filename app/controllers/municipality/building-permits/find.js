@@ -2,7 +2,6 @@ import Controller from '@ember/controller';
 import { inject as service } from '@ember/service';
 import { tracked } from '@glimmer/tracking';
 import { action } from '@ember/object';
-import { observe } from '@ember/object/observers';
 
 export default class MunicipalityBuildingPermitsFindController extends Controller {
   @service('hybrid-api') hybridApi;
@@ -17,28 +16,24 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   @tracked permits = [];
   @tracked projects = [];
   @tracked isLoadingPermits = false;
+  @tracked _lastPropertyId = null;
 
-  constructor() {
-    super(...arguments);
-
-    // Watch for property selection changes
-    this.addObserver('propertySelection.selectedProperty', this, this.onPropertyChange);
-  }
-
-  onPropertyChange() {
+  get selectedProperty() {
     const property = this.propertySelection.selectedProperty;
-    if (property) {
+
+    // Auto-load permits when property changes
+    if (property && property.id !== this._lastPropertyId) {
+      this._lastPropertyId = property.id;
       this.property_id = property.id;
       this.loadPermitsForProperty(property.id);
-    } else {
+    } else if (!property && this._lastPropertyId) {
+      this._lastPropertyId = null;
       this.property_id = null;
       this.permits = [];
       this.projects = [];
     }
-  }
 
-  get selectedProperty() {
-    return this.propertySelection.selectedProperty;
+    return property;
   }
 
   get displayedPermitsAndProjects() {
