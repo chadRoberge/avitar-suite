@@ -133,7 +133,7 @@
       {{#if this.hasFiltersApplied}}
         <div class="avitar-flex avitar-gap-2 avitar-mt-3">
           <span class="avitar-text-sm avitar-text-muted">Active filters:</span>
-          {{#if (not (eq this.filterStatus 'all'))}}
+          {{#if (not-eq this.filterStatus 'all')}}
             <span class="avitar-badge avitar-badge--secondary">
               Status: {{this.filterStatus}}
               <button

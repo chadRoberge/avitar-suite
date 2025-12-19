@@ -36,6 +36,17 @@
             {{this.activeInspectorsCount}}
           </span>
         </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.activeTab 'issue-cards') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setActiveTab "issue-cards")}}
+        >
+          <i class="fas fa-qrcode avitar-mr-2"></i>
+          Issue Cards
+          <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-ml-2">
+            {{this.batches.length}}
+          </span>
+        </button>
       </div>
     </div>
 
@@ -236,6 +247,134 @@
             </p>
           </div>
         {{/if}}
+      {{else if (eq this.activeTab "issue-cards")}}
+        {{! Issue Cards Tab }}
+        <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
+          <div>
+            <h3 class="avitar-text-lg avitar-font-semibold">Inspection Issue Cards</h3>
+            <p class="avitar-text-sm avitar-text-muted">
+              Generate QR code cards for tracking inspection issues when contractors are not present
+            </p>
+          </div>
+        </div>
+
+        {{! Generate Batch Section }}
+        <div class="avitar-card avitar-bg-primary-light avitar-mb-6">
+          <div class="avitar-card__body">
+            <div class="avitar-flex avitar-items-end avitar-gap-4">
+              <div class="avitar-flex-1">
+                <label class="avitar-label">Number of Cards to Generate</label>
+                <select
+                  class="avitar-select"
+                  {{on "change" this.updateBatchQuantity}}
+                >
+                  <option value="6" selected={{eq this.batchQuantity 6}}>6 cards (1 page)</option>
+                  <option value="12" selected={{eq this.batchQuantity 12}}>12 cards (2 pages)</option>
+                  <option value="18" selected={{eq this.batchQuantity 18}}>18 cards (3 pages)</option>
+                  <option value="24" selected={{eq this.batchQuantity 24}}>24 cards (4 pages)</option>
+                  <option value="30" selected={{eq this.batchQuantity 30}}>30 cards (5 pages)</option>
+                  <option value="36" selected={{eq this.batchQuantity 36}}>36 cards (6 pages)</option>
+                  <option value="42" selected={{eq this.batchQuantity 42}}>42 cards (7 pages)</option>
+                  <option value="48" selected={{eq this.batchQuantity 48}}>48 cards (8 pages)</option>
+                  <option value="60" selected={{eq this.batchQuantity 60}}>60 cards (10 pages)</option>
+                  <option value="120" selected={{eq this.batchQuantity 120}}>120 cards (20 pages)</option>
+                </select>
+                <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                  Each card has a unique QR code. 6 cards print per page.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.generateBatch}}
+                disabled={{this.isGeneratingBatch}}
+              >
+                {{#if this.isGeneratingBatch}}
+                  <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+                  Generating...
+                {{else}}
+                  <i class="fas fa-qrcode avitar-mr-2"></i>
+                  Generate Batch
+                {{/if}}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {{! Batches List }}
+        {{#if this.batches.length}}
+          <div class="avitar-space-y-4">
+            {{#each this.batchesWithPrintUrls as |batch|}}
+              <div class="avitar-card avitar-bg-gray-50 avitar-card--hover" {{on "click" (fn this.handleViewBatchDetails batch)}}>
+                <div class="avitar-card__body">
+                  <div class="avitar-flex avitar-items-center avitar-justify-between">
+                    <div class="avitar-flex-1">
+                      <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-mb-2">
+                        <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                          <i class="fas fa-qrcode fa-lg"></i>
+                        </div>
+                        <div>
+                          <div class="avitar-font-semibold">Batch {{batch.batchId}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">
+                            Generated {{date-format batch.generatedAt "MMM DD, YYYY"}}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="avitar-grid avitar-grid-cols-4 avitar-gap-3 avitar-mt-3">
+                        <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-text-center">
+                          <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">{{batch.totalCards}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">Total Cards</div>
+                        </div>
+                        <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-text-center">
+                          <div class="avitar-text-2xl avitar-font-bold avitar-text-secondary">{{batch.pendingCount}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">Pending</div>
+                        </div>
+                        <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-text-center">
+                          <div class="avitar-text-2xl avitar-font-bold avitar-text-warning">{{batch.openCount}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">In Use</div>
+                        </div>
+                        <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-text-center">
+                          <div class="avitar-text-2xl avitar-font-bold avitar-text-success">{{batch.resolvedCount}}</div>
+                          <div class="avitar-text-xs avitar-text-muted">Resolved</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="avitar-flex avitar-gap-2">
+                      <a
+                        href={{batch.printUrl}}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="avitar-btn avitar-btn--primary"
+                        {{on "click" this.handlePrintClick}}
+                      >
+                        <i class="fas fa-print"></i>
+                      </a>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--secondary"
+                        {{on "click" (fn this.handleViewBatchDetails batch)}}
+                      >
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-8">
+            <i class="fas fa-qrcode fa-3x avitar-text-muted avitar-mb-4"></i>
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              No Batches Generated
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Generate your first batch of inspection issue cards to get started
+            </p>
+          </div>
+        {{/if}}
       {{/if}}
     </div>
   </div>
@@ -315,6 +454,157 @@
           {{if (eq this.editingTimeSlotIndex null) "Add Time Slot" "Save Changes"}}
         </button>
       </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Batch Details Modal }}
+{{#if this.showBatchModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeBatchModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-qrcode avitar-mr-2"></i>
+          Batch Details
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeBatchModal}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{#if this.selectedBatch}}
+        {{#if (eq this.batchModalView "delete-confirm")}}
+          {{! Delete Confirmation View }}
+          <div class="avitar-modal__body">
+            <div class="avitar-text-center avitar-py-6">
+              <div class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-warning-light avitar-mx-auto avitar-flex avitar-items-center avitar-justify-center avitar-mb-4">
+                <i class="fas fa-exclamation-triangle fa-2x avitar-text-warning"></i>
+              </div>
+              <h3 class="avitar-text-xl avitar-font-bold avitar-mb-2">
+                Delete Batch?
+              </h3>
+              <p class="avitar-text-muted avitar-mb-6">
+                Are you sure you want to delete this batch? Only unused batches can be deleted.
+              </p>
+
+              <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-inline-block">
+                <div class="avitar-text-sm avitar-text-muted">Batch ID</div>
+                <div class="avitar-font-semibold avitar-text-lg">{{this.selectedBatch.batchId}}</div>
+                <div class="avitar-text-sm avitar-text-muted avitar-mt-2">Total Cards</div>
+                <div class="avitar-font-semibold">{{this.selectedBatch.totalCards}}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="avitar-modal__footer avitar-flex avitar-justify-end avitar-gap-2">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.cancelDelete}}
+            >
+              <i class="fas fa-arrow-left avitar-mr-2"></i>
+              Back
+            </button>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--danger"
+              {{on "click" this.confirmDelete}}
+            >
+              <i class="fas fa-trash avitar-mr-2"></i>
+              Delete Batch
+            </button>
+          </div>
+        {{else}}
+          {{! Details View }}
+          <div class="avitar-modal__body">
+            <div class="avitar-space-y-4">
+              {{! Batch Stats }}
+              <div class="avitar-grid avitar-grid-cols-4 avitar-gap-4">
+                <div class="avitar-card avitar-bg-primary-light">
+                  <div class="avitar-card__body avitar-text-center">
+                    <div class="avitar-text-3xl avitar-font-bold avitar-text-primary">
+                      {{this.selectedBatch.totalCards}}
+                    </div>
+                    <div class="avitar-text-sm avitar-text-muted">Total Cards</div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-text-center">
+                    <div class="avitar-text-3xl avitar-font-bold avitar-text-secondary">
+                      {{this.selectedBatch.statusCounts.pending}}
+                    </div>
+                    <div class="avitar-text-sm avitar-text-muted">Pending</div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-bg-warning-light">
+                  <div class="avitar-card__body avitar-text-center">
+                    <div class="avitar-text-3xl avitar-font-bold avitar-text-warning">
+                      {{this.selectedBatch.statusCounts.open}}
+                    </div>
+                    <div class="avitar-text-sm avitar-text-muted">In Use</div>
+                  </div>
+                </div>
+                <div class="avitar-card avitar-bg-success-light">
+                  <div class="avitar-card__body avitar-text-center">
+                    <div class="avitar-text-3xl avitar-font-bold avitar-text-success">
+                      {{or this.selectedBatch.statusCounts.verified 0}}
+                    </div>
+                    <div class="avitar-text-sm avitar-text-muted">Resolved</div>
+                  </div>
+                </div>
+              </div>
+
+              {{! Issue Numbers List }}
+              <div>
+                <h4 class="avitar-font-semibold avitar-mb-2">Issue Numbers</h4>
+                <div class="avitar-max-h-60 avitar-overflow-y-auto avitar-bg-gray-50 avitar-p-3 avitar-rounded">
+                  <div class="avitar-grid avitar-grid-cols-3 avitar-gap-2">
+                    {{#each this.selectedBatch.issues as |issue|}}
+                      <div class="avitar-bg-white avitar-p-2 avitar-rounded avitar-border avitar-border-gray-200">
+                        <div class="avitar-font-mono avitar-text-sm">{{issue.issueNumber}}</div>
+                        <div class="avitar-text-xs avitar-text-muted avitar-capitalize">{{issue.status}}</div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="avitar-modal__footer avitar-flex avitar-justify-between">
+            <div class="avitar-flex avitar-gap-2">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--danger"
+                {{on "click" (fn this.handleDeleteBatch this.selectedBatch)}}
+              >
+                <i class="fas fa-trash avitar-mr-2"></i>
+                Delete Batch
+              </button>
+            </div>
+            <div class="avitar-flex avitar-gap-2">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--secondary"
+                {{on "click" (fn this.handleMarkBatchAsPrinted this.selectedBatch)}}
+              >
+                <i class="fas fa-check avitar-mr-2"></i>
+                Mark as Printed
+              </button>
+              <a
+                href={{this.selectedBatchPrintUrl}}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.handlePrintClick}}
+              >
+                <i class="fas fa-print avitar-mr-2"></i>
+                Print Cards
+              </a>
+            </div>
+          </div>
+        {{/if}}
+      {{/if}}
     </div>
   </div>
 {{/if}}

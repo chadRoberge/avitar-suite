@@ -1,0 +1,103 @@
+{{! QR Issue Scanner Component }}
+
+{{! Scan Button - Always visible when not scanning }}
+{{#unless this.isScanning}}
+  <button
+    type="button"
+    class="avitar-btn avitar-btn--warning"
+    {{on "click" this.startScanner}}
+    disabled={{this.isProcessing}}
+  >
+    {{#if this.isProcessing}}
+      {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+      Processing...
+    {{else}}
+      {{lnr-icon "frame-expand" class="avitar-mr-2"}}
+      Scan Issue Card
+    {{/if}}
+  </button>
+{{/unless}}
+
+{{! Scanner Modal - Rendered at document body level to prevent positioning issues }}
+{{#if this.isScanning}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    {{!-- template-lint-disable no-invalid-interactive --}}
+    <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.stopScanner}}>
+      <div class="avitar-modal" role="dialog" aria-modal="true" {{on "click" this.stopPropagation}}>
+        <div class="avitar-modal__header">
+          <h2 class="avitar-modal__title">
+            {{lnr-icon "frame-expand" class="avitar-mr-2"}}
+            Scan Issue Card QR Code
+          </h2>
+          <button type="button" class="avitar-modal__close" {{on "click" this.stopScanner}}>
+            {{lnr-icon "cross"}}
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          {{#if this.scanError}}
+            <div class="avitar-alert avitar-alert--danger avitar-mb-4">
+              {{lnr-icon "warning" class="avitar-mr-2"}}
+              {{this.scanError}}
+            </div>
+            <div class="avitar-text-center">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--primary"
+                {{on "click" this.startScanner}}
+              >
+                {{lnr-icon "redo" class="avitar-mr-2"}}
+                Try Again
+              </button>
+            </div>
+          {{else}}
+            <div class="avitar-text-center avitar-mb-4">
+              <p class="avitar-text-muted">
+                Point your camera at the QR code on the inspection issue card
+              </p>
+            </div>
+
+            {{! QR Reader Container }}
+            <div id="qr-reader" class="qr-scanner-container"></div>
+
+            <div class="avitar-text-center avitar-mt-4">
+              <p class="avitar-text-xs avitar-text-muted">
+                Make sure the QR code is well-lit and centered in the frame
+              </p>
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.stopScanner}}
+          >
+            {{lnr-icon "cross" class="avitar-mr-2"}}
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  {{/in-element}}
+{{/if}}
+
+{{! Processing Overlay - Rendered at document body level }}
+{{#if this.isProcessing}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    <div class="avitar-modal-overlay avitar-modal-overlay--visible">
+      <div class="avitar-modal avitar-modal--sm" role="dialog" aria-modal="true">
+        <div class="avitar-modal__body avitar-text-center avitar-py-8">
+          {{lnr-icon "sync" class="avitar-text-3xl avitar-text-primary avitar-mb-4 avitar-spin"}}
+          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+            Processing Issue Card
+          </h3>
+          <p class="avitar-text-muted">
+            Linking issue card to this inspection...
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/in-element}}
+{{/if}}

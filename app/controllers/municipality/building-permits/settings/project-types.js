@@ -22,7 +22,7 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
     name: '',
     description: '',
     category: '',
-    icon: 'folder-open',
+    icon: 'home',
     estimatedCompletionDays: null,
     selectedPermitTypes: [],
     feeSchedule: {
@@ -82,6 +82,38 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
     ];
   }
 
+  get iconOptions() {
+    return [
+      { value: 'home', label: 'Home' },
+      { value: 'apartment', label: 'Apartment' },
+      { value: 'store', label: 'Store' },
+      { value: 'cart', label: 'Shopping Cart' },
+      { value: 'layers', label: 'Layers' },
+      { value: 'construction', label: 'Construction' },
+      { value: 'rocket', label: 'Rocket' },
+      { value: 'graduation-hat', label: 'Graduation Hat' },
+      { value: 'briefcase', label: 'Briefcase' },
+      { value: 'wheelchair', label: 'Wheelchair' },
+      { value: 'tree', label: 'Tree' },
+      { value: 'users', label: 'Users' },
+      { value: 'license', label: 'License' },
+      { value: 'map', label: 'Map' },
+      { value: 'car', label: 'Car' },
+      { value: 'dinner', label: 'Dinner' },
+      { value: 'leaf', label: 'Leaf' },
+      { value: 'paw', label: 'Paw' },
+      { value: 'gift', label: 'Gift' },
+      { value: 'sun', label: 'Sun' },
+      { value: 'lighter', label: 'Lighter' },
+      { value: 'hammer', label: 'Hammer' },
+      { value: 'drop', label: 'Drop' },
+      { value: 'pushpin', label: 'Pushpin' },
+      { value: 'bullhorn', label: 'Bullhorn' },
+      { value: 'diamond', label: 'Diamond' },
+      { value: 'flag', label: 'Flag' },
+    ];
+  }
+
   @action
   updateSearch(event) {
     this.searchText = event.target.value;
@@ -106,7 +138,7 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
       name: '',
       description: '',
       category: '',
-      icon: 'folder-open',
+      icon: 'home',
       estimatedCompletionDays: null,
       selectedPermitTypes: [],
       feeSchedule: {
@@ -126,7 +158,7 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
       name: projectType.name || '',
       description: projectType.description || '',
       category: projectType.category || '',
-      icon: projectType.icon || 'folder-open',
+      icon: projectType.icon || 'home',
       estimatedCompletionDays: projectType.estimatedCompletionDays || null,
       selectedPermitTypes:
         projectType.defaultPermitTypes?.map((pt) => pt.permitTypeId) || [],
@@ -219,7 +251,7 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
         name: this.formData.name,
         description: this.formData.description,
         category: this.formData.category,
-        icon: this.formData.icon || 'folder-open',
+        icon: this.formData.icon || 'home',
         estimatedCompletionDays: this.formData.estimatedCompletionDays
           ? parseInt(this.formData.estimatedCompletionDays)
           : null,
@@ -232,7 +264,7 @@ export default class MunicipalityBuildingPermitsSettingsProjectTypesController e
         ),
         feeSchedule: {
           baseAmount: this.formData.feeSchedule.baseAmount || 0,
-          calculationType: 'fixed',
+          calculationType: 'flat',
         },
         isActive: this.formData.isActive,
       };

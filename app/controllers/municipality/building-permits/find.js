@@ -37,8 +37,8 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   get displayedPermitsAndProjects() {
     // Combine permits and projects, sort by newest first
     const combined = [
-      ...this.permits.map(p => ({ ...p, type: 'permit' })),
-      ...this.projects.map(p => ({ ...p, type: 'project' })),
+      ...this.permits.map((p) => ({ ...p, type: 'permit' })),
+      ...this.projects.map((p) => ({ ...p, type: 'project' })),
     ];
 
     return combined.sort((a, b) => {
@@ -76,8 +76,8 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
         this.permits = Array.isArray(response)
           ? response
           : Array.isArray(response?.permits)
-          ? response.permits
-          : [];
+            ? response.permits
+            : [];
       } else {
         console.warn('Failed to load permits:', permitsResponse.reason);
         this.permits = [];
@@ -89,8 +89,8 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
         this.projects = Array.isArray(response)
           ? response
           : Array.isArray(response?.projects)
-          ? response.projects
-          : [];
+            ? response.projects
+            : [];
       } else {
         console.warn('Failed to load projects:', projectsResponse.reason);
         this.projects = [];
@@ -107,9 +107,15 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   @action
   viewPermit(permit) {
     if (permit.type === 'permit') {
-      this.router.transitionTo('municipality.building-permits.permit', permit._id);
+      this.router.transitionTo(
+        'municipality.building-permits.permit',
+        permit._id,
+      );
     } else {
-      this.router.transitionTo('municipality.building-permits.project', permit._id);
+      this.router.transitionTo(
+        'municipality.building-permits.project',
+        permit._id,
+      );
     }
   }
 }

@@ -117,7 +117,11 @@ async function getActiveSubscriptionSources(user, context = {}) {
  * @param {Object} context - Context object { municipalityId, moduleName }
  * @returns {Object} { allowed: boolean, channels: { email: boolean, sms: boolean }, userOptOut: boolean, reason: string, payingSources: Array }
  */
-async function canUserReceiveNotification(userId, notificationType, context = {}) {
+async function canUserReceiveNotification(
+  userId,
+  notificationType,
+  context = {},
+) {
   try {
     // 1. Get user
     const user = await User.findById(userId);
@@ -180,10 +184,7 @@ async function canUserReceiveNotification(userId, notificationType, context = {}
     // Check each source for features
     for (const source of sources) {
       // Check email notifications
-      if (
-        userPrefs.email &&
-        source.features.includes(emailFeature)
-      ) {
+      if (userPrefs.email && source.features.includes(emailFeature)) {
         allowedChannels.email = true;
         payingSources.push({
           type: source.type,
@@ -194,15 +195,13 @@ async function canUserReceiveNotification(userId, notificationType, context = {}
           tier:
             source.type === 'contractor'
               ? source.entity.subscription?.plan
-              : source.entity.module_config.modules.get(source.moduleName)?.tier,
+              : source.entity.module_config.modules.get(source.moduleName)
+                  ?.tier,
         });
       }
 
       // Check SMS notifications
-      if (
-        userPrefs.sms &&
-        source.features.includes(smsFeature)
-      ) {
+      if (userPrefs.sms && source.features.includes(smsFeature)) {
         allowedChannels.sms = true;
         // Add to payingSources if not already there
         const existing = payingSources.find(
@@ -293,7 +292,10 @@ async function canMunicipalitySendNotifications(
       reason: 'Municipality has active subscription with notification features',
     };
   } catch (error) {
-    console.error('❌ Error checking municipality notification permission:', error);
+    console.error(
+      '❌ Error checking municipality notification permission:',
+      error,
+    );
     return {
       allowed: false,
       reason: `Error: ${error.message}`,
@@ -340,7 +342,10 @@ async function canContractorSendNotifications(
       reason: 'Contractor has active subscription with notification features',
     };
   } catch (error) {
-    console.error('❌ Error checking contractor notification permission:', error);
+    console.error(
+      '❌ Error checking contractor notification permission:',
+      error,
+    );
     return {
       allowed: false,
       reason: `Error: ${error.message}`,

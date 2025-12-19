@@ -523,6 +523,25 @@ Professional appearance suitable for presentations to town boards and taxpayers
 <div class="avitar-pb-4">Bottom padding</div>
 <div class="avitar-pl-4">Left padding</div>
 <div class="avitar-pr-4">Right padding</div>
+
+<!-- Combined vertical padding (top + bottom) -->
+<div class="avitar-py-4">Top and bottom padding</div>
+<div class="avitar-py-6">1.5rem vertical padding</div>
+
+<!-- Combined horizontal padding (left + right) -->
+<div class="avitar-px-4">Left and right padding</div>
+<div class="avitar-px-6">1.5rem horizontal padding</div>
+```
+
+**Container:**
+```html
+<!-- Centered max-width container -->
+<div class="avitar-container">Max-width 1400px, centered, with horizontal padding</div>
+
+<!-- Common pattern for page content -->
+<div class="avitar-container avitar-py-6 avitar-m-4">
+  <!-- Page content with vertical padding and margin -->
+</div>
 ```
 
 **Scale:** 0, 1, 2, 3, 4, 5, 6, 8 (0rem to 2rem)

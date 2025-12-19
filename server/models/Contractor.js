@@ -685,7 +685,9 @@ contractorSchema.methods.isSubscriptionPaused = function () {
 };
 
 // Update subscription data from Stripe webhook
-contractorSchema.methods.updateSubscription = async function (subscriptionData) {
+contractorSchema.methods.updateSubscription = async function (
+  subscriptionData,
+) {
   if (!this.subscription) {
     this.subscription = {};
   }

@@ -157,6 +157,28 @@ const permitInspectionSchema = new mongoose.Schema(
       },
     ],
 
+    // Inspection checklist (from template)
+    checklist: [
+      {
+        templateId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'InspectionChecklistTemplate',
+        },
+        itemId: mongoose.Schema.Types.ObjectId, // Reference to template item _id
+        itemText: { type: String, required: true }, // Denormalized for history
+        order: Number,
+        isRequired: Boolean,
+        category: String,
+        checked: { type: Boolean, default: false },
+        notes: String,
+        checkedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        checkedAt: Date,
+      },
+    ],
+
     // Reinspection tracking
     requiresReinspection: { type: Boolean, default: false },
     reinspectionReason: String,
@@ -225,6 +247,7 @@ const permitInspectionSchema = new mongoose.Schema(
             'status_updated',
             'note_added',
             'photo_added',
+            'checklist_updated',
             'completed',
             'cancelled',
           ],
@@ -277,6 +300,7 @@ permitInspectionSchema.index({ municipalityId: 1, result: 1 });
 
 // Virtual for has open violations
 permitInspectionSchema.virtual('hasOpenViolations').get(function () {
+  if (!this.violations || !Array.isArray(this.violations)) return false;
   return this.violations.some((v) => !v.corrected);
 });
 

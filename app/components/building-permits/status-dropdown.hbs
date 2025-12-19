@@ -1,0 +1,132 @@
+<div class="avitar-dropdown avitar-relative" {{on "click" this.stopPropagation}}>
+  {{! Dropdown Button }}
+  <button
+    type="button"
+    class="avitar-btn avitar-btn--{{this.currentStatusOption.color}}"
+    {{on "click" this.toggleDropdown}}
+    disabled={{this.isChanging}}
+  >
+    <i class="fas fa-{{this.currentStatusOption.icon}} avitar-mr-2"></i>
+    Status: {{this.currentStatusOption.label}}
+    <i class="fas fa-chevron-down avitar-ml-2"></i>
+  </button>
+
+  {{! Dropdown Menu }}
+  {{#if this.isOpen}}
+    <div
+      class="avitar-dropdown__menu avitar-dropdown__menu--right avitar-shadow-lg"
+      {{on "click" this.stopPropagation}}
+    >
+      <div class="avitar-dropdown__header">
+        <h4 class="avitar-font-semibold">Change Inspection Status</h4>
+      </div>
+
+      <div class="avitar-dropdown__content">
+        {{#each this.availableStatusOptions as |statusOption|}}
+          <button
+            type="button"
+            class="avitar-dropdown__item"
+            {{on "click" (fn this.selectStatus statusOption.value)}}
+          >
+            <i class="fas fa-{{statusOption.icon}} avitar-mr-2 avitar-text-{{statusOption.color}}"></i>
+            {{statusOption.label}}
+          </button>
+        {{/each}}
+      </div>
+    </div>
+
+    {{! Overlay to close dropdown when clicking outside }}
+    {{#unless this.showConfirmModal}}
+      <div class="avitar-fixed avitar-inset-0 avitar-z-10" {{on "click" this.closeDropdown}}></div>
+    {{/unless}}
+  {{/if}}
+</div>
+
+{{! Confirmation Modal - Rendered at document root to prevent positioning issues }}
+{{#if this.showConfirmModal}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeConfirmModal}}>
+      <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
+        <div class="avitar-modal__header">
+          <h2 class="avitar-modal__title">
+            <i class="fas fa-{{if (eq this.selectedStatus 'completed') 'check-circle' 'times-circle'}} avitar-mr-2"></i>
+            {{#if (eq this.selectedStatus "completed")}}
+              Complete Inspection
+            {{else if (eq this.selectedStatus "cancelled")}}
+              Cancel Inspection
+            {{/if}}
+          </h2>
+          <button type="button" class="avitar-modal__close" {{on "click" this.closeConfirmModal}}>
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          <p class="avitar-mb-4">
+            {{#if (eq this.selectedStatus "completed")}}
+              Please provide any final comments or notes about this inspection:
+            {{else if (eq this.selectedStatus "cancelled")}}
+              Please provide a reason for cancelling this inspection:
+            {{/if}}
+          </p>
+
+          <div>
+            <label class="avitar-label">
+              {{#if (eq this.selectedStatus "completed")}}
+                Completion Notes
+              {{else if (eq this.selectedStatus "cancelled")}}
+                Cancellation Reason
+              {{/if}}
+            </label>
+            <textarea
+              class="avitar-input"
+              rows="4"
+              placeholder={{if (eq this.selectedStatus "completed")
+                "Enter completion notes..."
+                "Enter cancellation reason..."
+              }}
+              value={{this.completionNotes}}
+              {{on "input" this.updateCompletionNotes}}
+            ></textarea>
+          </div>
+
+          {{#if (eq this.selectedStatus "completed")}}
+            <div class="avitar-alert avitar-alert--info avitar-mt-4">
+              <i class="fas fa-info-circle avitar-mr-2"></i>
+              Ensure all required checklist items are completed before marking this inspection as complete.
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.closeConfirmModal}}
+            disabled={{this.isChanging}}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--{{if (eq this.selectedStatus 'completed') 'success' 'danger'}}"
+            {{on "click" this.changeStatus}}
+            disabled={{this.isChanging}}
+          >
+            {{#if this.isChanging}}
+              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              Updating...
+            {{else}}
+              <i class="fas fa-{{if (eq this.selectedStatus 'completed') 'check' 'times'}} avitar-mr-2"></i>
+              {{#if (eq this.selectedStatus "completed")}}
+                Complete Inspection
+              {{else if (eq this.selectedStatus "cancelled")}}
+                Cancel Inspection
+              {{/if}}
+            {{/if}}
+          </button>
+        </div>
+      </div>
+    </div>
+  {{/in-element}}
+{{/if}}

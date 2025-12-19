@@ -42,6 +42,17 @@
 
       <li class="avitar-sidebar__nav-item">
         <LinkTo
+          @route="municipality.building-permits.settings.inspection-checklists"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          <i class="fas fa-list-check avitar-sidebar__nav-icon"></i>
+          <span>Inspection Checklists</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
           @route="municipality.building-permits.settings.users"
           class="avitar-sidebar__nav-link"
           @activeClass="avitar-sidebar__nav-link--active"

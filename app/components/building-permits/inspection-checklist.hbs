@@ -1,0 +1,123 @@
+<div class="avitar-p-4">
+  {{#if this.isLoading}}
+    <div class="avitar-flex avitar-justify-center avitar-items-center avitar-py-8">
+      {{lnr-icon "sync" class="avitar-text-2xl avitar-text-muted avitar-spin"}}
+    </div>
+  {{else if this.checklist.length}}
+    {{#each this.groupedByCategory as |group|}}
+      <div class="avitar-mb-4">
+        <h4 class="avitar-font-semibold avitar-mb-2 avitar-text-primary avitar-flex avitar-items-center avitar-gap-2 avitar-text-sm">
+          {{lnr-icon "folder" class="avitar-text-xs"}}
+          {{group.category}}
+        </h4>
+
+        <div class="avitar-space-y-2">
+          {{#each group.items as |item|}}
+            <div class="avitar-border avitar-rounded avitar-p-2 {{if item.checked 'avitar-bg-success-light' 'avitar-bg-gray-50'}}">
+              <div class="avitar-flex avitar-items-start avitar-gap-2">
+                {{! Checkbox }}
+                <div class="avitar-flex-shrink-0">
+                  <label class="avitar-flex avitar-items-center avitar-cursor-pointer">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{item.checked}}
+                      {{on "change" (fn this.toggleChecklistItem item)}}
+                      disabled={{includes this.savingItemIds item._id}}
+                    />
+                    {{#if item.isRequired}}
+                      <span class="avitar-text-danger avitar-ml-1 avitar-text-xs" title="Required">*</span>
+                    {{/if}}
+                  </label>
+                </div>
+
+                {{! Item Details }}
+                <div class="avitar-flex-1 avitar-min-w-0">
+                  <div class="avitar-flex avitar-justify-between avitar-items-start">
+                    <p class="avitar-text-sm {{if item.checked 'avitar-text-success' ''}}">
+                      {{item.itemText}}
+                    </p>
+
+                    {{! Saving Indicator }}
+                    {{#if (includes this.savingItemIds item._id)}}
+                      <div class="avitar-flex avitar-items-center avitar-gap-1 avitar-text-xs avitar-text-muted avitar-flex-shrink-0">
+                        {{lnr-icon "sync" class="avitar-spin"}}
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  {{! Compact Note Toggle }}
+                  <div class="avitar-mt-1">
+                    {{#if (includes this.expandedNoteIds item._id)}}
+                      {{! Expanded Note Field }}
+                      <div class="avitar-flex avitar-items-start avitar-gap-1">
+                        <textarea
+                          class="avitar-input avitar-text-xs avitar-flex-1"
+                          rows="2"
+                          placeholder="Add notes..."
+                          value={{item.notes}}
+                          {{on "input" (fn this.updateItemNotes item)}}
+                        ></textarea>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-muted"
+                          title="Collapse"
+                          {{on "click" (fn this.toggleNoteExpanded item._id)}}
+                        >
+                          {{lnr-icon "chevron-up"}}
+                        </button>
+                      </div>
+                    {{else}}
+                      {{! Collapsed Note - Show preview or add button }}
+                      {{#if item.notes}}
+                        <button
+                          type="button"
+                          class="avitar-text-xs avitar-text-muted avitar-flex avitar-items-center avitar-gap-1 hover:avitar-text-primary"
+                          {{on "click" (fn this.toggleNoteExpanded item._id)}}
+                        >
+                          {{lnr-icon "bubble" class="avitar-text-xs"}}
+                          <span class="avitar-truncate avitar-max-w-xs">{{item.notes}}</span>
+                        </button>
+                      {{else}}
+                        <button
+                          type="button"
+                          class="avitar-text-xs avitar-text-muted avitar-flex avitar-items-center avitar-gap-1 hover:avitar-text-primary"
+                          {{on "click" (fn this.toggleNoteExpanded item._id)}}
+                        >
+                          {{lnr-icon "bubble" class="avitar-text-xs"}}
+                          Add note
+                        </button>
+                      {{/if}}
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {{/each}}
+        </div>
+      </div>
+    {{/each}}
+
+    {{! Footer Summary }}
+    <div class="avitar-pt-3 avitar-border-t avitar-mt-4">
+      <div class="avitar-flex avitar-justify-between avitar-items-center avitar-text-xs avitar-text-muted">
+        <div>
+          {{lnr-icon "checkmark-circle" class="avitar-mr-1"}}
+          Auto-saved
+        </div>
+        <div>
+          <span class="avitar-font-semibold">{{count-checked this.checklist}}</span>
+          / {{this.checklist.length}} complete
+        </div>
+      </div>
+    </div>
+  {{else}}
+    <div class="avitar-empty-state avitar-py-6">
+      {{lnr-icon "clipboard" class="avitar-text-3xl avitar-text-muted avitar-mb-3"}}
+      <h3 class="avitar-mb-2 avitar-text-sm">No Checklist Available</h3>
+      <p class="avitar-text-muted avitar-text-xs">
+        No checklist template has been configured for this inspection type.
+      </p>
+    </div>
+  {{/if}}
+</div>

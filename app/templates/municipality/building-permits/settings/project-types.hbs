@@ -106,7 +106,7 @@
           <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-3">
             <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-flex-1">
               <div class="avitar-icon-wrapper avitar-bg-primary-light" style="width: 2rem; height: 2rem; font-size: 0.875rem;">
-                <i class="fas fa-{{projectType.icon}}"></i>
+                {{{lnr-icon projectType.icon}}}
               </div>
               <div class="avitar-flex-1 avitar-min-w-0">
                 <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1">
@@ -362,20 +362,24 @@
 
               <div>
                 <label class="avitar-label" for="project-type-icon">
-                  Icon (Font Awesome class name)
+                  Icon
                 </label>
-                <input
-                  type="text"
-                  id="project-type-icon"
-                  class="avitar-input"
-                  placeholder="home"
-                  value={{this.formData.icon}}
-                  {{on "input" (fn this.updateFormField "icon")}}
-                />
-                <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
-                  Enter Font Awesome icon name (without "fa-" prefix). Example: home,
-                  building, hammer
-                </p>
+                <div class="avitar-flex avitar-gap-3 avitar-items-center">
+                  <select
+                    id="project-type-icon"
+                    class="avitar-select avitar-flex-1"
+                    {{on "change" (fn this.updateFormField "icon")}}
+                  >
+                    {{#each this.iconOptions as |iconOption|}}
+                      <option value={{iconOption.value}} selected={{eq this.formData.icon iconOption.value}}>
+                        {{iconOption.label}}
+                      </option>
+                    {{/each}}
+                  </select>
+                  <div class="avitar-icon-wrapper avitar-bg-primary-light" style="width: 2.5rem; height: 2.5rem;">
+                    {{{lnr-icon this.formData.icon}}}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

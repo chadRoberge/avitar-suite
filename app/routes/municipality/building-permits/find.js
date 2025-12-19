@@ -10,8 +10,8 @@ export default class MunicipalityBuildingPermitsFindRoute extends Route {
 
   queryParams = {
     property_id: {
-      refreshModel: false
-    }
+      refreshModel: false,
+    },
   };
 
   async model() {
@@ -33,7 +33,9 @@ export default class MunicipalityBuildingPermitsFindRoute extends Route {
 
     // Load permits for the selected property
     if (this.propertySelection.selectedProperty) {
-      controller.loadPermitsForProperty(this.propertySelection.selectedProperty.id);
+      controller.loadPermitsForProperty(
+        this.propertySelection.selectedProperty.id,
+      );
     }
   }
 

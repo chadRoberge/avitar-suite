@@ -1312,7 +1312,9 @@ export default class HybridApiService extends Service.extend(Evented) {
       };
 
       if (resourceMap[resourceName]) {
-        console.log(`🎯 Mapping ${endpoint} -> ${resourceMap[resourceName]} collection`);
+        console.log(
+          `🎯 Mapping ${endpoint} -> ${resourceMap[resourceName]} collection`,
+        );
         return resourceMap[resourceName];
       }
     }

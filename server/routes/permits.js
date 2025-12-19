@@ -3,6 +3,8 @@ const router = express.Router();
 const multer = require('multer');
 const Permit = require('../models/Permit');
 const PermitInspection = require('../models/PermitInspection');
+const InspectionIssue = require('../models/InspectionIssue');
+const InspectionChecklistTemplate = require('../models/InspectionChecklistTemplate');
 const PermitDocument = require('../models/PermitDocument');
 const File = require('../models/File');
 const PropertyTreeNode = require('../models/PropertyTreeNode');
@@ -14,6 +16,8 @@ const mongoose = require('mongoose');
 const stripeService = require('../services/stripeService');
 const storageService = require('../services/storageService');
 const notificationService = require('../services/notificationService');
+const qrCodeGenerator = require('../utils/qr-code-generator');
+const batchGenerator = require('../utils/issue-card-batch-generator');
 
 // Configure multer for file uploads (store in memory)
 const upload = multer({
@@ -906,6 +910,253 @@ router.get(
         error: 'Failed to fetch projects',
         message: error.message,
       });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/permits/dashboard-stats
+ * Get dashboard statistics for building permits
+ */
+router.get(
+  '/municipalities/:municipalityId/permits/dashboard-stats',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const currentYear = new Date().getFullYear();
+      const lastYear = currentYear - 1;
+
+      // Get current year start and end dates
+      const currentYearStart = new Date(currentYear, 0, 1);
+      const currentYearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
+      const lastYearStart = new Date(lastYear, 0, 1);
+      const lastYearEnd = new Date(lastYear, 11, 31, 23, 59, 59);
+
+      // Get all permits for current year
+      const currentYearPermits = await Permit.find({
+        municipalityId,
+        createdAt: { $gte: currentYearStart, $lte: currentYearEnd },
+      }).lean();
+
+      // Get all permits for last year
+      const lastYearPermits = await Permit.find({
+        municipalityId,
+        createdAt: { $gte: lastYearStart, $lte: lastYearEnd },
+      }).lean();
+
+      // Calculate totals
+      const permitsThisYear = currentYearPermits.length;
+      const permitsLastYear = lastYearPermits.length;
+      const permitsVsLastYear =
+        permitsLastYear > 0
+          ? Math.round(
+              ((permitsThisYear - permitsLastYear) / permitsLastYear) * 100,
+            )
+          : 0;
+
+      // Calculate revenue from paid fees
+      const revenueThisYear = currentYearPermits.reduce((sum, p) => {
+        const permitRevenue = (p.fees || []).reduce((feeSum, fee) => {
+          return feeSum + (fee.paidAmount || 0);
+        }, 0);
+        return sum + permitRevenue;
+      }, 0);
+
+      const revenueLastYear = lastYearPermits.reduce((sum, p) => {
+        const permitRevenue = (p.fees || []).reduce((feeSum, fee) => {
+          return feeSum + (fee.paidAmount || 0);
+        }, 0);
+        return sum + permitRevenue;
+      }, 0);
+
+      const revenueVsLastYear =
+        revenueLastYear > 0
+          ? Math.round(
+              ((revenueThisYear - revenueLastYear) / revenueLastYear) * 100,
+            )
+          : 0;
+
+      // Status counts (current)
+      const statusCounts = await Permit.aggregate([
+        {
+          $match: {
+            municipalityId: new mongoose.Types.ObjectId(municipalityId),
+          },
+        },
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const statusMap = statusCounts.reduce((acc, { _id, count }) => {
+        acc[_id] = count;
+        return acc;
+      }, {});
+
+      // Calculate completed and processing time
+      const completedPermits = currentYearPermits.filter(
+        (p) => p.status === 'completed' || p.status === 'issued',
+      );
+      const permitsCompleted = completedPermits.length;
+
+      // Calculate average processing days
+      const processingDays = completedPermits
+        .filter((p) => p.createdAt && p.completedAt)
+        .map((p) =>
+          Math.ceil(
+            (new Date(p.completedAt) - new Date(p.createdAt)) /
+              (1000 * 60 * 60 * 24),
+          ),
+        );
+
+      const avgProcessingDays =
+        processingDays.length > 0
+          ? Math.round(
+              processingDays.reduce((sum, days) => sum + days, 0) /
+                processingDays.length,
+            )
+          : 0;
+
+      // Last year avg processing time for comparison
+      const lastYearCompleted = lastYearPermits.filter(
+        (p) => p.status === 'completed' || p.status === 'issued',
+      );
+      const lastYearProcessingDays = lastYearCompleted
+        .filter((p) => p.createdAt && p.completedAt)
+        .map((p) =>
+          Math.ceil(
+            (new Date(p.completedAt) - new Date(p.createdAt)) /
+              (1000 * 60 * 60 * 24),
+          ),
+        );
+
+      const lastYearAvgProcessing =
+        lastYearProcessingDays.length > 0
+          ? Math.round(
+              lastYearProcessingDays.reduce((sum, days) => sum + days, 0) /
+                lastYearProcessingDays.length,
+            )
+          : 0;
+
+      const avgProcessingVsLastYear =
+        lastYearAvgProcessing > 0
+          ? Math.abs(
+              Math.round(
+                ((avgProcessingDays - lastYearAvgProcessing) /
+                  lastYearAvgProcessing) *
+                  100,
+              ),
+            )
+          : 0;
+
+      // Permit type breakdown
+      const newHomePermits = currentYearPermits.filter(
+        (p) =>
+          p.permitType?.toLowerCase().includes('new home') ||
+          p.permitType?.toLowerCase().includes('new construction') ||
+          p.permitType?.toLowerCase().includes('residential new'),
+      ).length;
+
+      const commercialPermits = currentYearPermits.filter((p) =>
+        p.permitType?.toLowerCase().includes('commercial'),
+      ).length;
+
+      const renovationPermits = currentYearPermits.filter(
+        (p) =>
+          p.permitType?.toLowerCase().includes('renovation') ||
+          p.permitType?.toLowerCase().includes('remodel') ||
+          p.permitType?.toLowerCase().includes('addition'),
+      ).length;
+
+      const otherPermits =
+        permitsThisYear -
+        newHomePermits -
+        commercialPermits -
+        renovationPermits;
+
+      // Revenue by type
+      const newHomeRevenue = currentYearPermits
+        .filter(
+          (p) =>
+            p.permitType?.toLowerCase().includes('new home') ||
+            p.permitType?.toLowerCase().includes('new construction') ||
+            p.permitType?.toLowerCase().includes('residential new'),
+        )
+        .reduce((sum, p) => {
+          const permitRevenue = (p.fees || []).reduce(
+            (feeSum, fee) => feeSum + (fee.paidAmount || 0),
+            0,
+          );
+          return sum + permitRevenue;
+        }, 0);
+
+      const commercialRevenue = currentYearPermits
+        .filter((p) => p.permitType?.toLowerCase().includes('commercial'))
+        .reduce((sum, p) => {
+          const permitRevenue = (p.fees || []).reduce(
+            (feeSum, fee) => feeSum + (fee.paidAmount || 0),
+            0,
+          );
+          return sum + permitRevenue;
+        }, 0);
+
+      const renovationRevenue = currentYearPermits
+        .filter(
+          (p) =>
+            p.permitType?.toLowerCase().includes('renovation') ||
+            p.permitType?.toLowerCase().includes('remodel') ||
+            p.permitType?.toLowerCase().includes('addition'),
+        )
+        .reduce((sum, p) => {
+          const permitRevenue = (p.fees || []).reduce(
+            (feeSum, fee) => feeSum + (fee.paidAmount || 0),
+            0,
+          );
+          return sum + permitRevenue;
+        }, 0);
+
+      const otherRevenue =
+        revenueThisYear -
+        newHomeRevenue -
+        commercialRevenue -
+        renovationRevenue;
+
+      res.json({
+        currentYear,
+        permitsThisYear,
+        permitsVsLastYear,
+        revenueThisYear: Math.round(revenueThisYear),
+        revenueVsLastYear,
+        permitsCompleted,
+        avgProcessingDays,
+        avgProcessingDaysLastYear: lastYearAvgProcessing,
+        avgProcessingVsLastYear,
+        permitsOpen:
+          (statusMap.submitted || 0) +
+          (statusMap.under_review || 0) +
+          (statusMap.approved || 0),
+        permitsUnderReview: statusMap.under_review || 0,
+        permitsApproved: statusMap.approved || 0,
+        permitsInInspections: statusMap.inspections || 0,
+        permitsOnHold: statusMap.on_hold || 0,
+        newHomePermits,
+        newHomeRevenue: Math.round(newHomeRevenue),
+        commercialPermits,
+        commercialRevenue: Math.round(commercialRevenue),
+        renovationPermits,
+        renovationRevenue: Math.round(renovationRevenue),
+        otherPermits,
+        otherRevenue: Math.round(otherRevenue),
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
     }
   },
 );
@@ -3911,6 +4162,1375 @@ router.delete(
       console.error('❌ Error cancelling inspection:', error);
       res.status(500).json({
         error: 'Failed to cancel inspection',
+        message: error.message,
+      });
+    }
+  },
+);
+
+// ============================================================================
+// INSPECTION CHECKLIST TEMPLATE ROUTES
+// ============================================================================
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-checklist-templates
+ * List all checklist templates for a municipality
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-checklist-templates',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { inspectionType } = req.query;
+
+      const query = {
+        municipalityId,
+        isActive: true,
+      };
+
+      if (inspectionType) {
+        query.inspectionType = inspectionType;
+      }
+
+      const templates = await InspectionChecklistTemplate.find(query)
+        .sort({ inspectionType: 1, createdAt: -1 })
+        .populate('createdBy', 'first_name last_name')
+        .populate('updatedBy', 'first_name last_name');
+
+      res.json({ templates });
+    } catch (error) {
+      console.error('Error fetching checklist templates:', error);
+      res.status(500).json({
+        error: 'Failed to fetch checklist templates',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-checklist-templates/:templateId
+ * Get a single checklist template
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-checklist-templates/:templateId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { templateId } = req.params;
+
+      const template = await InspectionChecklistTemplate.findById(templateId)
+        .populate('createdBy', 'first_name last_name')
+        .populate('updatedBy', 'first_name last_name');
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error fetching checklist template:', error);
+      res.status(500).json({
+        error: 'Failed to fetch checklist template',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-checklist-templates
+ * Create a new checklist template
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-checklist-templates',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('create'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { name, description, inspectionType, items } = req.body;
+
+      // Validate required fields
+      if (!name || !inspectionType) {
+        return res.status(400).json({
+          error: 'Name and inspection type are required',
+        });
+      }
+
+      // Check if template already exists for this type
+      const existing = await InspectionChecklistTemplate.findOne({
+        municipalityId,
+        inspectionType,
+        isActive: true,
+      });
+
+      if (existing) {
+        return res.status(400).json({
+          error: 'A template for this inspection type already exists',
+        });
+      }
+
+      // Ensure items have order
+      const orderedItems = (items || []).map((item, index) => ({
+        ...item,
+        order: item.order !== undefined ? item.order : index,
+      }));
+
+      const template = new InspectionChecklistTemplate({
+        municipalityId,
+        name,
+        description,
+        inspectionType,
+        items: orderedItems,
+        createdBy: req.user._id,
+        updatedBy: req.user._id,
+      });
+
+      await template.save();
+
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Error creating checklist template:', error);
+      res.status(500).json({
+        error: 'Failed to create checklist template',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * PUT /api/municipalities/:municipalityId/inspection-checklist-templates/:templateId
+ * Update a checklist template
+ */
+router.put(
+  '/municipalities/:municipalityId/inspection-checklist-templates/:templateId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      const { name, description, items } = req.body;
+
+      const template = await InspectionChecklistTemplate.findById(templateId);
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Update fields
+      if (name) template.name = name;
+      if (description !== undefined) template.description = description;
+      if (items) {
+        // Ensure items have order
+        template.items = items.map((item, index) => ({
+          ...item,
+          order: item.order !== undefined ? item.order : index,
+        }));
+      }
+
+      template.updatedBy = req.user._id;
+      await template.save();
+
+      res.json(template);
+    } catch (error) {
+      console.error('Error updating checklist template:', error);
+      res.status(500).json({
+        error: 'Failed to update checklist template',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * DELETE /api/municipalities/:municipalityId/inspection-checklist-templates/:templateId
+ * Deactivate a checklist template (soft delete)
+ */
+router.delete(
+  '/municipalities/:municipalityId/inspection-checklist-templates/:templateId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('delete'),
+  async (req, res) => {
+    try {
+      const { templateId } = req.params;
+
+      const template = await InspectionChecklistTemplate.findById(templateId);
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      template.isActive = false;
+      template.updatedBy = req.user._id;
+      await template.save();
+
+      res.json({ message: 'Template deactivated successfully' });
+    } catch (error) {
+      console.error('Error deleting checklist template:', error);
+      res.status(500).json({
+        error: 'Failed to delete checklist template',
+        message: error.message,
+      });
+    }
+  },
+);
+
+// ============================================================================
+// INSPECTION CHECKLIST ROUTES
+// ============================================================================
+
+/**
+ * GET /api/municipalities/:municipalityId/inspections/:inspectionId/checklist
+ * Get checklist for an inspection (auto-initialize from template if not exists)
+ */
+router.get(
+  '/municipalities/:municipalityId/inspections/:inspectionId/checklist',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { inspectionId } = req.params;
+
+      const inspection = await PermitInspection.findById(inspectionId);
+
+      if (!inspection) {
+        return res.status(404).json({ error: 'Inspection not found' });
+      }
+
+      // If checklist already exists, return it
+      if (inspection.checklist && inspection.checklist.length > 0) {
+        return res.json({ checklist: inspection.checklist });
+      }
+
+      // Otherwise, initialize from template
+      const template = await InspectionChecklistTemplate.findOne({
+        municipalityId: inspection.municipalityId,
+        inspectionType: inspection.type,
+        isActive: true,
+      });
+
+      if (!template) {
+        // No template exists, return empty checklist
+        return res.json({ checklist: [] });
+      }
+
+      // Initialize checklist from template
+      inspection.checklist = template.items.map((item) => ({
+        templateId: template._id,
+        itemId: item._id,
+        itemText: item.text,
+        order: item.order,
+        isRequired: item.isRequired,
+        category: item.category,
+        checked: false,
+        notes: '',
+      }));
+
+      await inspection.save();
+
+      res.json({ checklist: inspection.checklist });
+    } catch (error) {
+      console.error('Error fetching inspection checklist:', error);
+      res.status(500).json({
+        error: 'Failed to fetch inspection checklist',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * PATCH /api/municipalities/:municipalityId/inspections/:inspectionId/checklist/:itemId
+ * Update a checklist item (auto-save)
+ */
+router.patch(
+  '/municipalities/:municipalityId/inspections/:inspectionId/checklist/:itemId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { inspectionId, itemId } = req.params;
+      const { checked, notes } = req.body;
+
+      const inspection = await PermitInspection.findById(inspectionId);
+
+      if (!inspection) {
+        return res.status(404).json({ error: 'Inspection not found' });
+      }
+
+      // Find the checklist item
+      const item = inspection.checklist.id(itemId);
+
+      if (!item) {
+        return res.status(404).json({ error: 'Checklist item not found' });
+      }
+
+      // Update fields
+      if (checked !== undefined) {
+        item.checked = checked;
+        if (checked) {
+          item.checkedBy = req.user._id;
+          item.checkedAt = new Date();
+        } else {
+          item.checkedBy = null;
+          item.checkedAt = null;
+        }
+      }
+
+      if (notes !== undefined) {
+        item.notes = notes;
+      }
+
+      inspection.updatedBy = req.user._id;
+      await inspection.save();
+
+      // Add to history
+      inspection.history.push({
+        action: 'checklist_updated',
+        performedBy: req.user._id,
+        timestamp: new Date(),
+        details: `Updated checklist item: ${item.itemText}`,
+      });
+
+      await inspection.save();
+
+      res.json({ item });
+    } catch (error) {
+      console.error('Error updating checklist item:', error);
+      res.status(500).json({
+        error: 'Failed to update checklist item',
+        message: error.message,
+      });
+    }
+  },
+);
+
+// ===============================================
+//   INSPECTION ISSUE (QR CARD) ENDPOINTS
+// ===============================================
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-issues/:issueNumber
+ * Get inspection issue by issue number (public access for scanning)
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { issueNumber } = req.params;
+
+      const issue = await InspectionIssue.findOne({ issueNumber })
+        .populate('municipalityId', 'name state')
+        .populate('permitId', 'permitNumber propertyAddress')
+        .populate('propertyId', 'location')
+        .populate('inspectionId', 'type scheduledDate')
+        .populate('createdBy', 'first_name last_name')
+        .populate('verifiedBy', 'first_name last_name');
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error fetching inspection issue:', error);
+      res.status(500).json({
+        error: 'Failed to fetch inspection issue',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/permits/:permitId/inspection-issues
+ * Get all inspection issues for a permit
+ */
+router.get(
+  '/municipalities/:municipalityId/permits/:permitId/inspection-issues',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { permitId } = req.params;
+
+      const issues = await InspectionIssue.find({
+        permitId,
+        isActive: true,
+      })
+        .populate('createdBy', 'first_name last_name')
+        .populate('verifiedBy', 'first_name last_name')
+        .populate('inspectionId', 'type scheduledDate')
+        .sort({ createdAt: -1 });
+
+      res.json({ issues });
+    } catch (error) {
+      console.error('Error fetching permit inspection issues:', error);
+      res.status(500).json({
+        error: 'Failed to fetch inspection issues',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/inspections/:inspectionId/issues
+ * Get all inspection issues linked to a specific inspection
+ */
+router.get(
+  '/municipalities/:municipalityId/inspections/:inspectionId/issues',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { inspectionId } = req.params;
+
+      const issues = await InspectionIssue.find({
+        inspectionId,
+        isActive: true,
+      })
+        .populate('createdBy', 'first_name last_name')
+        .populate('verifiedBy', 'first_name last_name')
+        .populate('permitId', 'permitNumber propertyAddress')
+        .sort({ createdAt: -1 });
+
+      res.json({ issues });
+    } catch (error) {
+      console.error('Error fetching inspection issues:', error);
+      res.status(500).json({
+        error: 'Failed to fetch inspection issues',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-issues
+ * List all inspection issues for municipality with filters
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-issues',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('read'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const {
+        status,
+        severity,
+        inspectorId,
+        propertyId,
+        limit = 50,
+        skip = 0,
+      } = req.query;
+
+      const query = {
+        municipalityId,
+        isActive: true,
+      };
+
+      if (status) {
+        query.status = status;
+      }
+
+      if (severity) {
+        query.severity = severity;
+      }
+
+      if (inspectorId) {
+        query.createdBy = inspectorId;
+      }
+
+      if (propertyId) {
+        query.propertyId = propertyId;
+      }
+
+      const issues = await InspectionIssue.find(query)
+        .populate('permitId', 'permitNumber propertyAddress')
+        .populate('propertyId', 'location')
+        .populate('createdBy', 'first_name last_name')
+        .populate('verifiedBy', 'first_name last_name')
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip(parseInt(skip));
+
+      const total = await InspectionIssue.countDocuments(query);
+
+      res.json({ issues, total, limit: parseInt(limit), skip: parseInt(skip) });
+    } catch (error) {
+      console.error('Error fetching inspection issues:', error);
+      res.status(500).json({
+        error: 'Failed to fetch inspection issues',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues
+ * Create inspection issue (when inspector scans card and fills out details)
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  upload.array('photos', 10),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const {
+        issueNumber,
+        permitId,
+        propertyId,
+        inspectionId,
+        description,
+        location,
+        severity,
+      } = req.body;
+
+      // Validate required fields
+      if (!issueNumber || !permitId || !propertyId || !description) {
+        return res.status(400).json({
+          error:
+            'Missing required fields: issueNumber, permitId, propertyId, description',
+        });
+      }
+
+      // Check if issue number already exists and has been scanned
+      const existingIssue = await InspectionIssue.findOne({ issueNumber });
+      if (existingIssue && existingIssue.status !== 'pending') {
+        return res.status(400).json({
+          error: 'This issue card has already been scanned and recorded',
+        });
+      }
+
+      // Upload photos if provided
+      const photos = [];
+      if (req.files && req.files.length > 0) {
+        const municipality = await Municipality.findById(municipalityId);
+
+        for (const file of req.files) {
+          const fileName = `${Date.now()}-${file.originalname}`;
+          const storagePath = storageService.generateOrganizedPath(fileName, {
+            state: municipality.state,
+            municipality: municipality.name,
+            municipalityId,
+            department: 'building-permits',
+            folder: 'inspection-issues',
+          });
+
+          const uploadResult = await storageService.uploadFile(
+            file.buffer,
+            storagePath,
+            {
+              contentType: file.mimetype,
+              visibility: 'private',
+            },
+          );
+
+          photos.push({
+            url: uploadResult.gcsUrl || uploadResult.localPath,
+            filename: file.originalname,
+            uploadedBy: req.user._id,
+            uploadedAt: new Date(),
+          });
+        }
+      }
+
+      // Create or update the issue
+      let issue;
+      if (existingIssue) {
+        // Update pending issue
+        existingIssue.permitId = permitId;
+        existingIssue.propertyId = propertyId;
+        existingIssue.inspectionId = inspectionId;
+        existingIssue.description = description;
+        existingIssue.location = location;
+        existingIssue.severity = severity || 'major';
+        existingIssue.photos = photos;
+        existingIssue.createdBy = req.user._id;
+        existingIssue.createdAt = new Date();
+        existingIssue.status = 'open';
+
+        existingIssue.history.push({
+          action: 'issue_created',
+          performedBy: req.user._id,
+          performedAt: new Date(),
+          details: { description },
+        });
+
+        issue = await existingIssue.save();
+      } else {
+        // Create new issue
+        issue = new InspectionIssue({
+          issueNumber,
+          municipalityId,
+          permitId,
+          propertyId,
+          inspectionId,
+          description,
+          location,
+          severity: severity || 'major',
+          photos,
+          createdBy: req.user._id,
+          createdAt: new Date(),
+          status: 'open',
+          history: [
+            {
+              action: 'issue_created',
+              performedBy: req.user._id,
+              performedAt: new Date(),
+              details: { description },
+            },
+          ],
+        });
+
+        await issue.save();
+      }
+
+      // Populate for response
+      await issue.populate('permitId', 'permitNumber propertyAddress');
+      await issue.populate('propertyId', 'location');
+      await issue.populate('createdBy', 'first_name last_name');
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error creating inspection issue:', error);
+      res.status(500).json({
+        error: 'Failed to create inspection issue',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * PATCH /api/municipalities/:municipalityId/inspection-issues/:issueNumber
+ * Update inspection issue details
+ */
+router.patch(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { issueNumber } = req.params;
+      const { description, location, severity, status } = req.body;
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      // Update fields
+      if (description !== undefined) issue.description = description;
+      if (location !== undefined) issue.location = location;
+      if (severity !== undefined) issue.severity = severity;
+      if (status !== undefined) issue.status = status;
+
+      issue.updatedBy = req.user._id;
+      await issue.save();
+
+      await issue.populate('permitId', 'permitNumber propertyAddress');
+      await issue.populate('createdBy', 'first_name last_name');
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error updating inspection issue:', error);
+      res.status(500).json({
+        error: 'Failed to update inspection issue',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/photos
+ * Upload photo to inspection issue (for inspectors)
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/photos',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { municipalityId, issueNumber } = req.params;
+      const { base64Data, caption } = req.body;
+
+      if (!base64Data) {
+        return res.status(400).json({ error: 'No photo data provided' });
+      }
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      // Parse base64 data
+      const matches = base64Data.match(/^data:(.+);base64,(.+)$/);
+      if (!matches) {
+        return res.status(400).json({ error: 'Invalid base64 data format' });
+      }
+
+      const mimeType = matches[1];
+      const buffer = Buffer.from(matches[2], 'base64');
+      const extension = mimeType.split('/')[1] || 'jpg';
+
+      // Upload to storage
+      const municipality = await Municipality.findById(municipalityId);
+      const fileName = `issue-photo-${Date.now()}.${extension}`;
+      const storagePath = storageService.generateOrganizedPath(fileName, {
+        state: municipality.state,
+        municipality: municipality.name,
+        municipalityId,
+        department: 'building-permits',
+        folder: `inspection-issues/${issueNumber}/photos`,
+      });
+
+      const uploadResult = await storageService.uploadFile(buffer, storagePath, {
+        contentType: mimeType,
+        visibility: 'private',
+      });
+
+      // Add photo to issue
+      const photo = {
+        url: uploadResult.gcsUrl || uploadResult.localPath,
+        filename: fileName,
+        caption: caption || '',
+        uploadedBy: req.user._id,
+        uploadedAt: new Date(),
+      };
+
+      issue.photos.push(photo);
+      issue.updatedBy = req.user._id;
+      await issue.save();
+
+      // Return the newly added photo with its _id
+      const addedPhoto = issue.photos[issue.photos.length - 1];
+
+      console.log(
+        `[API] Photo uploaded to issue ${issueNumber} by ${req.user.first_name} ${req.user.last_name}`,
+      );
+
+      res.json({ photo: addedPhoto });
+    } catch (error) {
+      console.error('Error uploading issue photo:', error);
+      res.status(500).json({
+        error: 'Failed to upload photo',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * DELETE /api/municipalities/:municipalityId/inspection-issues/:issueNumber/photos/:photoId
+ * Delete photo from inspection issue
+ */
+router.delete(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/photos/:photoId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { issueNumber, photoId } = req.params;
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      // Find and remove the photo
+      const photoIndex = issue.photos.findIndex(
+        (p) => p._id.toString() === photoId,
+      );
+
+      if (photoIndex === -1) {
+        return res.status(404).json({ error: 'Photo not found' });
+      }
+
+      // TODO: Optionally delete from storage service
+      // const photo = issue.photos[photoIndex];
+      // await storageService.deleteFile(photo.url);
+
+      issue.photos.splice(photoIndex, 1);
+      issue.updatedBy = req.user._id;
+      await issue.save();
+
+      console.log(
+        `[API] Photo deleted from issue ${issueNumber} by ${req.user.first_name} ${req.user.last_name}`,
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting issue photo:', error);
+      res.status(500).json({
+        error: 'Failed to delete photo',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/view
+ * Mark issue as viewed by contractor
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/view',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { issueNumber } = req.params;
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      // Only mark as viewed if not already viewed
+      if (!issue.viewedByContractor) {
+        issue.markViewedByContractor(req.user._id);
+        await issue.save();
+      }
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error marking issue as viewed:', error);
+      res.status(500).json({
+        error: 'Failed to mark issue as viewed',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/link
+ * Link a pending issue card to an inspection (used when inspector scans QR code)
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/link',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('create'),
+  async (req, res) => {
+    try {
+      const { municipalityId, issueNumber } = req.params;
+      const { inspectionId, permitId, propertyId } = req.body;
+
+      // Validate required fields
+      if (!inspectionId || !permitId || !propertyId) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'inspectionId, permitId, and propertyId are required',
+        });
+      }
+
+      // Find the issue by issue number
+      const issue = await InspectionIssue.findOne({
+        issueNumber: issueNumber.toUpperCase(),
+        municipalityId,
+        isActive: true,
+      });
+
+      if (!issue) {
+        return res.status(404).json({
+          error: 'Issue card not found',
+          message: `No issue card found with number ${issueNumber}`,
+        });
+      }
+
+      // Check if already linked (not in pending status)
+      if (issue.status !== 'pending') {
+        return res.status(400).json({
+          error: 'Issue card already used',
+          message: `This issue card has already been linked to an inspection (status: ${issue.status})`,
+        });
+      }
+
+      // Update the issue with inspection data
+      issue.inspectionId = inspectionId;
+      issue.permitId = permitId;
+      issue.propertyId = propertyId;
+      issue.status = 'open';
+      issue.createdBy = req.user._id;
+      issue.createdAt = new Date();
+
+      // Add history entry
+      issue.history.push({
+        action: 'issue_created',
+        performedBy: req.user._id,
+        performedAt: new Date(),
+        details: {
+          inspectionId,
+          permitId,
+          propertyId,
+          scannedBy: `${req.user.first_name} ${req.user.last_name}`,
+        },
+      });
+
+      await issue.save();
+
+      // Populate references for response
+      await issue.populate('permitId', 'permitNumber propertyAddress');
+      await issue.populate('propertyId', 'location');
+      await issue.populate('inspectionId', 'type scheduledDate');
+      await issue.populate('createdBy', 'first_name last_name');
+
+      console.log(
+        `✅ Issue card ${issueNumber} linked to inspection ${inspectionId} by ${req.user.first_name} ${req.user.last_name}`,
+      );
+
+      res.json({
+        success: true,
+        issue,
+        message: `Issue card ${issueNumber} successfully linked to this inspection`,
+      });
+    } catch (error) {
+      console.error('Error linking inspection issue:', error);
+      res.status(500).json({
+        error: 'Failed to link issue card',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/correction-photos
+ * Upload correction photos
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/correction-photos',
+  authenticateToken,
+  checkMunicipalityAccess,
+  upload.array('photos', 10),
+  async (req, res) => {
+    try {
+      const { municipalityId, issueNumber } = req.params;
+      const { notes } = req.body;
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No photos provided' });
+      }
+
+      // Upload photos
+      const municipality = await Municipality.findById(municipalityId);
+      const correctionPhotos = [];
+
+      for (const file of req.files) {
+        const fileName = `correction-${Date.now()}-${file.originalname}`;
+        const storagePath = storageService.generateOrganizedPath(fileName, {
+          state: municipality.state,
+          municipality: municipality.name,
+          municipalityId,
+          department: 'building-permits',
+          folder: `inspection-issues/${issueNumber}/corrections`,
+        });
+
+        const uploadResult = await storageService.uploadFile(
+          file.buffer,
+          storagePath,
+          {
+            contentType: file.mimetype,
+            visibility: 'private',
+          },
+        );
+
+        correctionPhotos.push({
+          url: uploadResult.gcsUrl || uploadResult.localPath,
+          filename: file.originalname,
+          uploadedBy: req.user._id,
+          uploadedAt: new Date(),
+        });
+      }
+
+      // Add correction
+      issue.addCorrection(req.user._id, notes, correctionPhotos);
+      await issue.save();
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error uploading correction photos:', error);
+      res.status(500).json({
+        error: 'Failed to upload correction photos',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/verify
+ * Verify correction (inspector action)
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/verify',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { issueNumber } = req.params;
+      const { approved, notes } = req.body;
+
+      if (approved === undefined) {
+        return res.status(400).json({ error: 'approved field is required' });
+      }
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      issue.verifyCorrection(req.user._id, approved, notes);
+      await issue.save();
+
+      await issue.populate('verifiedBy', 'first_name last_name');
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error verifying issue correction:', error);
+      res.status(500).json({
+        error: 'Failed to verify correction',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issues/:issueNumber/close
+ * Close inspection issue
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issues/:issueNumber/close',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('update'),
+  async (req, res) => {
+    try {
+      const { issueNumber } = req.params;
+      const { notes } = req.body;
+
+      const issue = await InspectionIssue.findOne({ issueNumber });
+
+      if (!issue) {
+        return res.status(404).json({ error: 'Inspection issue not found' });
+      }
+
+      issue.close(req.user._id, notes);
+      await issue.save();
+
+      res.json({ issue });
+    } catch (error) {
+      console.error('Error closing inspection issue:', error);
+      res.status(500).json({
+        error: 'Failed to close issue',
+        message: error.message,
+      });
+    }
+  },
+);
+
+// ============================================================================
+// INSPECTION ISSUE BATCH GENERATION ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issue-batches
+ * Generate a batch of inspection issue cards
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issue-batches',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('create'),
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { quantity } = req.body;
+
+      // Get municipality data for QR code generation
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({ error: 'Municipality not found' });
+      }
+
+      const organizationData = {
+        state: municipality.state,
+        municipality: municipality.name,
+        municipalityId: municipality._id.toString(),
+        municipalitySlug:
+          municipality.slug ||
+          municipality.name.toLowerCase().replace(/\s+/g, '-'),
+      };
+
+      // Generate batch
+      const batchResult = await batchGenerator.generateBatch({
+        municipalityId,
+        quantity: quantity || 10, // Default to 10 cards
+        organizationData,
+        createdBy: req.user._id,
+      });
+
+      res.json({
+        success: true,
+        batch: batchResult,
+      });
+    } catch (error) {
+      console.error('Error generating inspection issue batch:', error);
+      res.status(500).json({
+        error: 'Failed to generate batch',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-issue-batches/:batchId
+ * Get batch details and all associated issues
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-issue-batches/:batchId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { batchId } = req.params;
+
+      const batchDetails = await batchGenerator.getBatchDetails(batchId);
+
+      res.json({
+        success: true,
+        batch: batchDetails,
+      });
+    } catch (error) {
+      console.error('Error retrieving batch details:', error);
+      res.status(500).json({
+        error: 'Failed to retrieve batch',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /api/municipalities/:municipalityId/inspection-issue-batches/:batchId/mark-printed
+ * Mark batch as printed and cleanup QR code images from storage
+ */
+router.post(
+  '/municipalities/:municipalityId/inspection-issue-batches/:batchId/mark-printed',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('create'), // Use 'create' permission for consistency with batch generation
+  async (req, res) => {
+    try {
+      const { municipalityId, batchId } = req.params;
+
+      // Get municipality data for storage paths
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({ error: 'Municipality not found' });
+      }
+
+      const organizationData = {
+        state: municipality.state,
+        municipality: municipality.name,
+        municipalityId: municipality._id.toString(),
+        municipalitySlug:
+          municipality.slug ||
+          municipality.name.toLowerCase().replace(/\s+/g, '-'),
+      };
+
+      const result = await batchGenerator.markBatchAsPrinted(
+        batchId,
+        organizationData,
+      );
+
+      res.json({
+        success: true,
+        result,
+      });
+    } catch (error) {
+      console.error('Error marking batch as printed:', error);
+      res.status(500).json({
+        error: 'Failed to mark batch as printed',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * DELETE /api/municipalities/:municipalityId/inspection-issue-batches/:batchId
+ * Delete a batch (only if all cards are still in pending status)
+ */
+router.delete(
+  '/municipalities/:municipalityId/inspection-issue-batches/:batchId',
+  authenticateToken,
+  checkMunicipalityAccess,
+  checkPermitPermission('create'), // Use 'create' permission - if you can create batches, you can delete them
+  async (req, res) => {
+    try {
+      const { municipalityId, batchId } = req.params;
+
+      // Get municipality data for storage paths
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({ error: 'Municipality not found' });
+      }
+
+      const organizationData = {
+        state: municipality.state,
+        municipality: municipality.name,
+        municipalityId: municipality._id.toString(),
+        municipalitySlug:
+          municipality.slug ||
+          municipality.name.toLowerCase().replace(/\s+/g, '-'),
+      };
+
+      const result = await batchGenerator.deleteBatch(
+        batchId,
+        organizationData,
+      );
+
+      res.json({
+        success: true,
+        result,
+      });
+    } catch (error) {
+      console.error('Error deleting batch:', error);
+
+      // Check if error is about used cards
+      if (error.message.includes('cards have been used')) {
+        return res.status(400).json({
+          error: 'Cannot delete batch with used cards',
+          message: error.message,
+        });
+      }
+
+      res.status(500).json({
+        error: 'Failed to delete batch',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/inspection-issue-batches
+ * List all batches for a municipality
+ */
+router.get(
+  '/municipalities/:municipalityId/inspection-issue-batches',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { limit = 20, skip = 0 } = req.query;
+
+      // Find all unique batch IDs for this municipality
+      const batches = await InspectionIssue.aggregate([
+        {
+          $match: {
+            municipalityId: new mongoose.Types.ObjectId(municipalityId),
+            isActive: true,
+            batchId: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: '$batchId',
+            totalCards: { $sum: 1 },
+            pendingCount: {
+              $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+            },
+            openCount: {
+              $sum: { $cond: [{ $eq: ['$status', 'open'] }, 1, 0] },
+            },
+            resolvedCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $in: ['$status', ['verified', 'closed']],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            generatedAt: { $min: '$createdAt' },
+          },
+        },
+        { $sort: { generatedAt: -1 } },
+        { $skip: parseInt(skip) },
+        { $limit: parseInt(limit) },
+      ]);
+
+      const total = await InspectionIssue.distinct('batchId', {
+        municipalityId,
+        isActive: true,
+        batchId: { $exists: true, $ne: null },
+      });
+
+      res.json({
+        batches: batches.map((b) => ({
+          batchId: b._id.toString(),
+          totalCards: b.totalCards,
+          pendingCount: b.pendingCount,
+          openCount: b.openCount,
+          resolvedCount: b.resolvedCount,
+          generatedAt: b.generatedAt,
+        })),
+        total: total.length,
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+      });
+    } catch (error) {
+      console.error('Error listing batches:', error);
+      res.status(500).json({
+        error: 'Failed to list batches',
         message: error.message,
       });
     }

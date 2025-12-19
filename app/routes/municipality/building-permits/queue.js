@@ -17,9 +17,9 @@ export default class MunicipalityBuildingPermitsQueueRoute extends Route {
         throw new Error('No municipality selected');
       }
 
-      // Fetch the permits queue from the backend using API service
-      const queueData = await this.api.get(
-        `/municipalities/${municipalityId}/permits/queue?assignedToMe=false`,
+      // Fetch dashboard statistics
+      const dashboardStats = await this.api.get(
+        `/municipalities/${municipalityId}/permits/dashboard-stats`,
       );
 
       // Also fetch permits assigned to current user
@@ -38,25 +38,19 @@ export default class MunicipalityBuildingPermitsQueueRoute extends Route {
       }
 
       return {
-        queue: queueData.queue || [],
-        needingAttention: queueData.needingAttention || [],
-        expiringSoon: queueData.expiringSoon || [],
-        stats: queueData.stats || {},
+        stats: dashboardStats || {},
         myPermits,
         municipalityId,
       };
     } catch (error) {
-      console.error('Error loading permits queue:', error);
-      this.notifications.error('Failed to load permits queue');
+      console.error('Error loading dashboard:', error);
+      this.notifications.error('Failed to load dashboard');
       throw error;
     }
   }
 
   setupController(controller, model) {
     super.setupController(controller, model);
-    controller.queue = model.queue;
-    controller.needingAttention = model.needingAttention;
-    controller.expiringSoon = model.expiringSoon;
     controller.stats = model.stats;
     controller.myPermits = model.myPermits;
     controller.municipalityId = model.municipalityId;

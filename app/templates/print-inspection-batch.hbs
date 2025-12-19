@@ -1,0 +1,264 @@
+{{page-title "Print Issue Cards"}}
+
+<style>
+  /* Page Setup - US Letter Portrait */
+  @page {
+    size: letter portrait;
+    margin: 0.5in;
+  }
+
+  /* Print-specific styles */
+  @media print {
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .no-print,
+    .sync-status-indicator {
+      display: none !important;
+    }
+
+    .page-break {
+      page-break-after: always;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .issue-card {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  }
+
+  /* General card layout */
+  .print-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0.25in;
+  }
+
+  /* Grid layout - 3 columns x 2 rows = 6 cards per page */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.15in;
+    margin: 0;
+  }
+
+  @media print {
+    .print-container {
+      padding: 0;
+    }
+
+    .cards-grid {
+      grid-template-columns: repeat(3, 2.4in);
+      grid-template-rows: repeat(2, 4.85in);
+      gap: 0.15in;
+      margin: 0;
+    }
+  }
+
+  /* Each card is sized to fit exactly on the page with margins */
+  .issue-card {
+    border: 2px solid #333;
+    border-radius: 0.125in;
+    padding: 0.15in;
+    background: white;
+    width: 2.4in;
+    height: 4.85in;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  @media print {
+    .issue-card {
+      border-radius: 0;
+    }
+  }
+
+  .card-header {
+    text-align: center;
+    margin-bottom: 0.1in;
+    padding-bottom: 0.08in;
+    border-bottom: 2pt solid #333;
+  }
+
+  .municipality-name {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-bottom: 0.03in;
+  }
+
+  .card-title {
+    font-size: 9pt;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .qr-code-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.1in 0;
+  }
+
+  .qr-code-container {
+    width: 1.8in;
+    height: 1.8in;
+    border: 2pt solid #ddd;
+    border-radius: 0.05in;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qr-code-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .issue-number {
+    font-family: 'Courier New', monospace;
+    font-size: 12pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 0.08in;
+    padding: 0.06in;
+    background: #f5f5f5;
+    border-radius: 0.05in;
+  }
+
+  @media print {
+    .issue-number {
+      border-radius: 0;
+      background: #f0f0f0;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+
+  .card-instructions {
+    margin-top: 0.1in;
+    padding-top: 0.08in;
+    border-top: 1pt solid #ddd;
+    font-size: 7.5pt;
+    text-align: left;
+    line-height: 1.2;
+  }
+
+  .card-instructions strong {
+    display: block;
+    margin-bottom: 0.03in;
+    font-size: 8pt;
+  }
+
+  .card-instructions ol {
+    margin: 0.03in 0;
+    padding-left: 0.15in;
+  }
+
+  .card-instructions li {
+    margin-bottom: 0.02in;
+  }
+
+  .print-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+
+  @media print {
+    .print-controls {
+      display: none;
+    }
+  }
+</style>
+
+<div class="print-controls no-print">
+  <button
+    type="button"
+    class="avitar-btn avitar-btn--primary avitar-mb-2"
+    {{on "click" this.print}}
+  >
+    <i class="fas fa-print avitar-mr-2"></i>
+    Print Cards
+  </button>
+  <button
+    type="button"
+    class="avitar-btn avitar-btn--secondary"
+    {{on "click" this.close}}
+  >
+    <i class="fas fa-times avitar-mr-2"></i>
+    Close
+  </button>
+</div>
+
+<div class="print-container">
+  {{#if @model.batch.issues}}
+    <div class="cards-grid">
+      {{#each @model.batch.issues as |issue index|}}
+        <div class="issue-card">
+          <div class="card-header">
+            <div class="municipality-name">
+              {{or @model.municipality.name "Municipality"}}
+            </div>
+            <div class="card-title">
+              Building Inspection Issue Card
+            </div>
+          </div>
+
+          <div class="qr-code-section">
+            <div class="qr-code-container">
+              {{#if issue.qrCodeUrl}}
+                <img src="{{issue.qrCodeUrl}}" alt="QR Code for {{issue.issueNumber}}" />
+              {{else}}
+                <div style="text-align: center; color: #999;">
+                  <i class="fas fa-qrcode fa-3x"></i>
+                  <div style="margin-top: 10px; font-size: 12px;">QR Code</div>
+                </div>
+              {{/if}}
+            </div>
+
+            <div class="issue-number">
+              {{issue.issueNumber}}
+            </div>
+          </div>
+
+          <div class="card-instructions">
+            <strong>Contractor:</strong>
+            <ol>
+              <li>Scan QR code to view issue</li>
+              <li>Complete corrections</li>
+              <li>Upload photos of work</li>
+              <li>Request re-inspection</li>
+            </ol>
+          </div>
+        </div>
+
+        {{! Add page break after every 6 cards (3x2 grid) }}
+        {{#if (eq (mod (add index 1) 6) 0)}}
+          <div class="page-break"></div>
+        {{/if}}
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="avitar-empty-state">
+      <i class="fas fa-exclamation-circle fa-3x avitar-text-muted avitar-mb-4"></i>
+      <h3>No cards found in this batch</h3>
+    </div>
+  {{/if}}
+</div>

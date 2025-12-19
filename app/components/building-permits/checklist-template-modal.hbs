@@ -1,0 +1,250 @@
+{{#if @isOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.close}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}}>
+      {{! Header }}
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          <i class="fas fa-clipboard-check avitar-mr-2"></i>
+          {{#if @isEditMode}}
+            Edit Checklist Template
+          {{else}}
+            New Checklist Template
+          {{/if}}
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.close}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      {{! Body }}
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Template Name }}
+          <div>
+            <label class="avitar-label">
+              Template Name
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="e.g., Foundation Inspection Checklist"
+              value={{this.name}}
+              {{on "input" this.updateName}}
+            />
+          </div>
+
+          {{! Inspection Type }}
+          <div>
+            <label class="avitar-label">
+              Inspection Type
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <select
+              class="avitar-select"
+              {{on "change" this.setInspectionType}}
+              disabled={{@isEditMode}}
+            >
+              <option value="">Select inspection type...</option>
+              {{#each this.inspectionTypeOptions as |typeOption|}}
+                <option value={{typeOption.value}} selected={{eq this.inspectionType typeOption.value}}>
+                  {{typeOption.label}}
+                </option>
+              {{/each}}
+            </select>
+            {{#if @isEditMode}}
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Inspection type cannot be changed after creation
+              </p>
+            {{/if}}
+          </div>
+
+          {{! Description }}
+          <div>
+            <label class="avitar-label">Description (optional)</label>
+            <textarea
+              class="avitar-input"
+              rows="2"
+              placeholder="Describe what this checklist is for..."
+              value={{this.description}}
+              {{on "input" this.updateDescription}}
+            ></textarea>
+          </div>
+
+          {{! Checklist Items Section }}
+          <div class="avitar-border-t avitar-pt-4">
+            <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3">
+              <h3 class="avitar-font-semibold">
+                Checklist Items
+                <span class="avitar-text-danger">*</span>
+                {{#if this.items.length}}
+                  <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-ml-2">
+                    {{this.items.length}}
+                  </span>
+                {{/if}}
+              </h3>
+            </div>
+
+            {{! Existing Items List }}
+            {{#if this.items.length}}
+              <div class="avitar-space-y-2 avitar-mb-4">
+                {{#each this.items as |item index|}}
+                  <div class="avitar-border avitar-rounded avitar-p-3 avitar-bg-gray-50">
+                    <div class="avitar-flex avitar-gap-3 avitar-items-start">
+                      {{! Order/Move Buttons }}
+                      <div class="avitar-flex avitar-flex-col avitar-gap-1">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          {{on "click" (fn this.moveItemUp index)}}
+                          disabled={{eq index 0}}
+                          title="Move up"
+                        >
+                          <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <div class="avitar-text-xs avitar-text-center avitar-text-muted avitar-font-semibold">
+                          {{add index 1}}
+                        </div>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                          {{on "click" (fn this.moveItemDown index)}}
+                          disabled={{eq index (sub this.items.length 1)}}
+                          title="Move down"
+                        >
+                          <i class="fas fa-chevron-down"></i>
+                        </button>
+                      </div>
+
+                      {{! Item Details }}
+                      <div class="avitar-flex-1 avitar-space-y-2">
+                        <div class="avitar-flex avitar-gap-2 avitar-items-start">
+                          <div class="avitar-flex-1">
+                            <input
+                              type="text"
+                              class="avitar-input avitar-input--sm"
+                              placeholder="Item text..."
+                              value={{item.text}}
+                              {{on "input" (fn this.updateItemText index)}}
+                            />
+                          </div>
+                          <label class="avitar-flex avitar-items-center avitar-gap-2 avitar-cursor-pointer avitar-whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              class="avitar-checkbox"
+                              checked={{item.isRequired}}
+                              {{on "change" (fn this.toggleItemRequired index)}}
+                            />
+                            <span class="avitar-text-sm">Required</span>
+                          </label>
+                        </div>
+
+                        <div class="avitar-flex avitar-gap-2">
+                          <input
+                            type="text"
+                            class="avitar-input avitar-input--sm avitar-flex-1"
+                            placeholder="Category (optional)..."
+                            value={{item.category}}
+                            {{on "input" (fn this.updateItemCategory index)}}
+                          />
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--danger avitar-btn--sm"
+                            {{on "click" (fn this.removeItem index)}}
+                          >
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <div class="avitar-empty-state avitar-py-6 avitar-mb-4">
+                <i class="fas fa-list-check fa-2x avitar-text-muted avitar-mb-2"></i>
+                <p class="avitar-text-muted avitar-text-sm">No checklist items yet. Add items below.</p>
+              </div>
+            {{/if}}
+
+            {{! Add New Item Form }}
+            <div class="avitar-border avitar-rounded avitar-p-3 avitar-bg-primary-light">
+              <h4 class="avitar-font-semibold avitar-text-sm avitar-mb-3">Add New Item</h4>
+              <div class="avitar-space-y-2">
+                <div class="avitar-flex avitar-gap-2 avitar-items-start">
+                  <div class="avitar-flex-1">
+                    <input
+                      type="text"
+                      class="avitar-input avitar-input--sm"
+                      placeholder="Item text..."
+                      value={{this.newItemText}}
+                      {{on "input" this.updateNewItemText}}
+                    />
+                  </div>
+                  <label class="avitar-flex avitar-items-center avitar-gap-2 avitar-cursor-pointer avitar-whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{this.newItemIsRequired}}
+                      {{on "change" this.toggleNewItemRequired}}
+                    />
+                    <span class="avitar-text-sm">Required</span>
+                  </label>
+                </div>
+
+                <div class="avitar-flex avitar-gap-2">
+                  <input
+                    type="text"
+                    class="avitar-input avitar-input--sm avitar-flex-1"
+                    placeholder="Category (optional)..."
+                    value={{this.newItemCategory}}
+                    {{on "input" this.updateNewItemCategory}}
+                  />
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--primary avitar-btn--sm"
+                    {{on "click" this.addItem}}
+                    disabled={{not this.canAddItem}}
+                  >
+                    <i class="fas fa-plus avitar-mr-1"></i>
+                    Add Item
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {{! Footer }}
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.close}}
+          disabled={{this.isSaving}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.save}}
+          disabled={{or this.isSaving (not this.isValid)}}
+        >
+          {{#if this.isSaving}}
+            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            Saving...
+          {{else}}
+            <i class="fas fa-save avitar-mr-2"></i>
+            {{#if @isEditMode}}
+              Update Template
+            {{else}}
+              Create Template
+            {{/if}}
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}

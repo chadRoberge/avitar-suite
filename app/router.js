@@ -128,7 +128,10 @@ Router.map(function () {
       this.route('settings', function () {
         this.route('permit-types'); // Permit types configuration
         this.route('project-types'); // Project types configuration
-        this.route('inspections'); // Inspection types and workflows
+        this.route('inspections', function () {
+          this.route('print-batch', { path: '/print-batch/:batch_id' }); // Print QR code batch
+        }); // Inspection types and workflows
+        this.route('inspection-checklists'); // Inspection checklist templates
         this.route('users'); // Users and inspectors management
         this.route('documents'); // Document library management
       });
@@ -200,5 +203,10 @@ Router.map(function () {
     this.route('users');
     this.route('billing');
     this.route('reports');
+  });
+
+  // Standalone print routes (outside municipality to avoid auth issues in new windows)
+  this.route('print-inspection-batch', {
+    path: '/print/inspection-batch/:municipality_slug/:batch_id',
   });
 });

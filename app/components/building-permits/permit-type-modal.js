@@ -149,7 +149,22 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
       this.percentageRate = pt.feeSchedule?.percentageRate || 2.5;
       this.formula = pt.feeSchedule?.formula || '';
       this.linkedScheduleId = pt.feeSchedule?.linkedScheduleId || null;
-      this.departmentReviews = [...(pt.departmentReviews || [])];
+
+      // Normalize departmentReviews to ensure requiredDocuments are objects
+      this.departmentReviews = (pt.departmentReviews || []).map((dept) => ({
+        ...dept,
+        requiredDocuments: (dept.requiredDocuments || []).map((doc) =>
+          typeof doc === 'string'
+            ? {
+                name: doc,
+                description: '',
+                fileTypes: [],
+                isMandatory: true,
+              }
+            : doc,
+        ),
+      }));
+
       this.customFormFields = [...(pt.customFormFields || [])];
       this.requiredDocuments = [...(pt.requiredDocuments || [])];
       this.suggestedDocuments = [...(pt.suggestedDocuments || [])];
@@ -384,6 +399,14 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
     }
   }
 
+  // Helper to check if a document is selected for a department
+  isDepartmentDocumentSelected(dept, docName) {
+    if (!dept?.requiredDocuments) return false;
+    return dept.requiredDocuments.some((d) =>
+      typeof d === 'string' ? d === docName : d.name === docName,
+    );
+  }
+
   @action
   toggleDepartmentDocument(deptIndex, docName, event) {
     const departments = [...this.departmentReviews];
@@ -391,11 +414,19 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
     const requiredDocs = dept.requiredDocuments || [];
 
     if (event.target.checked) {
-      // Add document
-      dept.requiredDocuments = [...requiredDocs, docName];
+      // Add document as object with required schema fields
+      const docObject = {
+        name: docName,
+        description: '',
+        fileTypes: [],
+        isMandatory: true,
+      };
+      dept.requiredDocuments = [...requiredDocs, docObject];
     } else {
-      // Remove document
-      dept.requiredDocuments = requiredDocs.filter((d) => d !== docName);
+      // Remove document by comparing name property
+      dept.requiredDocuments = requiredDocs.filter(
+        (d) => (typeof d === 'string' ? d : d.name) !== docName,
+      );
     }
 
     departments[deptIndex] = dept;

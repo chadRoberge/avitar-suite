@@ -40,11 +40,12 @@ class NotificationService {
       }
 
       // Check notification permissions (includes user preferences + subscription features)
-      const permission = await notificationPermissionService.canUserReceiveNotification(
-        userId,
-        notificationType,
-        { municipalityId, moduleName: data?.moduleName }
-      );
+      const permission =
+        await notificationPermissionService.canUserReceiveNotification(
+          userId,
+          notificationType,
+          { municipalityId, moduleName: data?.moduleName },
+        );
 
       if (!permission.allowed) {
         console.log(
@@ -61,7 +62,7 @@ class NotificationService {
       // Log which subscriptions granted permission
       if (permission.payingSources.length > 0) {
         console.log(
-          `Notification permission granted by: ${permission.payingSources.map(s => s.name).join(', ')}`,
+          `Notification permission granted by: ${permission.payingSources.map((s) => s.name).join(', ')}`,
         );
       }
 

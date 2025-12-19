@@ -1,6 +1,6 @@
 {{page-title "Inspection Details"}}
 
-<div class="avitar-container avitar-py-6">
+<div class="avitar-container avitar-py-6 avitar-m-4">
   {{! Back Button }}
   <div class="avitar-mb-4">
     <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.goBack}}>
@@ -32,7 +32,7 @@
             {{/if}}
           </div>
         </div>
-        <div class="avitar-flex avitar-gap-2">
+        <div class="avitar-flex avitar-gap-2 avitar-items-center">
           <span class={{this.getStatusBadge this.inspection.status}}>
             {{this.formatStatus this.inspection.status}}
           </span>
@@ -41,14 +41,20 @@
               {{this.formatStatus this.inspection.result}}
             </span>
           {{/if}}
+          {{! Status Dropdown Component }}
+          <BuildingPermits::StatusDropdown
+            @inspection={{this.inspection}}
+            @municipalityId={{this.municipality.currentMunicipality.id}}
+            @onStatusChange={{this.handleStatusChange}}
+          />
         </div>
       </div>
     </div>
 
     <div class="avitar-card__body">
-      <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6">
+      <div class="avitar-flex avitar-row avitar-gap-6">
         {{! Scheduled Date/Time }}
-        <div>
+        <div class="avitar-flex-1">
           <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Scheduled Date & Time</div>
           <div class="avitar-font-semibold">
             {{this.formatDate this.inspection.scheduledDate}}
@@ -61,7 +67,7 @@
         </div>
 
         {{! Inspector }}
-        <div>
+        <div class="avitar-flex-1">
           <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Inspector</div>
           {{#if this.inspection.inspector}}
             <div class="avitar-font-semibold">
@@ -76,7 +82,7 @@
         </div>
 
         {{! Completed Date }}
-        <div>
+        <div class="avitar-flex-1"> 
           <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Completed Date</div>
           {{#if this.inspection.completedAt}}
             <div class="avitar-font-semibold">
@@ -110,91 +116,92 @@
     </div>
   </div>
 
-  <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
-    {{! Left Column - Photos and Notes }}
-    <div class="avitar-space-y-6">
-      {{! Photos Section }}
-      <div class="avitar-card">
-        <div class="avitar-card__header">
-          <h2 class="avitar-card__title">
-            {{lnr-icon "camera" class="avitar-mr-2"}}
-            Photos
-          </h2>
-        </div>
-        <div class="avitar-card__body">
-          {{! Upload Photo Form }}
-          <div class="avitar-mb-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded">
-            <label class="avitar-label avitar-mb-2">Upload Photo</label>
-            <input
-              type="file"
-              class="avitar-input avitar-mb-2"
-              accept="image/*"
-              capture="environment"
-              {{on "change" this.handlePhotoSelect}}
-              disabled={{this.isUploadingPhoto}}
-            />
-            <input
-              type="text"
-              class="avitar-input avitar-mb-2"
-              placeholder="Caption (optional)"
-              value={{this.photoCaption}}
-              {{on "input" this.updatePhotoCaption}}
-              disabled={{this.isUploadingPhoto}}
-            />
-            {{#if this.isUploadingPhoto}}
-              <div class="avitar-text-sm avitar-text-muted">
-                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
-                Uploading photo...
-              </div>
+  {{! Single Column with Four Tabs }}
+  <div class="avitar-card avitar-card--allow-sticky">
+    {{! Tab Header - Sticky with Dynamic Action Button }}
+    <div class="avitar-card__header avitar-card__header--sticky avitar-bg-gray-50">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div class="avitar-tabs">
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'checklist') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab "checklist")}}
+          >
+            {{lnr-icon "clipboard" class="avitar-mr-1"}}
+            Checklist
+            {{#if this.checklistLoaded}}
+              <span class="avitar-badge avitar-badge--{{if (eq this.checklistCompletionPercent 100) 'success' 'info'}} avitar-badge--sm avitar-ml-1">
+                {{this.checklistCompletionPercent}}%
+              </span>
             {{/if}}
-          </div>
-
-          {{! Photos Grid }}
-          {{#if this.inspection.photos.length}}
-            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
-              {{#each this.inspection.photos as |photo|}}
-                <div class="avitar-card avitar-card--sm">
-                  <img src={{photo.url}} alt={{photo.caption}} class="avitar-w-full avitar-h-48 avitar-object-cover avitar-rounded-t" />
-                  {{#if photo.caption}}
-                    <div class="avitar-p-2 avitar-text-xs">
-                      {{photo.caption}}
-                    </div>
-                  {{/if}}
-                  <div class="avitar-p-2 avitar-text-xs avitar-text-muted avitar-border-t">
-                    {{this.formatDate photo.uploadedAt}}
-                  </div>
-                </div>
-              {{/each}}
-            </div>
-          {{else}}
-            <div class="avitar-empty-state avitar-py-6">
-              {{lnr-icon "camera" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
-              <p class="avitar-text-muted">No photos uploaded yet</p>
-            </div>
-          {{/if}}
-        </div>
-      </div>
-
-      {{! Notes Section }}
-      <div class="avitar-card">
-        <div class="avitar-card__header">
-          <h2 class="avitar-card__title">
-            {{lnr-icon "file-add" class="avitar-mr-2"}}
+          </button>
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'issues') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab "issues")}}
+          >
+            {{lnr-icon "warning" class="avitar-mr-1"}}
+            Issues
+            {{#if this.hasLinkedIssues}}
+              <span class="avitar-badge avitar-badge--warning avitar-badge--sm avitar-ml-1">
+                {{this.linkedIssues.length}}
+              </span>
+            {{/if}}
+          </button>
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'photos') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab "photos")}}
+          >
+            {{lnr-icon "camera" class="avitar-mr-1"}}
+            Photos
+            {{#if this.inspection.photos.length}}
+              <span class="avitar-badge avitar-badge--info avitar-badge--sm avitar-ml-1">
+                {{this.inspection.photos.length}}
+              </span>
+            {{/if}}
+          </button>
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'notes') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab "notes")}}
+          >
+            {{lnr-icon "file-add" class="avitar-mr-1"}}
             Notes
-          </h2>
+            {{#if this.inspection.notes.length}}
+              <span class="avitar-badge avitar-badge--info avitar-badge--sm avitar-ml-1">
+                {{this.inspection.notes.length}}
+              </span>
+            {{/if}}
+          </button>
         </div>
-        <div class="avitar-card__body">
-          {{! Add Note Form }}
-          <div class="avitar-mb-4">
-            <label class="avitar-label avitar-mb-2">Add Note</label>
-            <textarea
-              class="avitar-input avitar-mb-2"
-              rows="3"
-              placeholder="Write a note about this inspection..."
-              value={{this.noteContent}}
-              {{on "input" this.updateNoteContent}}
-              disabled={{this.isAddingNote}}
-            ></textarea>
+
+        {{! Dynamic Action Button based on active tab }}
+        <div class="avitar-flex-shrink-0">
+          {{#if (eq this.activeTab "issues")}}
+            <BuildingPermits::QrIssueScanner
+              @inspection={{this.inspection}}
+              @municipalityId={{this.model.municipalityId}}
+              @onIssueLinked={{this.handleIssueLinked}}
+            />
+          {{else if (eq this.activeTab "photos")}}
+            <label class="avitar-btn avitar-btn--primary avitar-btn--sm">
+              {{#if this.isUploadingPhoto}}
+                {{lnr-icon "sync" class="avitar-spin"}}
+              {{else}}
+                {{lnr-icon "camera" class="avitar-mr-1"}}
+                Add Photo
+              {{/if}}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                class="avitar-hidden"
+                {{on "change" this.handlePhotoSelect}}
+                disabled={{this.isUploadingPhoto}}
+              />
+            </label>
+          {{else if (eq this.activeTab "notes")}}
             <button
               type="button"
               class="avitar-btn avitar-btn--primary avitar-btn--sm"
@@ -202,13 +209,124 @@
               disabled={{or this.isAddingNote (not this.noteContent)}}
             >
               {{#if this.isAddingNote}}
-                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
-                Adding...
+                {{lnr-icon "sync" class="avitar-spin"}}
               {{else}}
-                {{lnr-icon "plus-circle" class="avitar-mr-2"}}
+                {{lnr-icon "plus-circle" class="avitar-mr-1"}}
                 Add Note
               {{/if}}
             </button>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{! Tab Content }}
+    <div class="avitar-card__body avitar-p-0">
+      {{#if (eq this.activeTab "checklist")}}
+        {{! Inspection Checklist Component }}
+        <BuildingPermits::InspectionChecklist
+          @inspection={{this.inspection}}
+          @municipalityId={{this.municipality.currentMunicipality.id}}
+          @onChecklistLoaded={{this.handleChecklistLoaded}}
+        />
+
+      {{else if (eq this.activeTab "issues")}}
+        {{! Issues Tab Content }}
+        <div class="avitar-p-4">
+          {{#if this.hasLinkedIssues}}
+            <div class="avitar-space-y-3">
+              {{#each this.linkedIssues as |issue|}}
+                <div class="avitar-card avitar-bg-gray-50">
+                  <div class="avitar-card__body avitar-p-4">
+                    <div class="avitar-flex avitar-justify-between avitar-items-start">
+                      <div class="avitar-flex-1">
+                        <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-2">
+                          <span class="avitar-font-mono avitar-font-semibold">
+                            {{issue.issueNumber}}
+                          </span>
+                          <span class={{this.getIssueStatusBadge issue.status}}>
+                            {{this.formatStatus issue.status}}
+                          </span>
+                          <span class={{this.getIssueSeverityBadge issue.severity}}>
+                            {{this.formatStatus issue.severity}}
+                          </span>
+                        </div>
+                        {{#if issue.description}}
+                          <p class="avitar-text-sm avitar-mb-2">{{issue.description}}</p>
+                        {{else}}
+                          <p class="avitar-text-sm avitar-text-muted avitar-italic avitar-mb-2">
+                            No description added yet
+                          </p>
+                        {{/if}}
+                        {{#if issue.location}}
+                          <div class="avitar-text-xs avitar-text-muted">
+                            {{lnr-icon "map-marker" class="avitar-mr-1"}}
+                            {{issue.location}}
+                          </div>
+                        {{/if}}
+                      </div>
+                      <div class="avitar-flex avitar-flex-col avitar-items-end avitar-gap-2">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                          {{on "click" (fn this.openEditIssueModal issue)}}
+                        >
+                          {{lnr-icon "pencil"}}
+                        </button>
+                        <div class="avitar-text-right avitar-text-xs avitar-text-muted">
+                          {{#if issue.createdBy}}
+                            <div>{{issue.createdBy.first_name}} {{issue.createdBy.last_name}}</div>
+                          {{/if}}
+                          <div>{{this.formatDate issue.createdAt}}</div>
+                        </div>
+                      </div>
+                    </div>
+                    {{#if issue.photos.length}}
+                      <div class="avitar-mt-3 avitar-pt-3 avitar-border-t">
+                        <div class="avitar-text-xs avitar-text-muted">
+                          {{lnr-icon "camera" class="avitar-mr-1"}}
+                          {{issue.photos.length}} photo(s) attached
+                        </div>
+                      </div>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              {{lnr-icon "frame-expand" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
+              <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Issue Cards</h3>
+              <p class="avitar-text-muted avitar-mb-4">
+                Click "Scan Issue Card" to link issue cards to this inspection
+              </p>
+            </div>
+          {{/if}}
+        </div>
+
+      {{else if (eq this.activeTab "photos")}}
+        {{! Photo Gallery Component }}
+        <BuildingPermits::InspectionPhotoGallery
+          @inspection={{this.inspection}}
+          @municipalityId={{this.municipality.currentMunicipality.id}}
+          @onPhotoAdded={{this.handlePhotoAdded}}
+          @onPhotoDeleted={{this.handlePhotoDeleted}}
+        />
+
+      {{else if (eq this.activeTab "notes")}}
+        {{! Notes Tab Content }}
+        <div class="avitar-p-4">
+          {{! Add Note Form }}
+          <div class="avitar-mb-4">
+            <textarea
+              id="inspection-note-content"
+              class="avitar-input"
+              rows="3"
+              placeholder="Write a note about this inspection..."
+              value={{this.noteContent}}
+              {{on "input" this.updateNoteContent}}
+              disabled={{this.isAddingNote}}
+            ></textarea>
           </div>
 
           {{! Notes List }}
@@ -229,120 +347,286 @@
           {{else}}
             <div class="avitar-empty-state avitar-py-6">
               {{lnr-icon "file-add" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
-              <p class="avitar-text-muted">No notes added yet</p>
+              <p class="avitar-text-muted">No notes added yet. Type a note above and click "Add Note".</p>
             </div>
           {{/if}}
         </div>
-      </div>
+      {{/if}}
     </div>
+  </div>
 
-    {{! Right Column - Status Updates and History }}
-    <div class="avitar-space-y-6">
-      {{! Update Status Section }}
-      <div class="avitar-card">
-        <div class="avitar-card__header">
-          <h2 class="avitar-card__title">
-            {{lnr-icon "pencil" class="avitar-mr-2"}}
-            Update Status
-          </h2>
-        </div>
-        <div class="avitar-card__body">
-          <div class="avitar-space-y-4">
-            <div>
-              <label class="avitar-label">Status</label>
-              <select class="avitar-select" value={{this.selectedStatus}} {{on "change" this.setStatus}}>
-                <option value="">Select Status...</option>
-                {{#each this.statusOptions as |statusOption|}}
-                  <option value={{statusOption.value}}>
-                    {{statusOption.label}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
-
-            <div>
-              <label class="avitar-label">Result</label>
-              <select class="avitar-select" value={{this.selectedResult}} {{on "change" this.setResult}}>
-                {{#each this.resultOptions as |resultOption|}}
-                  <option value={{resultOption.value}}>
-                    {{resultOption.label}}
-                  </option>
-                {{/each}}
-              </select>
-            </div>
-
-            <div>
-              <label class="avitar-label">Comments</label>
-              <textarea
-                class="avitar-input"
-                rows="4"
-                placeholder="Add comments about this status change..."
-                value={{this.statusComments}}
-                {{on "input" this.updateStatusComments}}
-              ></textarea>
-            </div>
-
-            <button
-              type="button"
-              class="avitar-btn avitar-btn--primary avitar-w-full"
-              {{on "click" this.updateInspectionStatus}}
-              disabled={{or this.isUpdatingStatus (not this.selectedStatus)}}
-            >
-              {{#if this.isUpdatingStatus}}
-                <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
-                Updating...
-              {{else}}
-                {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
-                Update Status
-              {{/if}}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {{! History Section }}
-      <div class="avitar-card">
-        <div class="avitar-card__header">
-          <h2 class="avitar-card__title">
-            {{lnr-icon "history" class="avitar-mr-2"}}
-            History
-          </h2>
-        </div>
-        <div class="avitar-card__body">
-          {{#if this.inspection.history.length}}
-            <div class="avitar-space-y-3">
-              {{#each this.inspection.history as |historyItem|}}
-                <div class="avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+  {{! Status Change History - Full Width at Bottom }}
+  <div class="avitar-card avitar-mt-6">
+    <div class="avitar-card__header">
+      <h2 class="avitar-card__title">
+        {{lnr-icon "history" class="avitar-mr-2"}}
+        Status Change History
+      </h2>
+    </div>
+    <div class="avitar-card__body">
+      {{#if this.inspection.history.length}}
+        <div class="avitar-space-y-3">
+          {{#each this.inspection.history as |historyItem|}}
+            <div class="avitar-p-4 avitar-bg-gray-50 avitar-rounded">
+              <div class="avitar-flex avitar-justify-between avitar-items-start">
+                <div class="avitar-flex-1">
                   <div class="avitar-font-semibold avitar-text-sm avitar-mb-1">
                     {{this.formatStatus historyItem.action}}
                   </div>
                   {{#if historyItem.details}}
-                    <div class="avitar-text-xs avitar-text-muted avitar-mb-2">
+                    <div class="avitar-text-sm avitar-text-muted avitar-mb-2">
                       {{#if historyItem.details.reason}}
                         Reason: {{historyItem.details.reason}}
                       {{/if}}
                       {{#if historyItem.details.newStatus}}
                         Status changed to {{this.formatStatus historyItem.details.newStatus}}
                       {{/if}}
+                      {{#if historyItem.details.previousStatus}}
+                        <span class="avitar-mx-1">→</span>
+                        from {{this.formatStatus historyItem.details.previousStatus}}
+                      {{/if}}
                     </div>
                   {{/if}}
-                  <div class="avitar-text-xs avitar-text-muted">
-                    {{#if historyItem.performedBy}}
-                      {{historyItem.performedBy.first_name}} {{historyItem.performedBy.last_name}} •
-                    {{/if}}
-                    {{this.formatDate historyItem.performedAt}}
-                  </div>
                 </div>
-              {{/each}}
+                <div class="avitar-text-xs avitar-text-muted avitar-text-right">
+                  {{#if historyItem.performedBy}}
+                    <div class="avitar-font-medium">
+                      {{historyItem.performedBy.first_name}} {{historyItem.performedBy.last_name}}
+                    </div>
+                  {{/if}}
+                  <div>{{this.formatDate historyItem.performedAt}}</div>
+                  <div>{{this.formatTime historyItem.performedAt}}</div>
+                </div>
+              </div>
             </div>
-          {{else}}
-            <div class="avitar-empty-state avitar-py-6">
-              {{lnr-icon "history" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
-              <p class="avitar-text-muted">No history available</p>
+          {{/each}}
+        </div>
+      {{else}}
+        <div class="avitar-empty-state avitar-py-6">
+          {{lnr-icon "history" class="avitar-text-2xl avitar-text-muted avitar-mb-3"}}
+          <p class="avitar-text-muted">No status change history available</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+{{! Edit Issue Modal - Rendered at document body level }}
+{{#if this.showEditIssueModal}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    {{!-- template-lint-disable no-invalid-interactive --}}
+    <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeEditIssueModal}}>
+      <div class="avitar-modal avitar-modal--md" role="dialog" aria-modal="true" {{on "click" this.stopPropagation}}>
+        <div class="avitar-modal__header">
+          <h2 class="avitar-modal__title">
+            {{lnr-icon "pencil" class="avitar-mr-2"}}
+            Edit Issue Card
+          </h2>
+          <button type="button" class="avitar-modal__close" {{on "click" this.closeEditIssueModal}}>
+            {{lnr-icon "cross"}}
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          {{#if this.editingIssue}}
+            <div class="avitar-space-y-4">
+              {{! Issue Number Display }}
+              <div class="avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+                <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Issue Number</div>
+                <div class="avitar-font-mono avitar-font-semibold">
+                  {{this.editingIssue.issueNumber}}
+                </div>
+              </div>
+
+              {{! Description }}
+              <div>
+                <label class="avitar-label" for="issue-description">Description</label>
+                <textarea
+                  id="issue-description"
+                  class="avitar-input"
+                  rows="3"
+                  placeholder="Describe the issue found during inspection..."
+                  value={{this.issueDescription}}
+                  {{on "input" (fn this.updateIssueField "issueDescription")}}
+                ></textarea>
+              </div>
+
+              {{! Location }}
+              <div>
+                <label class="avitar-label" for="issue-location">Location</label>
+                <input
+                  id="issue-location"
+                  type="text"
+                  class="avitar-input"
+                  placeholder="e.g., North wall, second floor, kitchen area..."
+                  value={{this.issueLocation}}
+                  {{on "input" (fn this.updateIssueField "issueLocation")}}
+                />
+              </div>
+
+              {{! Severity }}
+              <div>
+                <label class="avitar-label" for="issue-severity">Severity</label>
+                <select
+                  id="issue-severity"
+                  class="avitar-select"
+                  {{on "change" (fn this.updateIssueField "issueSeverity")}}
+                >
+                  {{#each this.severityOptions as |severityOption|}}
+                    <option
+                      value={{severityOption.value}}
+                      selected={{eq this.issueSeverity severityOption.value}}
+                    >
+                      {{severityOption.label}} - {{severityOption.description}}
+                    </option>
+                  {{/each}}
+                </select>
+              </div>
+
+              {{! Photos Section }}
+              <div>
+                <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-2">
+                  <label class="avitar-label">Photos</label>
+                  <label class="avitar-btn avitar-btn--sm avitar-btn--secondary">
+                    {{#if this.isUploadingIssuePhoto}}
+                      {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+                      Uploading...
+                    {{else}}
+                      {{lnr-icon "camera" class="avitar-mr-2"}}
+                      Add Photo
+                    {{/if}}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      class="avitar-hidden"
+                      {{on "change" this.handleIssuePhotoSelect}}
+                      disabled={{this.isUploadingIssuePhoto}}
+                    />
+                  </label>
+                </div>
+
+                {{#if this.issuePhotos.length}}
+                  <div class="avitar-grid avitar-grid-cols-3 avitar-gap-2">
+                    {{#each this.issuePhotos as |photo|}}
+                      <div class="avitar-relative avitar-group">
+                        <img
+                          src={{photo.url}}
+                          alt={{photo.caption}}
+                          class="avitar-w-full avitar-h-24 avitar-object-cover avitar-rounded"
+                        />
+                        <button
+                          type="button"
+                          class="avitar-absolute avitar-top-1 avitar-right-1 avitar-w-6 avitar-h-6 avitar-bg-danger avitar-text-white avitar-rounded-full avitar-flex avitar-items-center avitar-justify-center avitar-opacity-0 group-hover:avitar-opacity-100 avitar-transition-opacity"
+                          {{on "click" (fn this.deleteIssuePhoto photo)}}
+                        >
+                          {{lnr-icon "cross" class="avitar-text-xs"}}
+                        </button>
+                      </div>
+                    {{/each}}
+                  </div>
+                {{else}}
+                  <div class="avitar-p-4 avitar-bg-gray-50 avitar-rounded avitar-text-center">
+                    <div class="avitar-text-muted avitar-text-sm">
+                      {{lnr-icon "camera" class="avitar-mr-2"}}
+                      No photos attached
+                    </div>
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+
+        <div class="avitar-modal__footer">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.closeEditIssueModal}}
+            disabled={{this.isSavingIssue}}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.saveIssue}}
+            disabled={{this.isSavingIssue}}
+          >
+            {{#if this.isSavingIssue}}
+              {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+              Saving...
+            {{else}}
+              {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
+              Save Changes
+            {{/if}}
+          </button>
+        </div>
+      </div>
+    </div>
+  {{/in-element}}
+{{/if}}
+
+{{! Post-Scan Photo Modal - Prompts to add photo after linking issue }}
+{{#if this.showPostScanPhotoModal}}
+  {{#in-element this.destinationElement insertBefore=null}}
+    {{!-- template-lint-disable no-invalid-interactive --}}
+    <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closePostScanPhotoModal}}>
+      <div class="avitar-modal avitar-modal--sm" role="dialog" aria-modal="true" {{on "click" this.stopPropagation}}>
+        <div class="avitar-modal__header">
+          <h2 class="avitar-modal__title">
+            {{lnr-icon "camera" class="avitar-mr-2"}}
+            Add Photo to Issue
+          </h2>
+          <button type="button" class="avitar-modal__close" {{on "click" this.closePostScanPhotoModal}}>
+            {{lnr-icon "cross"}}
+          </button>
+        </div>
+
+        <div class="avitar-modal__body">
+          {{#if this.justLinkedIssue}}
+            <div class="avitar-text-center">
+              <div class="avitar-p-3 avitar-bg-success-light avitar-rounded avitar-mb-4">
+                {{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mr-2"}}
+                <span class="avitar-font-semibold">Issue card linked successfully!</span>
+              </div>
+
+              <p class="avitar-text-muted avitar-mb-4">
+                Would you like to take a photo of the issue now?
+              </p>
+
+              <div class="avitar-space-y-3">
+                <label class="avitar-btn avitar-btn--primary avitar-btn--lg avitar-w-full">
+                  {{#if this.isUploadingIssuePhoto}}
+                    {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+                    Uploading...
+                  {{else}}
+                    {{lnr-icon "camera" class="avitar-mr-2"}}
+                    Take Photo
+                  {{/if}}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    class="avitar-hidden"
+                    {{on "change" this.handlePostScanPhotoSelect}}
+                    disabled={{this.isUploadingIssuePhoto}}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--secondary avitar-w-full"
+                  {{on "click" this.skipPostScanPhoto}}
+                  disabled={{this.isUploadingIssuePhoto}}
+                >
+                  Skip for Now
+                </button>
+              </div>
             </div>
           {{/if}}
         </div>
       </div>
     </div>
-  </div>
-</div>
+  {{/in-element}}
+{{/if}}

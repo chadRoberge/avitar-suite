@@ -127,7 +127,9 @@ export default class MyPermitsCreateRoute extends Route {
         console.log('📝 Loading draft permit:', draftPermitId);
 
         // Load the draft permit using local-first strategy
-        const draftResponse = await this.hybridApi.get(`/permits/${draftPermitId}`);
+        const draftResponse = await this.hybridApi.get(
+          `/permits/${draftPermitId}`,
+        );
         draftPermit = draftResponse;
 
         // Clear the session storage flag

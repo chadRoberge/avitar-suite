@@ -7,6 +7,7 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsController ex
   @service api;
   @service notifications;
   @service router;
+  @service municipality;
 
   @tracked activeTab = 'availability';
   @tracked isLoading = false;
@@ -14,6 +15,22 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsController ex
   @tracked inspectors = [];
   @tracked showAddTimeSlotModal = false;
   @tracked editingTimeSlotIndex = null;
+
+  // Issue Cards batch generation
+  @tracked batches = [];
+  @tracked batchQuantity = 6; // Default to 6 (one page)
+  @tracked isGeneratingBatch = false;
+  @tracked showBatchModal = false;
+  @tracked selectedBatch = null;
+  @tracked batchModalView = 'details'; // 'details' or 'delete-confirm'
+
+  // Add print URLs to batches
+  get batchesWithPrintUrls() {
+    return this.batches.map((batch) => ({
+      ...batch,
+      printUrl: `${window.location.origin}/print/inspection-batch/${this.municipalitySlug}/${batch.batchId}`,
+    }));
+  }
 
   // New time slot form data
   @tracked newSlotDayOfWeek = 1; // Monday
@@ -80,6 +97,21 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsController ex
   // Computed property for active inspectors count
   get activeInspectorsCount() {
     return this.inspectors.filter((insp) => insp.isActive).length;
+  }
+
+  // Computed property for municipality slug
+  get municipalitySlug() {
+    const slug =
+      this.municipality.currentMunicipality?.slug ||
+      this.municipality.currentMunicipality?.municipality_slug;
+    console.log('🏢 municipalitySlug:', slug);
+    return slug;
+  }
+
+  // Get print URL for selected batch in modal
+  get selectedBatchPrintUrl() {
+    if (!this.selectedBatch) return '';
+    return `${window.location.origin}/print/inspection-batch/${this.municipalitySlug}/${this.selectedBatch.batchId}`;
   }
 
   @action
@@ -245,6 +277,184 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsController ex
 
   @action
   stopPropagation(event) {
+    event.stopPropagation();
+  }
+
+  // Issue Cards Batch Generation Actions
+  @action
+  async generateBatch() {
+    if (this.batchQuantity < 1 || this.batchQuantity > 1000) {
+      this.notifications.warning('Quantity must be between 1 and 1000');
+      return;
+    }
+
+    this.isGeneratingBatch = true;
+    try {
+      const response = await this.api.post(
+        `/municipalities/${this.model.municipalityId}/inspection-issue-batches`,
+        {
+          quantity: this.batchQuantity,
+        },
+      );
+
+      this.notifications.success(
+        `Successfully generated ${response.batch.quantity} inspection issue cards`,
+      );
+
+      // Reload batches list
+      await this.loadBatches();
+
+      // Reset quantity
+      this.batchQuantity = 10;
+    } catch (error) {
+      console.error('Error generating batch:', error);
+      this.notifications.error(error.message || 'Failed to generate batch');
+    } finally {
+      this.isGeneratingBatch = false;
+    }
+  }
+
+  @action
+  async loadBatches() {
+    try {
+      const response = await this.api.get(
+        `/municipalities/${this.model.municipalityId}/inspection-issue-batches`,
+      );
+      this.batches = response.batches || [];
+    } catch (error) {
+      console.error('Error loading batches:', error);
+    }
+  }
+
+  @action
+  handleViewBatchDetails(batch, event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.viewBatchDetails(batch);
+  }
+
+  @action
+  async viewBatchDetails(batch) {
+    console.log('📦 viewBatchDetails called with:', batch);
+    try {
+      const response = await this.api.get(
+        `/municipalities/${this.model.municipalityId}/inspection-issue-batches/${batch.batchId}`,
+      );
+      console.log('📦 Batch details response:', response.batch);
+      this.selectedBatch = response.batch;
+      this.showBatchModal = true;
+      console.log('📦 Modal should be visible now, selectedBatch:', this.selectedBatch);
+    } catch (error) {
+      console.error('Error loading batch details:', error);
+      this.notifications.error('Failed to load batch details');
+    }
+  }
+
+  @action
+  closeBatchModal() {
+    this.showBatchModal = false;
+    this.selectedBatch = null;
+    this.batchModalView = 'details';
+  }
+
+  @action
+  async markBatchAsPrinted(batch) {
+    if (
+      !confirm(
+        'This will delete QR code images from storage to save space. Cards should be printed before this action. Continue?',
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await this.api.post(
+        `/municipalities/${this.model.municipalityId}/inspection-issue-batches/${batch.batchId}/mark-printed`,
+      );
+
+      this.notifications.success(
+        'Batch marked as printed and QR codes cleaned up',
+      );
+      await this.loadBatches();
+      this.closeBatchModal();
+    } catch (error) {
+      console.error('Error marking batch as printed:', error);
+      this.notifications.error('Failed to mark batch as printed');
+    }
+  }
+
+  @action
+  deleteBatch(batch) {
+    console.log('🗑️ deleteBatch called, switching to confirmation view...');
+    this.batchModalView = 'delete-confirm';
+  }
+
+  @action
+  cancelDelete() {
+    console.log('🗑️ Delete cancelled by user');
+    this.batchModalView = 'details';
+  }
+
+  @action
+  async confirmDelete() {
+    console.log('🗑️ Proceeding with delete...');
+    const batch = this.selectedBatch;
+
+    try {
+      const deleteUrl = `/municipalities/${this.model.municipalityId}/inspection-issue-batches/${batch.batchId}`;
+      console.log('🗑️ DELETE URL:', deleteUrl);
+
+      await this.api.delete(deleteUrl);
+
+      console.log('🗑️ Delete successful!');
+      this.notifications.success('Batch deleted successfully');
+      await this.loadBatches();
+      this.closeBatchModal();
+    } catch (error) {
+      console.error('🗑️ Error deleting batch:', error);
+      this.notifications.error(
+        error.message ||
+          'Failed to delete batch. Batch may contain used cards.',
+      );
+      this.batchModalView = 'details';
+    }
+  }
+
+  @action
+  handleDeleteBatch(batch, event) {
+    console.log('🔴 DELETE CLICKED:', batch);
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.deleteBatch(batch);
+  }
+
+  @action
+  handleMarkBatchAsPrinted(batch, event) {
+    console.log('🟢 MARK AS PRINTED CLICKED:', batch);
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.markBatchAsPrinted(batch);
+  }
+
+  @action
+  updateBatchQuantity(event) {
+    let value = parseInt(event.target.value) || 6;
+
+    // Round to nearest multiple of 6 (6 cards per page)
+    value = Math.max(6, Math.round(value / 6) * 6);
+
+    this.batchQuantity = value;
+  }
+
+  @action
+  handlePrintClick(event) {
+    // Only stop propagation, allow default link behavior
     event.stopPropagation();
   }
 }

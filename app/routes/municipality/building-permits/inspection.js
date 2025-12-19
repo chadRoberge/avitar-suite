@@ -9,12 +9,21 @@ export default class MunicipalityBuildingPermitsInspectionRoute extends Route {
     const municipalityId = this.municipality.currentMunicipality?.id;
     const { inspection_id } = params;
 
-    const response = await this.api.get(
-      `/municipalities/${municipalityId}/inspections/${inspection_id}`,
-    );
+    // Fetch inspection and linked issues in parallel
+    const [inspectionResponse, issuesResponse] = await Promise.all([
+      this.api.get(
+        `/municipalities/${municipalityId}/inspections/${inspection_id}`,
+      ),
+      this.api
+        .get(
+          `/municipalities/${municipalityId}/inspections/${inspection_id}/issues`,
+        )
+        .catch(() => ({ issues: [] })), // Gracefully handle if no issues
+    ]);
 
     return {
-      inspection: response.inspection,
+      inspection: inspectionResponse.inspection,
+      linkedIssues: issuesResponse.issues || [],
       municipalityId,
     };
   }

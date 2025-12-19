@@ -828,7 +828,7 @@
                               <label class="avitar-checkbox avitar-checkbox--sm">
                                 <input
                                   type="checkbox"
-                                  checked={{includes dept.requiredDocuments doc.name}}
+                                  checked={{this.isDepartmentDocumentSelected dept doc.name}}
                                   {{on "change" (fn this.toggleDepartmentDocument deptIndex doc.name)}}
                                 />
                                 <span>{{doc.name}}</span>

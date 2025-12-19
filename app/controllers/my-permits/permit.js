@@ -200,7 +200,10 @@ export default class MyPermitsPermitController extends Controller {
         formData.append('department', 'building_permit');
         formData.append('permitId', this.permit._id);
 
-        await this.hybridApi.upload(`/permits/${this.permit._id}/files`, formData);
+        await this.hybridApi.upload(
+          `/permits/${this.permit._id}/files`,
+          formData,
+        );
       }
 
       this.notifications.success(

@@ -633,8 +633,7 @@ export default class IndexedDbService extends Service {
           '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
         conflicts:
           '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
-        changeLog:
-          '++id, collection, documentId, operation, timestamp, userId',
+        changeLog: '++id, collection, documentId, operation, timestamp, userId',
       });
 
       await this.db.open();

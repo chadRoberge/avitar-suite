@@ -30,14 +30,14 @@
           Property Address
         </div>
         <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
-          {{@model.permit.address}}
+          {{@model.permit.propertyAddress}}
         </div>
       </div>
       {{! Permit Type }}
       <div class="avitar-mt-1">
         <div class="avitar-text-xs avitar-text-muted avitar-mb-1">Permit Type</div>
         <div class="avitar-text-sm avitar-font-medium avitar-text-gray-900">
-          {{@model.permit.permitType}}
+          {{@model.permit.permitTypeId.name}}
         </div>
       </div>
     </div>
@@ -150,12 +150,12 @@
               </div>
               <div>
                 <label class="avitar-label">Permit Type</label>
-                <p class="avitar-font-medium">{{@model.permit.permitType}}</p>
+                <p class="avitar-font-medium">{{@model.permit.permitTypeId.name}}</p>
               </div>
               <div>
                 <label class="avitar-label">Categories</label>
                 <div class="avitar-flex avitar-gap-1 avitar-flex-wrap">
-                  {{#each @model.permit.categories as |category|}}
+                  {{#each @model.permit.permitTypeId.categories as |category|}}
                     <span class="avitar-badge avitar-badge--info">{{category}}</span>
                   {{/each}}
                 </div>
@@ -168,40 +168,40 @@
               {{/if}}
               <div class="avitar-col-span-2">
                 <label class="avitar-label">Property Address</label>
-                <p class="avitar-font-medium">{{@model.permit.address}}</p>
+                <p class="avitar-font-medium">{{@model.permit.propertyAddress}}</p>
               </div>
               <div>
                 <label class="avitar-label">Applicant</label>
-                <p>{{@model.permit.applicantName}}</p>
-                {{#if @model.permit.applicantEmail}}
-                  <p class="avitar-text-sm avitar-text-gray-600">{{@model.permit.applicantEmail}}</p>
+                <p>{{@model.permit.applicant.name}}</p>
+                {{#if @model.permit.applicant.email}}
+                  <p class="avitar-text-sm avitar-text-gray-600">{{@model.permit.applicant.email}}</p>
                 {{/if}}
               </div>
               <div>
                 <label class="avitar-label">Applicant Phone</label>
-                <p>{{@model.permit.applicantPhone}}</p>
+                <p>{{@model.permit.applicant.phone}}</p>
               </div>
-              {{#if @model.permit.contractorName}}
+              {{#if @model.permit.contractor.companyName}}
                 <div>
                   <label class="avitar-label">Contractor</label>
-                  <p>{{@model.permit.contractorName}}</p>
-                  {{#if @model.permit.contractorLicense}}
-                    <p class="avitar-text-sm avitar-text-gray-600">License: {{@model.permit.contractorLicense}}</p>
+                  <p>{{@model.permit.contractor.companyName}}</p>
+                  {{#if @model.permit.contractor.licenseNumber}}
+                    <p class="avitar-text-sm avitar-text-gray-600">License: {{@model.permit.contractor.licenseNumber}}</p>
                   {{/if}}
                 </div>
                 <div>
                   <label class="avitar-label">Contractor Phone</label>
-                  <p>{{@model.permit.contractorPhone}}</p>
+                  <p>{{@model.permit.contractor.phone}}</p>
                 </div>
               {{/if}}
               <div>
-                <label class="avitar-label">Submitted Date</label>
-                <p>{{date-format @model.permit.submittedDate "MMM DD, YYYY"}}</p>
+                <label class="avitar-label">Application Date</label>
+                <p>{{date-format @model.permit.applicationDate "MMM DD, YYYY"}}</p>
               </div>
-              {{#if @model.permit.approvedDate}}
+              {{#if @model.permit.approvalDate}}
                 <div>
                   <label class="avitar-label">Approved Date</label>
-                  <p>{{date-format @model.permit.approvedDate "MMM DD, YYYY"}}</p>
+                  <p>{{date-format @model.permit.approvalDate "MMM DD, YYYY"}}</p>
                 </div>
               {{/if}}
               {{#if @model.permit.estimatedValue}}
@@ -213,7 +213,7 @@
               {{#if @model.permit.fees}}
                 <div>
                   <label class="avitar-label">Permit Fees</label>
-                  <p class="avitar-font-medium">{{format-currency @model.permit.fees}}</p>
+                  <p class="avitar-font-medium">{{format-currency @model.permit.totalFees}}</p>
                 </div>
               {{/if}}
               {{#if @model.permit.description}}
@@ -357,8 +357,13 @@
                       {{/if}}
                     </td>
                     <td>
-                      <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm">
-                        <i class="fas fa-eye"></i>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+                        {{on "click" (fn this.viewInspection inspection)}}
+                        title="View Inspection"
+                      >
+                        {{{lnr-icon "eye"}}}
                       </button>
                     </td>
                   </tr>

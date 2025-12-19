@@ -118,7 +118,10 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.indexOf(origin) !== -1 || process.env.CLIENT_URL === origin) {
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        process.env.CLIENT_URL === origin
+      ) {
         callback(null, true);
       } else {
         callback(new Error(`Origin ${origin} not allowed by CORS`));

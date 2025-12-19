@@ -1,0 +1,223 @@
+{{page-title "Inspection Checklist Templates"}}
+
+<div class="avitar-page-header">
+  <div class="avitar-page-header__content">
+    <h1 class="avitar-page-header__title">
+      <i class="fas fa-clipboard-check avitar-mr-2"></i>
+      Inspection Checklist Templates
+    </h1>
+    <p class="avitar-page-header__subtitle">
+      Configure inspection checklists for different inspection types
+    </p>
+  </div>
+
+  <div class="avitar-page-header__actions">
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" (fn this.openCreateModal null)}}
+    >
+      <i class="fas fa-plus avitar-mr-2"></i>
+      New Checklist Template
+    </button>
+  </div>
+</div>
+
+{{! Stats Cards }}
+<div class="avitar-flex avitar-gap-4 avitar-mb-4">
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Total Templates</div>
+        <div class="avitar-stat__value">{{@model.templates.length}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Active</div>
+        <div class="avitar-stat__value avitar-text-success">{{this.activeCount}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="avitar-card avitar-card--stat avitar-flex-1">
+    <div class="avitar-card__body">
+      <div class="avitar-stat">
+        <div class="avitar-stat__label">Inspection Types</div>
+        <div class="avitar-stat__value avitar-text-primary">{{this.uniqueInspectionTypesCount}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Filters }}
+<div class="avitar-card avitar-mb-4">
+  <div class="avitar-card__body">
+    <div class="avitar-filters">
+      <div class="avitar-filter-group">
+        <label class="avitar-label">Inspection Type</label>
+        <select
+          class="avitar-select"
+          {{on "change" this.setFilterInspectionType}}
+        >
+          {{#each this.inspectionTypeOptions as |inspectionType|}}
+            <option value={{inspectionType.value}} selected={{eq this.filterInspectionType inspectionType.value}}>
+              {{inspectionType.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{! Templates List }}
+{{#if this.filteredTemplates.length}}
+  <div class="avitar-grid avitar-grid--2 avitar-gap-4">
+    {{#each this.filteredTemplates as |template|}}
+      <div class="avitar-card">
+        {{! Header }}
+        <div class="avitar-card__body avitar-py-3">
+          <div class="avitar-flex avitar-justify-between avitar-items-start avitar-mb-3">
+            <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-flex-1">
+              <div class="avitar-icon-wrapper avitar-bg-primary-light" style="width: 2rem; height: 2rem; font-size: 0.875rem;">
+                <i class="fas fa-clipboard-check"></i>
+              </div>
+              <div class="avitar-flex-1 avitar-min-w-0">
+                <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1">
+                  <h3 class="avitar-font-semibold avitar-text-base avitar-truncate">
+                    {{template.name}}
+                  </h3>
+                  <span class="avitar-badge avitar-badge--info avitar-badge--sm avitar-badge--pill">
+                    {{this.getInspectionTypeLabel template.inspectionType}}
+                  </span>
+                </div>
+                {{#if template.description}}
+                  <p class="avitar-text-muted avitar-text-xs avitar-mb-2 avitar-line-clamp-2">
+                    {{template.description}}
+                  </p>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+
+          {{! Stats }}
+          <div class="avitar-flex avitar-gap-4 avitar-mb-2 avitar-py-2 avitar-px-3 avitar-rounded avitar-bg-gray-50">
+            <div class="avitar-flex-1">
+              <div class="avitar-text-xs avitar-text-muted">Total Items</div>
+              <div class="avitar-font-semibold avitar-text-sm">{{template.items.length}}</div>
+            </div>
+
+            <div class="avitar-flex-1">
+              <div class="avitar-text-xs avitar-text-muted">Required Items</div>
+              <div class="avitar-font-semibold avitar-text-sm">
+                {{this.getRequiredItemsCount template.items}}
+              </div>
+            </div>
+
+            <div class="avitar-flex-1">
+              <div class="avitar-text-xs avitar-text-muted">Categories</div>
+              <div class="avitar-font-semibold avitar-text-sm">
+                {{this.getUniqueCategoriesCount template.items}}
+              </div>
+            </div>
+          </div>
+
+          {{! Checklist Items Preview }}
+          {{#if template.items.length}}
+            <div>
+              <div class="avitar-text-xs avitar-text-muted avitar-mb-2">Checklist Items:</div>
+              <div class="avitar-space-y-1">
+                {{#each template.items as |item index|}}
+                  {{#if (lt index 5)}}
+                    <div class="avitar-flex avitar-items-start avitar-gap-2 avitar-text-sm">
+                      <div class="avitar-flex-shrink-0 avitar-mt-1">
+                        {{#if item.isRequired}}
+                          <i class="fas fa-check-circle avitar-text-primary"></i>
+                        {{else}}
+                          <i class="far fa-circle avitar-text-muted"></i>
+                        {{/if}}
+                      </div>
+                      <div class="avitar-flex-1 avitar-truncate">
+                        {{item.text}}
+                        {{#if item.category}}
+                          <span class="avitar-text-muted avitar-text-xs">({{item.category}})</span>
+                        {{/if}}
+                      </div>
+                    </div>
+                  {{/if}}
+                {{/each}}
+                {{#if (gt template.items.length 5)}}
+                  <div class="avitar-text-xs avitar-text-muted avitar-italic">
+                    +{{sub template.items.length 5}} more items...
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          {{else}}
+            <div class="avitar-text-sm avitar-text-muted avitar-italic">
+              No checklist items defined
+            </div>
+          {{/if}}
+        </div>
+
+        {{! Footer }}
+        <div class="avitar-card__footer avitar-py-2">
+          <div class="avitar-flex avitar-justify-end avitar-gap-2">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+              {{on "click" (fn this.openEditModal template)}}
+            >
+              {{{lnr-icon "pencil" class="avitar-mr-1"}}}
+              Edit
+            </button>
+
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--danger avitar-btn--sm"
+              {{on "click" (fn this.deleteTemplate template)}}
+            >
+              {{{lnr-icon "trash" class="avitar-mr-1"}}}
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <div class="avitar-empty-state">
+    <i class="fas fa-clipboard-check fa-3x avitar-text-muted avitar-mb-3"></i>
+    <h3 class="avitar-mb-2">No Checklist Templates Found</h3>
+    <p class="avitar-text-muted avitar-mb-4">
+      {{#if (ne this.filterInspectionType "all")}}
+        No checklist templates for this inspection type. Create one to get started.
+      {{else}}
+        Get started by creating your first inspection checklist template.
+      {{/if}}
+    </p>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" (fn this.openCreateModal this.filterInspectionType)}}
+    >
+      <i class="fas fa-plus avitar-mr-2"></i>
+      Create Checklist Template
+    </button>
+  </div>
+{{/if}}
+
+{{! Checklist Template Modal }}
+{{#if this.isModalOpen}}
+  <BuildingPermits::ChecklistTemplateModal
+    @isOpen={{this.isModalOpen}}
+    @template={{this.selectedTemplate}}
+    @isEditMode={{this.isEditMode}}
+    @onClose={{this.closeModal}}
+    @onSave={{this.saveTemplate}}
+  />
+{{/if}}

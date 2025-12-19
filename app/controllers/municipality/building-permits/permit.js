@@ -338,4 +338,12 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
       departmentName,
     );
   }
+
+  @action
+  viewInspection(inspection) {
+    this.router.transitionTo(
+      'municipality.building-permits.inspection',
+      inspection._id,
+    );
+  }
 }

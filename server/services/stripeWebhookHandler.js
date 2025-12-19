@@ -137,7 +137,9 @@ async function findEntitiesByProduct(productId) {
       }
     }
 
-    console.log(`✅ Found ${entities.length} entities using product ${productId}`);
+    console.log(
+      `✅ Found ${entities.length} entities using product ${productId}`,
+    );
     return entities;
   } catch (error) {
     console.error('❌ Error finding entities by product:', error);
@@ -163,9 +165,8 @@ async function handleSubscriptionChange(subscription) {
     const { entity, entityType, moduleName } = result;
 
     // Get product with features
-    const { product_id, tier, features } = await getProductWithFeatures(
-      subscription,
-    );
+    const { product_id, tier, features } =
+      await getProductWithFeatures(subscription);
 
     // Prepare subscription data
     const subscriptionData = {

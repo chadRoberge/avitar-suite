@@ -4,12 +4,82 @@ This file provides quick reference for Claude Code when working with the Buildin
 
 ## Quick Navigation
 
+- [Icons](#icons)
 - [Route Structure](#route-structure)
 - [Controller Patterns](#controller-patterns)
 - [Template Conventions](#template-conventions)
 - [Component Guidelines](#component-guidelines)
 - [Service Usage](#service-usage)
 - [Common Patterns](#common-patterns)
+
+---
+
+## Icons
+
+**IMPORTANT: This application uses Linear Icons via the `lnr-icon` helper. DO NOT use Font Awesome (`fa-`, `fas`, `far`, `fab`) icons.**
+
+### Icon Usage
+
+```handlebars
+{{! Basic usage }}
+{{lnr-icon "pencil"}}
+
+{{! With classes }}
+{{lnr-icon "arrow-left" class="avitar-mr-2"}}
+
+{{! In buttons }}
+<button type="button" class="avitar-btn avitar-btn--primary">
+  {{lnr-icon "plus-circle" class="avitar-mr-2"}}
+  Add Item
+</button>
+
+{{! For loading spinners }}
+{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+Loading...
+
+{{! Large icons (empty states) }}
+{{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
+```
+
+### Common Icon Names
+
+| Purpose | Icon Name | Example |
+|---------|-----------|---------|
+| Edit/Pencil | `pencil` | {{lnr-icon "pencil"}} |
+| Delete/Close | `cross` | {{lnr-icon "cross"}} |
+| Add | `plus-circle` | {{lnr-icon "plus-circle"}} |
+| Back/Left | `arrow-left` | {{lnr-icon "arrow-left"}} |
+| Forward/Right | `arrow-right` | {{lnr-icon "arrow-right"}} |
+| View/Eye | `eye` | {{lnr-icon "eye"}} |
+| Save/Check | `checkmark-circle` | {{lnr-icon "checkmark-circle"}} |
+| Warning | `warning` | {{lnr-icon "warning"}} |
+| File | `file-empty` | {{lnr-icon "file-empty"}} |
+| Calendar | `calendar-full` | {{lnr-icon "calendar-full"}} |
+| User | `user` | {{lnr-icon "user"}} |
+| Location | `map-marker` | {{lnr-icon "map-marker"}} |
+| History | `history` | {{lnr-icon "history"}} |
+| Camera | `camera` | {{lnr-icon "camera"}} |
+| QR Code/Scan | `frame-expand` | {{lnr-icon "frame-expand"}} |
+| Refresh/Loading | `sync` | {{lnr-icon "sync"}} |
+| Redo/Retry | `redo` | {{lnr-icon "redo"}} |
+| Clipboard | `clipboard` | {{lnr-icon "clipboard"}} |
+| Chart | `chart-bars` | {{lnr-icon "chart-bars"}} |
+| Building | `apartment` | {{lnr-icon "apartment"}} |
+| Layers | `layers` | {{lnr-icon "layers"}} |
+
+### Never Use
+
+```handlebars
+{{! WRONG - Do not use Font Awesome }}
+<i class="fas fa-edit"></i>
+<i class="fa fa-times"></i>
+<i class="far fa-calendar"></i>
+
+{{! CORRECT - Use lnr-icon helper }}
+{{lnr-icon "pencil"}}
+{{lnr-icon "cross"}}
+{{lnr-icon "calendar-full"}}
+```
 
 ---
 
@@ -407,7 +477,7 @@ All building permit templates follow this pattern:
     <p class="avitar-text-sm avitar-text-muted">Subtitle</p>
   </div>
   <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.action}}>
-    <i class="fas fa-plus avitar-mr-2"></i>
+    {{lnr-icon "plus-circle" class="avitar-mr-2"}}
     Button Text
   </button>
 </div>
@@ -475,7 +545,7 @@ All building permit templates follow this pattern:
     {{else}}
       {{! Empty state }}
       <div class="avitar-empty-state avitar-py-8">
-        <i class="fas fa-icon fa-3x avitar-text-muted avitar-mb-4"></i>
+        {{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
         <h3 class="avitar-text-lg avitar-font-semibold">No Items</h3>
         <p class="avitar-text-muted">Message here</p>
       </div>
@@ -500,11 +570,11 @@ All building permit templates follow this pattern:
       {{! Header }}
       <div class="avitar-modal__header">
         <h2 class="avitar-modal__title">
-          <i class="fas fa-icon avitar-mr-2"></i>
+          {{lnr-icon "pencil" class="avitar-mr-2"}}
           Modal Title
         </h2>
         <button type="button" class="avitar-modal__close" {{on "click" this.closeModal}}>
-          <i class="fas fa-times"></i>
+          {{lnr-icon "cross"}}
         </button>
       </div>
 
@@ -530,7 +600,7 @@ All building permit templates follow this pattern:
           {{on "click" this.submitAction}}
           disabled={{this.isLoading}}>
           {{#if this.isLoading}}
-            <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+            {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
             Saving...
           {{else}}
             Save
@@ -560,7 +630,7 @@ All building permit templates follow this pattern:
       <div class="avitar-flex avitar-items-start avitar-gap-4">
         <div class="avitar-flex-shrink-0">
           <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-warning avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
-            <i class="fas fa-lock fa-lg"></i>
+            {{lnr-icon "lock" class="avitar-text-lg"}}
           </div>
         </div>
         <div class="avitar-flex-1">
@@ -571,7 +641,7 @@ All building permit templates follow this pattern:
             Upgrade to unlock this feature.
           </p>
           <LinkTo @route="contractor-management.subscription" class="avitar-btn avitar-btn--primary">
-            <i class="fas fa-arrow-up avitar-mr-2"></i>
+            {{lnr-icon "arrow-up" class="avitar-mr-2"}}
             Upgrade Now
           </LinkTo>
         </div>
@@ -606,9 +676,9 @@ All building permit templates follow this pattern:
               (if (gt this.currentStep step.number) 'avitar-bg-success avitar-text-white'
                 'avitar-bg-gray-200 avitar-text-gray-600')}}">
             {{#if (gt this.currentStep step.number)}}
-              <i class="fas fa-check"></i>
+              {{lnr-icon "checkmark-circle"}}
             {{else}}
-              <i class="fas fa-{{step.icon}}"></i>
+              {{lnr-icon step.icon}}
             {{/if}}
           </div>
           <span class="avitar-text-xs avitar-font-medium">{{step.name}}</span>
@@ -640,7 +710,7 @@ All building permit templates follow this pattern:
       {{#if this.canGoPrevious}}
         <button type="button" class="avitar-btn avitar-btn--secondary"
           {{on "click" this.previousStep}}>
-          <i class="fas fa-arrow-left avitar-mr-2"></i>
+          {{lnr-icon "arrow-left" class="avitar-mr-2"}}
           Previous
         </button>
       {{/if}}
@@ -658,7 +728,7 @@ All building permit templates follow this pattern:
           {{on "click" this.nextStep}}
           disabled={{(not this.canGoNext)}}>
           Next
-          <i class="fas fa-arrow-right avitar-ml-2"></i>
+          {{lnr-icon "arrow-right" class="avitar-ml-2"}}
         </button>
       {{/if}}
     </div>
@@ -911,7 +981,7 @@ async performAction() {
 {{! Template }}
 <button type="button" {{on "click" this.performAction}} disabled={{this.isLoading}}>
   {{#if this.isLoading}}
-    <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+    {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
     Loading...
   {{else}}
     Click Me

@@ -78,10 +78,7 @@ class VercelBlobStorageService {
       }
 
       // Calculate file hashes
-      const md5Hash = crypto
-        .createHash('md5')
-        .update(fileBuffer)
-        .digest('hex');
+      const md5Hash = crypto.createHash('md5').update(fileBuffer).digest('hex');
       const sha256Hash = crypto
         .createHash('sha256')
         .update(fileBuffer)
@@ -106,9 +103,7 @@ class VercelBlobStorageService {
       };
     } catch (error) {
       console.error('Vercel Blob upload error:', error);
-      throw new Error(
-        `Failed to upload file to Vercel Blob: ${error.message}`,
-      );
+      throw new Error(`Failed to upload file to Vercel Blob: ${error.message}`);
     }
   }
 

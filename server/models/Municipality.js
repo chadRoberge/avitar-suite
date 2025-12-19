@@ -814,7 +814,10 @@ municipalitySchema.methods.isModulePaused = function (moduleName) {
 };
 
 // Check if module has specific feature (for notification permissions)
-municipalitySchema.methods.hasModuleFeature = function (moduleName, featureName) {
+municipalitySchema.methods.hasModuleFeature = function (
+  moduleName,
+  featureName,
+) {
   const module = this.module_config.modules.get(moduleName);
   if (!module || !module.enabled) return false;
 
@@ -828,7 +831,7 @@ municipalitySchema.methods.hasModuleFeature = function (moduleName, featureName)
 // Update module subscription data from Stripe webhook
 municipalitySchema.methods.updateModuleSubscription = async function (
   moduleName,
-  subscriptionData
+  subscriptionData,
 ) {
   const module = this.module_config.modules.get(moduleName) || {};
 
@@ -866,7 +869,7 @@ municipalitySchema.methods.updateModuleSubscription = async function (
 // Update module features from Stripe Product Features API
 municipalitySchema.methods.updateModuleFeatures = async function (
   moduleName,
-  featuresArray
+  featuresArray,
 ) {
   const module = this.module_config.modules.get(moduleName);
   if (!module) {
