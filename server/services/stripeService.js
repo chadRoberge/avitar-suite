@@ -59,6 +59,28 @@ async function createCustomer(contractor, user) {
 }
 
 /**
+ * Create a Stripe customer for a citizen (residential user)
+ */
+async function createCitizenCustomer(user) {
+  ensureStripeInitialized();
+  try {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      name: `${user.first_name} ${user.last_name}`,
+      metadata: {
+        user_id: user._id.toString(),
+        user_type: 'citizen',
+      },
+    });
+
+    return customer;
+  } catch (error) {
+    console.error('Error creating Stripe citizen customer:', error);
+    throw new Error('Failed to create Stripe customer for citizen');
+  }
+}
+
+/**
  * Create a Setup Intent for adding payment methods
  */
 async function createSetupIntent(customerId) {
@@ -1248,6 +1270,7 @@ async function createLoginLink(accountId) {
 module.exports = {
   stripe,
   createCustomer,
+  createCitizenCustomer,
   createSetupIntent,
   attachPaymentMethod,
   getPaymentMethod,

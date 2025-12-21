@@ -1,0 +1,40 @@
+<div class={{this.dropdownClass}}>
+  {{!-- Dropdown Trigger Button --}}
+  <button
+    type="button"
+    class="mobile-module-dropdown__trigger"
+    aria-haspopup="listbox"
+    aria-expanded={{if this.isOpen "true" "false"}}
+    {{on "click" this.toggleDropdown}}
+  >
+    {{lnr-icon this.currentModuleIcon class="mobile-module-dropdown__trigger-icon"}}
+    <span>{{this.currentModuleTitle}}</span>
+    {{lnr-icon "chevron-down" class="mobile-module-dropdown__trigger-chevron"}}
+  </button>
+
+  {{!-- Dropdown Menu --}}
+  {{#if this.isOpen}}
+    {{!-- Overlay to close dropdown when clicking outside --}}
+    <div
+      class="mobile-module-dropdown__overlay"
+      role="presentation"
+      {{on "click" this.closeDropdown}}
+    ></div>
+
+    {{!-- Menu Items --}}
+    <div class="mobile-module-dropdown__menu" role="listbox">
+      {{#each this.modules as |module|}}
+        <button
+          type="button"
+          class="mobile-module-dropdown__item {{if (this.isModuleActive module) 'mobile-module-dropdown__item--active'}}"
+          role="option"
+          aria-selected={{if (this.isModuleActive module) "true" "false"}}
+          {{on "click" (fn this.selectModule module)}}
+        >
+          {{lnr-icon module.icon class="mobile-module-dropdown__item-icon"}}
+          <span>{{module.title}}</span>
+        </button>
+      {{/each}}
+    </div>
+  {{/if}}
+</div>

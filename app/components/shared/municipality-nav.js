@@ -16,6 +16,7 @@ export default class MunicipalityNavComponent extends Component {
   @tracked assessmentYear = null;
   @tracked isPrintModalOpen = false;
   @tracked openDropdownIndex = null;
+  @tracked isPIDSheetOpen = false;
 
   get navigationItems() {
     // Access propertySelection to make this reactive to property changes
@@ -66,6 +67,33 @@ export default class MunicipalityNavComponent extends Component {
 
   get hasActiveChildren() {
     return this.activeModuleChildren.length > 0;
+  }
+
+  /**
+   * Show PID button for modules that use property selection
+   * Mirrors the logic from municipality controller's shouldShowPropertySidebar
+   */
+  get showPIDButton() {
+    const routeName = this.router.currentRouteName;
+    if (!routeName) return false;
+
+    // Show on assessing routes (excluding settings, reports, revaluation)
+    const isAssessingRoute =
+      routeName.startsWith('municipality.assessing') &&
+      !routeName.startsWith('municipality.assessing.settings') &&
+      !routeName.startsWith('municipality.assessing.reports') &&
+      !routeName.startsWith('municipality.assessing.revaluation');
+
+    // Show on building-permits find route
+    const isBuildingPermitsFind =
+      routeName === 'municipality.building-permits.find';
+
+    // Show on tax-collection routes (future)
+    const isTaxCollectionRoute = routeName.startsWith(
+      'municipality.tax-collection',
+    );
+
+    return isAssessingRoute || isBuildingPermitsFind || isTaxCollectionRoute;
   }
 
   get selectedProperty() {
@@ -181,6 +209,16 @@ export default class MunicipalityNavComponent extends Component {
   @action
   closePrintModal() {
     this.isPrintModalOpen = false;
+  }
+
+  @action
+  openPIDSheet() {
+    this.isPIDSheetOpen = true;
+  }
+
+  @action
+  closePIDSheet() {
+    this.isPIDSheetOpen = false;
   }
 
   @action

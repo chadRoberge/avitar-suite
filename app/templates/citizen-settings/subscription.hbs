@@ -1,0 +1,23 @@
+{{page-title "Subscription & Billing"}}
+
+<div class="avitar-container avitar-pt-6 avitar-pb-6">
+  {{! Header }}
+  <div class="avitar-mb-6">
+    <h1 class="avitar-text-3xl avitar-font-bold avitar-mb-2">Subscription & Billing</h1>
+    <p class="avitar-text-muted">Manage your subscription plan and billing information</p>
+  </div>
+
+  <Shared::SubscriptionManager
+    @userType={{if this.model.isContractor "contractor" "citizen"}}
+    @plans={{this.model.plans}}
+    @subscription={{this.model.subscription}}
+    @stripeSubscription={{this.model.stripeSubscription}}
+    @upcomingInvoice={{this.model.upcomingInvoice}}
+    @billingEmail={{this.billingEmail}}
+    @billingName={{this.billingName}}
+    @entityId={{this.user._id}}
+    @paymentMethodsRoute="citizen-settings.payment-methods"
+    @needsOnboarding={{this.needsOnboarding}}
+    @onRefresh={{this.refreshModel}}
+  />
+</div>

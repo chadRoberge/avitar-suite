@@ -1,0 +1,96 @@
+{{page-title "Payment Methods"}}
+
+<div class="avitar-container avitar-py-6">
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-2">Payment Methods</h2>
+      <p class="avitar-text-muted">Manage your saved payment methods</p>
+    </div>
+    <button
+      type="button"
+      class="avitar-btn avitar-btn--primary"
+      {{on "click" this.openAddPaymentModal}}
+    >
+      {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+      Add Payment Method
+    </button>
+  </div>
+
+  {{#if this.hasPaymentMethods}}
+    <div class="avitar-space-y-4">
+      {{#each this.paymentMethods as |method|}}
+        <div class="avitar-card">
+          <div class="avitar-card__body">
+            <div class="avitar-flex avitar-justify-between avitar-items-center">
+              <div class="avitar-flex avitar-items-center avitar-gap-4">
+                <div class="avitar-w-12 avitar-h-8 avitar-flex avitar-items-center avitar-justify-center avitar-bg-gray-100 avitar-rounded">
+                  {{{lnr-icon "credit-card" class="avitar-text-lg"}}}
+                </div>
+                <div>
+                  <div class="avitar-font-medium">
+                    {{method.card.brand}} ending in {{method.card.last4}}
+                    {{#if method.is_default}}
+                      <span class="avitar-badge avitar-badge--success avitar-ml-2">Default</span>
+                    {{/if}}
+                  </div>
+                  <div class="avitar-text-sm avitar-text-muted">
+                    Expires {{method.card.exp_month}}/{{method.card.exp_year}}
+                  </div>
+                </div>
+              </div>
+              <div class="avitar-flex avitar-gap-2">
+                {{#unless method.is_default}}
+                  <button
+                    type="button"
+                    class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                    {{on "click" (fn this.setDefaultPaymentMethod method)}}
+                    disabled={{this.isLoading}}
+                  >
+                    Set Default
+                  </button>
+                {{/unless}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--sm avitar-btn--danger"
+                  {{on "click" (fn this.removePaymentMethod method)}}
+                  disabled={{this.isLoading}}
+                >
+                  {{{lnr-icon "trash2"}}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="avitar-card">
+      <div class="avitar-card__body avitar-text-center avitar-py-8">
+        {{{lnr-icon "credit-card" class="avitar-text-4xl avitar-text-muted avitar-mb-4"}}}
+        <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">No Payment Methods</h3>
+        <p class="avitar-text-muted avitar-mb-4">You haven't added any payment methods yet.</p>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.openAddPaymentModal}}
+        >
+          {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+          Add Your First Payment Method
+        </button>
+      </div>
+    </div>
+  {{/if}}
+</div>
+
+{{! Add Payment Method Modal }}
+{{#if this.showAddPaymentModal}}
+  <StripePaymentModal
+    @isOpen={{true}}
+    @title="Add Payment Method"
+    @description="Add a new credit or debit card to your account"
+    @billingEmail={{this.user.email}}
+    @billingName={{this.billingName}}
+    @onClose={{this.closeAddPaymentModal}}
+    @onPaymentMethodReady={{this.handlePaymentMethodAdded}}
+  />
+{{/if}}

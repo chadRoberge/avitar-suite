@@ -1,0 +1,66 @@
+{{!-- Citizen Settings Menu Component using Avitar Sidebar Classes --}}
+<nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar">
+  <div class="avitar-sidebar__header">
+    <h2 class="avitar-sidebar__title">Account Settings</h2>
+    <div class="avitar-sidebar__subtitle">Manage your account</div>
+  </div>
+
+  <div class="avitar-sidebar__nav">
+    <ul class="avitar-sidebar__nav-list">
+      {{!-- Profile Section --}}
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="citizen-settings.profile"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          {{{lnr-icon "user" class="avitar-sidebar__nav-icon"}}}
+          <span>Profile</span>
+        </LinkTo>
+      </li>
+
+      {{!-- Billing Section --}}
+      <li class="avitar-sidebar__nav-section">
+        <span class="avitar-sidebar__nav-section-title">Billing</span>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="citizen-settings.subscription"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          {{{lnr-icon "diamond" class="avitar-sidebar__nav-icon"}}}
+          <span>Subscription</span>
+        </LinkTo>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="citizen-settings.payment-methods"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          {{{lnr-icon "credit-card" class="avitar-sidebar__nav-icon"}}}
+          <span>Payment Methods</span>
+        </LinkTo>
+      </li>
+
+      {{!-- Preferences Section --}}
+      <li class="avitar-sidebar__nav-section">
+        <span class="avitar-sidebar__nav-section-title">Preferences</span>
+      </li>
+
+      <li class="avitar-sidebar__nav-item">
+        <LinkTo
+          @route="citizen-settings.notifications"
+          class="avitar-sidebar__nav-link"
+          @activeClass="avitar-sidebar__nav-link--active"
+        >
+          {{{lnr-icon "alarm" class="avitar-sidebar__nav-icon"}}}
+          <span>Notifications</span>
+        </LinkTo>
+      </li>
+    </ul>
+  </div>
+</nav>

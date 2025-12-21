@@ -29,6 +29,15 @@ const checkMunicipalityAccess = async (req, res, next) => {
     return next();
   }
 
+  // Contractors and citizens have implicit access for building permit files
+  // The upload handler will verify permit ownership if needed
+  if (
+    req.user.global_role === 'contractor' ||
+    req.user.global_role === 'citizen'
+  ) {
+    return next();
+  }
+
   // Check if user has access to this municipality
   if (!req.user.hasAccessToMunicipality(municipalityId)) {
     return res
@@ -242,9 +251,10 @@ router.post(
       ) {
         hasPermission = true;
       }
-      // Contractors can upload to building_permit department
+      // Contractors and citizens can upload to building_permit department
       else if (
-        req.user.global_role === 'contractor' &&
+        (req.user.global_role === 'contractor' ||
+          req.user.global_role === 'citizen') &&
         department === 'building_permit'
       ) {
         // If permitId is provided, verify ownership
@@ -252,13 +262,24 @@ router.post(
           const Permit = require('../models/Permit');
           const permit = await Permit.findById(permitId);
 
-          if (
-            permit &&
-            permit.contractor_id &&
-            permit.contractor_id.toString() ===
-              req.user.contractor_id?.toString()
-          ) {
-            hasPermission = true;
+          if (permit) {
+            // Check if contractor owns this permit
+            if (
+              req.user.global_role === 'contractor' &&
+              permit.contractor_id &&
+              permit.contractor_id.toString() ===
+                req.user.contractor_id?.toString()
+            ) {
+              hasPermission = true;
+            }
+            // Check if citizen created this permit
+            else if (
+              req.user.global_role === 'citizen' &&
+              permit.applicant?.userId &&
+              permit.applicant.userId.toString() === req.user._id?.toString()
+            ) {
+              hasPermission = true;
+            }
           }
         } else {
           // No permitId means they're uploading during permit creation - allow it
@@ -273,8 +294,19 @@ router.post(
       }
 
       if (!hasPermission) {
+        // Provide more specific error messages
+        let errorMessage =
+          'You do not have permission to upload files to this permit';
+        if (
+          (req.user.global_role === 'contractor' ||
+            req.user.global_role === 'citizen') &&
+          permitId
+        ) {
+          errorMessage =
+            'You can only upload documents to permits that you own';
+        }
         return res.status(403).json({
-          error: `Insufficient permissions to upload files in ${department}`,
+          error: errorMessage,
         });
       }
 

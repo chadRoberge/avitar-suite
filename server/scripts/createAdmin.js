@@ -27,8 +27,8 @@ async function createSystemAdmin() {
           city: 'Admin City',
           zipCode: '00000',
         },
-        isActive: true,
-        setupCompleted: true,
+        is_active: true,
+        setup_completed: true,
       });
 
       await systemMunicipality.save();

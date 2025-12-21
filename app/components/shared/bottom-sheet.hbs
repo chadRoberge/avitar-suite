@@ -1,0 +1,46 @@
+{{#if @isOpen}}
+  {{!-- Overlay backdrop --}}
+  <div
+    class="bottom-sheet-overlay"
+    role="presentation"
+    {{on "click" this.handleOverlayClick}}
+  ></div>
+
+  {{!-- Sheet container --}}
+  <div
+    class={{this.sheetClass}}
+    style={{this.sheetStyle}}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby={{if @title "bottom-sheet-title"}}
+    {{on "click" this.stopPropagation}}
+    {{on "touchstart" this.handleDragStart passive=true}}
+    {{on "touchmove" this.handleDrag passive=true}}
+    {{on "touchend" this.handleDragEnd}}
+  >
+    {{!-- Drag Handle --}}
+    <div class="bottom-sheet__handle">
+      <div class="bottom-sheet__handle-bar"></div>
+    </div>
+
+    {{!-- Header (optional) --}}
+    {{#if @title}}
+      <div class="bottom-sheet__header">
+        <h3 id="bottom-sheet-title" class="bottom-sheet__title">{{@title}}</h3>
+        <button
+          type="button"
+          class="bottom-sheet__close"
+          aria-label="Close"
+          {{on "click" this.close}}
+        >
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+    {{/if}}
+
+    {{!-- Content --}}
+    <div class="bottom-sheet__content">
+      {{yield}}
+    </div>
+  </div>
+{{/if}}

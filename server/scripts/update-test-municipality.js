@@ -230,8 +230,8 @@ async function updateTestMunicipality() {
       lastStatsUpdate: new Date(),
     };
 
-    municipality.setupCompleted = true;
-    municipality.isActive = true;
+    municipality.setup_completed = true;
+    municipality.is_active = true;
 
     // Save the municipality
     await municipality.save();

@@ -1,0 +1,72 @@
+<nav class="bottom-tab-bar" aria-label="Module navigation">
+  <div class="bottom-tab-bar__tabs">
+    {{!-- PID/Properties Access Button (for Assessing/Tax modules) --}}
+    {{#if this.showPIDButton}}
+      <button
+        type="button"
+        class="bottom-tab-bar__tab bottom-tab-bar__tab--pid"
+        aria-label="Open property list"
+        {{on "click" this.openPIDSheet}}
+      >
+        {{lnr-icon "list" class="bottom-tab-bar__tab-icon"}}
+        <span class="bottom-tab-bar__tab-label">Properties</span>
+      </button>
+    {{/if}}
+
+    {{!-- Visible Tabs --}}
+    {{#each this.visibleTabs as |tab|}}
+      <LinkTo
+        @route={{tab.route}}
+        @models={{if tab.models tab.models (array)}}
+        class={{this.getTabClass tab}}
+        aria-current={{if (this.isTabActive tab) "page"}}
+      >
+        {{lnr-icon (or tab.icon "file-empty") class="bottom-tab-bar__tab-icon"}}
+        <span class="bottom-tab-bar__tab-label">{{tab.title}}</span>
+        {{#if tab.badge}}
+          <span class="bottom-tab-bar__badge">{{tab.badge}}</span>
+        {{/if}}
+      </LinkTo>
+    {{/each}}
+
+    {{!-- More Menu Button --}}
+    {{#if this.hasMoreTabs}}
+      <button
+        type="button"
+        class="bottom-tab-bar__tab bottom-tab-bar__tab--more"
+        aria-haspopup="menu"
+        aria-expanded={{if this.showMoreMenu "true" "false"}}
+        {{on "click" this.toggleMoreMenu}}
+      >
+        {{lnr-icon "menu" class="bottom-tab-bar__tab-icon"}}
+        <span class="bottom-tab-bar__tab-label">More</span>
+      </button>
+
+      {{!-- More Menu --}}
+      {{#if this.showMoreMenu}}
+        <div
+          class="bottom-tab-bar__more-overlay"
+          role="presentation"
+          {{on "click" this.closeMoreMenu}}
+        ></div>
+
+        <div class="bottom-tab-bar__more-menu" role="menu">
+          {{#each this.moreTabs as |tab|}}
+            <button
+              type="button"
+              class="bottom-tab-bar__more-item"
+              role="menuitem"
+              {{on "click" (fn this.navigateToTab tab)}}
+            >
+              {{lnr-icon (or tab.icon "file-empty") class="bottom-tab-bar__more-item-icon"}}
+              <span>{{tab.title}}</span>
+              {{#if tab.badge}}
+                <span class="bottom-tab-bar__badge">{{tab.badge}}</span>
+              {{/if}}
+            </button>
+          {{/each}}
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
+</nav>

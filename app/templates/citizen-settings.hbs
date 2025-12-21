@@ -1,0 +1,46 @@
+{{page-title "Settings"}}
+
+<div class="avitar-layout">
+  {{! Top Navigation Bar }}
+  <header class="avitar-topbar avitar-bg-primary">
+    <div class="avitar-container">
+      <div class="avitar-flex avitar-items-center avitar-justify-between avitar-py-3">
+        <div class="avitar-flex avitar-items-center avitar-gap-3">
+          <LinkTo @route="my-permits" class="avitar-text-white hover:avitar-opacity-80 avitar-pr-5 avitar-transition avitar-no-underline">
+            {{{lnr-icon "arrow-left" size="24"}}}
+          </LinkTo>
+          <div>
+            <h1 class="avitar-m-0 avitar-pr-5 avitar-text-lg avitar-font-bold avitar-text-white">
+              Account Settings
+            </h1>
+            <p class="avitar-m-0 avitar-text-xs avitar-text-white avitar-opacity-80">
+              Manage your account preferences
+            </p>
+          </div>
+        </div>
+
+        {{#if @model.subscription}}
+          <div class="avitar-flex avitar-items-center avitar-gap-3">
+            <span class="avitar-badge
+              {{if (eq @model.subscription.plan 'enterprise') 'avitar-badge--success'
+                (if (eq @model.subscription.plan 'pro') 'avitar-badge--primary'
+                  (if (eq @model.subscription.plan 'premium') 'avitar-badge--warning'
+                    (if (eq @model.subscription.plan 'free') 'avitar-badge--info' 'avitar-badge--secondary')))}}">
+              {{or @model.subscription.plan "Free"}} Plan
+            </span>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+  </header>
+
+  {{! Left Sidebar Menu }}
+  <Citizen::SettingsMenu />
+
+  {{! Main Content Area }}
+  <main class="avitar-main avitar-main--with-sidebar avitar-main--with-topbar">
+    <div class="avitar-container avitar-p-6">
+      {{outlet}}
+    </div>
+  </main>
+</div>

@@ -1,0 +1,22 @@
+{{page-title "Notifications"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-mb-6">
+    <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+      {{{lnr-icon "alarm" class="avitar-mr-2"}}}
+      Notification Preferences
+    </h1>
+    <p class="avitar-text-muted">
+      Manage how you receive updates about your building permits
+    </p>
+  </div>
+
+  <Shared::NotificationPreferences
+    @userType={{if this.model.isContractor "contractor" "citizen"}}
+    @currentPlan={{this.model.currentPlan}}
+    @subscriptionRoute="municipality.building-permits.settings.subscription"
+    @initialPreferences={{this.model.preferences}}
+    @onSave={{this.handleSave}}
+  />
+</div>

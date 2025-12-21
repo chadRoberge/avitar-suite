@@ -94,6 +94,8 @@
     "d3": "^7.9.0",
     "dexie": "^4.2.0",
     "dotenv": "^17.2.1",
+    "ember-basic-dropdown": "^8.11.0",
+    "ember-power-select": "^8.12.1",
     "ember-render-helpers": "^2.0.0",
     "ember-simple-auth": "^8.0.0",
     "ember-truth-helpers": "^4.0.3",

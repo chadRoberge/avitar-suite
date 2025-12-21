@@ -80,6 +80,13 @@ const userSchema = new mongoose.Schema(
       sparse: true, // Only contractors will have this
     },
 
+    // Citizen reference (for global_role: 'citizen')
+    citizen_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Citizen',
+      sparse: true, // Only citizens will have this
+    },
+
     // Municipality-specific permissions
     municipal_permissions: [
       {
@@ -326,6 +333,7 @@ userSchema.index({ 'municipal_permissions.municipality_id': 1 });
 userSchema.index({ global_role: 1 });
 userSchema.index({ is_active: 1 });
 userSchema.index({ contractor_id: 1 }, { sparse: true });
+userSchema.index({ citizen_id: 1 }, { sparse: true });
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

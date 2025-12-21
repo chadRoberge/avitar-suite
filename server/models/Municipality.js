@@ -379,15 +379,6 @@ const municipalitySchema = new mongoose.Schema(
       removeLeadingZeros: { type: Boolean, default: true },
       showSubOnlyWhenPresent: { type: Boolean, default: false },
     },
-    // Status
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    setupCompleted: {
-      type: Boolean,
-      default: false,
-    },
     // Statistics (updated periodically)
     stats: {
       totalUsers: {

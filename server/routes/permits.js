@@ -41,8 +41,20 @@ const checkMunicipalityAccess = async (req, res, next) => {
     return next();
   }
 
-  // Check if user has access to this municipality
-  if (!req.user.hasAccessToMunicipality(municipalityId)) {
+  // Contractors and citizens can access any active municipality
+  if (
+    req.user.global_role === 'contractor' ||
+    req.user.global_role === 'citizen'
+  ) {
+    return next();
+  }
+
+  // For municipal users: check if they have permissions for this municipality
+  const hasAccess = req.user.municipal_permissions?.some(
+    (perm) => perm.municipality_id.toString() === municipalityId.toString(),
+  );
+
+  if (!hasAccess) {
     return res
       .status(403)
       .json({ error: 'Access denied to this municipality' });
@@ -4913,10 +4925,14 @@ router.post(
         folder: `inspection-issues/${issueNumber}/photos`,
       });
 
-      const uploadResult = await storageService.uploadFile(buffer, storagePath, {
-        contentType: mimeType,
-        visibility: 'private',
-      });
+      const uploadResult = await storageService.uploadFile(
+        buffer,
+        storagePath,
+        {
+          contentType: mimeType,
+          visibility: 'private',
+        },
+      );
 
       // Add photo to issue
       const photo = {

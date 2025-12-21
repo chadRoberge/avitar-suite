@@ -1,0 +1,139 @@
+{{!-- PID Bottom Sheet - Mobile Property Selection --}}
+<Shared::BottomSheet
+  @isOpen={{@isOpen}}
+  @onClose={{@onClose}}
+  @title="Properties"
+  @snapPoints={{array 0.5 0.9}}
+>
+  <div class="pid-sheet">
+    {{!-- Search Bar --}}
+    <div class="pid-sheet__search">
+      <div class="pid-sheet__search-input-wrapper">
+        {{lnr-icon "magnifier" class="pid-sheet__search-icon"}}
+        <input
+          type="text"
+          class="pid-sheet__search-input"
+          placeholder="Search by PID, address, or owner..."
+          aria-label="Search properties"
+          value={{this.searchTerm}}
+          {{on "input" this.updateSearch}}
+        />
+        {{#if this.searchTerm}}
+          <button
+            type="button"
+            class="pid-sheet__search-clear"
+            {{on "click" this.clearSearch}}
+            aria-label="Clear search"
+          >
+            {{lnr-icon "cross"}}
+          </button>
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Group By Tabs --}}
+    <div class="pid-sheet__tabs">
+      <button
+        type="button"
+        class="pid-sheet__tab {{if (eq this.groupBy 'pid') 'pid-sheet__tab--active'}}"
+        {{on "click" (fn this.setGroupBy "pid")}}
+      >
+        {{lnr-icon "layers" class="pid-sheet__tab-icon"}}
+        <span>PID</span>
+      </button>
+      <button
+        type="button"
+        class="pid-sheet__tab {{if (eq this.groupBy 'street') 'pid-sheet__tab--active'}}"
+        {{on "click" (fn this.setGroupBy "street")}}
+      >
+        {{lnr-icon "map-marker" class="pid-sheet__tab-icon"}}
+        <span>Street</span>
+      </button>
+      <button
+        type="button"
+        class="pid-sheet__tab {{if (eq this.groupBy 'lastname') 'pid-sheet__tab--active'}}"
+        {{on "click" (fn this.setGroupBy "lastname")}}
+      >
+        {{lnr-icon "user" class="pid-sheet__tab-icon"}}
+        <span>Owner</span>
+      </button>
+    </div>
+
+    {{!-- Property Count --}}
+    <div class="pid-sheet__count">
+      {{this.propertyCount}} properties
+      {{#if this.searchTerm}}
+        <span class="pid-sheet__count-filter">(filtered)</span>
+      {{/if}}
+    </div>
+
+    {{!-- Property List --}}
+    <div class="pid-sheet__list">
+      {{#if this.isLoading}}
+        <div class="pid-sheet__loading">
+          <div class="avitar-loading"></div>
+          <span>Loading properties...</span>
+        </div>
+      {{else if (eq this.propertyCount 0)}}
+        <div class="pid-sheet__empty">
+          {{lnr-icon "magnifier" class="pid-sheet__empty-icon"}}
+          <p class="pid-sheet__empty-title">No properties found</p>
+          {{#if this.searchTerm}}
+            <p class="pid-sheet__empty-text">Try a different search term</p>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary avitar-btn--sm"
+              {{on "click" this.clearSearch}}
+            >
+              Clear Search
+            </button>
+          {{/if}}
+        </div>
+      {{else}}
+        {{#each this.groupKeys as |groupKey|}}
+          <div class="pid-sheet__group">
+            {{!-- Group Header --}}
+            <button
+              type="button"
+              class="pid-sheet__group-header"
+              {{on "click" (fn this.toggleGroup groupKey)}}
+              aria-expanded={{if (this.isGroupExpanded groupKey) "true" "false"}}
+            >
+              <div class="pid-sheet__group-info">
+                {{lnr-icon (this.getGroupIcon) class="pid-sheet__group-icon"}}
+                <span class="pid-sheet__group-title">{{this.getGroupTitle groupKey}}</span>
+                <span class="pid-sheet__group-count">
+                  {{get (get this.groupedProperties groupKey) "length"}}
+                </span>
+              </div>
+              {{lnr-icon (if (this.isGroupExpanded groupKey) "chevron-up" "chevron-down") class="pid-sheet__group-chevron"}}
+            </button>
+
+            {{!-- Group Properties --}}
+            {{#if (this.isGroupExpanded groupKey)}}
+              <div class="pid-sheet__group-content">
+                {{#each (get this.groupedProperties groupKey) as |property|}}
+                  <button
+                    type="button"
+                    class="pid-sheet__property {{if (this.isPropertySelected property) 'pid-sheet__property--selected'}}"
+                    {{on "click" (fn this.selectProperty property)}}
+                  >
+                    <div class="pid-sheet__property-info">
+                      <span class="pid-sheet__property-name">{{this.getDisplayName property}}</span>
+                      <span class="pid-sheet__property-secondary">{{this.getSecondaryInfo property}}</span>
+                    </div>
+                    {{#if (this.isPropertySelected property)}}
+                      <div class="pid-sheet__property-check">
+                        {{lnr-icon "checkmark-circle"}}
+                      </div>
+                    {{/if}}
+                  </button>
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      {{/if}}
+    </div>
+  </div>
+</Shared::BottomSheet>

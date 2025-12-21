@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const Contractor = require('../models/Contractor');
+const Citizen = require('../models/Citizen');
 const {
   getAllPlans,
   getPlan,
@@ -33,23 +34,44 @@ router.get('/plans', authenticateToken, async (req, res) => {
 
 /**
  * GET /subscriptions/my-subscription
- * Get current contractor's subscription details
+ * Get current user's subscription details (contractor or citizen)
  */
 router.get('/my-subscription', authenticateToken, async (req, res) => {
   try {
-    if (!req.user.contractor_id) {
-      return res.status(404).json({
-        success: false,
-        message: 'No contractor account found',
-      });
+    let subscription = null;
+    let entityType = null;
+
+    // Check if user is a contractor
+    if (req.user.contractor_id) {
+      const contractor = await Contractor.findById(req.user.contractor_id);
+      if (contractor) {
+        subscription = contractor.subscription;
+        entityType = 'contractor';
+      }
+    }
+    // Check if user is a citizen
+    else if (req.user.citizen_id) {
+      const citizen = await Citizen.findById(req.user.citizen_id);
+      if (citizen) {
+        subscription = citizen.subscription;
+        entityType = 'citizen';
+      }
     }
 
-    const contractor = await Contractor.findById(req.user.contractor_id);
-
-    if (!contractor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contractor not found',
+    // If no subscription found, return a default free plan response
+    if (!subscription) {
+      const freePlan = getPlan('free');
+      return res.json({
+        success: true,
+        subscription: {
+          plan: 'free',
+          status: 'active',
+          plan_details: freePlan,
+        },
+        stripe_subscription: null,
+        stripe_customer: null,
+        upcoming_invoice: null,
+        entity_type: entityType || 'unknown',
       });
     }
 
@@ -58,26 +80,20 @@ router.get('/my-subscription', authenticateToken, async (req, res) => {
     let stripeCustomer = null;
     let upcomingInvoice = null;
 
-    if (contractor.subscription?.stripe_subscription_id) {
+    if (subscription?.stripe_subscription_id) {
       try {
         stripeSubscription = await stripeService.getSubscription(
-          contractor.subscription.stripe_subscription_id,
+          subscription.stripe_subscription_id,
         );
-
-        // Temporarily disabled - method name issues with Stripe v20
-        // upcomingInvoice = await stripeService.getUpcomingInvoice(
-        //   contractor.subscription.stripe_customer_id,
-        //   contractor.subscription.stripe_subscription_id,
-        // );
       } catch (error) {
-        console.warn('Could not fetch Stripe data:', error.message);
+        console.warn('Could not fetch Stripe subscription:', error.message);
       }
     }
 
-    if (contractor.subscription?.stripe_customer_id) {
+    if (subscription?.stripe_customer_id) {
       try {
         stripeCustomer = await stripeService.getCustomer(
-          contractor.subscription.stripe_customer_id,
+          subscription.stripe_customer_id,
         );
       } catch (error) {
         console.warn('Could not fetch Stripe customer:', error.message);
@@ -85,17 +101,18 @@ router.get('/my-subscription', authenticateToken, async (req, res) => {
     }
 
     // Get current plan details
-    const currentPlan = getPlan(contractor.subscription?.plan || 'free');
+    const currentPlan = getPlan(subscription?.plan || 'free');
 
     res.json({
       success: true,
       subscription: {
-        ...contractor.subscription?.toObject(),
+        ...(subscription?.toObject ? subscription.toObject() : subscription),
         plan_details: currentPlan,
       },
       stripe_subscription: stripeSubscription,
       stripe_customer: stripeCustomer,
       upcoming_invoice: upcomingInvoice,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('Error fetching subscription:', error);
@@ -110,35 +127,47 @@ router.get('/my-subscription', authenticateToken, async (req, res) => {
 /**
  * POST /subscriptions/create-setup-intent
  * Create a Stripe Setup Intent for adding payment methods
+ * Supports both contractors and citizens
  */
 router.post('/create-setup-intent', authenticateToken, async (req, res) => {
   try {
-    const contractor = await Contractor.findById(req.user.contractor_id);
+    // Find entity - contractor or citizen
+    let entity = null;
+    let entityType = null;
 
-    if (!contractor) {
+    if (req.user.contractor_id) {
+      entity = await Contractor.findById(req.user.contractor_id);
+      entityType = 'contractor';
+    } else if (req.user.citizen_id) {
+      entity = await Citizen.findById(req.user.citizen_id);
+      entityType = 'citizen';
+    }
+
+    if (!entity) {
       return res.status(404).json({
         success: false,
-        message: 'Contractor not found',
+        message: 'User account not found',
       });
     }
 
     // Create Stripe customer if doesn't exist
-    if (!contractor.subscription?.stripe_customer_id) {
-      const customer = await stripeService.createCustomer(contractor, req.user);
+    if (!entity.subscription?.stripe_customer_id) {
+      const customer = await stripeService.createCustomer(entity, req.user);
 
-      contractor.subscription = contractor.subscription || {};
-      contractor.subscription.stripe_customer_id = customer.id;
-      await contractor.save();
+      entity.subscription = entity.subscription || {};
+      entity.subscription.stripe_customer_id = customer.id;
+      await entity.save();
     }
 
     // Create setup intent
     const setupIntent = await stripeService.createSetupIntent(
-      contractor.subscription.stripe_customer_id,
+      entity.subscription.stripe_customer_id,
     );
 
     res.json({
       success: true,
       client_secret: setupIntent.client_secret,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('Error creating setup intent:', error);
@@ -153,6 +182,7 @@ router.post('/create-setup-intent', authenticateToken, async (req, res) => {
 /**
  * POST /subscriptions/subscribe
  * Create a new subscription
+ * Supports both contractors and citizens
  */
 router.post('/subscribe', authenticateToken, async (req, res) => {
   try {
@@ -184,14 +214,31 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
       });
     }
 
-    const contractor = await Contractor.findById(req.user.contractor_id);
+    // Find entity - contractor or citizen
+    let entity = null;
+    let entityType = null;
 
-    if (!contractor) {
+    if (req.user.contractor_id) {
+      entity = await Contractor.findById(req.user.contractor_id);
+      entityType = 'contractor';
+    } else if (req.user.citizen_id) {
+      entity = await Citizen.findById(req.user.citizen_id);
+      entityType = 'citizen';
+    }
+
+    if (!entity) {
       return res.status(404).json({
         success: false,
-        message: 'Contractor not found',
+        message: 'User account not found',
       });
     }
+
+    console.log('🔵 [SUBSCRIBE] Creating subscription for:', {
+      entityType,
+      entityId: entity._id,
+      planKey,
+      priceId,
+    });
 
     // Can't subscribe to free plan via API
     if (planKey === 'free') {
@@ -202,36 +249,37 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
     }
 
     // Create Stripe customer if doesn't exist
-    if (!contractor.subscription?.stripe_customer_id) {
-      const customer = await stripeService.createCustomer(contractor, req.user);
-      contractor.subscription = contractor.subscription || {};
-      contractor.subscription.stripe_customer_id = customer.id;
-      await contractor.save();
+    if (!entity.subscription?.stripe_customer_id) {
+      const customer = await stripeService.createCustomer(entity, req.user);
+      entity.subscription = entity.subscription || {};
+      entity.subscription.stripe_customer_id = customer.id;
+      await entity.save();
     }
 
     // Attach payment method if provided
     if (payment_method_id) {
       await stripeService.attachPaymentMethod(
         payment_method_id,
-        contractor.subscription.stripe_customer_id,
+        entity.subscription.stripe_customer_id,
       );
 
       await stripeService.setDefaultPaymentMethod(
-        contractor.subscription.stripe_customer_id,
+        entity.subscription.stripe_customer_id,
         payment_method_id,
       );
     }
 
     // Create subscription using Stripe price ID
     const subscription = await stripeService.createSubscription(
-      contractor.subscription.stripe_customer_id,
+      entity.subscription.stripe_customer_id,
       priceId,
       payment_method_id,
     );
 
-    console.log('🟢 [ROUTE] Stripe subscription created:', {
+    console.log('🟢 [SUBSCRIBE] Stripe subscription created:', {
       id: subscription.id,
       status: subscription.status,
+      entityType,
       current_period_start: subscription.current_period_start,
       current_period_end: subscription.current_period_end,
       latest_invoice_type: typeof subscription.latest_invoice,
@@ -242,38 +290,39 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
         : '❌ missing',
     });
 
-    // Update contractor subscription with data from Stripe
-    contractor.subscription.stripe_subscription_id = subscription.id;
-    contractor.subscription.stripe_product_id = productId;
-    contractor.subscription.plan = planKey;
-    contractor.subscription.status = stripeService.mapSubscriptionStatus(
+    // Update entity subscription with data from Stripe
+    entity.subscription.stripe_subscription_id = subscription.id;
+    entity.subscription.stripe_product_id = productId;
+    entity.subscription.plan = planKey;
+    entity.subscription.status = stripeService.mapSubscriptionStatus(
       subscription.status,
     );
 
     // Only set dates if they exist (Stripe returns Unix timestamps in seconds)
     if (subscription.current_period_start) {
-      contractor.subscription.current_period_start = new Date(
+      entity.subscription.current_period_start = new Date(
         subscription.current_period_start * 1000,
       );
     }
     if (subscription.current_period_end) {
-      contractor.subscription.current_period_end = new Date(
+      entity.subscription.current_period_end = new Date(
         subscription.current_period_end * 1000,
       );
     }
 
     // Use features from Stripe product metadata (passed from frontend)
-    contractor.subscription.features = features || {};
+    entity.subscription.features = features || {};
 
-    await contractor.save();
+    await entity.save();
 
     res.json({
       success: true,
-      subscription: contractor.subscription,
+      subscription: entity.subscription,
       stripe_subscription: subscription,
       requires_action: subscription.status === 'incomplete',
       client_secret:
         subscription.latest_invoice?.payment_intent?.client_secret || null,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('Error creating subscription:', error);
@@ -289,6 +338,7 @@ router.post('/subscribe', authenticateToken, async (req, res) => {
  * POST /subscriptions/change-plan
  * Change subscription plan (including Free <-> Paid transitions)
  * Now ALL plans use subscriptions, so we always update the subscription
+ * Supports both contractors and citizens
  */
 router.post('/change-plan', authenticateToken, async (req, res) => {
   try {
@@ -310,6 +360,9 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
       priceId,
       productId,
       hasPaymentMethod: !!payment_method_id,
+      userId: req.user._id,
+      contractorId: req.user.contractor_id,
+      citizenId: req.user.citizen_id,
       timestamp: new Date().toISOString(),
     });
 
@@ -320,17 +373,33 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
       });
     }
 
-    const contractor = await Contractor.findById(req.user.contractor_id);
+    // Find entity - contractor or citizen
+    let entity = null;
+    let entityType = null;
 
-    if (!contractor) {
+    if (req.user.contractor_id) {
+      entity = await Contractor.findById(req.user.contractor_id);
+      entityType = 'contractor';
+    } else if (req.user.citizen_id) {
+      entity = await Citizen.findById(req.user.citizen_id);
+      entityType = 'citizen';
+    }
+
+    if (!entity) {
       return res.status(404).json({
         success: false,
-        message: 'Contractor not found',
+        message: 'User account not found',
       });
     }
 
-    // Check if contractor has an existing subscription
-    if (!contractor.subscription?.stripe_subscription_id) {
+    console.log('🔵 [CHANGE_PLAN] Found entity:', {
+      entityType,
+      entityId: entity._id,
+      currentPlan: entity.subscription?.plan,
+    });
+
+    // Check if entity has an existing subscription
+    if (!entity.subscription?.stripe_subscription_id) {
       return res.status(400).json({
         success: false,
         message:
@@ -339,7 +408,7 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
     }
 
     // If payment method provided, attach it to customer (for Free → Paid upgrades)
-    if (payment_method_id && contractor.subscription?.stripe_customer_id) {
+    if (payment_method_id && entity.subscription?.stripe_customer_id) {
       console.log(
         '🔵 [CHANGE_PLAN] Attaching payment method:',
         payment_method_id,
@@ -347,11 +416,11 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
 
       await stripeService.attachPaymentMethod(
         payment_method_id,
-        contractor.subscription.stripe_customer_id,
+        entity.subscription.stripe_customer_id,
       );
 
       await stripeService.setDefaultPaymentMethod(
-        contractor.subscription.stripe_customer_id,
+        entity.subscription.stripe_customer_id,
         payment_method_id,
       );
 
@@ -361,15 +430,15 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
     }
 
     console.log('🔵 [CHANGE_PLAN] Updating subscription:', {
-      subscriptionId: contractor.subscription.stripe_subscription_id,
-      fromPlan: contractor.subscription.plan,
+      subscriptionId: entity.subscription.stripe_subscription_id,
+      fromPlan: entity.subscription.plan,
       toPlan: planKey,
       newPriceId: priceId,
     });
 
     // Update Stripe subscription with new price ID (handles proration automatically)
     const subscription = await stripeService.updateSubscription(
-      contractor.subscription.stripe_subscription_id,
+      entity.subscription.stripe_subscription_id,
       priceId,
     );
 
@@ -379,39 +448,41 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
       current_period_end: subscription.current_period_end,
     });
 
-    // Update contractor subscription with data from Stripe
-    contractor.subscription.stripe_product_id = productId;
-    contractor.subscription.plan = planKey;
-    contractor.subscription.status = stripeService.mapSubscriptionStatus(
+    // Update entity subscription with data from Stripe
+    entity.subscription.stripe_product_id = productId;
+    entity.subscription.plan = planKey;
+    entity.subscription.status = stripeService.mapSubscriptionStatus(
       subscription.status,
     );
 
     // Only set dates if they exist (Stripe returns Unix timestamps in seconds)
     if (subscription.current_period_start) {
-      contractor.subscription.current_period_start = new Date(
+      entity.subscription.current_period_start = new Date(
         subscription.current_period_start * 1000,
       );
     }
     if (subscription.current_period_end) {
-      contractor.subscription.current_period_end = new Date(
+      entity.subscription.current_period_end = new Date(
         subscription.current_period_end * 1000,
       );
     }
 
     // Use features from Stripe product metadata (passed from frontend)
-    contractor.subscription.features = features || {};
+    entity.subscription.features = features || {};
 
-    await contractor.save();
+    await entity.save();
 
     console.log('🟢 [CHANGE_PLAN] Plan changed successfully:', {
+      entityType,
       newPlan: planKey,
-      status: contractor.subscription.status,
+      status: entity.subscription.status,
     });
 
     res.json({
       success: true,
-      subscription: contractor.subscription,
+      subscription: entity.subscription,
       stripe_subscription: subscription,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('❌ [CHANGE_PLAN] Error changing plan:', error);
@@ -426,21 +497,32 @@ router.post('/change-plan', authenticateToken, async (req, res) => {
 /**
  * POST /subscriptions/cancel
  * Cancel subscription
+ * Supports both contractors and citizens
  */
 router.post('/cancel', authenticateToken, async (req, res) => {
   try {
     const { cancel_immediately } = req.body;
 
-    const contractor = await Contractor.findById(req.user.contractor_id);
+    // Find entity - contractor or citizen
+    let entity = null;
+    let entityType = null;
 
-    if (!contractor) {
+    if (req.user.contractor_id) {
+      entity = await Contractor.findById(req.user.contractor_id);
+      entityType = 'contractor';
+    } else if (req.user.citizen_id) {
+      entity = await Citizen.findById(req.user.citizen_id);
+      entityType = 'citizen';
+    }
+
+    if (!entity) {
       return res.status(404).json({
         success: false,
-        message: 'Contractor not found',
+        message: 'User account not found',
       });
     }
 
-    if (!contractor.subscription?.stripe_subscription_id) {
+    if (!entity.subscription?.stripe_subscription_id) {
       return res.status(400).json({
         success: false,
         message: 'No active subscription found',
@@ -449,26 +531,27 @@ router.post('/cancel', authenticateToken, async (req, res) => {
 
     // Cancel Stripe subscription
     const subscription = await stripeService.cancelSubscription(
-      contractor.subscription.stripe_subscription_id,
+      entity.subscription.stripe_subscription_id,
       cancel_immediately,
     );
 
-    // Update contractor subscription status
+    // Update entity subscription status
     if (cancel_immediately) {
-      contractor.subscription.status = 'cancelled';
-      contractor.subscription.plan = 'free';
-      contractor.subscription.features = getPlan('free').features;
+      entity.subscription.status = 'cancelled';
+      entity.subscription.plan = 'free';
+      entity.subscription.features = getPlan('free').features;
     } else {
-      contractor.subscription.status = 'active'; // Still active until period end
+      entity.subscription.status = 'active'; // Still active until period end
     }
 
-    await contractor.save();
+    await entity.save();
 
     res.json({
       success: true,
-      subscription: contractor.subscription,
+      subscription: entity.subscription,
       stripe_subscription: subscription,
       cancel_at_period_end: subscription.cancel_at_period_end,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('Error canceling subscription:', error);
@@ -483,19 +566,30 @@ router.post('/cancel', authenticateToken, async (req, res) => {
 /**
  * POST /subscriptions/reactivate
  * Reactivate a canceled subscription
+ * Supports both contractors and citizens
  */
 router.post('/reactivate', authenticateToken, async (req, res) => {
   try {
-    const contractor = await Contractor.findById(req.user.contractor_id);
+    // Find entity - contractor or citizen
+    let entity = null;
+    let entityType = null;
 
-    if (!contractor) {
+    if (req.user.contractor_id) {
+      entity = await Contractor.findById(req.user.contractor_id);
+      entityType = 'contractor';
+    } else if (req.user.citizen_id) {
+      entity = await Citizen.findById(req.user.citizen_id);
+      entityType = 'citizen';
+    }
+
+    if (!entity) {
       return res.status(404).json({
         success: false,
-        message: 'Contractor not found',
+        message: 'User account not found',
       });
     }
 
-    if (!contractor.subscription?.stripe_subscription_id) {
+    if (!entity.subscription?.stripe_subscription_id) {
       return res.status(400).json({
         success: false,
         message: 'No subscription found',
@@ -504,20 +598,21 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
 
     // Reactivate Stripe subscription
     const subscription = await stripeService.reactivateSubscription(
-      contractor.subscription.stripe_subscription_id,
+      entity.subscription.stripe_subscription_id,
     );
 
-    // Update contractor subscription status
-    contractor.subscription.status = stripeService.mapSubscriptionStatus(
+    // Update entity subscription status
+    entity.subscription.status = stripeService.mapSubscriptionStatus(
       subscription.status,
     );
 
-    await contractor.save();
+    await entity.save();
 
     res.json({
       success: true,
-      subscription: contractor.subscription,
+      subscription: entity.subscription,
       stripe_subscription: subscription,
+      entity_type: entityType,
     });
   } catch (error) {
     console.error('Error reactivating subscription:', error);
@@ -532,6 +627,7 @@ router.post('/reactivate', authenticateToken, async (req, res) => {
 /**
  * GET /subscriptions/upgrade-preview
  * Get preview of upgrading to a new plan
+ * Supports both contractors and citizens
  */
 router.get(
   '/upgrade-preview/:new_plan_id',
@@ -540,16 +636,26 @@ router.get(
     try {
       const { new_plan_id } = req.params;
 
-      const contractor = await Contractor.findById(req.user.contractor_id);
+      // Find entity - contractor or citizen
+      let entity = null;
+      let entityType = null;
 
-      if (!contractor) {
+      if (req.user.contractor_id) {
+        entity = await Contractor.findById(req.user.contractor_id);
+        entityType = 'contractor';
+      } else if (req.user.citizen_id) {
+        entity = await Citizen.findById(req.user.citizen_id);
+        entityType = 'citizen';
+      }
+
+      if (!entity) {
         return res.status(404).json({
           success: false,
-          message: 'Contractor not found',
+          message: 'User account not found',
         });
       }
 
-      const currentPlanId = contractor.subscription?.plan || 'free';
+      const currentPlanId = entity.subscription?.plan || 'free';
       const currentPlan = getPlan(currentPlanId);
       const newPlan = getPlan(new_plan_id);
 
@@ -566,12 +672,12 @@ router.get(
       // Calculate pro-rated amount if applicable
       let proratedAmount = null;
       if (
-        contractor.subscription?.stripe_customer_id &&
+        entity.subscription?.stripe_customer_id &&
         newPlan.stripe_price_id
       ) {
         try {
           const upcomingInvoice = await stripeService.getUpcomingInvoice(
-            contractor.subscription.stripe_customer_id,
+            entity.subscription.stripe_customer_id,
           );
           proratedAmount = upcomingInvoice.amount_due / 100; // Convert cents to dollars
         } catch (error) {
@@ -585,6 +691,7 @@ router.get(
         new_plan: newPlan,
         benefits,
         prorated_amount: proratedAmount,
+        entity_type: entityType,
       });
     } catch (error) {
       console.error('Error generating upgrade preview:', error);

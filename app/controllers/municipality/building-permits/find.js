@@ -60,13 +60,15 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
 
     try {
       // Load permits for this property using query parameter
-      // Note: Projects endpoint doesn't support propertyId filtering yet
+      // Use background: true to prevent global loading overlay (controller has its own isLoadingPermits state)
       const [permitsResponse, projectsResponse] = await Promise.allSettled([
         this.hybridApi.get(
           `/municipalities/${municipalityId}/permits?propertyId=${propertyId}`,
+          { background: true },
         ),
         this.hybridApi.get(
           `/municipalities/${municipalityId}/projects?propertyId=${propertyId}`,
+          { background: true },
         ),
       ]);
 
@@ -117,5 +119,13 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
         permit._id,
       );
     }
+  }
+
+  @action
+  applyForPermit() {
+    // Navigate to the permit creation wizard
+    // The selected property is already stored in the propertySelection service
+    // and will be automatically picked up by the create route
+    this.router.transitionTo('municipality.building-permits.create');
   }
 }

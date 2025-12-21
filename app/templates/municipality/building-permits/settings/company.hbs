@@ -1,0 +1,319 @@
+{{page-title "Company Settings"}}
+
+<div class="avitar-container avitar-py-6">
+  {{#if this.needsOnboarding}}
+    {{! Onboarding Required Message }}
+    <div class="avitar-card avitar-bg-primary-light avitar-border-primary avitar-mb-6">
+      <div class="avitar-card__body avitar-p-6">
+        <div class="avitar-flex avitar-items-start avitar-gap-4">
+          <div class="avitar-flex-shrink-0">
+            <div class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+              {{{lnr-icon "clipboard-check" class="avitar-text-2xl"}}}
+            </div>
+          </div>
+          <div class="avitar-flex-1">
+            <h3 class="avitar-text-xl avitar-font-bold avitar-mb-3">
+              Complete Your Contractor Profile
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              Welcome! To start submitting permit applications, you'll need to complete your contractor profile with your business and licensing information.
+            </p>
+            <div class="avitar-bg-white avitar-rounded avitar-p-4 avitar-mb-4">
+              <h4 class="avitar-font-semibold avitar-mb-2">What you'll need:</h4>
+              <ul class="avitar-space-y-2">
+                <li class="avitar-flex avitar-items-start avitar-gap-2">
+                  {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mt-1"}}}
+                  <span>Business license number and expiration date</span>
+                </li>
+                <li class="avitar-flex avitar-items-start avitar-gap-2">
+                  {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mt-1"}}}
+                  <span>Company contact information</span>
+                </li>
+                <li class="avitar-flex avitar-items-start avitar-gap-2">
+                  {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mt-1"}}}
+                  <span>Business address</span>
+                </li>
+                <li class="avitar-flex avitar-items-start avitar-gap-2">
+                  {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mt-1"}}}
+                  <span>Insurance information (optional)</span>
+                </li>
+              </ul>
+            </div>
+            <LinkTo @route="municipality.building-permits.settings.account" class="avitar-btn avitar-btn--primary avitar-btn--lg">
+              {{{lnr-icon "arrow-right" class="avitar-mr-2"}}}
+              Complete Profile
+            </LinkTo>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{else}}
+    {{! Action Bar }}
+    <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+      <div>
+        <h1 class="avitar-text-2xl avitar-font-bold avitar-mb-2">
+          {{{lnr-icon "briefcase" class="avitar-mr-2"}}}
+          Company Profile
+        </h1>
+        <p class="avitar-text-muted">
+          {{#if this.canEdit}}
+            Edit your company information and details
+          {{else}}
+            View your company information and details
+          {{/if}}
+        </p>
+      </div>
+      {{#if this.isDirty}}
+        <div class="avitar-flex avitar-gap-3">
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--secondary"
+            {{on "click" this.undoChanges}}
+            disabled={{this.isLoading}}
+          >
+            {{{lnr-icon "undo" class="avitar-mr-2"}}}
+            Undo Changes
+          </button>
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.saveChanges}}
+            disabled={{this.isLoading}}
+          >
+            {{#if this.isLoading}}
+              {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+              Saving...
+            {{else}}
+              {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+              Save Changes
+            {{/if}}
+          </button>
+        </div>
+      {{/if}}
+    </div>
+
+    {{! Company Information Card }}
+    <div class="avitar-card avitar-mb-6">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          {{{lnr-icon "apartment" class="avitar-mr-2"}}}
+          Company Information
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+          <div>
+            <label class="avitar-label">
+              Company Name
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.company_name}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateField "company_name")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">
+              License Number
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.license_number}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateField "license_number")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">
+              License State
+              <span class="avitar-text-danger">*</span>
+            </label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.license_state}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateField "license_state")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">License Type</label>
+            <select class="avitar-select" disabled={{not this.canEdit}} {{on "change" (fn this.updateField "license_type")}}>
+              <option value="general_contractor" selected={{eq this.formData.license_type "general_contractor"}}>General Contractor</option>
+              <option value="electrical" selected={{eq this.formData.license_type "electrical"}}>Electrical</option>
+              <option value="plumbing" selected={{eq this.formData.license_type "plumbing"}}>Plumbing</option>
+              <option value="hvac" selected={{eq this.formData.license_type "hvac"}}>HVAC</option>
+              <option value="roofing" selected={{eq this.formData.license_type "roofing"}}>Roofing</option>
+              <option value="other" selected={{eq this.formData.license_type "other"}}>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="avitar-label">License Expiration</label>
+            <Input
+              @type="date"
+              class="avitar-input"
+              @value={{this.formData.license_expiration}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateField "license_expiration")}}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Business Contact Information Card }}
+    <div class="avitar-card avitar-mb-6">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          {{{lnr-icon "phone-handset" class="avitar-mr-2"}}}
+          Business Contact Information
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+          <div class="avitar-col-span-2">
+            <label class="avitar-label">Street Address</label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.business_info.address.street}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info.address" "street")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">City</label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.business_info.address.city}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info.address" "city")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">State</label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.business_info.address.state}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info.address" "state")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">ZIP Code</label>
+            <Input
+              @type="text"
+              class="avitar-input"
+              @value={{this.formData.business_info.address.zip}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info.address" "zip")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Phone</label>
+            <Input
+              @type="tel"
+              class="avitar-input"
+              placeholder="(555) 123-4567"
+              @value={{this.formData.business_info.phone}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info" "phone")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Email</label>
+            <Input
+              @type="email"
+              class="avitar-input"
+              placeholder="contact@company.com"
+              @value={{this.formData.business_info.email}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info" "email")}}
+            />
+          </div>
+
+          <div class="avitar-col-span-2">
+            <label class="avitar-label">Website</label>
+            <Input
+              @type="url"
+              class="avitar-input"
+              placeholder="https://www.company.com"
+              @value={{this.formData.business_info.website}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNestedField "business_info" "website")}}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{! Additional Information Card }}
+    <div class="avitar-card">
+      <div class="avitar-card__header">
+        <h3 class="avitar-card__title">
+          {{{lnr-icon "question-circle" class="avitar-mr-2"}}}
+          Additional Information
+        </h3>
+      </div>
+      <div class="avitar-card__body">
+        <div class="avitar-grid avitar-grid-cols-3 avitar-gap-6">
+          <div>
+            <label class="avitar-label">Years in Business</label>
+            <Input
+              @type="number"
+              class="avitar-input"
+              min="0"
+              @value={{this.formData.years_in_business}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNumber "years_in_business")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Employee Count</label>
+            <Input
+              @type="number"
+              class="avitar-input"
+              min="0"
+              @value={{this.formData.employee_count}}
+              disabled={{not this.canEdit}}
+              {{on "input" (fn this.updateNumber "employee_count")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Bonded</label>
+            <div class="avitar-flex avitar-items-center avitar-h-10">
+              <Input
+                @type="checkbox"
+                class="avitar-checkbox"
+                @checked={{this.formData.bonded}}
+                disabled={{not this.canEdit}}
+                {{on "change" (fn this.updateCheckbox "bonded")}}
+              />
+              <span class="avitar-ml-2">
+                {{if this.formData.bonded "Yes" "No"}}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>

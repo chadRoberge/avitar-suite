@@ -1,0 +1,81 @@
+{{!-- Municipality Selector - Power Select styled as topbar brand --}}
+<div class="municipality-selector {{if this.isLoading 'municipality-selector--loading'}}">
+  {{#if this.hasMultipleMunicipalities}}
+    <PowerSelect
+      @options={{this.availableMunicipalities}}
+      @selected={{this.currentMunicipality}}
+      @onChange={{this.selectMunicipality}}
+      @searchEnabled={{true}}
+      @searchField="name"
+      @placeholder="Select Municipality"
+      @triggerClass="municipality-selector__trigger"
+      @dropdownClass="municipality-selector__dropdown"
+      @disabled={{this.isLoading}}
+      as |municipality|
+    >
+      <div
+        class="municipality-selector__option"
+        style="--muni-primary: {{municipality.branding_config.primary_color}}; --muni-secondary: {{municipality.branding_config.secondary_color}}"
+      >
+        {{#if municipality.branding_config.logo_url}}
+          <img
+            src={{municipality.branding_config.logo_url}}
+            alt=""
+            class="municipality-selector__logo"
+          />
+        {{else}}
+          <div
+            class="municipality-selector__initial"
+            style="background-color: {{if municipality.branding_config.primary_color municipality.branding_config.primary_color 'var(--avitar-green)'}}"
+          >
+            {{substring (or municipality.displayName municipality.name "A") 0 1}}
+          </div>
+        {{/if}}
+        <div class="municipality-selector__info">
+          <span class="municipality-selector__name">
+            {{or municipality.displayName municipality.name}}
+          </span>
+          {{#if municipality.state}}
+            <span class="municipality-selector__state">{{municipality.state}}</span>
+          {{/if}}
+        </div>
+        {{#if (eq municipality.id this.currentMunicipality.id)}}
+          <span class="municipality-selector__check">
+            {{lnr-icon "checkmark-circle"}}
+          </span>
+        {{/if}}
+      </div>
+    </PowerSelect>
+  {{else}}
+    {{!-- Single municipality - just show static brand (no dropdown) --}}
+    <div class="municipality-selector__static">
+      {{#if this.brandingConfig.logo_url}}
+        <img
+          src={{this.brandingConfig.logo_url}}
+          alt="{{this.currentMunicipality.name}} Logo"
+          class="municipality-selector__logo"
+        />
+      {{else}}
+        <div class="municipality-selector__initial">
+          {{this.municipalityInitial}}
+        </div>
+      {{/if}}
+      <div class="municipality-selector__info hide-mobile">
+        <span class="municipality-selector__name">
+          {{or this.currentMunicipality.displayName this.currentMunicipality.name}}
+        </span>
+        {{#if this.brandingConfig.header_text}}
+          <span class="municipality-selector__subtitle">
+            {{this.brandingConfig.header_text}}
+          </span>
+        {{/if}}
+      </div>
+    </div>
+  {{/if}}
+
+  {{#if this.isLoading}}
+    <div class="municipality-selector__loading">
+      {{lnr-icon "sync" class="avitar-spin"}}
+    </div>
+  {{/if}}
+</div>

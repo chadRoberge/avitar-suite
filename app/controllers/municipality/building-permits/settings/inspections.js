@@ -345,7 +345,10 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsController ex
       console.log('📦 Batch details response:', response.batch);
       this.selectedBatch = response.batch;
       this.showBatchModal = true;
-      console.log('📦 Modal should be visible now, selectedBatch:', this.selectedBatch);
+      console.log(
+        '📦 Modal should be visible now, selectedBatch:',
+        this.selectedBatch,
+      );
     } catch (error) {
       console.error('Error loading batch details:', error);
       this.notifications.error('Failed to load batch details');

@@ -7,6 +7,7 @@ export default class MunicipalitySelectController extends Controller {
   @service municipality;
   @service router;
   @service session;
+  @service('current-user') currentUser;
   @tracked selectedMunicipality = null;
   @tracked setAsDefault = false;
   @tracked searchTerm = '';
@@ -56,16 +57,18 @@ export default class MunicipalitySelectController extends Controller {
     this.isLoading = true;
 
     try {
-      if (this.setAsDefault) {
-        await this.municipality.setDefaultMunicipality(
-          this.selectedMunicipality.slug ||
-            this.selectedMunicipality.code.toLowerCase(),
-        );
-      }
-
       const slug =
         this.selectedMunicipality.slug ||
         this.selectedMunicipality.code.toLowerCase();
+
+      // Save default municipality if checkbox is checked
+      // Pass rememberMe flag to save to localStorage
+      if (this.setAsDefault) {
+        await this.municipality.setDefaultMunicipality(slug, true);
+      }
+
+      // All users go to the municipality dashboard
+      // Menu items are filtered based on user permissions
       this.router.transitionTo('municipality.dashboard', slug);
     } catch (error) {
       console.error('Error proceeding to municipality:', error);

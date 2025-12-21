@@ -4,11 +4,19 @@
   {{#if this.selectedProperty}}
     {{!-- Property Info Card --}}
     <div class="avitar-card avitar-mb-4">
-      <div class="avitar-card__header avitar-bg-gray-50">
+      <div class="avitar-card__header avitar-bg-gray-50 avitar-flex avitar-justify-between avitar-items-center">
         <h2 class="avitar-card__title">
-          <i class="fas fa-home avitar-mr-2"></i>
+          {{{lnr-icon "home" class="avitar-mr-2"}}}
           {{this.selectedProperty.location.address}}
         </h2>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary"
+          {{on "click" this.applyForPermit}}
+        >
+          {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+          Apply for Permit
+        </button>
       </div>
       <div class="avitar-card__body">
         <div class="avitar-grid avitar-grid-cols-3 avitar-gap-4">

@@ -157,6 +157,18 @@ export default class MunicipalityBuildingPermitsPermitController extends Control
     return this.userReviewableDepartments.length > 0;
   }
 
+  // Permits can only be printed once approved
+  get canPrint() {
+    const status = this.model.permit?.status;
+    const printableStatuses = [
+      'approved',
+      'inspections',
+      'completed',
+      'issued',
+    ];
+    return printableStatuses.includes(status);
+  }
+
   @action
   setActiveTab(tab) {
     this.activeTab = tab;

@@ -156,7 +156,10 @@ export default class HybridApiService extends Service.extend(Evented) {
           `Cannot fetch ${endpoint} - endpoint requires network and device is offline`,
         );
       }
-      return this.api.get(endpoint, options.params);
+      // Pass through background option to prevent loading overlay when caller requests it
+      return this.api.get(endpoint, options.params, {
+        background: options.background,
+      });
     }
 
     // Override strategy if forceRefresh is requested
@@ -176,6 +179,12 @@ export default class HybridApiService extends Service.extend(Evented) {
       console.log(
         `⚙️ Configuration endpoint detected - using network-first strategy`,
       );
+    }
+
+    // If IndexedDB is not ready yet and we're online, use network-first to avoid errors
+    if (!this.indexedDb.isReady && this.isOnline) {
+      strategy = 'network-first';
+      console.log(`⏳ IndexedDB not ready yet - using network-first strategy`);
     }
 
     console.log(
@@ -487,6 +496,23 @@ export default class HybridApiService extends Service.extend(Evented) {
       // If online and using local-first strategy, fall back to network
       return this.getFromNetwork(endpoint, collection, isItemRequest, options);
     } catch (error) {
+      // If IndexedDB isn't ready or has an error, fall back to network
+      if (
+        error.message?.includes('IndexedDB not ready') ||
+        error.message?.includes('IndexedDB')
+      ) {
+        console.warn(
+          `⚠️ IndexedDB error in local fetch, falling back to network: ${error.message}`,
+        );
+        if (this.isOnline) {
+          return this.getFromNetwork(
+            endpoint,
+            collection,
+            isItemRequest,
+            options,
+          );
+        }
+      }
       console.error(`Local fetch failed for ${endpoint}:`, error);
       throw error;
     }
@@ -684,6 +710,23 @@ export default class HybridApiService extends Service.extend(Evented) {
         `No data available for ${endpoint} and device is offline`,
       );
     } catch (error) {
+      // If IndexedDB isn't ready or has an error, fall back to network
+      if (
+        error.message?.includes('IndexedDB not ready') ||
+        error.message?.includes('IndexedDB')
+      ) {
+        console.warn(
+          `⚠️ IndexedDB error in hybrid fetch, falling back to network: ${error.message}`,
+        );
+        if (this.isOnline) {
+          return this.getFromNetwork(
+            endpoint,
+            collection,
+            isItemRequest,
+            options,
+          );
+        }
+      }
       console.error(`Hybrid fetch failed for ${endpoint}:`, error);
       throw error;
     }
@@ -1211,11 +1254,18 @@ export default class HybridApiService extends Service.extend(Evented) {
       const subResource = parts[3];
 
       // Special handling for property sub-resources
-      if (subResource === 'zones' || subResource === 'updates') {
+      // - zones: configuration data, should always be fresh
+      // - updates: delta sync endpoint, not cacheable
+      // - search: dynamic query results, vary with each search term
+      if (
+        subResource === 'zones' ||
+        subResource === 'updates' ||
+        subResource === 'search'
+      ) {
         console.log(
           `🎯 Property sub-resource ${endpoint} -> excluded from caching (will fetch from network)`,
         );
-        return null; // Don't cache zones config or update checks
+        return null; // Don't cache - always fetch from network
       }
     }
 
@@ -1514,6 +1564,16 @@ export default class HybridApiService extends Service.extend(Evented) {
    */
   isConfigurationEndpoint(endpoint) {
     const cleanEndpoint = endpoint.split('?')[0];
+
+    // Special case: top-level /municipalities endpoint (not /municipalities/{id}/...)
+    // should always be fetched from network as it's used for permit creation and needs fresh data
+    if (
+      cleanEndpoint === '/municipalities' ||
+      cleanEndpoint.match(/^\/municipalities\?/)
+    ) {
+      return true;
+    }
+
     const configurationPatterns = [
       '/sketch-sub-area-factors',
       '/building-codes',

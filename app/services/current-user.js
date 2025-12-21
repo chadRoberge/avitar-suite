@@ -144,6 +144,16 @@ export default class CurrentUserService extends Service {
     return this.isContractor || this.isCitizen;
   }
 
+  // Check if user has a linked citizen account
+  get hasCitizenAccount() {
+    return this.isCitizen && !!this.user?.citizen_id;
+  }
+
+  // Check if user has a linked contractor account
+  get hasContractorAccount() {
+    return this.isContractor && !!this.user?.contractor_id;
+  }
+
   get isMunicipalStaff() {
     return this.isMunicipalUser || this.isAvitarStaff;
   }
@@ -231,6 +241,17 @@ export default class CurrentUserService extends Service {
 
   hasModulePermission(moduleName, permission) {
     if (this.isAvitarStaff) return true; // Avitar staff have all permissions
+
+    // Citizens and contractors have implicit read access to building permits
+    // They can view the module, submit permits, and view their own permits
+    if (this.isContractorOrCitizen) {
+      if (moduleName === 'building_permit') {
+        // Grant read and create access for permit submission
+        return ['read', 'create'].includes(permission);
+      }
+      // Citizens/contractors don't have access to other modules (assessing, tax, etc.)
+      return false;
+    }
 
     console.log('🔍 [hasModulePermission] Checking permission:', {
       moduleName,

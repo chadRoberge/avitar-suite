@@ -7,6 +7,7 @@ export default class MunicipalityService extends Service {
   @service session;
   @service router;
   @service('property-selection') propertySelection;
+  @service('current-user') currentUser;
 
   @tracked currentMunicipality = null;
   @tracked availableMunicipalities = [];
@@ -24,12 +25,21 @@ export default class MunicipalityService extends Service {
       // Store in session
       this.session.set('selectedMunicipality', slug);
 
-      // Load today's inspection count for badge
-      if (this.hasModule('building_permit')) {
+      // Load today's inspection count for badge (only for municipal staff)
+      if (
+        this.hasModule('building_permit') &&
+        !this.currentUser.isContractorOrCitizen
+      ) {
         await this.loadInspectionsTodayCount();
       }
 
       return this.currentMunicipality;
+    } catch (error) {
+      console.error(`Failed to load municipality ${slug}:`, error);
+      this.currentMunicipality = null;
+
+      // Re-throw the error so the route can handle it
+      throw error;
     } finally {
       this.isLoading = false;
     }
@@ -66,9 +76,15 @@ export default class MunicipalityService extends Service {
     return this.currentMunicipality;
   }
 
-  async setDefaultMunicipality(municipalitySlug) {
+  async setDefaultMunicipality(municipalitySlug, rememberMe = false) {
     if (this.session.isAuthenticated) {
+      // Always set in session for current session
       this.session.set('defaultMunicipality', municipalitySlug);
+
+      // If rememberMe is true, also save to localStorage for future sessions
+      if (rememberMe) {
+        localStorage.setItem('defaultMunicipality', municipalitySlug);
+      }
     }
   }
 
@@ -291,31 +307,33 @@ export default class MunicipalityService extends Service {
     }
 
     if (this.hasModule('building_permit')) {
-      nav.push({
-        title: 'Building Permits',
-        route: 'municipality.building-permits',
-        icon: 'tool',
-        children: [
-          {
-            title: 'Dashboard',
-            route: 'municipality.building-permits.queue',
-            icon: 'tachometer-alt',
-          },
-          {
-            title: 'Find',
-            route: 'municipality.building-permits.find',
-            icon: 'search',
-          },
-          {
-            title: 'All Permits',
-            route: 'municipality.building-permits.permits',
-            icon: 'file-alt',
-          },
-          {
-            title: 'Projects',
-            route: 'municipality.building-permits.projects',
-            icon: 'folder-open',
-          },
+      // Base children for all users
+      const buildingPermitChildren = [
+        {
+          title: 'Dashboard',
+          route: 'municipality.building-permits.queue',
+          icon: 'tachometer-alt',
+        },
+        {
+          title: 'Find',
+          route: 'municipality.building-permits.find',
+          icon: 'search',
+        },
+        {
+          title: 'Permits',
+          route: 'municipality.building-permits.permits',
+          icon: 'file-alt',
+        },
+        {
+          title: 'Projects',
+          route: 'municipality.building-permits.projects',
+          icon: 'folder-open',
+        },
+      ];
+
+      // Add staff-only navigation items (Inspections, Reports)
+      if (!this.currentUser.isContractorOrCitizen) {
+        buildingPermitChildren.push(
           {
             title: 'Inspections',
             route: 'municipality.building-permits.inspections',
@@ -330,12 +348,21 @@ export default class MunicipalityService extends Service {
             route: 'municipality.building-permits.reports',
             icon: 'chart-bar',
           },
-          {
-            title: 'Settings',
-            route: 'municipality.building-permits.settings',
-            icon: 'cog',
-          },
-        ],
+        );
+      }
+
+      // Add Settings for all users - menu content differs based on user type
+      buildingPermitChildren.push({
+        title: 'Settings',
+        route: 'municipality.building-permits.settings',
+        icon: 'cog',
+      });
+
+      nav.push({
+        title: 'Building Permits',
+        route: 'municipality.building-permits',
+        icon: 'tool',
+        children: buildingPermitChildren,
       });
     }
 
@@ -386,12 +413,20 @@ export default class MunicipalityService extends Service {
       });
     }
 
-    // Add Settings navigation (always available)
-    nav.push({
-      title: 'Settings',
-      route: 'municipality.settings',
-      icon: 'cog',
-    });
+    // Add Account (for residential users) or Settings (for municipal staff)
+    if (this.currentUser.isContractorOrCitizen) {
+      nav.push({
+        title: 'Account',
+        route: 'municipality.profile',
+        icon: 'user',
+      });
+    } else {
+      nav.push({
+        title: 'Settings',
+        route: 'municipality.settings',
+        icon: 'cog',
+      });
+    }
 
     return nav;
   }

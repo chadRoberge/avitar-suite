@@ -180,26 +180,41 @@
               </div>
             </div>
 
-            <div class="avitar-form-row avitar-form-row--2">
+            <div class="avitar-form-row">
               <div class="avitar-form-group">
                 <label class="avitar-label">Icon</label>
-                <select
-                  class="avitar-select"
-                  {{on "change" (fn this.updateField "icon")}}
-                >
+                <p class="avitar-text-muted avitar-text-sm avitar-mb-3">
+                  Select an icon to represent this permit type.
+                </p>
+                <div class="avitar-flex avitar-flex-wrap avitar-gap-2">
                   {{#each this.iconOptions as |iconOpt|}}
-                    <option value={{iconOpt}} selected={{eq this.icon iconOpt}}>
-                      {{iconOpt}}
-                    </option>
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-icon-select-btn {{if (eq this.icon iconOpt.value) 'avitar-btn--primary' 'avitar-btn--secondary'}}"
+                      title={{iconOpt.label}}
+                      {{on "click" (fn this.selectIcon iconOpt.value)}}
+                    >
+                      <span class="avitar-text-xl">
+                        {{{lnr-icon iconOpt.value}}}
+                      </span>
+                    </button>
                   {{/each}}
-                </select>
-                <div class="avitar-mt-2">
-                  <div class="avitar-icon-wrapper avitar-icon-wrapper--lg avitar-bg-primary-light">
-                    <i class="fas fa-{{this.icon}}"></i>
+                </div>
+                <div class="avitar-mt-3 avitar-flex avitar-items-center avitar-gap-3">
+                  <div class="avitar-icon-preview">
+                    <span class="avitar-text-2xl">
+                      {{{lnr-icon this.icon class="avitar-text-primary"}}}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="avitar-font-medium">Selected Icon</p>
+                    <p class="avitar-text-sm avitar-text-muted">{{this.icon}}</p>
                   </div>
                 </div>
               </div>
+            </div>
 
+            <div class="avitar-form-row">
               <div class="avitar-form-group">
                 <label class="avitar-label">Status</label>
                 <label class="avitar-checkbox">

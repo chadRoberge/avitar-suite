@@ -1,0 +1,22 @@
+{{#if this.messages.length}}
+  <div class="avitar-notification-container">
+    {{#each this.messages as |notification|}}
+      <div class="avitar-notification avitar-notification--{{notification.type}}" role="alert">
+        <div class="avitar-notification__icon">
+          {{{lnr-icon (this.getIconForType notification.type)}}}
+        </div>
+        <div class="avitar-notification__content">
+          {{notification.message}}
+        </div>
+        <button
+          type="button"
+          class="avitar-notification__close"
+          {{on "click" (fn this.dismiss notification.id)}}
+          aria-label="Dismiss notification"
+        >
+          {{{lnr-icon "cross"}}}
+        </button>
+      </div>
+    {{/each}}
+  </div>
+{{/if}}

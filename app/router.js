@@ -35,7 +35,15 @@ Router.map(function () {
     this.route('documents'); // Document library management
   });
 
-  // Municipality-specific routes using slug
+  // Citizen/Contractor account settings
+  this.route('citizen-settings', function () {
+    this.route('profile'); // Profile information
+    this.route('subscription'); // Subscription & billing
+    this.route('payment-methods'); // Payment methods
+    this.route('notifications'); // Notification preferences
+  });
+
+  // Municipality-specific routes using slug (for all user types)
   this.route('municipality', { path: '/m/:municipality_slug' }, function () {
     // Dashboard - main landing page for municipality
     this.route('dashboard');
@@ -124,8 +132,9 @@ Router.map(function () {
       this.route('reports'); // Reports dashboard
       this.route('analytics'); // Analytics (Professional+)
 
-      // Settings
+      // Settings (municipal staff) / Account (residential users)
       this.route('settings', function () {
+        // Municipal staff settings
         this.route('permit-types'); // Permit types configuration
         this.route('project-types'); // Project types configuration
         this.route('inspections', function () {
@@ -134,6 +143,15 @@ Router.map(function () {
         this.route('inspection-checklists'); // Inspection checklist templates
         this.route('users'); // Users and inspectors management
         this.route('documents'); // Document library management
+
+        // Residential user account settings
+        this.route('account'); // Profile/personal info
+        this.route('my-permits'); // View their permits
+        this.route('company'); // Contractor company settings
+        this.route('team'); // Team management (contractors)
+        this.route('subscription'); // Subscription management (contractors)
+        this.route('payment-methods'); // Payment methods (contractors)
+        this.route('notifications'); // Notification preferences for building permits
       });
       this.route('inspection', { path: '/inspection/:inspection_id' });
     });

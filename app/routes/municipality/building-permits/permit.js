@@ -19,9 +19,12 @@ export default class MunicipalityBuildingPermitsPermitRoute extends Route {
       // Load permit with all related data
       const [permit, files, inspections, comments] = await Promise.all([
         this.api.get(`/municipalities/${municipalityId}/permits/${permit_id}`),
-        this.api.get(
-          `/municipalities/${municipalityId}/files?permitId=${permit_id}`,
-        ),
+        this.api
+          .get(`/municipalities/${municipalityId}/files?permitId=${permit_id}`)
+          .catch((error) => {
+            console.warn('Could not load files for permit:', error);
+            return { files: [] };
+          }),
         this.api
           .get(
             `/municipalities/${municipalityId}/permits/${permit_id}/inspections`,

@@ -164,20 +164,8 @@ router.get('/by-slug/:slug', authenticateToken, async (req, res) => {
       });
     }
 
-    // Check if user belongs to this municipality or is Avitar staff
-    const hasAccess =
-      ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
-      req.user.municipal_permissions?.some(
-        (perm) =>
-          perm.municipality_id.toString() === municipality._id.toString(),
-      );
-
-    if (!hasAccess) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied to this municipality',
-      });
-    }
+    // Any authenticated user can access any active municipality
+    // Access control is handled at the module level via permissions
 
     res.json({
       success: true,
@@ -201,8 +189,8 @@ router.get('/by-slug/:slug', authenticateToken, async (req, res) => {
         branding_config: municipality.branding_config,
         module_config: municipality.module_config,
         slug: municipality.slug || municipality.code.toLowerCase(),
-        isActive: municipality.is_active,
-        setupCompleted: municipality.setup_completed,
+        is_active: municipality.is_active,
+        setup_completed: municipality.setup_completed,
         createdAt: municipality.createdAt,
         updatedAt: municipality.updatedAt,
         // Stripe Connect fields
@@ -252,20 +240,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
       });
     }
 
-    // Check if user belongs to this municipality or is Avitar staff
-    const hasAccess =
-      ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
-      req.user.municipal_permissions?.some(
-        (perm) =>
-          perm.municipality_id.toString() === municipality._id.toString(),
-      );
-
-    if (!hasAccess) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied to this municipality',
-      });
-    }
+    // Any authenticated user can access any active municipality
+    // Access control is handled at the module level via permissions
 
     // Convert module_config.modules Map to plain object for JSON serialization
     const moduleConfigForResponse = municipality.module_config
@@ -297,8 +273,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
         settings: municipality.settings,
         stats: municipality.stats,
         module_config: moduleConfigForResponse,
-        isActive: municipality.is_active,
-        setupCompleted: municipality.setup_completed,
+        is_active: municipality.is_active,
+        setup_completed: municipality.setup_completed,
         createdAt: municipality.createdAt,
         updatedAt: municipality.updatedAt,
       },

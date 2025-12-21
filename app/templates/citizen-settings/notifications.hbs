@@ -1,0 +1,16 @@
+{{page-title "Notifications"}}
+
+<div class="avitar-container avitar-py-6">
+  <div class="avitar-mb-6">
+    <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-2">Notification Preferences</h2>
+    <p class="avitar-text-muted">Manage how you receive updates and alerts</p>
+  </div>
+
+  <Shared::NotificationPreferences
+    @userType={{if this.model.isContractor "contractor" "citizen"}}
+    @currentPlan={{this.currentPlan}}
+    @subscriptionRoute="citizen-settings.subscription"
+    @initialPreferences={{this.model.preferences}}
+    @onSave={{this.handleSave}}
+  />
+</div>

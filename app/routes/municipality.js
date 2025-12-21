@@ -14,11 +14,8 @@ export default class MunicipalityRoute extends AuthenticatedRoute {
         params.municipality_slug,
       );
 
-      // Verify user has access to this municipality
-      if (!this.canUserAccessMunicipality(municipality)) {
-        this.router.transitionTo('municipality-select');
-        return;
-      }
+      // Any authenticated user can access any active municipality
+      // Access control is handled at the module level via permissions
 
       // CRITICAL: Update current user permissions for this municipality
       // This ensures permissions are loaded BEFORE the UI renders
@@ -27,8 +24,16 @@ export default class MunicipalityRoute extends AuthenticatedRoute {
       return municipality;
     } catch (error) {
       console.error('Failed to load municipality:', error);
-      // Redirect to selection if municipality not found
+
+      // Clear any saved default to prevent infinite loop
+      localStorage.removeItem('defaultMunicipality');
+      this.session.set('defaultMunicipality', null);
+
+      // Redirect to selection if municipality not found or access denied
       this.router.transitionTo('municipality-select');
+
+      // Return null to prevent further processing
+      return null;
     }
   }
 
@@ -42,20 +47,6 @@ export default class MunicipalityRoute extends AuthenticatedRoute {
     if (transition.to.name === 'municipality.index') {
       this.router.transitionTo('municipality.dashboard');
     }
-  }
-
-  canUserAccessMunicipality(municipality) {
-    const user = this.session.data.authenticated.user;
-    if (!user) return false;
-
-    // System users can access any municipality
-    if (user.userType === 'system' || user.role === 'avitar_staff') return true;
-
-    // Other users must belong to this municipality
-    return (
-      user.municipality === municipality.id ||
-      user.municipality === municipality._id
-    );
   }
 
   // Global error handling for municipality routes

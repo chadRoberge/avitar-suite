@@ -8,11 +8,44 @@ export default class AssessingService extends Service {
   @service municipality;
   @service('property-cache') propertyCache;
 
+  // Request deduplication - stores pending requests to prevent duplicate API calls
+  _pendingPropertiesRequest = null;
+  _pendingPropertiesMunicipalityId = null;
+
   async getProperties(filters = {}) {
     const municipalityId = this.municipality.currentMunicipality.id;
-    return this.localApi.get(`/municipalities/${municipalityId}/properties`, {
-      params: filters,
-    });
+
+    // Check if there's already a pending request for the same municipality
+    // Return the existing promise to prevent duplicate API calls
+    if (
+      this._pendingPropertiesRequest &&
+      this._pendingPropertiesMunicipalityId === municipalityId
+    ) {
+      console.log(
+        '🔄 [getProperties] Returning existing pending request for municipality:',
+        municipalityId,
+      );
+      return this._pendingPropertiesRequest;
+    }
+
+    console.log(
+      '📦 [getProperties] Starting new request for municipality:',
+      municipalityId,
+    );
+
+    // Store the pending request
+    this._pendingPropertiesMunicipalityId = municipalityId;
+    this._pendingPropertiesRequest = this.localApi
+      .get(`/municipalities/${municipalityId}/properties`, {
+        params: filters,
+      })
+      .finally(() => {
+        // Clear the pending request when done (success or error)
+        this._pendingPropertiesRequest = null;
+        this._pendingPropertiesMunicipalityId = null;
+      });
+
+    return this._pendingPropertiesRequest;
   }
 
   async getProperty(propertyId, options = {}) {

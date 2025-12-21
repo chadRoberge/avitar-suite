@@ -1,0 +1,154 @@
+{{page-title "Profile"}}
+
+<div class="avitar-container avitar-py-6">
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h2 class="avitar-text-2xl avitar-font-bold avitar-mb-2">Profile</h2>
+      <p class="avitar-text-muted">Manage your personal information</p>
+    </div>
+    {{#unless this.isEditing}}
+      <button
+        type="button"
+        class="avitar-btn avitar-btn--primary"
+        {{on "click" this.startEditing}}
+      >
+        {{{lnr-icon "pencil" class="avitar-mr-2"}}}
+        Edit Profile
+      </button>
+    {{/unless}}
+  </div>
+
+  <div class="avitar-card">
+    <div class="avitar-card__body">
+      {{#if this.isEditing}}
+        {{!-- Edit Mode --}}
+        <div class="avitar-space-y-4">
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+            <div>
+              <label class="avitar-label">First Name</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.firstName}}
+                {{on "input" (fn this.updateField "firstName")}}
+              />
+            </div>
+            <div>
+              <label class="avitar-label">Last Name</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.lastName}}
+                {{on "input" (fn this.updateField "lastName")}}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="avitar-label">Email Address</label>
+            <input
+              type="email"
+              class="avitar-input"
+              value={{this.email}}
+              {{on "input" (fn this.updateField "email")}}
+            />
+          </div>
+
+          <div>
+            <label class="avitar-label">Phone Number</label>
+            <input
+              type="tel"
+              class="avitar-input"
+              value={{this.phone}}
+              {{on "input" (fn this.updateField "phone")}}
+              placeholder="(555) 555-5555"
+            />
+          </div>
+
+          <div class="avitar-flex avitar-gap-3 avitar-pt-4">
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.saveProfile}}
+              disabled={{this.isLoading}}
+            >
+              {{#if this.isLoading}}
+                {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+                Saving...
+              {{else}}
+                {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+                Save Changes
+              {{/if}}
+            </button>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--secondary"
+              {{on "click" this.cancelEditing}}
+              disabled={{this.isLoading}}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      {{else}}
+        {{!-- View Mode --}}
+        <div class="avitar-space-y-6">
+          <div class="avitar-flex avitar-items-center avitar-gap-4">
+            <div class="avitar-w-16 avitar-h-16 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-text-2xl avitar-font-bold">
+              {{substring this.user.first_name 0 1}}{{substring this.user.last_name 0 1}}
+            </div>
+            <div>
+              <h3 class="avitar-text-xl avitar-font-semibold">
+                {{this.user.first_name}} {{this.user.last_name}}
+              </h3>
+              <p class="avitar-text-muted">
+                {{#if this.isContractor}}
+                  Contractor
+                {{else}}
+                  Citizen
+                {{/if}}
+              </p>
+            </div>
+          </div>
+
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-6">
+            <div>
+              <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Email Address</div>
+              <div class="avitar-font-medium">{{or this.user.email "Not provided"}}</div>
+            </div>
+            <div>
+              <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Phone Number</div>
+              <div class="avitar-font-medium">{{or this.user.phone "Not provided"}}</div>
+            </div>
+          </div>
+
+          {{#if this.user.created_at}}
+            <div>
+              <div class="avitar-text-sm avitar-text-muted avitar-mb-1">Member Since</div>
+              <div class="avitar-font-medium">{{date-format this.user.created_at "MMMM DD, YYYY"}}</div>
+            </div>
+          {{/if}}
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  {{!-- Password Change Section --}}
+  <div class="avitar-card avitar-mt-6">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">
+        {{{lnr-icon "lock" class="avitar-mr-2"}}}
+        Password & Security
+      </h3>
+    </div>
+    <div class="avitar-card__body">
+      <p class="avitar-text-muted avitar-mb-4">
+        Manage your password and security settings.
+      </p>
+      <button type="button" class="avitar-btn avitar-btn--secondary">
+        {{{lnr-icon "lock" class="avitar-mr-2"}}}
+        Change Password
+      </button>
+    </div>
+  </div>
+</div>

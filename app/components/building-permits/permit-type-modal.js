@@ -9,7 +9,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   @tracked name = '';
   @tracked description = '';
   @tracked categories = []; // Changed from single category to array
-  @tracked icon = 'file-alt';
+  @tracked icon = 'file-empty';
   @tracked subtypes = [];
   @tracked isActive = true;
   @tracked baseAmount = 0;
@@ -140,7 +140,7 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
       this.name = pt.name || '';
       this.description = pt.description || '';
       this.categories = [...(pt.categories || [])];
-      this.icon = pt.icon || 'file-alt';
+      this.icon = pt.icon || 'file-empty';
       this.subtypes = [...(pt.subtypes || [])];
       this.isActive = pt.isActive !== undefined ? pt.isActive : true;
       this.baseAmount = pt.feeSchedule?.baseAmount || 0;
@@ -214,21 +214,28 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   }
 
   get iconOptions() {
+    // Linear Icons (lnr-icon) options for permit types
     return [
-      'file-alt',
-      'home',
-      'hammer',
-      'wrench',
-      'tools',
-      'building',
-      'bolt',
-      'fire',
-      'water',
-      'snowflake',
-      'tree',
-      'road',
-      'fence',
-      'sign',
+      { value: 'file-empty', label: 'Document' },
+      { value: 'home', label: 'Home' },
+      { value: 'apartment', label: 'Building' },
+      { value: 'construction', label: 'Construction' },
+      { value: 'hammer2', label: 'Hammer' },
+      { value: 'cog', label: 'Mechanical' },
+      { value: 'power-switch', label: 'Electrical' },
+      { value: 'drop', label: 'Plumbing' },
+      { value: 'leaf', label: 'Landscape' },
+      { value: 'layers', label: 'Layers' },
+      { value: 'frame-expand', label: 'Expand' },
+      { value: 'pie-chart', label: 'Chart' },
+      { value: 'map-marker', label: 'Location' },
+      { value: 'flag', label: 'Flag' },
+      { value: 'sun', label: 'Sun' },
+      { value: 'cloud', label: 'Cloud' },
+      { value: 'rocket', label: 'Rocket' },
+      { value: 'diamond', label: 'Diamond' },
+      { value: 'license', label: 'License' },
+      { value: 'clipboard', label: 'Clipboard' },
     ];
   }
 
@@ -314,6 +321,11 @@ export default class BuildingPermitsPermitTypeModalComponent extends Component {
   @action
   updateField(field, event) {
     this[field] = event.target.value;
+  }
+
+  @action
+  selectIcon(iconValue) {
+    this.icon = iconValue;
   }
 
   @action

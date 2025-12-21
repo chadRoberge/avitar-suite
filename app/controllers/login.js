@@ -72,14 +72,9 @@ export default class LoginController extends Controller {
       this.loginEmail = '';
       this.loginPassword = '';
 
-      // Redirect based on user role
-      if (this.currentUser.isContractorOrCitizen) {
-        // Contractors and citizens go to their personal dashboard
-        this.router.transitionTo('my-permits');
-      } else {
-        // Municipal staff and Avitar staff go to municipality selection
-        this.router.transitionTo('municipality-select');
-      }
+      // Redirect all users to municipality selection
+      // Municipality selection route will handle auto-redirect if default is saved
+      this.router.transitionTo('municipality-select');
     } catch (error) {
       this.errorMessage = error.message || 'Login failed. Please try again.';
     } finally {
@@ -170,14 +165,9 @@ export default class LoginController extends Controller {
       this.signupBusinessName = '';
       this.signupBusinessType = '';
 
-      // Redirect based on user role
-      if (this.currentUser.isContractorOrCitizen) {
-        // Contractors and citizens go to their personal dashboard
-        this.router.transitionTo('my-permits');
-      } else {
-        // Municipal staff and Avitar staff go to municipality selection
-        this.router.transitionTo('municipality-select');
-      }
+      // Redirect all users to municipality selection
+      // Municipality selection route will handle auto-redirect if default is saved
+      this.router.transitionTo('municipality-select');
     } catch (error) {
       this.errorMessage = error.message || 'Signup failed. Please try again.';
     } finally {

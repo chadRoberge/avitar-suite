@@ -1,0 +1,135 @@
+{{! Email Notifications Card }}
+<div class="avitar-card avitar-mb-6">
+  <div class="avitar-card__header">
+    <h3 class="avitar-card__title">
+      {{{lnr-icon "envelope" class="avitar-mr-2"}}}
+      Email Notifications
+    </h3>
+  </div>
+  <div class="avitar-card__body">
+    <div class="avitar-space-y-4">
+      {{#each this.emailNotificationOptions as |notifOption|}}
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+          <div>
+            <div class="avitar-font-medium">{{notifOption.label}}</div>
+            <div class="avitar-text-sm avitar-text-muted">{{notifOption.description}}</div>
+          </div>
+          <label class="avitar-switch">
+            <input
+              type="checkbox"
+              checked={{notifOption.value}}
+              {{on "change" (fn this.toggleEmailNotification notifOption.key)}}
+            />
+            <span class="avitar-switch__slider"></span>
+          </label>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</div>
+
+{{! SMS Notifications Card }}
+<div class="avitar-card avitar-mb-6">
+  <div class="avitar-card__header">
+    <h3 class="avitar-card__title">
+      {{{lnr-icon "smartphone" class="avitar-mr-2"}}}
+      SMS Notifications
+      {{#unless this.hasSMSAccess}}
+        <span class="avitar-badge avitar-badge--warning avitar-ml-2">Premium</span>
+      {{/unless}}
+    </h3>
+  </div>
+  <div class="avitar-card__body">
+    {{#if this.hasSMSAccess}}
+      {{! SMS Settings for Premium Users }}
+      <div class="avitar-space-y-4">
+        {{#each this.smsNotificationOptions as |smsOption|}}
+          <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+            <div>
+              <div class="avitar-font-medium">{{smsOption.label}}</div>
+              <div class="avitar-text-sm avitar-text-muted">{{smsOption.description}}</div>
+            </div>
+            <label class="avitar-switch">
+              <input
+                type="checkbox"
+                checked={{smsOption.value}}
+                {{on "change" (fn this.toggleSMSNotification smsOption.key)}}
+              />
+              <span class="avitar-switch__slider"></span>
+            </label>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      {{! Upgrade Message for Free Users }}
+      <div class="avitar-text-center avitar-py-8">
+        <div class="avitar-mb-4">
+          {{{lnr-icon "lock" class="avitar-text-3xl avitar-text-warning"}}}
+        </div>
+        <h4 class="avitar-text-lg avitar-font-bold avitar-mb-2">SMS Notifications - Premium Feature</h4>
+        <p class="avitar-text-muted avitar-mb-4">
+          Upgrade to Pro or Enterprise to receive urgent updates via SMS
+        </p>
+        <ul class="avitar-text-left avitar-mb-6 avitar-mx-auto" style="max-width: 400px;">
+          <li class="avitar-mb-2">
+            {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mr-2"}}}
+            Critical permit status updates
+          </li>
+          <li class="avitar-mb-2">
+            {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mr-2"}}}
+            Inspection reminders the day before
+          </li>
+          <li class="avitar-mb-2">
+            {{{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mr-2"}}}
+            Never miss important deadlines
+          </li>
+        </ul>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.goToSubscription}}>
+          {{{lnr-icon "arrow-up" class="avitar-mr-2"}}}
+          Upgrade Now
+        </button>
+      </div>
+    {{/if}}
+  </div>
+  {{#if this.hasSMSAccess}}
+    <div class="avitar-card__footer avitar-bg-success-light">
+      {{{lnr-icon "checkmark-circle" class="avitar-mr-2 avitar-text-success"}}}
+      SMS notifications are active on your {{this.currentPlan}} plan.
+    </div>
+  {{else}}
+    <div class="avitar-card__footer avitar-bg-warning-light">
+      {{{lnr-icon "information" class="avitar-mr-2"}}}
+      SMS notifications are a premium feature available on Premium, Pro, and Enterprise plans.
+    </div>
+  {{/if}}
+</div>
+
+{{! Marketing Preferences Card }}
+<div class="avitar-card">
+  <div class="avitar-card__header">
+    <h3 class="avitar-card__title">
+      {{{lnr-icon "bullhorn" class="avitar-mr-2"}}}
+      Marketing & Updates
+    </h3>
+  </div>
+  <div class="avitar-card__body">
+    <div class="avitar-space-y-4">
+      {{#each this.marketingOptions as |marketingOption|}}
+        <div class="avitar-flex avitar-items-center avitar-justify-between avitar-p-3 avitar-bg-gray-50 avitar-rounded">
+          <div>
+            <div class="avitar-font-medium">{{marketingOption.label}}</div>
+            <div class="avitar-text-sm avitar-text-muted">{{marketingOption.description}}</div>
+          </div>
+          <label class="avitar-switch">
+            <input
+              type="checkbox"
+              checked={{marketingOption.value}}
+              {{on "change" (fn this.toggleMarketingPreference marketingOption.key)}}
+            />
+            <span class="avitar-switch__slider"></span>
+          </label>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</div>

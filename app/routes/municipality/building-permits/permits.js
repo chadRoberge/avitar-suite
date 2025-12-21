@@ -11,6 +11,7 @@ export default class MunicipalityBuildingPermitsPermitsRoute extends Route {
     status: { refreshModel: true },
     search: { refreshModel: true },
     page: { refreshModel: true },
+    tab: { refreshModel: false }, // Tab doesn't need to refresh - filtering happens client-side
   };
 
   async model(params) {

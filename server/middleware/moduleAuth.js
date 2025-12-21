@@ -12,14 +12,65 @@ const requireModuleAccess = (moduleName) => {
         });
       }
 
-      // System users have access to all modules
-      if (req.user.userType === 'system') {
+      // Avitar staff and admins have access to all modules
+      if (['avitar_staff', 'avitar_admin'].includes(req.user.global_role)) {
         return next();
       }
 
-      const hasAccess = await req.user.canAccessModule(moduleName);
+      // Get municipality ID from request params
+      const municipalityId = req.params.municipalityId || req.params.id;
 
-      if (!hasAccess) {
+      if (!municipalityId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Municipality ID required',
+        });
+      }
+
+      // Check if municipality has this module enabled
+      const municipality = await Municipality.findById(municipalityId);
+
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      // Check if module is enabled for this municipality
+      const moduleConfig = municipality.module_config?.modules?.get(moduleName);
+
+      if (!moduleConfig || !moduleConfig.enabled) {
+        return res.status(403).json({
+          success: false,
+          message: `${moduleName} module is not available for this municipality`,
+          code: 'MODULE_NOT_ENABLED',
+        });
+      }
+
+      // For contractors and citizens: allow read access to view modules
+      // Specific permissions will be checked at the action level
+      if (['contractor', 'citizen'].includes(req.user.global_role)) {
+        return next();
+      }
+
+      // For municipal users: check if they have permissions for this municipality and module
+      const userPerm = req.user.municipal_permissions?.find(
+        (perm) => perm.municipality_id.toString() === municipalityId.toString(),
+      );
+
+      if (!userPerm) {
+        return res.status(403).json({
+          success: false,
+          message: 'No permissions for this municipality',
+          code: 'NO_MUNICIPAL_PERMISSIONS',
+        });
+      }
+
+      // Check if user has this module enabled in their permissions
+      const userModulePerm = userPerm.module_permissions?.get(moduleName);
+
+      if (!userModulePerm || !userModulePerm.enabled) {
         return res.status(403).json({
           success: false,
           message: `Access denied to ${moduleName} module`,
@@ -49,20 +100,48 @@ const requireModuleFeature = (moduleName, featureName) => {
         });
       }
 
-      // System users have access to all features
-      if (req.user.userType === 'system') {
+      // Avitar staff and admins have access to all features
+      if (['avitar_staff', 'avitar_admin'].includes(req.user.global_role)) {
         return next();
       }
 
-      const hasFeature = await req.user.canAccessModuleFeature(
-        moduleName,
-        featureName,
-      );
+      // Get municipality ID from request params
+      const municipalityId = req.params.municipalityId || req.params.id;
 
-      if (!hasFeature) {
+      if (!municipalityId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Municipality ID required',
+        });
+      }
+
+      // Check if municipality has this feature enabled
+      const municipality = await Municipality.findById(municipalityId);
+
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      // Check if feature is enabled for this municipality's module
+      const moduleConfig = municipality.module_config?.modules?.get(moduleName);
+
+      if (!moduleConfig || !moduleConfig.enabled) {
         return res.status(403).json({
           success: false,
-          message: `Access denied to ${featureName} feature in ${moduleName} module`,
+          message: `${moduleName} module is not available`,
+          code: 'MODULE_NOT_ENABLED',
+        });
+      }
+
+      const featureEnabled = moduleConfig.features?.[featureName]?.enabled;
+
+      if (!featureEnabled) {
+        return res.status(403).json({
+          success: false,
+          message: `${featureName} feature is not available in ${moduleName} module`,
           code: 'MODULE_FEATURE_ACCESS_DENIED',
         });
       }
@@ -89,13 +168,13 @@ const requireDepartmentModuleAccess = (moduleName) => {
         });
       }
 
-      // System users have access to all modules
-      if (req.user.userType === 'system') {
+      // Avitar staff and admins have access to all modules
+      if (['avitar_staff', 'avitar_admin'].includes(req.user.global_role)) {
         return next();
       }
 
-      // Non-municipal users are checked by general module access
-      if (req.user.userType !== 'municipal') {
+      // Non-municipal users (contractors, citizens) are checked by general module access
+      if (!['municipal_user'].includes(req.user.global_role)) {
         return requireModuleAccess(moduleName)(req, res, next);
       }
 
@@ -112,20 +191,53 @@ const requireDepartmentModuleAccess = (moduleName) => {
         general: Object.values(MODULES), // General admin can access all modules
       };
 
-      const allowedModules = departmentModules[req.user.department] || [];
+      // Get municipality ID from request params
+      const municipalityId = req.params.municipalityId || req.params.id;
+
+      if (!municipalityId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Municipality ID required',
+        });
+      }
+
+      // Find user's permission for this municipality
+      const userPerm = req.user.municipal_permissions?.find(
+        (perm) => perm.municipality_id.toString() === municipalityId.toString(),
+      );
+
+      if (!userPerm) {
+        return res.status(403).json({
+          success: false,
+          message: 'No permissions for this municipality',
+          code: 'NO_MUNICIPAL_PERMISSIONS',
+        });
+      }
+
+      const userDepartment = userPerm.department;
+      const allowedModules = departmentModules[userDepartment] || [];
 
       if (!allowedModules.includes(moduleName)) {
         return res.status(403).json({
           success: false,
-          message: `Department ${req.user.department} does not have access to ${moduleName} module`,
+          message: `Department ${userDepartment} does not have access to ${moduleName} module`,
           code: 'DEPARTMENT_MODULE_ACCESS_DENIED',
         });
       }
 
       // Also check if municipality has the module enabled
-      const hasAccess = await req.user.canAccessModule(moduleName);
+      const municipality = await Municipality.findById(municipalityId);
 
-      if (!hasAccess) {
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      const moduleConfig = municipality.module_config?.modules?.get(moduleName);
+
+      if (!moduleConfig || !moduleConfig.enabled) {
         return res.status(403).json({
           success: false,
           message: `Module ${moduleName} is not available for your municipality`,
@@ -147,8 +259,21 @@ const requireDepartmentModuleAccess = (moduleName) => {
 // Middleware to attach user's available modules to request
 const attachUserModules = async (req, res, next) => {
   try {
-    if (req.user) {
-      req.userModules = await req.user.getAvailableModules();
+    if (req.user && req.user.municipal_permissions) {
+      // Extract unique module names from user's municipal permissions
+      const moduleSet = new Set();
+
+      req.user.municipal_permissions.forEach((perm) => {
+        if (perm.module_permissions) {
+          for (const [moduleName, moduleConfig] of perm.module_permissions) {
+            if (moduleConfig.enabled) {
+              moduleSet.add(moduleName);
+            }
+          }
+        }
+      });
+
+      req.userModules = Array.from(moduleSet);
     } else {
       req.userModules = [];
     }

@@ -410,6 +410,7 @@ router.get(
       // Check if user has access to this municipality
       const hasAccess =
         ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
+        ['contractor', 'citizen'].includes(req.user.global_role) ||
         req.user.municipal_permissions?.some(
           (perm) => perm.municipality_id.toString() === municipalityId,
         );
@@ -4205,8 +4206,9 @@ router.get(
       // Check if user has access to this municipality
       const hasAccess =
         ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
-        req.user.municipalities?.some(
-          (userMun) => userMun.municipality_id === municipalityId,
+        ['contractor', 'citizen'].includes(req.user.global_role) ||
+        req.user.municipal_permissions?.some(
+          (perm) => perm.municipality_id.toString() === municipalityId,
         );
 
       if (!hasAccess) {

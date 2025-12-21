@@ -13,7 +13,9 @@ export default class MunicipalityBuildingPermitsSettingsInspectionsPrintBatchRou
 
     try {
       // First, get the municipality info by slug
-      const municipalityResponse = await this.api.get(`/municipalities/slug/${municipality_slug}`);
+      const municipalityResponse = await this.api.get(
+        `/municipalities/slug/${municipality_slug}`,
+      );
       const municipality = municipalityResponse.municipality;
       const municipalityId = municipality.id || municipality._id;
 

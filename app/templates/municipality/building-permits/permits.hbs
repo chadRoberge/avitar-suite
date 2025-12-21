@@ -1,7 +1,31 @@
-{{page-title "All Permits"}}
+{{page-title "Permits"}}
 
 <div class="avitar-container avitar-py-6">
   <div class="avitar-card">
+    {{! Tabs }}
+    <div class="avitar-card__header avitar-border-b">
+      <div class="avitar-tabs">
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.tab 'all') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setTab "all")}}
+        >
+          {{{lnr-icon "layers" class="avitar-mr-2"}}}
+          All Permits
+          <span class="avitar-badge avitar-badge--sm avitar-ml-2">{{this.allPermitsCount}}</span>
+        </button>
+        <button
+          type="button"
+          class="avitar-tab {{if (eq this.tab 'my') 'avitar-tab--active'}}"
+          {{on "click" (fn this.setTab "my")}}
+        >
+          {{{lnr-icon "user" class="avitar-mr-2"}}}
+          My Permits
+          <span class="avitar-badge avitar-badge--sm avitar-ml-2">{{this.myPermitsCount}}</span>
+        </button>
+      </div>
+    </div>
+
     {{! Filters }}
     <div class="avitar-card__header avitar-bg-gray-50">
       <div class="avitar-flex avitar-items-end avitar-gap-3">
@@ -56,7 +80,7 @@
                 class="avitar-btn avitar-btn--sm avitar-btn--secondary"
                 {{on "click" this.clearSearch}}
               >
-                <i class="fas fa-times"></i>
+                {{{lnr-icon "cross"}}}
               </button>
             {{/if}}
           </div>
@@ -64,14 +88,18 @@
 
         {{! Stats }}
         <div class="avitar-text-sm avitar-text-muted avitar-whitespace-nowrap">
-          Showing {{@model.permits.length}} of {{@model.pagination.total}} permits
+          {{#if (eq this.tab "my")}}
+            Showing {{this.displayedPermits.length}} of {{this.myPermitsCount}} my permits
+          {{else}}
+            Showing {{this.displayedPermits.length}} of {{@model.pagination.total}} permits
+          {{/if}}
         </div>
       </div>
     </div>
 
     {{! Permits Table }}
     <div class="avitar-card__body avitar-p-0">
-      {{#if @model.permits.length}}
+      {{#if this.displayedPermits.length}}
         <div class="avitar-table-container">
           <table class="avitar-table avitar-table--hover">
             <thead>
@@ -87,7 +115,7 @@
               </tr>
             </thead>
             <tbody>
-              {{#each @model.permits as |permit|}}
+              {{#each this.displayedPermits as |permit|}}
                 <tr {{on "click" (fn this.viewPermit permit)}} style="cursor: pointer;">
                   <td class="avitar-font-medium">
                     {{permit.permitNumber}}
@@ -152,7 +180,7 @@
                       class="avitar-btn avitar-btn--sm avitar-btn--primary"
                       {{on "click" (fn this.viewPermit permit)}}
                     >
-                      <i class="fas fa-eye avitar-mr-2"></i>
+                      {{{lnr-icon "eye" class="avitar-mr-2"}}}
                       View
                     </button>
                   </td>
@@ -175,7 +203,7 @@
                 {{on "click" this.previousPage}}
                 disabled={{eq @model.pagination.page 1}}
               >
-                <i class="fas fa-chevron-left"></i>
+                {{{lnr-icon "chevron-left"}}}
               </button>
               <button
                 type="button"
@@ -183,32 +211,50 @@
                 {{on "click" this.nextPage}}
                 disabled={{eq @model.pagination.page @model.pagination.totalPages}}
               >
-                <i class="fas fa-chevron-right"></i>
+                {{{lnr-icon "chevron-right"}}}
               </button>
             </div>
           </div>
         {{/if}}
       {{else}}
         <div class="avitar-empty-state avitar-py-8">
-          <i class="fas fa-file-alt fa-3x avitar-text-muted avitar-mb-4"></i>
+          {{{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}}
           <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
-            No Permits Found
+            {{#if (eq this.tab "my")}}
+              No Permits Yet
+            {{else}}
+              No Permits Found
+            {{/if}}
           </h3>
           <p class="avitar-text-muted avitar-mb-4">
-            {{#if this.search}}
-              No permits match your search criteria.
+            {{#if (eq this.tab "my")}}
+              {{#if this.search}}
+                No permits you've pulled match your search criteria.
+              {{else}}
+                You haven't pulled any permits in this municipality yet.
+              {{/if}}
             {{else}}
-              No permits found for the selected filters.
+              {{#if this.search}}
+                No permits match your search criteria.
+              {{else}}
+                No permits found for the selected filters.
+              {{/if}}
             {{/if}}
           </p>
           {{#if this.search}}
             <button
               type="button"
-              class="avitar-btn avitar-btn--primary"
+              class="avitar-btn avitar-btn--secondary"
               {{on "click" this.clearSearch}}
             >
+              {{{lnr-icon "cross" class="avitar-mr-2"}}}
               Clear Search
             </button>
+          {{else if (eq this.tab "my")}}
+            <LinkTo @route="municipality.building-permits.find" class="avitar-btn avitar-btn--primary">
+              {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+              Start a New Permit
+            </LinkTo>
           {{/if}}
         </div>
       {{/if}}

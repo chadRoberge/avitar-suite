@@ -1,77 +1,174 @@
 {{!-- Building Permits Settings Menu Component --}}
-<nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar" style="top: 120px">
-  <div class="avitar-sidebar__header">
-    <h2 class="avitar-sidebar__title">Building Permits Settings</h2>
-    <div class="avitar-sidebar__subtitle">Configure permits module</div>
-  </div>
+{{!-- Shows different menu items based on user type --}}
 
-  <div class="avitar-sidebar__nav">
-    <ul class="avitar-sidebar__nav-list">
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.permit-types"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-file-alt avitar-sidebar__nav-icon"></i>
-          <span>Permit Types</span>
-        </LinkTo>
-      </li>
+{{#if this.isResidentialUser}}
+  {{!-- Residential User (Citizen/Contractor) Building Permits Settings --}}
+  <nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar" style="top: 120px">
+    <div class="avitar-sidebar__header">
+      <h2 class="avitar-sidebar__title">Permit Settings</h2>
+      <div class="avitar-sidebar__subtitle">Building permits preferences</div>
+    </div>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.project-types"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-folder-open avitar-sidebar__nav-icon"></i>
-          <span>Project Types</span>
-        </LinkTo>
-      </li>
+    <div class="avitar-sidebar__nav">
+      <ul class="avitar-sidebar__nav-list">
+        {{!-- Module-specific settings --}}
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.account"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "user" class="avitar-sidebar__nav-icon"}}}
+            <span>Profile</span>
+          </LinkTo>
+        </li>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.inspections"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-clipboard-check avitar-sidebar__nav-icon"></i>
-          <span>Inspections</span>
-        </LinkTo>
-      </li>
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.notifications"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "alarm" class="avitar-sidebar__nav-icon"}}}
+            <span>Notifications</span>
+          </LinkTo>
+        </li>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.inspection-checklists"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-list-check avitar-sidebar__nav-icon"></i>
-          <span>Inspection Checklists</span>
-        </LinkTo>
-      </li>
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.subscription"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "diamond" class="avitar-sidebar__nav-icon"}}}
+            <span>Subscription</span>
+          </LinkTo>
+        </li>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.users"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-users avitar-sidebar__nav-icon"></i>
-          <span>Users & Inspectors</span>
-        </LinkTo>
-      </li>
+        {{#if this.isContractor}}
+          {{!-- Contractor-specific options --}}
+          <li class="avitar-sidebar__nav-section">
+            <span class="avitar-sidebar__nav-section-title">Business</span>
+          </li>
 
-      <li class="avitar-sidebar__nav-item">
-        <LinkTo
-          @route="municipality.building-permits.settings.documents"
-          class="avitar-sidebar__nav-link"
-          @activeClass="avitar-sidebar__nav-link--active"
-        >
-          <i class="fas fa-folder-tree avitar-sidebar__nav-icon"></i>
-          <span>Document Library</span>
-        </LinkTo>
-      </li>
-    </ul>
-  </div>
-</nav>
+          <li class="avitar-sidebar__nav-item">
+            <LinkTo
+              @route="municipality.building-permits.settings.company"
+              class="avitar-sidebar__nav-link"
+              @activeClass="avitar-sidebar__nav-link--active"
+            >
+              {{{lnr-icon "apartment" class="avitar-sidebar__nav-icon"}}}
+              <span>Company Settings</span>
+            </LinkTo>
+          </li>
+
+          <li class="avitar-sidebar__nav-item">
+            <LinkTo
+              @route="municipality.building-permits.settings.team"
+              class="avitar-sidebar__nav-link"
+              @activeClass="avitar-sidebar__nav-link--active"
+            >
+              {{{lnr-icon "users" class="avitar-sidebar__nav-icon"}}}
+              <span>Team Members</span>
+            </LinkTo>
+          </li>
+        {{/if}}
+
+        {{!-- Link to full account settings --}}
+        <li class="avitar-sidebar__nav-section">
+          <span class="avitar-sidebar__nav-section-title">Account</span>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="citizen-settings"
+            class="avitar-sidebar__nav-link"
+          >
+            {{{lnr-icon "cog" class="avitar-sidebar__nav-icon"}}}
+            <span>Manage Account</span>
+            {{{lnr-icon "arrow-right" class="avitar-ml-auto"}}}
+          </LinkTo>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+{{else}}
+  {{!-- Municipal Staff Settings Menu --}}
+  <nav class="avitar-sidebar avitar-sidebar--open avitar-sidebar--with-topbar" style="top: 120px">
+    <div class="avitar-sidebar__header">
+      <h2 class="avitar-sidebar__title">Building Permits Settings</h2>
+      <div class="avitar-sidebar__subtitle">Configure permits module</div>
+    </div>
+
+    <div class="avitar-sidebar__nav">
+      <ul class="avitar-sidebar__nav-list">
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.permit-types"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "file-empty" class="avitar-sidebar__nav-icon"}}}
+            <span>Permit Types</span>
+          </LinkTo>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.project-types"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "folder" class="avitar-sidebar__nav-icon"}}}
+            <span>Project Types</span>
+          </LinkTo>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.inspections"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "clipboard" class="avitar-sidebar__nav-icon"}}}
+            <span>Inspections</span>
+          </LinkTo>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.inspection-checklists"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "list" class="avitar-sidebar__nav-icon"}}}
+            <span>Inspection Checklists</span>
+          </LinkTo>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.users"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "users" class="avitar-sidebar__nav-icon"}}}
+            <span>Users & Inspectors</span>
+          </LinkTo>
+        </li>
+
+        <li class="avitar-sidebar__nav-item">
+          <LinkTo
+            @route="municipality.building-permits.settings.documents"
+            class="avitar-sidebar__nav-link"
+            @activeClass="avitar-sidebar__nav-link--active"
+          >
+            {{{lnr-icon "layers" class="avitar-sidebar__nav-icon"}}}
+            <span>Document Library</span>
+          </LinkTo>
+        </li>
+      </ul>
+    </div>
+  </nav>
+{{/if}}

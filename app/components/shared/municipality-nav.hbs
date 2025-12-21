@@ -1,37 +1,24 @@
 {{!-- Municipality Navigation Component using Avitar Topbar Design --}}
 <div class="municipal-navigation {{if this.hasActiveChildren 'has-children'}}" style={{this.navStyles}}>
-  
+
   {{!-- Primary Top Bar with Brand and Modules --}}
   <nav class="avitar-topbar">
-    {{!-- Municipal Brand --}}
-    {{#if this.currentMunicipalityName}}
-      <div class="avitar-topbar__brand">
-        {{#if this.brandingConfig.logo_url}}
-          <img src={{this.brandingConfig.logo_url}} alt="{{this.currentMunicipalityName}} Logo" class="municipal-logo">
-        {{else}}
-          <div class="avitar-topbar__brand-logo">
-            {{this.municipalityInitial}}
-          </div>
-        {{/if}}
-        <div>
-          <div class="municipal-name">{{this.currentMunicipalityName}}</div>
-          {{#if this.brandingConfig.header_text}}
-            <div class="municipal-subtitle">{{this.brandingConfig.header_text}}</div>
-          {{/if}}
-        </div>
-      </div>
-    {{/if}}
+    {{!-- Municipal Brand with Selector --}}
+    <Navigation::MunicipalitySelector />
 
-    {{!-- Module Navigation --}}
+    {{!-- Mobile Module Dropdown (visible only on mobile) --}}
+    <Navigation::MobileModuleDropdown />
+
+    {{!-- Desktop Module Navigation (hidden on mobile via CSS) --}}
     {{#if this.navigationItems.length}}
-      <ul class="avitar-topbar__nav">
+      <ul class="avitar-topbar__nav hide-mobile">
         {{#each this.navigationItems as |navItem|}}
           <li class="avitar-topbar__nav-item">
-            <LinkTo 
-              @route={{navItem.route}} 
+            <LinkTo
+              @route={{navItem.route}}
               class="avitar-topbar__nav-link {{if (this.isModuleActive navItem) 'avitar-topbar__nav-link--active'}}"
             >
-              <i class="fas fa-{{navItem.icon}}"></i>
+              {{lnr-icon navItem.icon}}
               {{navItem.title}}
               {{#if navItem.tier}}
                 <span class="avitar-badge avitar-badge--{{navItem.tier}}">
@@ -43,14 +30,14 @@
         {{/each}}
       </ul>
     {{else}}
-      <div class="avitar-empty-state">
-        <i class="fas fa-cube"></i>
+      <div class="avitar-empty-state hide-mobile">
+        {{lnr-icon "layers"}}
         <span>No modules available</span>
       </div>
     {{/if}}
 
-    {{!-- User Actions --}}
-    <div class="avitar-topbar__user">
+    {{!-- User Actions (desktop only - mobile uses simplified icons) --}}
+    <div class="avitar-topbar__user hide-mobile">
       {{!-- User Role Badge --}}
       {{#if this.userRole}}
         <span class="avitar-badge {{this.userRole.badge}}" title="Your role in this municipality">
@@ -74,26 +61,27 @@
         </span>
       {{/if}}
 
-      {{!-- Municipality Selection Button --}}
-      <button 
-        class="avitar-btn avitar-btn--secondary avitar-btn--sm avitar-ml-2"
-        {{on "click" this.goToMunicipalitySelection}}
-        type="button"
-        title="Switch Municipality"
-      >
-        <i class="fas fa-building avitar-mr-1"></i>
-        Switch
-      </button>
-      
       {{!-- Logout Button --}}
-      <button 
+      <button
         class="avitar-btn avitar-btn--danger avitar-btn--sm avitar-ml-2"
         {{on "click" this.logout}}
         type="button"
         title="Logout"
       >
-        <i class="fas fa-sign-out-alt avitar-mr-1"></i>
+        {{lnr-icon "exit" class="avitar-mr-1"}}
         Logout
+      </button>
+    </div>
+
+    {{!-- Mobile User Actions (simplified for mobile) --}}
+    <div class="avitar-topbar__user show-mobile">
+      <button
+        class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+        {{on "click" this.logout}}
+        type="button"
+        title="Logout"
+      >
+        {{lnr-icon "exit"}}
       </button>
     </div>
   </nav>
@@ -176,9 +164,21 @@
   {{/if}}
 
   {{!-- Property Record Card Print Modal --}}
-  <Assessing::PropertyRecordCardModal 
+  <Assessing::PropertyRecordCardModal
     @isOpen={{this.isPrintModalOpen}}
     @onClose={{this.closePrintModal}}
+  />
+
+  {{!-- Mobile Bottom Tab Bar --}}
+  <Navigation::BottomTabBar
+    @showPIDButton={{this.showPIDButton}}
+    @onOpenPIDSheet={{this.openPIDSheet}}
+  />
+
+  {{!-- PID Bottom Sheet (for Assessing/Tax modules on mobile) --}}
+  <Navigation::PidBottomSheet
+    @isOpen={{this.isPIDSheetOpen}}
+    @onClose={{this.closePIDSheet}}
   />
 
 </div>

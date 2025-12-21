@@ -27,13 +27,25 @@
 <div class="avitar-card">
   {{! Header with Step Progress }}
   <div class="avitar-card__header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-    <h2 class="avitar-card__title">
-      {{#if this.selectedPermitType}}
-        {{this.selectedPermitType.name}} - {{this.stepTitle}}
-      {{else}}
-        {{this.stepTitle}}
+    <div>
+      <h2 class="avitar-card__title">
+        {{#if this.selectedPermitType}}
+          {{this.selectedPermitType.name}} - {{this.stepTitle}}
+        {{else}}
+          {{this.stepTitle}}
+        {{/if}}
+      </h2>
+      {{#if this.selectedProperty}}
+        <p class="avitar-text-sm avitar-text-muted avitar-mt-1">
+          {{{lnr-icon "map-marker" class="avitar-mr-1"}}}
+          for {{this.selectedProperty.location.address}}
+          <span class="avitar-ml-3">
+            {{{lnr-icon "tag" class="avitar-mr-1"}}}
+            PID: {{this.selectedProperty.pid_formatted}}
+          </span>
+        </p>
       {{/if}}
-    </h2>
+    </div>
 
     {{! Step Progress }}
     <div class="avitar-step-progress" style="flex: 1; margin: 0; max-width: 40rem;">
@@ -81,19 +93,21 @@
 
         {{#if this.isLoadingPermitTypes}}
           <div class="avitar-text-center avitar-py-8">
-            <i class="fas fa-spinner fa-spin fa-2x avitar-mb-3"></i>
+            {{{lnr-icon "sync" class="avitar-text-3xl avitar-mb-3 avitar-spin"}}}
             <p class="avitar-text-muted">Loading permit types...</p>
           </div>
         {{else if this.permitTypes.length}}
-          <div class="avitar-grid avitar-grid--3">
+          <div class="avitar-flex avitar-flex-wrap avitar-gap-4">
             {{#each this.permitTypes as |permitType|}}
               <button
                 type="button"
-                class="avitar-card avitar-card--interactive {{if (eq this.selectedPermitType._id permitType._id) 'avitar-card--selected'}}"
+                class="avitar-card avitar-card--interactive avitar-flex-card {{if (eq this.selectedPermitType._id permitType._id) 'avitar-card--selected'}}"
                 {{on "click" (fn this.selectPermitType permitType)}}
               >
                 <div class="avitar-card__body avitar-text-center">
-                  <i class="fas fa-{{permitType.icon}} fa-3x avitar-mb-3 avitar-text-primary"></i>
+                  <div class="avitar-mb-3 avitar-text-3xl">
+                    {{{lnr-icon (or permitType.icon "file-empty") class="avitar-text-primary"}}}
+                  </div>
                   <h4 class="avitar-font-medium avitar-mb-2">{{permitType.name}}</h4>
                   <p class="avitar-text-sm avitar-text-muted avitar-mb-3">
                     {{permitType.description}}
@@ -103,11 +117,11 @@
                       {{#if (eq permitType.feeSchedule.calculationType "flat")}}
                         ${{permitType.feeSchedule.baseAmount}} flat fee
                       {{else if (eq permitType.feeSchedule.calculationType "per_sqft")}}
-                        ${{permitType.feeSchedule.baseAmount}} + ${{permitType.feeSchedule.perSqftRate}}/sq ft
+                        ${{permitType.feeSchedule.baseAmount}} base{{#if permitType.feeSchedule.perSqftRate}} + ${{permitType.feeSchedule.perSqftRate}}/sq ft{{/if}}
                       {{else if (eq permitType.feeSchedule.calculationType "percentage")}}
-                        {{permitType.feeSchedule.baseAmount}}% of project value
+                        ${{permitType.feeSchedule.baseAmount}} base{{#if permitType.feeSchedule.percentageRate}} + {{permitType.feeSchedule.percentageRate}}% of value{{/if}}
                       {{else}}
-                        Custom fee calculation
+                        ${{permitType.feeSchedule.baseAmount}} base{{#if permitType.feeSchedule.formula}} + custom calculation{{/if}}
                       {{/if}}
                     </div>
                   {{/if}}

@@ -1,9 +1,9 @@
 {{page-title "Permit Details"}}
 
 {{! Two-column layout: Progress sidebar + Main content }}
-<div class="avitar-flex avitar-flex-row">
+<div class="permit-detail">
   {{! Left Sidebar - Permit Info + Status Progress }}
-  <div class="avitar-flex-3" style="position: sticky; top: calc(var(--topbar-height) * 2); height: calc(100vh - calc(var(--topbar-height) * 2)); overflow-y: auto; border-right: 1px solid #e5e7eb; background: white;">
+  <div class="permit-detail__sidebar">
     {{! Permit Information Header }}
     <div class="avitar-p-2 avitar-border-b avitar-border-gray-200">
       {{! Permit Number - Prominent }}
@@ -45,88 +45,85 @@
     <Contractor::PermitStatusProgress @permit={{@model.permit}} @steps={{this.permitStatusSteps}} @currentStepIndex={{this.currentStepIndex}} @departmentReviews={{this.departmentReviews}} />
   </div>
 
-  {{! Right Content - Sticky Tabs + Scrollable Content }}
-  <main class="avitar-flex-10" style="background-color: #f9fafb; scrollbar-gutter: stable;">
-    {{! Action Buttons Bar }}
-    <div style="position: sticky; top: calc(var(--topbar-height) * 2); z-index: 10; background: white; border-bottom: 1px solid #e5e7eb; padding: 1rem;">
-      <div class="avitar-flex avitar-gap-2 avitar-justify-end">
-        {{#if this.canReviewPermit}}
-          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.reviewPermit}}>
-            {{{lnr-icon "clipboard"}}}
-            <span class="avitar-ml-2">Review Permit</span>
+  {{! Right Content - Fixed Tab Navigation + Scrollable Content }}
+  <main class="permit-detail__main">
+    {{! Fixed Tab Navigation with Action Buttons }}
+    <div class="permit-detail__tabs">
+      <div class="avitar-flex avitar-justify-between avitar-items-center">
+        <div class="avitar-tabs">
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab 'overview')}}
+          >
+            {{{lnr-icon "home" class="avitar-mr-2"}}}
+            Overview
           </button>
-        {{/if}}
-        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.printPermit}}>
-          <i class="fas fa-print avitar-mr-2"></i>
-          Print
-        </button>
-        <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.refreshData}}>
-          <i class="fas fa-sync-alt avitar-mr-2"></i>
-          Refresh
-        </button>
-        {{#if this.canEditPermit}}
-          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" this.editPermit}}>
-            <i class="fas fa-edit avitar-mr-2"></i>
-            Edit
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'inspections') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab 'inspections')}}
+          >
+            {{{lnr-icon "clipboard" class="avitar-mr-2"}}}
+            Inspections
+            {{#if @model.inspections.length}}
+              <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.inspections.length}}</span>
+            {{/if}}
           </button>
-        {{/if}}
-      </div>
-    </div>
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab 'documents')}}
+          >
+            {{{lnr-icon "file-empty" class="avitar-mr-2"}}}
+            Documents
+            {{#if @model.files.length}}
+              <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.files.length}}</span>
+            {{/if}}
+          </button>
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setActiveTab 'chat')}}
+          >
+            {{{lnr-icon "bubble" class="avitar-mr-2"}}}
+            Communications
+            {{#if @model.comments.length}}
+              <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.comments.length}}</span>
+            {{/if}}
+          </button>
+        </div>
 
-    {{! Sticky Tab Navigation }}
-    <div style="position: sticky; top: calc(var(--topbar-height) * 2 + 65px); z-index: 9; background: white; border-bottom: 1px solid #e5e7eb;">
-      <div class="avitar-tabs" style="overflow: visible;">
-        <button
-          type="button"
-          class="avitar-tab {{if (eq this.activeTab 'overview') 'avitar-tab--active'}}"
-          {{on "click" (fn this.setActiveTab 'overview')}}
-        >
-          <i class="fas fa-info-circle avitar-mr-2"></i>
-          Overview
-        </button>
-        <button
-          type="button"
-          class="avitar-tab {{if (eq this.activeTab 'inspections') 'avitar-tab--active'}}"
-          {{on "click" (fn this.setActiveTab 'inspections')}}
-        >
-          <i class="fas fa-clipboard-check avitar-mr-2"></i>
-          Inspections
-          {{#if @model.inspections.length}}
-            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.inspections.length}}</span>
+        {{! Action Buttons }}
+        <div class="avitar-flex avitar-gap-2">
+          {{#if this.canReviewPermit}}
+            <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" this.reviewPermit}} title="Review Permit">
+              {{{lnr-icon "clipboard" class="avitar-mr-1"}}}
+              Review
+            </button>
           {{/if}}
-        </button>
-        <button
-          type="button"
-          class="avitar-tab {{if (eq this.activeTab 'documents') 'avitar-tab--active'}}"
-          {{on "click" (fn this.setActiveTab 'documents')}}
-        >
-          <i class="fas fa-file-alt avitar-mr-2"></i>
-          Documents
-          {{#if @model.files.length}}
-            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.files.length}}</span>
+          {{#if this.canEditPermit}}
+            <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.editPermit}} title="Edit Permit">
+              {{{lnr-icon "pencil"}}}
+            </button>
           {{/if}}
-        </button>
-        <button
-          type="button"
-          class="avitar-tab {{if (eq this.activeTab 'chat') 'avitar-tab--active'}}"
-          {{on "click" (fn this.setActiveTab 'chat')}}
-        >
-          <i class="fas fa-comments avitar-mr-2"></i>
-          Communications
-          {{#if @model.comments.length}}
-            <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.comments.length}}</span>
-          {{/if}}
-        </button>
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.printPermit}} title="Print Permit">
+            {{{lnr-icon "printer"}}}
+          </button>
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" this.refreshData}} title="Refresh Data">
+            {{{lnr-icon "sync"}}}
+          </button>
+        </div>
       </div>
     </div>
 
     {{! Scrollable Tab Content }}
-    <div class="avitar-p-6">
+    <div class="permit-detail__content">
       {{! Overview Tab }}
       {{#if (eq this.activeTab 'overview')}}
-    <div class="avitar-flex avitar-gap-6" style="flex-wrap: wrap;">
+    <div class="avitar-flex avitar-gap-6 avitar-flex-wrap">
       {{! Left Column - Permit Details }}
-      <div class="avitar-flex-1" style="min-width: 400px;">
+      <div class="avitar-flex-1 avitar-min-w-400">
         <div class="avitar-card">
           <div class="avitar-card__header">
             <h3 class="avitar-card__title">
@@ -228,7 +225,7 @@
       </div>
 
       {{! Right Column - Quick Actions & Timeline }}
-      <div style="min-width: 350px; max-width: 400px;">
+      <div class="avitar-w-80 avitar-flex-shrink-0">
         {{! Quick Actions }}
         <div class="avitar-card avitar-mb-4">
           <div class="avitar-card__header">
@@ -240,25 +237,25 @@
           <div class="avitar-card__body">
             <div class="avitar-flex avitar-flex-col avitar-gap-2">
               {{#if this.canReviewPermit}}
-                <button type="button" class="avitar-btn avitar-btn--primary" style="justify-content: flex-start;" {{on "click" this.reviewPermit}}>
+                <button type="button" class="avitar-btn avitar-btn--primary avitar-justify-start" {{on "click" this.reviewPermit}}>
                   {{{lnr-icon "clipboard"}}}
                   <span class="avitar-ml-2">Review Permit</span>
                 </button>
               {{/if}}
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;">
-                <i class="fas fa-calendar-check avitar-mr-2"></i>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-justify-start">
+                {{{lnr-icon "calendar-full" class="avitar-mr-2"}}}
                 Schedule Inspection
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" this.openUploadModal}}>
-                <i class="fas fa-file-upload avitar-mr-2"></i>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-justify-start" {{on "click" this.openUploadModal}}>
+                {{{lnr-icon "upload" class="avitar-mr-2"}}}
                 Upload Document
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" (fn this.setActiveTab "chat")}}>
-                <i class="fas fa-comment avitar-mr-2"></i>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-justify-start" {{on "click" (fn this.setActiveTab "chat")}}>
+                {{{lnr-icon "bubble" class="avitar-mr-2"}}}
                 Add Comment
               </button>
-              <button type="button" class="avitar-btn avitar-btn--secondary" style="justify-content: flex-start;" {{on "click" this.printPermit}}>
-                <i class="fas fa-print avitar-mr-2"></i>
+              <button type="button" class="avitar-btn avitar-btn--secondary avitar-justify-start" {{on "click" this.printPermit}}>
+                {{{lnr-icon "printer" class="avitar-mr-2"}}}
                 Print Permit
               </button>
             </div>
@@ -402,7 +399,7 @@
         {{#if this.files.length}}
           <div class="avitar-grid avitar-grid-cols-1 avitar-gap-3">
             {{#each this.files as |file|}}
-              <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-p-3 avitar-bg-gray-50 avitar-rounded" style="border: 1px solid #e5e7eb;">
+              <div class="avitar-flex avitar-items-center avitar-gap-3 avitar-p-3 avitar-bg-gray-50 avitar-rounded avitar-border avitar-border-gray-200">
                 <i class="fas fa-file-{{if (includes file.fileType 'pdf') 'pdf' (if (includes file.fileType 'image') 'image' 'alt')}} avitar-text-2xl avitar-text-primary"></i>
                 <div class="avitar-flex-1">
                   <p class="avitar-font-medium">{{file.displayName}}</p>
@@ -463,11 +460,11 @@
       </div>
       <div class="avitar-card__body">
         {{! Chat Messages Area }}
-        <div class="avitar-chat-messages avitar-mb-4" style="max-height: 500px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; background: #f9fafb;">
+        <div class="permit-detail__chat-messages avitar-mb-4 avitar-p-4 avitar-bg-gray-50 avitar-rounded avitar-border avitar-border-gray-200">
           {{#if this.displayedComments.length}}
             {{#each this.displayedComments as |comment|}}
               <div class="avitar-flex avitar-gap-3 avitar-mb-4">
-                <div class="avitar-flex avitar-items-center avitar-justify-center avitar-bg-primary avitar-text-white avitar-rounded-full" style="width: 40px; height: 40px; flex-shrink: 0;">
+                <div class="avitar-flex avitar-items-center avitar-justify-center avitar-bg-primary avitar-text-white avitar-rounded-full avitar-w-10 avitar-h-10 avitar-flex-shrink-0">
                   <i class="fas fa-user"></i>
                 </div>
                 <div class="avitar-flex-1">
@@ -481,7 +478,7 @@
                       </span>
                     {{/if}}
                   </div>
-                  <div class="avitar-bg-white avitar-p-3 avitar-rounded" style="border: 1px solid #e5e7eb;">
+                  <div class="avitar-bg-white avitar-p-3 avitar-rounded avitar-border avitar-border-gray-200">
                     <p>{{comment.content}}</p>
                   </div>
                 </div>
@@ -506,12 +503,11 @@
           ></textarea>
           <button
             type="button"
-            class="avitar-btn avitar-btn--primary"
+            class="avitar-btn avitar-btn--primary avitar-self-end"
             {{on "click" this.sendComment}}
             disabled={{not this.newComment}}
-            style="align-self: flex-end;"
           >
-            <i class="fas fa-paper-plane avitar-mr-2"></i>
+            {{{lnr-icon "envelope" class="avitar-mr-2"}}}
             Send
           </button>
         </div>
@@ -566,7 +562,7 @@
         </button>
       </div>
 
-      <div class="avitar-modal__body" style="max-height: 80vh; overflow-y: auto;">
+      <div class="avitar-modal__body permit-detail__modal-body">
         <BuildingPermits::PermitPrintView
           @permit={{@model.permit}}
           @municipality={{this.municipality.currentMunicipality}}

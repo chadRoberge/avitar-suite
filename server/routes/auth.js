@@ -3,7 +3,10 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Municipality = require('../models/Municipality');
 const Contractor = require('../models/Contractor');
+const Citizen = require('../models/Citizen');
 const { authenticateToken } = require('../middleware/auth');
+const { createCitizenCustomer } = require('../services/stripeService');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 
@@ -73,11 +76,135 @@ router.post('/register', async (req, res) => {
     const user = new User(userData);
     await user.save();
 
+    // For commercial users, create a Contractor document and link it
+    let contractor = null;
+    if (userType === 'commercial') {
+      // Create the Contractor document
+      contractor = new Contractor({
+        company_name: businessName,
+        owner_user_id: user._id,
+        license_type: businessType, // Map business_type to license_type
+        business_info: {
+          email: email,
+          phone: phone || '',
+        },
+        members: [
+          {
+            user_id: user._id,
+            role: 'owner',
+            permissions: [
+              'manage_team',
+              'submit_permits',
+              'edit_permits',
+              'view_all_permits',
+              'manage_company_info',
+            ],
+          },
+        ],
+        is_active: true,
+        is_verified: false, // Requires verification by municipality or admin
+      });
+      await contractor.save();
+
+      // Link the contractor_id to the user
+      user.contractor_id = contractor._id;
+      await user.save();
+    }
+
+    // For residential users, create a Citizen document with Stripe customer
+    let citizen = null;
+    if (userType === 'residential' || userType !== 'commercial') {
+      try {
+        // Create Stripe customer for the citizen
+        const stripeCustomer = await createCitizenCustomer(user);
+
+        // Create the Citizen document with free plan active
+        citizen = new Citizen({
+          owner_user_id: user._id,
+          contact_info: {
+            phone: phone || '',
+          },
+          primary_address: address
+            ? {
+                street: address.street || '',
+                city: address.city || '',
+                state: address.state || '',
+                zip: address.zip || '',
+              }
+            : {},
+          subscription: {
+            plan: 'free',
+            status: 'active',
+            stripe_customer_id: stripeCustomer.id,
+            current_period_start: new Date(),
+            features: [], // Free plan has no premium features
+          },
+          is_active: true,
+        });
+        await citizen.save();
+
+        // Link the citizen_id to the user
+        user.citizen_id = citizen._id;
+        await user.save();
+
+        console.log(
+          `✅ Created citizen account for ${user.email} with Stripe customer ${stripeCustomer.id}`,
+        );
+      } catch (stripeError) {
+        // Log error but don't fail registration - citizen can still use the platform
+        console.error(
+          'Failed to create Stripe customer for citizen:',
+          stripeError,
+        );
+
+        // Still create the Citizen document without Stripe customer
+        citizen = new Citizen({
+          owner_user_id: user._id,
+          contact_info: {
+            phone: phone || '',
+          },
+          subscription: {
+            plan: 'free',
+            status: 'active',
+            features: [],
+          },
+          is_active: true,
+        });
+        await citizen.save();
+
+        user.citizen_id = citizen._id;
+        await user.save();
+
+        console.log(
+          `⚠️ Created citizen account for ${user.email} without Stripe customer`,
+        );
+      }
+    }
+
     // Update last login
     await user.updateLastLogin();
 
     // Generate token
     const token = generateToken(user._id);
+
+    // Send welcome email (async, don't block response)
+    emailService
+      .sendWelcomeEmail({
+        user: {
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+        },
+        accountType: userType === 'commercial' ? 'commercial' : 'residential',
+        planName: 'free',
+        companyName: businessName || null,
+      })
+      .then(() => {
+        console.log(`✅ Welcome email sent to ${user.email}`);
+      })
+      .catch((error) => {
+        console.error(`❌ Failed to send welcome email to ${user.email}:`, error.message);
+      });
 
     res.status(201).json({
       success: true,
@@ -92,6 +219,8 @@ router.post('/register', async (req, res) => {
         global_role: user.global_role,
         business_name: user.business_name,
         business_type: user.business_type,
+        contractor_id: user.contractor_id,
+        citizen_id: user.citizen_id,
         is_active: user.is_active,
         createdAt: user.createdAt,
       },
@@ -220,6 +349,7 @@ router.post('/login', async (req, res) => {
         phone: user.phone,
         global_role: user.global_role,
         contractor_id: user.contractor_id,
+        citizen_id: user.citizen_id,
         municipal_permissions: user.municipal_permissions,
         preferences: user.preferences,
         last_login: user.last_login,
@@ -272,6 +402,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         phone: user.phone,
         global_role: user.global_role,
         contractor_id: user.contractor_id,
+        citizen_id: user.citizen_id,
         municipal_permissions: user.municipal_permissions,
         preferences: user.preferences,
         last_login: user.last_login,

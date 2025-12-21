@@ -5,14 +5,78 @@ import { inject as service } from '@ember/service';
 
 export default class MunicipalityBuildingPermitsPermitsController extends Controller {
   @service router;
+  @service('current-user') currentUser;
 
   // Query params
-  queryParams = ['year', 'permitTypeId', 'status', 'search', 'page'];
+  queryParams = ['year', 'permitTypeId', 'status', 'search', 'page', 'tab'];
   @tracked year = '';
   @tracked permitTypeId = '';
   @tracked status = '';
   @tracked search = '';
   @tracked page = 1;
+  @tracked tab = 'all'; // 'all' or 'my'
+
+  // Check if user is residential (contractor or citizen)
+  get isResidentialUser() {
+    return this.currentUser.isContractorOrCitizen;
+  }
+
+  // Get current user ID for filtering
+  get currentUserId() {
+    return this.currentUser.user?._id;
+  }
+
+  // Get contractor ID for filtering
+  get contractorId() {
+    return this.currentUser.user?.contractor_id;
+  }
+
+  // Filter permits based on active tab
+  get displayedPermits() {
+    const permits = this.model.permits || [];
+
+    if (this.tab === 'my') {
+      // Filter to show only user's permits
+      return permits.filter((permit) => {
+        // Check if submitted by this user
+        if (permit.submitted_by?._id === this.currentUserId) {
+          return true;
+        }
+        // Check if contractor matches (for contractor users)
+        if (this.contractorId && permit.contractor_id === this.contractorId) {
+          return true;
+        }
+        // Check applicant user ID
+        if (permit.applicantUserId === this.currentUserId) {
+          return true;
+        }
+        return false;
+      });
+    }
+
+    return permits;
+  }
+
+  // Get count for each tab
+  get allPermitsCount() {
+    return this.model.permits?.length || 0;
+  }
+
+  get myPermitsCount() {
+    const permits = this.model.permits || [];
+    return permits.filter((permit) => {
+      if (permit.submitted_by?._id === this.currentUserId) {
+        return true;
+      }
+      if (this.contractorId && permit.contractor_id === this.contractorId) {
+        return true;
+      }
+      if (permit.applicantUserId === this.currentUserId) {
+        return true;
+      }
+      return false;
+    }).length;
+  }
 
   // Status options for filter
   get statusOptions() {
@@ -145,5 +209,11 @@ export default class MunicipalityBuildingPermitsPermitsController extends Contro
   @action
   stopPropagation(event) {
     event.stopPropagation();
+  }
+
+  @action
+  setTab(tabName) {
+    this.tab = tabName;
+    this.page = 1; // Reset to first page when switching tabs
   }
 }
