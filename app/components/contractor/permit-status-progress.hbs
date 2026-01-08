@@ -16,16 +16,31 @@
         {{#if (and (eq step.status "under_review") @departmentReviews @departmentReviews.length)}}
           <div class="avitar-step-progress__departments">
             {{#each @departmentReviews as |review|}}
-              <div class="avitar-step-progress__department avitar-step-progress__department--compact {{if review.approved 'avitar-step-progress__department--approved' 'avitar-step-progress__department--pending'}}">
+              <div class="avitar-step-progress__department {{if (or (eq review.status 'approved') (eq review.status 'conditionally_approved')) 'avitar-step-progress__department--approved' (if (eq review.status 'rejected') 'avitar-step-progress__department--rejected' (if (eq review.status 'revisions_requested') 'avitar-step-progress__department--revisions' 'avitar-step-progress__department--pending'))}}">
                 <div class="avitar-step-progress__department-icon">
-                  {{#if review.approved}}
-                    <i class="fas fa-check-circle"></i>
+                  {{#if (or (eq review.status 'approved') (eq review.status 'conditionally_approved'))}}
+                    {{lnr-icon "checkmark-circle"}}
+                  {{else if (eq review.status 'rejected')}}
+                    {{lnr-icon "cross-circle"}}
+                  {{else if (eq review.status 'revisions_requested')}}
+                    {{lnr-icon "warning"}}
                   {{else}}
-                    <i class="fas fa-clock"></i>
+                    {{lnr-icon "clock"}}
                   {{/if}}
                 </div>
                 <div class="avitar-step-progress__department-info">
                   <div class="avitar-step-progress__department-name">{{review.department}}</div>
+                  <div class="avitar-step-progress__department-status">
+                    {{#if (or (eq review.status 'approved') (eq review.status 'conditionally_approved'))}}
+                      Approved
+                    {{else if (eq review.status 'rejected')}}
+                      Rejected
+                    {{else if (eq review.status 'revisions_requested')}}
+                      Revisions Requested
+                    {{else}}
+                      Pending
+                    {{/if}}
+                  </div>
                   {{#if review.reviewedAt}}
                     <div class="avitar-step-progress__department-meta">
                       {{date-format review.reviewedAt "MMM DD"}}

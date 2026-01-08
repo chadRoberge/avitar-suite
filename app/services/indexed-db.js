@@ -636,6 +636,85 @@ export default class IndexedDbService extends Service {
         changeLog: '++id, collection, documentId, operation, timestamp, userId',
       });
 
+      // Define schema version 12 - Fix metadata table to use string key as primary key (not auto-increment)
+      // This fixes cache_version never persisting because ++key was auto-incrementing
+      this.db
+        .version(12)
+        .stores({
+          // All previous collections (same as v11)
+          municipalities: '++id, name, code, _lastSynced, _syncState',
+          properties:
+            '++id, municipalityId, address, parcel_number, zone, [municipalityId+parcel_number], _lastSynced, _syncState',
+          assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          land_assessments:
+            '++id, propertyId, property_id, municipalityId, year, [propertyId+year], [property_id+year], _lastSynced, _syncState',
+          views:
+            '++id, propertyId, municipalityId, subjectId, widthId, distanceId, depthId, [propertyId+municipalityId], _lastSynced, _syncState',
+          sketches:
+            '++id, propertyId, property_id, municipalityId, [propertyId+municipalityId], [property_id], _lastSynced, _syncState',
+          features:
+            '++id, sketchId, propertyId, property_id, municipalityId, card_number, [sketchId+propertyId], [property_id], [property_id+card_number], _lastSynced, _syncState',
+          exemptions:
+            '++id, propertyId, property_id, municipalityId, exemptionTypeId, assessmentYear, [propertyId+assessmentYear], [property_id+assessmentYear], _lastSynced, _syncState',
+          exemptionTypes:
+            '++id, municipalityId, name, code, [municipalityId+code], _lastSynced, _syncState',
+          viewAttributes:
+            '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+          zoneBaseValues:
+            '++id, municipalityId, zoneCode, [municipalityId+zoneCode], _lastSynced, _syncState',
+          topology_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          site_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          driveway_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          road_attributes:
+            '++id, municipalityId, displayText, attributeType, _lastSynced, _syncState',
+          land_use_details:
+            '++id, municipalityId, code, displayText, _lastSynced, _syncState',
+          land_taxation_categories:
+            '++id, municipalityId, name, _lastSynced, _syncState',
+          land_ladders: '++id, municipalityId, zoneId, _lastSynced, _syncState',
+          current_use_settings: '++id, municipalityId, _lastSynced, _syncState',
+          acreage_discount_settings:
+            '++id, municipalityId, _lastSynced, _syncState',
+          sketch_sub_area_factors:
+            '++id, municipalityId, _lastSynced, _syncState',
+          water_bodies:
+            '++id, municipalityId, name, waterBodyType, _lastSynced, _syncState',
+          waterfront_attributes:
+            '++id, municipalityId, attributeType, name, [municipalityId+attributeType], _lastSynced, _syncState',
+          water_body_ladders:
+            '++id, municipalityId, waterBodyId, frontage, [municipalityId+waterBodyId], _lastSynced, _syncState',
+          permits:
+            '++id, _id, municipalityId, permitNumber, status, submitted_by, [municipalityId+status], [submitted_by], _lastSynced, _syncState',
+          permit_inspections:
+            '++id, permitId, municipalityId, inspectionType, status, scheduledDate, [permitId+status], _lastSynced, _syncState',
+          permit_documents:
+            '++id, permitId, municipalityId, fileName, fileType, [permitId], _lastSynced, _syncState',
+          permit_comments:
+            '++id, permitId, municipalityId, author, timestamp, [permitId+timestamp], _lastSynced, _syncState',
+          syncQueue:
+            '++id, action, collection, recordId, data, timestamp, retryCount, _failed',
+          // FIXED: Changed from '++key' (auto-increment) to '&key' (unique string primary key)
+          // This allows storing metadata with string keys like 'cache_version'
+          metadata: '&key, value, lastUpdated',
+          deltas:
+            '++id, collection, documentId, delta, timestamp, attempts, synced, syncedAt',
+          conflicts:
+            '++id, collection, documentId, clientDelta, serverDelta, resolution, timestamp, resolved',
+          changeLog:
+            '++id, collection, documentId, operation, timestamp, userId',
+        })
+        .upgrade((trans) => {
+          console.log(
+            '🔄 IndexedDB v12 upgrade: Clearing metadata table to fix string key storage',
+          );
+          // Clear the old metadata table since it had numeric keys
+          return trans.table('metadata').clear();
+        });
+
       await this.db.open();
       this.isReady = true;
 
@@ -644,6 +723,38 @@ export default class IndexedDbService extends Service {
       // Initialize metadata if needed
       await this.initializeMetadata();
     } catch (error) {
+      // Handle UpgradeError when changing primary key (not supported by Dexie)
+      // This happens when upgrading from schema with ++key to &key for metadata table
+      if (
+        error.name === 'UpgradeError' &&
+        error.message?.includes('primary key')
+      ) {
+        console.warn(
+          '🔄 IndexedDB schema requires database reset (primary key change detected)',
+        );
+        console.warn('Deleting database and recreating...');
+
+        try {
+          // Delete the database
+          await Dexie.delete('AvitarSuiteDB');
+          console.log('✅ Old database deleted');
+
+          // Recursively call initializeDatabase to recreate
+          // Reset state first
+          this.db = null;
+          this.isReady = false;
+
+          // Wait a bit for cleanup
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Reinitialize
+          return await this.initializeDatabase();
+        } catch (deleteError) {
+          console.error('Failed to delete and recreate database:', deleteError);
+          throw deleteError;
+        }
+      }
+
       console.error('Failed to initialize IndexedDB:', error);
       throw error;
     }
@@ -1280,6 +1391,7 @@ export default class IndexedDbService extends Service {
       throw new Error('IndexedDB not ready');
     }
 
+    // With schema v12, 'key' is the primary key (&key) so we can use direct get
     const record = await this.db.metadata.get(key);
     return record?.value;
   }
@@ -1289,6 +1401,8 @@ export default class IndexedDbService extends Service {
       throw new Error('IndexedDB not ready');
     }
 
+    // With schema v12, 'key' is the primary key (&key) so we can use direct put
+    // put() will insert or update based on the primary key
     return await this.db.metadata.put({
       key,
       value,

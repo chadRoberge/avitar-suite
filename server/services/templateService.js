@@ -189,6 +189,8 @@ class TemplateService {
    */
   getDefaultSubject(templateType) {
     const subjects = {
+      welcome:
+        'Welcome to Avitar - Your {{accountTypeLabel}} Account is Ready!',
       permit_approved: 'Permit Approved - {{permitNumber}}',
       permit_rejected: 'Permit Rejected - {{permitNumber}}',
       permit_under_review: 'Permit Under Review - {{permitNumber}}',
@@ -378,6 +380,38 @@ class TemplateService {
         teamMemberRole: 'Project Manager',
         addedBy: 'John Smith',
         removedBy: 'John Smith',
+      };
+    }
+
+    if (templateType === 'welcome') {
+      return {
+        firstName: 'John',
+        email: 'john@example.com',
+        isCommercial: false,
+        companyName: null,
+        accountTypeLabel: 'Residential',
+        accountDescription:
+          'submit building permits and track your home improvement projects',
+        planName: 'Free',
+        planFeatures: [
+          'Submit and track building permits',
+          'View permit status and inspection results',
+          'Upload supporting documents',
+        ],
+        upgradePlans: [
+          {
+            name: 'Premium',
+            price: 9.99,
+            interval: 'month',
+            features: [
+              'SMS Notifications',
+              'Priority Support',
+              'Store payment methods',
+            ],
+          },
+        ],
+        appUrl: 'http://localhost:4200',
+        currentYear: new Date().getFullYear(),
       };
     }
 

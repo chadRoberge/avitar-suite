@@ -20,10 +20,13 @@ export default class CitizenSettingsSubscriptionRoute extends Route {
       // Get user from parent route
       const parentModel = this.modelFor('citizen-settings');
       const user = parentModel?.user || this.currentUser.user;
-      const isContractor = parentModel?.isContractor || this.currentUser.isContractor;
+      const isContractor =
+        parentModel?.isContractor || this.currentUser.isContractor;
 
       // Get subscription plans based on user type
-      const plansEndpoint = isContractor ? '/contractors/plans' : '/citizens/plans';
+      const plansEndpoint = isContractor
+        ? '/contractors/plans'
+        : '/citizens/plans';
       let plans = [];
       try {
         const plansResponse = await this.api.get(plansEndpoint);
@@ -45,9 +48,7 @@ export default class CitizenSettingsSubscriptionRoute extends Route {
       // Citizens without a citizen_id need to be migrated, but can still see the free plan
       const hasCitizenAccount = !isContractor && user?.citizen_id;
       const hasContractorAccount = isContractor && user?.contractor_id;
-      const needsOnboarding = isContractor
-        ? !hasContractorAccount
-        : false; // Citizens don't need onboarding - they can use free plan
+      const needsOnboarding = isContractor ? !hasContractorAccount : false; // Citizens don't need onboarding - they can use free plan
 
       return {
         user,

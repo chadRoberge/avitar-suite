@@ -6,6 +6,34 @@ import { inject as service } from '@ember/service';
 export default class NeighborhoodsController extends Controller {
   @service api;
 
+  // Query params for year selection
+  queryParams = ['year'];
+  @tracked year = new Date().getFullYear();
+
+  // Year-aware computed properties
+  get configYear() {
+    return this.model?.configYear || this.year;
+  }
+
+  get isYearLocked() {
+    return this.model?.isYearLocked || false;
+  }
+
+  get availableYears() {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear + 2; y >= currentYear - 5; y--) {
+      years.push(y);
+    }
+    return years;
+  }
+
+  @action
+  changeYear(event) {
+    const newYear = parseInt(event.target.value, 10);
+    this.year = newYear;
+  }
+
   // Neighborhood code tracking
   @tracked isAddingNeighborhood = false;
   @tracked isEditingNeighborhood = false;
@@ -151,12 +179,21 @@ export default class NeighborhoodsController extends Controller {
 
   @action
   async saveNeighborhoodCode() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const codeData = {
         description: this.newNeighborhoodDescription.trim(),
         code: this.newNeighborhoodCode.trim(),
         rate: parseInt(this.newNeighborhoodRate, 10),
+        effective_year: this.configYear,
       };
 
       // Validate

@@ -47,7 +47,10 @@ export default class MunicipalityBuildingPermitsSettingsNotificationsController 
       };
 
       // Use the existing API endpoint
-      await this.api.patch('/users/me/notification-preferences', notificationPayload);
+      await this.api.patch(
+        '/users/me/notification-preferences',
+        notificationPayload,
+      );
 
       this.notifications.success('Notification preferences saved');
     } catch (error) {

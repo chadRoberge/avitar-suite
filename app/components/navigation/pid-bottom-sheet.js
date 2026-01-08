@@ -26,9 +26,40 @@ export default class PidBottomSheetComponent extends Component {
   @tracked isLoading = true;
   @tracked expandedGroups = new Set();
 
+  _hasLoadedProperties = false;
+  _lastOpenState = false;
+
   constructor() {
     super(...arguments);
-    this.loadProperties();
+    // Don't load properties on construction - wait until sheet is opened
+    // This prevents unnecessary API calls on every page load
+    this.isLoading = false; // Start with false since we haven't loaded yet
+  }
+
+  /**
+   * Check if properties need to be loaded when sheet opens
+   * Called from template to trigger lazy loading
+   */
+  get shouldLoadProperties() {
+    console.log(
+      '🔍 [PidBottomSheet] shouldLoadProperties called, isOpen:',
+      this.args.isOpen,
+      '_hasLoadedProperties:',
+      this._hasLoadedProperties,
+    );
+    // When sheet opens for the first time, trigger loading
+    if (
+      this.args.isOpen &&
+      !this._hasLoadedProperties &&
+      !this._lastOpenState
+    ) {
+      this._lastOpenState = true;
+      this._hasLoadedProperties = true;
+      // Use setTimeout to avoid triggering during render
+      console.log('🔍 [PidBottomSheet] Scheduling loadProperties');
+      setTimeout(() => this.loadProperties(), 0);
+    }
+    return this._hasLoadedProperties;
   }
 
   /**

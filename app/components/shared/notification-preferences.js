@@ -55,7 +55,8 @@ export default class SharedNotificationPreferencesComponent extends Component {
   }
 
   get emailPaymentConfirmations() {
-    if (this._emailPaymentConfirmations !== null) return this._emailPaymentConfirmations;
+    if (this._emailPaymentConfirmations !== null)
+      return this._emailPaymentConfirmations;
     return this._initialPrefs.payment_confirmations?.email ?? true;
   }
   set emailPaymentConfirmations(value) {
@@ -63,7 +64,8 @@ export default class SharedNotificationPreferencesComponent extends Component {
   }
 
   get emailSubscriptionUpdates() {
-    if (this._emailSubscriptionUpdates !== null) return this._emailSubscriptionUpdates;
+    if (this._emailSubscriptionUpdates !== null)
+      return this._emailSubscriptionUpdates;
     return this._initialPrefs.subscription_updates?.email ?? true;
   }
   set emailSubscriptionUpdates(value) {
@@ -71,7 +73,8 @@ export default class SharedNotificationPreferencesComponent extends Component {
   }
 
   get emailLicenseReminders() {
-    if (this._emailLicenseReminders !== null) return this._emailLicenseReminders;
+    if (this._emailLicenseReminders !== null)
+      return this._emailLicenseReminders;
     return this._initialPrefs.license_expiration?.email ?? true;
   }
   set emailLicenseReminders(value) {
@@ -88,7 +91,8 @@ export default class SharedNotificationPreferencesComponent extends Component {
   }
 
   get smsInspectionReminders() {
-    if (this._smsInspectionReminders !== null) return this._smsInspectionReminders;
+    if (this._smsInspectionReminders !== null)
+      return this._smsInspectionReminders;
     return this._initialPrefs.inspection_notifications?.sms ?? false;
   }
   set smsInspectionReminders(value) {
@@ -97,7 +101,8 @@ export default class SharedNotificationPreferencesComponent extends Component {
 
   // Marketing getters
   get marketingProductUpdates() {
-    if (this._marketingProductUpdates !== null) return this._marketingProductUpdates;
+    if (this._marketingProductUpdates !== null)
+      return this._marketingProductUpdates;
     return this._initialPrefs.marketing?.product_updates ?? true;
   }
   set marketingProductUpdates(value) {

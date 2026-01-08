@@ -671,10 +671,7 @@ router.get(
 
       // Calculate pro-rated amount if applicable
       let proratedAmount = null;
-      if (
-        entity.subscription?.stripe_customer_id &&
-        newPlan.stripe_price_id
-      ) {
+      if (entity.subscription?.stripe_customer_id && newPlan.stripe_price_id) {
         try {
           const upcomingInvoice = await stripeService.getUpcomingInvoice(
             entity.subscription.stripe_customer_id,

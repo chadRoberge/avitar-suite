@@ -32,6 +32,8 @@ export default class AssessingService extends Service {
       '📦 [getProperties] Starting new request for municipality:',
       municipalityId,
     );
+    // DEBUG: Print stack trace to find caller
+    console.log('📦 [getProperties] Call stack:', new Error().stack);
 
     // Store the pending request
     this._pendingPropertiesMunicipalityId = municipalityId;
@@ -414,9 +416,10 @@ export default class AssessingService extends Service {
     };
   }
 
-  async getBuildingAssessment(propertyId, cardNumber = 1) {
+  async getBuildingAssessment(propertyId, cardNumber = 1, assessmentYear = null) {
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
     return this.localApi.get(
-      `/properties/${propertyId}/assessment/building?card=${cardNumber}`,
+      `/properties/${propertyId}/assessment/building?card=${cardNumber}&assessment_year=${year}`,
     );
   }
 
@@ -467,9 +470,10 @@ export default class AssessingService extends Service {
     };
   }
 
-  async updateBuildingAssessment(propertyId, cardNumber = 1, data) {
+  async updateBuildingAssessment(propertyId, cardNumber = 1, data, assessmentYear = null) {
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
     const result = await this.api.patch(
-      `/properties/${propertyId}/assessment/building?card=${cardNumber}`,
+      `/properties/${propertyId}/assessment/building?card=${cardNumber}&assessment_year=${year}`,
       data,
     );
 
@@ -508,10 +512,11 @@ export default class AssessingService extends Service {
     return result;
   }
 
-  async getBuildingFeatureCodes(municipalityId = null) {
+  async getBuildingFeatureCodes(municipalityId = null, year = null) {
     const muniId = municipalityId || this.municipality.currentMunicipality.id;
+    const effectiveYear = year || this.municipality.selectedAssessmentYear || new Date().getFullYear();
     return this.localApi.get(
-      `/municipalities/${muniId}/building-feature-codes`,
+      `/municipalities/${muniId}/building-feature-codes?year=${effectiveYear}`,
     );
   }
 
@@ -571,10 +576,13 @@ export default class AssessingService extends Service {
     }
   }
 
-  async getPropertySketches(propertyId, cardNumber = 1, options = {}) {
+  async getPropertySketches(propertyId, cardNumber = 1, assessmentYear = null, options = {}) {
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
+    // Use hybrid strategy: return cached data immediately, revalidate in background
+    const fetchOptions = { strategy: 'hybrid', ...options };
     const response = await this.hybridApi.get(
-      `/properties/${propertyId}/sketches?card=${cardNumber}`,
-      options,
+      `/properties/${propertyId}/sketches?card=${cardNumber}&year=${year}`,
+      fetchOptions,
     );
 
     // Handle different response formats from HybridAPI vs direct API
@@ -612,94 +620,54 @@ export default class AssessingService extends Service {
     assessmentYear = null,
     options = {},
   ) {
-    // Unified cache approach: try to reuse data when possible to avoid duplication
-    const { forceRefresh = false, useCache = true } = options;
-
     // If no assessment year specified, use the basic sketches method
     if (!assessmentYear) {
-      console.log(
-        '📋 Using basic sketches method for year-specific request (no year specified)',
-      );
-      return this.getPropertySketches(propertyId, cardNumber, options);
+      return this.getPropertySketches(propertyId, cardNumber, null, options);
     }
 
-    // For assessment year requests, try to use basic sketches if they exist and are fresh
-    if (!forceRefresh && useCache) {
-      try {
-        const basicSketches = await this.getPropertySketches(
-          propertyId,
-          cardNumber,
-          {
-            ...options,
-            useCache: true,
-            suppressErrors: true, // Don't log errors for cache attempts
-          },
-        );
-
-        // If we have basic sketches data, check if it's suitable for assessment year request
-        if (
-          basicSketches &&
-          basicSketches.sketches &&
-          basicSketches.sketches.length > 0
-        ) {
-          // Check if the sketches are recent enough or match the assessment year criteria
-          const firstSketch = basicSketches.sketches[0];
-          const currentYear = new Date().getFullYear();
-
-          // If assessment year is current year or close, use basic sketches
-          if (Math.abs(assessmentYear - currentYear) <= 1) {
-            console.log(
-              '📋 Reusing basic sketches cache for assessment year request:',
-              {
-                assessmentYear,
-                currentYear,
-                sketchCount: basicSketches.sketches.length,
-              },
-            );
-            return basicSketches;
-          }
-        }
-      } catch (error) {
-        // Cache miss or error, fall through to API call
-        console.log('📋 Basic sketches cache miss for year-specific request');
-      }
-    }
-
-    // Make the specific API call with assessment year
-    const params = new URLSearchParams({ card: cardNumber });
-    if (assessmentYear) {
-      params.append('assessment_year', assessmentYear);
-    }
-
-    console.log('📋 Making assessment year specific API call:', {
-      propertyId,
-      cardNumber,
-      assessmentYear,
-      forceRefresh,
-    });
-
-    return this.localApi.get(
-      `/properties/${propertyId}/sketches?${params.toString()}`,
+    // For year-specific requests with temporal inheritance, always fetch from network
+    // to ensure we get the correct inherited data for the requested year
+    const response = await this.localApi.get(
+      `/properties/${propertyId}/sketches?card=${cardNumber}&year=${assessmentYear}`,
       options,
     );
+
+    // Normalize response format
+    if (response?.success !== undefined) {
+      return {
+        sketches: response.sketches || [],
+        areaDescriptions: response.areaDescriptions || [],
+      };
+    }
+    return {
+      sketches: response?.sketches || [],
+      areaDescriptions: response?.areaDescriptions || [],
+    };
   }
 
-  async createPropertySketch(propertyId, sketchData) {
-    return this.localApi.post(`/properties/${propertyId}/sketches`, sketchData);
-  }
-
-  async updatePropertySketch(propertyId, sketchId, sketchData) {
-    // Extract card number from sketch data to include in URL query parameters
+  async createPropertySketch(propertyId, sketchData, assessmentYear = null) {
     const cardNumber = sketchData.card_number || 1;
-    return this.localApi.put(
-      `/properties/${propertyId}/sketches/${sketchId}?card=${cardNumber}`,
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
+    return this.localApi.post(
+      `/properties/${propertyId}/sketches?card=${cardNumber}&year=${year}`,
       sketchData,
     );
   }
 
-  async deletePropertySketch(propertyId, sketchId) {
+  async updatePropertySketch(propertyId, sketchId, sketchData, assessmentYear = null) {
+    // Extract card number from sketch data to include in URL query parameters
+    const cardNumber = sketchData.card_number || 1;
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
+    return this.localApi.put(
+      `/properties/${propertyId}/sketches/${sketchId}?card=${cardNumber}&year=${year}`,
+      sketchData,
+    );
+  }
+
+  async deletePropertySketch(propertyId, sketchId, cardNumber = 1, assessmentYear = null) {
+    const year = assessmentYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
     const result = await this.localApi.delete(
-      `/properties/${propertyId}/sketches/${sketchId}`,
+      `/properties/${propertyId}/sketches/${sketchId}?card=${cardNumber}&year=${year}`,
     );
     return result;
   }
@@ -938,10 +906,11 @@ export default class AssessingService extends Service {
 
   // === Sketch Sub-Area Factors ===
 
-  async getSketchSubAreaFactors() {
+  async getSketchSubAreaFactors(year = null) {
     const municipalityId = this.municipality.currentMunicipality.id;
+    const effectiveYear = year || this.municipality.selectedAssessmentYear || new Date().getFullYear();
     return this.localApi.get(
-      `/municipalities/${municipalityId}/sketch-sub-area-factors`,
+      `/municipalities/${municipalityId}/sketch-sub-area-factors?year=${effectiveYear}`,
     );
   }
 
@@ -964,14 +933,15 @@ export default class AssessingService extends Service {
 
   // === View Attributes ===
 
-  async getViewAttributes(municipalityId = null) {
+  async getViewAttributes(municipalityId = null, year = null) {
     const muniId = municipalityId || this.municipality.currentMunicipality.id;
+    const effectiveYear = year || this.municipality.selectedAssessmentYear || new Date().getFullYear();
 
     // Use specific collection name to avoid cache collision
     const response = await this.localApi.get(
-      `/municipalities/${muniId}/view-attributes`,
+      `/municipalities/${muniId}/view-attributes?year=${effectiveYear}`,
       {
-        collection: `view-attributes-${muniId}`,
+        collection: `view-attributes-${muniId}-${effectiveYear}`,
       },
     );
 
@@ -1256,9 +1226,11 @@ export default class AssessingService extends Service {
       return [];
     }
 
+    const effectiveYear = options.year || this.municipality.selectedAssessmentYear || new Date().getFullYear();
+
     try {
       const response = await this.localApi.get(
-        `/municipalities/${currentMunicipalityId}/land-ladders`,
+        `/municipalities/${currentMunicipalityId}/land-ladders?year=${effectiveYear}`,
         options,
       );
       return response || [];
@@ -1517,5 +1489,211 @@ export default class AssessingService extends Service {
       console.error('Error loading exemption configuration data:', error);
       throw error;
     }
+  }
+
+  // ===========================================
+  // ASSESSMENT YEAR MANAGEMENT METHODS
+  // ===========================================
+
+  /**
+   * Get available assessment years for a municipality
+   * Returns only visible years for public users, all years for staff
+   */
+  async getAvailableYears(municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.get(
+      `/municipalities/${currentMunicipalityId}/assessing/available-years`,
+    );
+  }
+
+  /**
+   * Get year management data for settings UI (staff only)
+   * Includes property counts and hidden status for each year
+   */
+  async getYearManagementData(municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.get(
+      `/municipalities/${currentMunicipalityId}/assessing/years`,
+    );
+  }
+
+  /**
+   * Create a new assessment year by copying from source year
+   * New year is hidden by default for staff to work on
+   */
+  async createAssessmentYear(sourceYear, targetYear, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.post(
+      `/municipalities/${currentMunicipalityId}/assessing/years`,
+      {
+        sourceYear,
+        targetYear,
+      },
+    );
+  }
+
+  /**
+   * Toggle year visibility (hide/show from public)
+   */
+  async toggleYearVisibility(year, hidden, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.patch(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}/visibility`,
+      { hidden },
+    );
+  }
+
+  /**
+   * Get details for a specific assessment year from the AssessmentYear model
+   * Includes cached totals, status flags, and fiscal milestones
+   */
+  async getAssessmentYearDetails(year, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.get(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}`,
+    );
+  }
+
+  /**
+   * Lock an assessment year (prevents modifications)
+   */
+  async lockAssessmentYear(year, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.patch(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}/lock`,
+      { isLocked: true },
+    );
+  }
+
+  /**
+   * Unlock an assessment year (allows modifications again)
+   */
+  async unlockAssessmentYear(year, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.patch(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}/lock`,
+      { isLocked: false },
+    );
+  }
+
+  /**
+   * Update assessment year fiscal milestones (tax rate, commitment date, etc.)
+   */
+  async updateAssessmentYearMilestones(year, milestones, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.patch(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}/milestones`,
+      milestones,
+    );
+  }
+
+  /**
+   * Recalculate all assessments for a year after base rate changes
+   * Uses copy-on-write pattern - only creates new records where values changed
+   *
+   * @param {number} year - The assessment year to recalculate
+   * @param {string} recalculationType - Type of recalculation: 'land', 'building', 'features', 'view', 'all'
+   * @param {string} municipalityId - Optional municipality ID
+   * @returns {Object} Results including recordsCreated, recordsUnchanged, recordsUpdated
+   */
+  async recalculateAssessments(year, recalculationType = 'all', municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.post(
+      `/municipalities/${currentMunicipalityId}/assessing/recalculate`,
+      {
+        year,
+        recalculationType,
+      },
+    );
+  }
+
+  /**
+   * Get recalculation preview/estimate without making changes
+   * Useful for showing user how many records would be affected
+   */
+  async getRecalculationPreview(year, recalculationType = 'all', municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.get(
+      `/municipalities/${currentMunicipalityId}/assessing/recalculate/preview`,
+      {
+        params: { year, recalculationType },
+      },
+    );
+  }
+
+  /**
+   * Get assessment year history showing which years have explicit vs inherited values
+   * Useful for property-level year comparison views
+   */
+  async getPropertyYearHistory(propertyId, startYear, endYear) {
+    return this.api.get(`/properties/${propertyId}/assessment/year-history`, {
+      params: { startYear, endYear },
+    });
+  }
+
+  /**
+   * Refresh cached totals for an assessment year
+   * Recalculates municipality-wide totals from ParcelAssessment data
+   */
+  async refreshAssessmentYearTotals(year, municipalityId = null) {
+    const currentMunicipalityId =
+      municipalityId || this.municipality.currentMunicipality?.id;
+    if (!currentMunicipalityId) {
+      throw new Error('Municipality ID is required');
+    }
+
+    return this.api.post(
+      `/municipalities/${currentMunicipalityId}/assessing/years/${year}/refresh-totals`,
+    );
   }
 }

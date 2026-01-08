@@ -30,6 +30,30 @@ const waterBodyLadderSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  effective_year: {
+    type: Number,
+    required: true,
+    index: true,
+    min: 2000,
+    max: 2099,
+  },
+  // The first year where this tier is NO LONGER effective (null = still active)
+  effective_year_end: {
+    type: Number,
+    default: null,
+    index: true,
+  },
+  // Version chain for tracking changes across years
+  previous_version_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'WaterBodyLadder',
+    default: null,
+  },
+  next_version_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'WaterBodyLadder',
+    default: null,
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -44,14 +68,15 @@ const waterBodyLadderSchema = new mongoose.Schema({
   },
 });
 
-// Compound index for unique frontage per water body
+// Compound index for unique frontage per water body per year
 waterBodyLadderSchema.index(
-  { waterBodyId: 1, frontage: 1, isActive: 1 },
+  { waterBodyId: 1, frontage: 1, effective_year: 1, isActive: 1 },
   { unique: true },
 );
 
 // Index for ordering within water body
 waterBodyLadderSchema.index({ waterBodyId: 1, order: 1 });
+waterBodyLadderSchema.index({ municipalityId: 1, effective_year: 1 });
 
 // Update the updatedAt field on save
 waterBodyLadderSchema.pre('save', function (next) {
@@ -59,19 +84,63 @@ waterBodyLadderSchema.pre('save', function (next) {
   next();
 });
 
-// Static method to find by water body
+// Static method to find by water body (legacy)
 waterBodyLadderSchema.statics.findByWaterBody = function (waterBodyId) {
   return this.find({ waterBodyId, isActive: true }).sort({ order: 1 });
 };
 
-// Static method to find by municipality
+// Static method to find by water body for a specific year
+// Uses temporal range: effective_year <= year AND (effective_year_end is null OR effective_year_end > year)
+waterBodyLadderSchema.statics.findByWaterBodyForYear = async function (
+  waterBodyId,
+  year,
+) {
+  // Find all tiers that are effective for this year
+  // A tier is effective if:
+  // 1. effective_year <= requested year (it has started)
+  // 2. effective_year_end is null OR > requested year (it hasn't ended)
+  return this.find({
+    waterBodyId,
+    effective_year: { $lte: year },
+    $or: [
+      { effective_year_end: null },
+      { effective_year_end: { $exists: false } },
+      { effective_year_end: { $gt: year } },
+    ],
+    isActive: true,
+  }).sort({ order: 1 });
+};
+
+// Static method to find by municipality (legacy)
 waterBodyLadderSchema.statics.findByMunicipality = function (municipalityId) {
   return this.find({ municipalityId, isActive: true })
     .populate('waterBodyId')
     .sort({ waterBodyId: 1, order: 1 });
 };
 
-// Static method to find by municipality and water body
+// Static method to find by municipality for a specific year
+// Uses temporal range: effective_year <= year AND (effective_year_end is null OR effective_year_end > year)
+waterBodyLadderSchema.statics.findByMunicipalityForYear = async function (
+  municipalityId,
+  year,
+) {
+  // Find all tiers that are effective for this year using temporal range
+  return this.find({
+    municipalityId,
+    effective_year: { $lte: year },
+    $or: [
+      { effective_year_end: null },
+      { effective_year_end: { $exists: false } },
+      { effective_year_end: { $gt: year } },
+    ],
+    isActive: true,
+  })
+    .populate('waterBodyId')
+    .sort({ waterBodyId: 1, order: 1 })
+    .lean();
+};
+
+// Static method to find by municipality and water body (legacy)
 waterBodyLadderSchema.statics.findByMunicipalityAndWaterBody = function (
   municipalityId,
   waterBodyId,
@@ -81,12 +150,47 @@ waterBodyLadderSchema.statics.findByMunicipalityAndWaterBody = function (
   });
 };
 
-// Instance method to calculate value for a given frontage using interpolation
+// Static method to find by municipality and water body for a specific year
+// Uses temporal range: effective_year <= year AND (effective_year_end is null OR effective_year_end > year)
+waterBodyLadderSchema.statics.findByMunicipalityAndWaterBodyForYear =
+  async function (municipalityId, waterBodyId, year) {
+    // Find all tiers that are effective for this year
+    return this.find({
+      municipalityId,
+      waterBodyId,
+      effective_year: { $lte: year },
+      $or: [
+        { effective_year_end: null },
+        { effective_year_end: { $exists: false } },
+        { effective_year_end: { $gt: year } },
+      ],
+      isActive: true,
+    }).sort({ order: 1 });
+  };
+
+// Instance method to calculate value for a given frontage using interpolation (legacy)
 waterBodyLadderSchema.statics.calculateValue = async function (
   waterBodyId,
   frontage,
 ) {
   const tiers = await this.findByWaterBody(waterBodyId);
+
+  return this._interpolateValue(tiers, frontage);
+};
+
+// Instance method to calculate value for a given frontage for a specific year
+waterBodyLadderSchema.statics.calculateValueForYear = async function (
+  waterBodyId,
+  frontage,
+  year,
+) {
+  const tiers = await this.findByWaterBodyForYear(waterBodyId, year);
+
+  return this._interpolateValue(tiers, frontage);
+};
+
+// Private helper method for interpolation
+waterBodyLadderSchema.statics._interpolateValue = function (tiers, frontage) {
 
   if (tiers.length === 0) {
     return 0;
@@ -171,6 +275,16 @@ waterBodyLadderSchema.statics.createDefaults = async function (
   }
 
   return results;
+};
+
+// Get distinct years that have water body ladder data for a municipality
+waterBodyLadderSchema.statics.getAvailableYears = async function (
+  municipalityId,
+) {
+  return this.distinct('effective_year', {
+    municipalityId,
+    isActive: true,
+  });
 };
 
 module.exports = mongoose.model('WaterBodyLadder', waterBodyLadderSchema);

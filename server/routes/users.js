@@ -7,7 +7,7 @@ const router = express.Router();
 
 // @route   GET /api/municipalities/:municipalityId/users
 // @desc    Get all users for a municipality
-// @access  Private (requires municipal admin permissions)
+// @access  Private (any staff with access to municipality can view, only admins can edit)
 router.get(
   '/municipalities/:municipalityId/users',
   authenticateToken,
@@ -15,18 +15,16 @@ router.get(
     try {
       const { municipalityId } = req.params;
 
-      // Check if user has permission to view users in this municipality
-      // Avitar staff/admin always have access, or users with admin/supervisor role
+      // Check if user has any access to this municipality
+      // Avitar staff/admin always have access, or any user with municipal permissions
       const isAvitarStaff =
         req.user.global_role === 'avitar_staff' ||
         req.user.global_role === 'avitar_admin';
       const municipalPermission =
         req.user.getMunicipalityPermission(municipalityId);
-      const isAdmin =
-        municipalPermission?.role === 'admin' ||
-        municipalPermission?.role === 'supervisor';
+      const hasMunicipalAccess = !!municipalPermission;
 
-      if (!isAvitarStaff && !isAdmin) {
+      if (!isAvitarStaff && !hasMunicipalAccess) {
         return res.status(403).json({
           success: false,
           message: 'You do not have permission to view users',

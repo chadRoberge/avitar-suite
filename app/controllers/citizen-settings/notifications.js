@@ -54,7 +54,10 @@ export default class CitizenSettingsNotificationsController extends Controller {
         },
       };
 
-      await this.api.patch('/users/me/notification-preferences', notificationPayload);
+      await this.api.patch(
+        '/users/me/notification-preferences',
+        notificationPayload,
+      );
       this.notifications.success('Notification preferences saved');
     } catch (error) {
       console.error('Error saving notification preferences:', error);

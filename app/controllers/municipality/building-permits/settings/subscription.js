@@ -60,7 +60,9 @@ export default class MunicipalityBuildingPermitsSettingsSubscriptionController e
 
   get billingEmail() {
     if (this.isContractor) {
-      return this.contractor?.owner_user_id?.email || this.model.user?.email || '';
+      return (
+        this.contractor?.owner_user_id?.email || this.model.user?.email || ''
+      );
     }
     return this.model.user?.email || '';
   }

@@ -29,7 +29,7 @@ function addSecurityHeaders() {
     {
       name: 'Content-Security-Policy',
       content:
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com; img-src 'self' data: https:; font-src 'self' data: https://cdn.quilljs.com; connect-src 'self' ws: wss: http://localhost:3000 https://avitar-suite.vercel.app https://nhbuildingpermits.com https://ninjatesting.nhbuildingpermits.com https://api.stripe.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' http://localhost:3000 https://avitar-suite.vercel.app https://nhbuildingpermits.com https://ninjatesting.nhbuildingpermits.com https://js.stripe.com https://hooks.stripe.com",
+        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://m.stripe.network; style-src 'self' 'unsafe-inline' https://cdn.quilljs.com; img-src 'self' data: https: http://localhost:3000; font-src 'self' data: https://cdn.quilljs.com; connect-src 'self' ws: wss: http://localhost:3000 https://avitar-suite.vercel.app https://nhbuildingpermits.com https://ninjatesting.nhbuildingpermits.com https://api.stripe.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' http://localhost:3000 https://avitar-suite.vercel.app https://nhbuildingpermits.com https://ninjatesting.nhbuildingpermits.com https://js.stripe.com https://hooks.stripe.com",
     },
   ];
 

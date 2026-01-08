@@ -130,7 +130,7 @@ export default class BuildingPermitsStatusDropdownComponent extends Component {
       }
 
       const updated = await this.api.patch(
-        `/municipalities/${this.args.municipalityId}/inspections/${this.args.inspection.id}`,
+        `/municipalities/${this.args.municipalityId}/inspections/${this.args.inspection._id}/status`,
         updateData,
       );
 

@@ -39,6 +39,15 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
   @tracked permitTypes = [];
   @tracked isLoadingPermitTypes = false;
 
+  // Payment state
+  @tracked savedPermitId = null;
+  @tracked paymentBreakdown = null;
+  @tracked clientSecret = null;
+  @tracked paymentIntentId = null;
+  @tracked stripeAccountId = null;
+  @tracked showPaymentModal = false;
+  @tracked showPayInPersonModal = false;
+
   relationshipOptions = [
     { value: 'owner', label: 'Property Owner' },
     { value: 'tenant', label: 'Tenant' },
@@ -56,6 +65,15 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     this.selectedCard = null;
     this.uploadedDocuments = [];
     this.errors = {};
+
+    // Reset payment state
+    this.savedPermitId = null;
+    this.paymentBreakdown = null;
+    this.clientSecret = null;
+    this.paymentIntentId = null;
+    this.stripeAccountId = null;
+    this.showPaymentModal = false;
+    this.showPayInPersonModal = false;
 
     // Initialize nested objects in permit
     if (this.permit) {
@@ -591,22 +609,74 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
     this.isSubmitting = true;
 
     try {
-      // Save via API
-      const savedPermit = await this.api.post(
+      // Step 1: Save permit as draft first to get permit ID
+      const response = await this.api.post(
         `/municipalities/${this.municipalityId}/permits`,
         {
           ...this.getPermitData(),
-          status: 'submitted',
+          status: 'draft',
         },
       );
+
+      // API returns { permit: {...} }
+      const savedPermit = response.permit || response;
+      this.savedPermitId = savedPermit._id;
 
       // Upload any pending files
       await this.uploadPendingFiles(savedPermit);
 
+      // Step 2: Calculate payment
+      const paymentCalc = await this.api.post(
+        `/municipalities/${this.municipalityId}/permits/${savedPermit._id}/calculate-payment`,
+      );
+
+      // API returns { breakdown: { permitFee, processingFees, totalAmount, ... } }
+      const breakdown = paymentCalc.breakdown || {};
+
+      this.paymentBreakdown = {
+        permitFee: breakdown.permitFee?.toFixed(2) || '0.00',
+        processingFees: breakdown.processingFees?.toFixed(2) || '0.00',
+        totalAmount: breakdown.totalAmount || 0,
+      };
+
+      // Step 3: Check if payment is required
+      if (breakdown.totalAmount <= 0) {
+        // No payment needed - submit directly
+        await this.submitPermitWithoutPayment(savedPermit._id);
+        return;
+      }
+
+      // Step 4: Create payment intent
+      const paymentIntent = await this.api.post(
+        `/municipalities/${this.municipalityId}/permits/${savedPermit._id}/create-payment-intent`,
+      );
+
+      this.clientSecret = paymentIntent.clientSecret;
+      this.paymentIntentId = paymentIntent.paymentIntentId;
+      this.stripeAccountId = paymentIntent.stripeAccountId;
+
+      // Step 5: Show payment modal
+      this.showPaymentModal = true;
+      this.isSubmitting = false;
+    } catch (error) {
+      console.error('Error submitting permit:', error);
+      this.notifications.error(error.message || 'Failed to submit permit');
+      this.isSubmitting = false;
+    }
+  }
+
+  async submitPermitWithoutPayment(permitId) {
+    try {
+      // Mark permit as submitted without payment
+      await this.api.patch(
+        `/municipalities/${this.municipalityId}/permits/${permitId}`,
+        { status: 'submitted' },
+      );
+
       this.notifications.success('Permit submitted successfully');
       this.router.transitionTo(
         'municipality.building-permits.permit',
-        savedPermit._id,
+        permitId,
       );
     } catch (error) {
       console.error('Error submitting permit:', error);
@@ -617,17 +687,115 @@ export default class MunicipalityBuildingPermitsCreateController extends Control
   }
 
   @action
+  async handlePaymentSuccess(paymentIntent) {
+    this.isSubmitting = true;
+    this.showPaymentModal = false;
+
+    try {
+      // Confirm payment with backend
+      await this.api.post(
+        `/municipalities/${this.municipalityId}/permits/${this.savedPermitId}/confirm-payment`,
+        {
+          paymentIntentId: this.paymentIntentId,
+        },
+      );
+
+      this.notifications.success('Payment successful! Permit submitted.');
+      this.router.transitionTo(
+        'municipality.building-permits.permit',
+        this.savedPermitId,
+      );
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      this.notifications.error(
+        error.message || 'Payment confirmed but failed to update permit status',
+      );
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  @action
+  closePaymentModal() {
+    this.showPaymentModal = false;
+    // Note: Permit is saved as draft, user can continue later
+    this.notifications.info(
+      'Payment cancelled. Your permit has been saved as a draft.',
+    );
+  }
+
+  @action
+  openPayInPersonModal() {
+    this.showPayInPersonModal = true;
+  }
+
+  @action
+  closePayInPersonModal() {
+    this.showPayInPersonModal = false;
+  }
+
+  @action
+  stopPropagation(event) {
+    event.stopPropagation();
+  }
+
+  @action
+  async confirmPayInPerson() {
+    if (!this.canSubmit) {
+      this.notifications.error('Please complete all required fields');
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.showPayInPersonModal = false;
+
+    try {
+      // Save permit with pending_payment status
+      const response = await this.api.post(
+        `/municipalities/${this.municipalityId}/permits`,
+        {
+          ...this.getPermitData(),
+          status: 'pending_payment',
+          paymentMethod: 'in_person',
+        },
+      );
+
+      // API returns { permit: {...} }
+      const savedPermit = response.permit || response;
+
+      // Upload any pending files
+      await this.uploadPendingFiles(savedPermit);
+
+      this.notifications.success(
+        'Permit saved! Please visit the building permits office to complete payment. Review will begin once payment is received.',
+      );
+      this.router.transitionTo(
+        'municipality.building-permits.permit',
+        savedPermit._id,
+      );
+    } catch (error) {
+      console.error('Error saving permit:', error);
+      this.notifications.error(error.message || 'Failed to save permit');
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  @action
   async saveDraft() {
     this.isSaving = true;
 
     try {
-      const savedPermit = await this.api.post(
+      const response = await this.api.post(
         `/municipalities/${this.municipalityId}/permits`,
         {
           ...this.getPermitData(),
           status: 'draft',
         },
       );
+
+      // API returns { permit: {...} }
+      const savedPermit = response.permit || response;
 
       // Upload any pending files
       await this.uploadPendingFiles(savedPermit);

@@ -12,6 +12,7 @@ import { inject as service } from '@ember/service';
 export default class MobileModuleDropdownComponent extends Component {
   @service municipality;
   @service router;
+  @service('property-selection') propertySelection;
 
   @tracked isOpen = false;
 
@@ -54,8 +55,35 @@ export default class MobileModuleDropdownComponent extends Component {
     event.stopPropagation();
     this.isOpen = false;
 
-    // Navigate to the module's route
-    this.router.transitionTo(module.route);
+    const selectedProperty = this.propertySelection.selectedProperty;
+    const moduleRoute = module.route;
+
+    // If no property selected, just navigate to the default module route
+    if (!selectedProperty) {
+      this.router.transitionTo(moduleRoute);
+      return;
+    }
+
+    const propertyId = selectedProperty.id || selectedProperty._id;
+
+    // Map modules to their property-aware routes
+    // Property context is preserved in the propertySelection service
+    if (moduleRoute === 'municipality.assessing') {
+      // Navigate to General/PID route with the selected property
+      this.router.transitionTo(
+        'municipality.assessing.general.property',
+        propertyId,
+      );
+    } else if (moduleRoute === 'municipality.building-permits') {
+      // Navigate to find route - property is already in propertySelection service
+      this.router.transitionTo('municipality.building-permits.find');
+    } else if (moduleRoute === 'municipality.tax-collection') {
+      // Future: Navigate to tax collection property view
+      this.router.transitionTo(moduleRoute);
+    } else {
+      // Default: just navigate to the module
+      this.router.transitionTo(moduleRoute);
+    }
   }
 
   @action

@@ -3,13 +3,17 @@ import { inject as service } from '@ember/service';
 
 export default class BuildingDetailsRoute extends Route {
   @service api;
+  @service municipality;
 
   async model() {
     const parentModel = this.modelFor('municipality.assessing.settings');
     const municipalityId = parentModel.municipality.id;
+    // Use the year from the main assessment year selector
+    const year = this.municipality.selectedAssessmentYear || new Date().getFullYear();
 
     try {
       // Fetch all building-related data in parallel
+      // Pass year parameter to year-aware endpoints
       const [
         buildingCodesResponse,
         buildingFeatureCodesResponse,
@@ -19,19 +23,23 @@ export default class BuildingDetailsRoute extends Route {
         buildingTypeStatsResponse,
       ] = await Promise.all([
         this.api
-          .get(`/municipalities/${municipalityId}/building-codes`)
+          .get(`/municipalities/${municipalityId}/building-codes?year=${year}`)
           .catch((error) => {
             console.warn('Error fetching building codes:', error);
             return { buildingCodes: [] };
           }),
         this.api
-          .get(`/municipalities/${municipalityId}/building-feature-codes`)
+          .get(
+            `/municipalities/${municipalityId}/building-feature-codes?year=${year}`,
+          )
           .catch((error) => {
             console.warn('Error fetching building feature codes:', error);
-            return [];
+            return { buildingFeatureCodes: [] };
           }),
         this.api
-          .get(`/municipalities/${municipalityId}/sketch-sub-area-factors`)
+          .get(
+            `/municipalities/${municipalityId}/sketch-sub-area-factors?year=${year}`,
+          )
           .catch((error) => {
             console.warn('Error fetching sketch sub area factors:', error);
             return { sketchSubAreaFactors: [] };
@@ -52,7 +60,9 @@ export default class BuildingDetailsRoute extends Route {
             };
           }),
         this.api
-          .get(`/municipalities/${municipalityId}/building-calculation-config`)
+          .get(
+            `/municipalities/${municipalityId}/building-calculation-config?year=${year}`,
+          )
           .catch((error) => {
             console.warn('Error fetching building calculation config:', error);
             return {
@@ -88,17 +98,23 @@ export default class BuildingDetailsRoute extends Route {
       );
       console.log(
         'Loaded building feature codes:',
-        buildingFeatureCodesResponse,
+        buildingFeatureCodesResponse.buildingFeatureCodes,
       );
       console.log(
         'Loaded sketch sub area factors:',
         sketchSubAreaFactorsResponse.sketchSubAreaFactors,
       );
 
+      // Extract year and lock status from building codes response (primary year-aware endpoint)
+      const configYear = buildingCodesResponse.year || year;
+      const isYearLocked = buildingCodesResponse.isYearLocked || false;
+
+      console.log('Config year:', configYear, 'Is locked:', isYearLocked);
+
       return {
         municipality: parentModel.municipality,
         buildingCodes: buildingCodesResponse.buildingCodes || [],
-        buildingFeatureCodes: buildingFeatureCodesResponse || [],
+        buildingFeatureCodes: buildingFeatureCodesResponse.buildingFeatureCodes || [],
         sketchSubAreaFactors:
           sketchSubAreaFactorsResponse.sketchSubAreaFactors || [],
         miscellaneousPoints: miscellaneousPointsResponse || {
@@ -122,6 +138,8 @@ export default class BuildingDetailsRoute extends Route {
           industrial: { median: 0, count: 0, min: 0, max: 0 },
           manufactured: { median: 0, count: 0, min: 0, max: 0 },
         },
+        configYear: configYear,
+        isYearLocked: isYearLocked,
       };
     } catch (error) {
       console.error('Error loading building codes data:', error);
@@ -152,6 +170,8 @@ export default class BuildingDetailsRoute extends Route {
           industrial: { median: 0, count: 0, min: 0, max: 0 },
           manufactured: { median: 0, count: 0, min: 0, max: 0 },
         },
+        configYear: year,
+        isYearLocked: false,
       };
     }
   }

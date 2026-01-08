@@ -6,6 +6,34 @@ import { inject as service } from '@ember/service';
 export default class FeatureDetailsController extends Controller {
   @service api;
 
+  // Query params for year selection
+  queryParams = ['year'];
+  @tracked year = new Date().getFullYear();
+
+  // Year-aware computed properties
+  get configYear() {
+    return this.model?.configYear || this.year;
+  }
+
+  get isYearLocked() {
+    return this.model?.isYearLocked || false;
+  }
+
+  get availableYears() {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear + 2; y >= currentYear - 5; y--) {
+      years.push(y);
+    }
+    return years;
+  }
+
+  @action
+  changeYear(event) {
+    const newYear = parseInt(event.target.value, 10);
+    this.year = newYear;
+  }
+
   // Feature code tracking
   @tracked isAddingFeatureCode = false;
   @tracked isEditingFeatureCode = false;

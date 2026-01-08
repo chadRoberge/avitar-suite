@@ -1,5 +1,7 @@
 {{!-- Property Record Card Component --}}
-<div class="property-record-card-page property-record-card-page--{{@cardNumber}}">
+{{!-- STRUCTURE: Each card outputs 2 separate page containers for reliable printing --}}
+{{!-- Page 1 of Card --}}
+<div class="property-record-page property-record-page--card-{{@cardNumber}}-page-1">
   <div class="property-record-card__header">
     <div class="avitar-flex avitar-flex-row avitar-flex-20">
       <div class="avitar-flex-2">
@@ -623,9 +625,11 @@
       </div>
     </div>
   </div>
-  {{!-- Page Break --}}
-  <div style="page-break-before: always;"></div>
-  {{!-- Page 2 Content --}}
+</div>
+{{!-- End of Page 1 --}}
+
+{{!-- Page 2 of Card --}}
+<div class="property-record-page property-record-page--card-{{@cardNumber}}-page-2">
   {{!-- Page 2 Header --}}
   <div class="property-record-card__header">
     <div class="avitar-flex avitar-flex-row avitar-flex-20">
@@ -693,65 +697,65 @@
         {{!-- Building Details Breakdown Table --}}
         <div class="avitar-pl-1 avitar-pr-1">
           {{!-- Model Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Model:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-medium">
-              {{@buildingAssessment.assessment.story_height}} {{@buildingAssessment.assessment.building_model}}
+              {{or @buildingAssessment.assessment.story_height.displayText @buildingAssessment.assessment.story_height}} {{@buildingAssessment.assessment.building_model}}
             </div>
           </div>
           {{!-- Roof Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Roof:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.roof_style}} {{@buildingAssessment.assessment.roof_cover}}
+              {{or @buildingAssessment.assessment.roof_style.displayText @buildingAssessment.assessment.roof_style}} {{or @buildingAssessment.assessment.roof_cover.displayText @buildingAssessment.assessment.roof_cover}}
             </div>
           </div>
           {{!-- Exterior Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Ext:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.exterior_wall_1}} /
-              {{@buildingAssessment.assessment.exterior_wall_2}}
+              {{or @buildingAssessment.assessment.exterior_wall_1.displayText @buildingAssessment.assessment.exterior_wall_1}} /
+              {{or @buildingAssessment.assessment.exterior_wall_2.displayText @buildingAssessment.assessment.exterior_wall_2}}
             </div>
           </div>
           {{!-- Interior Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Int:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.interior_wall_1}} /
-              {{@buildingAssessment.assessment.interior_wall_2}}
+              {{or @buildingAssessment.assessment.interior_wall_1.displayText @buildingAssessment.assessment.interior_wall_1}} /
+              {{or @buildingAssessment.assessment.interior_wall_2.displayText @buildingAssessment.assessment.interior_wall_2}}
             </div>
           </div>
           {{!-- Floor Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Floor:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.flooring_1}} /
-              {{@buildingAssessment.assessment.flooring_2}}
+              {{or @buildingAssessment.assessment.flooring_1.displayText @buildingAssessment.assessment.flooring_1}} /
+              {{or @buildingAssessment.assessment.flooring_2.displayText @buildingAssessment.assessment.flooring_2}}
             </div>
           </div>
           {{!-- Heating Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Heat:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.heating_fuel}} /
-              {{@buildingAssessment.assessment.heating_type}}
+              {{or @buildingAssessment.assessment.heating_fuel.displayText @buildingAssessment.assessment.heating_fuel}} /
+              {{or @buildingAssessment.assessment.heating_type.displayText @buildingAssessment.assessment.heating_type}}
             </div>
           </div>
           {{!-- Bedrooms & Bathrooms Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-1 avitar-text-right avitar-font-bold avitar-text-success">
               Bedrms:
             </div>
@@ -784,7 +788,7 @@
             </div>
           </div>
           {{!-- Extra Kitchen & Solar Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex avitar-flex-1 avitar-flex-row">
               <div class="avitar-flex-1"></div>
               <div class="avitar-flex avitar-flex-5 avitar-flex-row">
@@ -804,20 +808,20 @@
             </div>
           </div>
           {{!-- AC & Generator/Battery Storage --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex avitar-flex-1 avitar-flex-row">
               <div class="avitar-flex-4 avitar-text-right avitar-font-bold avitar-text-success">
                 A/C:
               </div>
               <div class="avitar-flex-1 avitar-pl-1 avitar-font-bold avitar-text-success">
-                {{or @buildingAssessment.assessment.air_conditioning "No"}}
+                {{or @buildingAssessment.assessment.air_conditioning.displayText @buildingAssessment.assessment.air_conditioning "No"}}
               </div>
               <div class="avitar-flex avitar-flex-9 avitar-flex-row">
                 <div class="avitar-flex-7 avitar-text-right avitar-font-bold avitar-text-success">
                   Generator:
                 </div>
                 <div class="avitar-flex-2 avitar-pl-1 avitar-font-bold avitar-text-success">
-                  {{or @buildingAssessment.assessment.generator "No"}}
+                  {{or @buildingAssessment.assessment.generator.displayText @buildingAssessment.assessment.generator "No"}}
                 </div>
               </div>
               <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
@@ -829,12 +833,12 @@
             </div>
           </div>
           {{!-- Quality Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Quality:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.quality_grade}}
+              {{or @buildingAssessment.assessment.quality_grade.displayText @buildingAssessment.assessment.quality_grade}}
             </div>
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               
@@ -844,22 +848,22 @@
             </div>
           </div>
           {{!-- Commercial Wall Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Frame Type:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.frame}}
+              {{or @buildingAssessment.assessment.frame.displayText @buildingAssessment.assessment.frame}}
             </div>
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Ceiling Ht:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.ceiling_height}}
+              {{or @buildingAssessment.assessment.ceiling_height.displayText @buildingAssessment.assessment.ceiling_height}}
             </div>
           </div>
           {{!-- Size Adj & Base Rate Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
               Size Adj:
             </div>
@@ -870,11 +874,11 @@
               Base Rate:
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
-              {{@buildingAssessment.assessment.base_type}} - ${{number-format @buildingAssessment.assessment.base_rate}}
+              {{or @buildingAssessment.assessment.base_type.code @buildingAssessment.assessment.base_type}} - ${{number-format @buildingAssessment.assessment.base_rate}}
             </div>
           </div>
           {{!-- Adjusted Base Rate Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-5 avitar-text-right avitar-font-bold avitar-text-success">
             </div>
             <div class="avitar-flex-5 avitar-pl-1 avitar-font-bold avitar-text-success">
@@ -998,7 +1002,7 @@
         {{!-- Base Year Building Value Depreciation Breakdown Table --}}
         <div class="avitar-pl-1 avitar-pr-1">
           {{!-- Market Cost New Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
               Market Cost New:
             </div>
@@ -1009,7 +1013,7 @@
             </div>
           </div>
           {{!-- Year Built Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-font-bold avitar-text-success">
               Year Built:
             </div>
@@ -1020,7 +1024,7 @@
             </div>
           </div>
           {{!-- Condition For Age Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
               Condition for Age:
             </div>
@@ -1032,7 +1036,7 @@
             </div>
           </div>
           {{!-- Physical Depreciation Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
               Physical:
             </div>
@@ -1044,7 +1048,7 @@
             </div>
           </div>
           {{!-- Functional Depreciation Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
               Functional:
             </div>
@@ -1056,7 +1060,7 @@
             </div>
           </div>
           {{!-- Economic Depreciation Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
               Economic:
             </div>
@@ -1068,7 +1072,7 @@
             </div>
           </div>
           {{!-- Temporary Depreciation Row --}}
-          <div class="avitar-flex avitar-items-center avitar-py-1 avitar-border-b avitar-border-gray-200 avitar-text-xs">
+          <div class="avitar-flex avitar-items-center avitar-text-xs">
             <div class="avitar-flex-2 avitar-text-right avitar-text-muted">
               Temporary:
             </div>

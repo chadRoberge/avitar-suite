@@ -61,10 +61,16 @@ export default class HybridApiService extends Service.extend(Evented) {
   async checkCacheVersion() {
     try {
       const stored = await this.indexedDb.getMetadata('cache_version');
+      console.log(
+        '🔍 [HybridAPI] Cache version check - stored:',
+        stored,
+        'expected:',
+        this.CACHE_VERSION,
+      );
 
-      if (!stored || stored.value !== this.CACHE_VERSION) {
+      if (!stored || stored !== this.CACHE_VERSION) {
         console.warn(
-          `🔄 Cache version mismatch (stored: ${stored?.value || 'none'}, expected: ${this.CACHE_VERSION})`,
+          `🔄 Cache version mismatch (stored: ${stored || 'none'}, expected: ${this.CACHE_VERSION})`,
         );
         console.warn(
           'Clearing all cached data to prevent stale data issues...',
@@ -138,6 +144,42 @@ export default class HybridApiService extends Service.extend(Evented) {
 
   // === INTELLIGENT ROUTING METHODS ===
 
+  /**
+   * Wait for IndexedDB to be ready (with timeout)
+   * @param {number} timeout - Max time to wait in ms (default 5000)
+   * @returns {Promise<boolean>} - True if ready, false if timed out
+   */
+  async waitForIndexedDb(timeout = 5000) {
+    if (this.indexedDb.isReady) {
+      return true;
+    }
+
+    const startTime = Date.now();
+    const checkInterval = 50; // Check every 50ms
+
+    return new Promise((resolve) => {
+      const check = () => {
+        if (this.indexedDb.isReady) {
+          console.log(`✅ IndexedDB ready after ${Date.now() - startTime}ms`);
+          resolve(true);
+          return;
+        }
+
+        if (Date.now() - startTime >= timeout) {
+          console.warn(
+            `⚠️ IndexedDB not ready after ${timeout}ms, proceeding with network`,
+          );
+          resolve(false);
+          return;
+        }
+
+        setTimeout(check, checkInterval);
+      };
+
+      check();
+    });
+  }
+
   async get(endpoint, options = {}) {
     const {
       useCache = true,
@@ -145,6 +187,19 @@ export default class HybridApiService extends Service.extend(Evented) {
       forceRefresh = false,
       collection = this.getCollectionFromEndpoint(endpoint),
     } = options;
+
+    // DEBUG: Trace who's calling the properties collection endpoint
+    if (
+      endpoint.includes('/properties') &&
+      !endpoint.includes('/properties/') &&
+      collection === 'properties'
+    ) {
+      console.log(
+        '🔍 [HybridAPI] Properties collection GET detected:',
+        endpoint,
+      );
+      console.log('🔍 [HybridAPI] Call stack:', new Error().stack);
+    }
 
     // If collection is null, this endpoint should not be cached - always fetch from network
     if (collection === null) {
@@ -181,10 +236,17 @@ export default class HybridApiService extends Service.extend(Evented) {
       );
     }
 
-    // If IndexedDB is not ready yet and we're online, use network-first to avoid errors
-    if (!this.indexedDb.isReady && this.isOnline) {
-      strategy = 'network-first';
-      console.log(`⏳ IndexedDB not ready yet - using network-first strategy`);
+    // Wait for IndexedDB to be ready before proceeding (short timeout)
+    // This prevents unnecessary network requests when IndexedDB is about to be ready
+    if (!this.indexedDb.isReady) {
+      console.log(`⏳ IndexedDB not ready yet - waiting...`);
+      const isReady = await this.waitForIndexedDb(3000);
+      if (!isReady && this.isOnline) {
+        strategy = 'network-first';
+        console.log(
+          `⏳ IndexedDB still not ready after waiting - using network-first`,
+        );
+      }
     }
 
     console.log(
@@ -1172,25 +1234,15 @@ export default class HybridApiService extends Service.extend(Evented) {
   }
 
   async cacheItem(collection, item) {
-    // Debug logging for properties collection to track what's being cached
-    if (collection === 'properties') {
-      console.log('🗄️ Caching item to properties collection:', {
-        id: item.id,
-        idType: typeof item.id,
-        mapNumber: item.mapNumber,
-        lotSubDisplay: item.lotSubDisplay,
-        pid_formatted: item.pid_formatted,
-        hasPropertyField: !!item.property,
-        allKeys: Object.keys(item).slice(0, 10), // First 10 keys
-      });
-
-      // Warn if this looks like a wrapped response object
-      if (item.success !== undefined || item.property !== undefined) {
-        console.error(
-          '⚠️ WARNING: Attempting to cache a wrapped response object to properties!',
-          item,
-        );
-      }
+    // Warn if this looks like a wrapped response object (for properties)
+    if (
+      collection === 'properties' &&
+      (item.success !== undefined || item.property !== undefined)
+    ) {
+      console.error(
+        '⚠️ WARNING: Attempting to cache a wrapped response object to properties!',
+        item,
+      );
     }
 
     await this.indexedDb.put(collection, {

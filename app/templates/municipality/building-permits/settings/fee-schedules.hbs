@@ -1,0 +1,567 @@
+{{page-title "Fee Schedules"}}
+
+<div class="avitar-container avitar-py-6">
+  {{! Header }}
+  <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-6">
+    <div>
+      <h1 class="avitar-text-2xl avitar-font-bold">Fee Schedule Management</h1>
+      <p class="avitar-text-muted">Manage versioned fee schedules for each permit type</p>
+    </div>
+  </div>
+
+  <div class="avitar-grid avitar-grid-cols-12 avitar-gap-6">
+    {{! Left Panel - Permit Type Selector }}
+    <div class="avitar-col-span-4">
+      <div class="avitar-card">
+        <div class="avitar-card__header">
+          <h3 class="avitar-card__title">Permit Types</h3>
+        </div>
+        <div class="avitar-card__body avitar-p-0">
+          {{#if this.permitTypes.length}}
+            <div class="avitar-divide-y">
+              {{#each this.permitTypes as |permitType|}}
+                <button
+                  type="button"
+                  class="avitar-w-full avitar-text-left avitar-p-4 avitar-flex avitar-items-center avitar-justify-between hover:avitar-bg-gray-50 {{if (eq this.selectedPermitType._id permitType._id) 'avitar-bg-primary-light'}}"
+                  {{on "click" (fn this.selectPermitType permitType)}}
+                >
+                  <div>
+                    <div class="avitar-font-medium">{{permitType.name}}</div>
+                    <div class="avitar-text-sm avitar-text-muted">
+                      {{#each permitType.categories as |cat|}}
+                        <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-mr-1">{{cat}}</span>
+                      {{/each}}
+                    </div>
+                  </div>
+                  {{lnr-icon "chevron-right" class="avitar-text-muted"}}
+                </button>
+              {{/each}}
+            </div>
+          {{else}}
+            <div class="avitar-empty-state avitar-py-8">
+              {{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
+              <h3 class="avitar-text-lg avitar-font-semibold">No Permit Types</h3>
+              <p class="avitar-text-muted">Create permit types first to manage fee schedules.</p>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{! Right Panel - Fee Schedules }}
+    <div class="avitar-col-span-8">
+      {{#if this.selectedPermitType}}
+        <div class="avitar-card">
+          <div class="avitar-card__header avitar-flex avitar-justify-between avitar-items-center">
+            <div>
+              <h3 class="avitar-card__title">{{this.selectedPermitType.name}} - Fee Schedules</h3>
+              <p class="avitar-text-sm avitar-text-muted">Manage fee schedule versions for this permit type</p>
+            </div>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.openCreateModal}}
+            >
+              {{lnr-icon "plus-circle" class="avitar-mr-2"}}
+              New Version
+            </button>
+          </div>
+
+          <div class="avitar-card__body">
+            {{#if this.isLoadingSchedules}}
+              <div class="avitar-flex avitar-justify-center avitar-py-8">
+                {{lnr-icon "sync" class="avitar-text-2xl avitar-text-muted avitar-spin"}}
+              </div>
+            {{else if this.feeSchedules.length}}
+              {{! Active Schedule }}
+              {{#if this.activeSchedule}}
+                <div class="avitar-mb-6">
+                  <h4 class="avitar-font-semibold avitar-mb-3 avitar-flex avitar-items-center">
+                    {{lnr-icon "checkmark-circle" class="avitar-text-success avitar-mr-2"}}
+                    Active Schedule
+                  </h4>
+                  <div class="avitar-border avitar-border-success avitar-rounded avitar-p-4 avitar-bg-success-light">
+                    <div class="avitar-flex avitar-justify-between avitar-items-start">
+                      <div>
+                        <div class="avitar-font-semibold">{{this.activeSchedule.name}}</div>
+                        <div class="avitar-text-sm avitar-text-muted avitar-mt-1">
+                          Version {{this.activeSchedule.version}} - Effective {{this.formatDate this.activeSchedule.effectiveDate}}
+                        </div>
+                        <div class="avitar-mt-2">
+                          <span class="avitar-font-medium">Base Fee:</span>
+                          {{this.formatCurrency this.activeSchedule.feeConfiguration.baseAmount}}
+                          <span class="avitar-text-muted avitar-ml-2">
+                            ({{this.activeSchedule.feeConfiguration.calculationType}})
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                        {{on "click" (fn this.viewScheduleDetails this.activeSchedule)}}
+                      >
+                        {{lnr-icon "eye" class="avitar-mr-1"}}
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+
+              {{! Scheduled Schedules }}
+              {{#if this.scheduledSchedules.length}}
+                <div class="avitar-mb-6">
+                  <h4 class="avitar-font-semibold avitar-mb-3 avitar-flex avitar-items-center">
+                    {{lnr-icon "calendar-full" class="avitar-text-warning avitar-mr-2"}}
+                    Scheduled ({{this.scheduledSchedules.length}})
+                  </h4>
+                  <div class="avitar-space-y-2">
+                    {{#each this.scheduledSchedules as |schedule|}}
+                      <div class="avitar-border avitar-border-warning avitar-rounded avitar-p-3 avitar-bg-warning-light">
+                        <div class="avitar-flex avitar-justify-between avitar-items-center">
+                          <div>
+                            <span class="avitar-font-medium">{{schedule.name}}</span>
+                            <span class="avitar-text-sm avitar-text-muted avitar-ml-2">
+                              v{{schedule.version}} - Activates {{this.formatDate schedule.effectiveDate}}
+                            </span>
+                          </div>
+                          <div class="avitar-flex avitar-gap-2">
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                              title="View Details"
+                              {{on "click" (fn this.viewScheduleDetails schedule)}}
+                            >
+                              {{lnr-icon "eye"}}
+                            </button>
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-danger"
+                              title="Cancel Scheduled Activation"
+                              {{on "click" (fn this.cancelScheduledActivation schedule)}}
+                            >
+                              {{lnr-icon "cross"}}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+
+              {{! Draft Schedules }}
+              {{#if this.draftSchedules.length}}
+                <div class="avitar-mb-6">
+                  <h4 class="avitar-font-semibold avitar-mb-3 avitar-flex avitar-items-center">
+                    {{lnr-icon "pencil" class="avitar-text-muted avitar-mr-2"}}
+                    Drafts ({{this.draftSchedules.length}})
+                  </h4>
+                  <div class="avitar-space-y-2">
+                    {{#each this.draftSchedules as |schedule|}}
+                      <div class="avitar-border avitar-rounded avitar-p-3">
+                        <div class="avitar-flex avitar-justify-between avitar-items-center">
+                          <div>
+                            <span class="avitar-font-medium">{{schedule.name}}</span>
+                            <span class="avitar-text-sm avitar-text-muted avitar-ml-2">
+                              v{{schedule.version}} - Base: {{this.formatCurrency schedule.feeConfiguration.baseAmount}}
+                            </span>
+                          </div>
+                          <div class="avitar-flex avitar-gap-2">
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                              title="Edit"
+                              {{on "click" (fn this.openEditModal schedule)}}
+                            >
+                              {{lnr-icon "pencil"}}
+                            </button>
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--success avitar-btn--sm"
+                              title="Activate Now"
+                              {{on "click" (fn this.activateSchedule schedule)}}
+                            >
+                              {{lnr-icon "checkmark-circle" class="avitar-mr-1"}}
+                              Activate
+                            </button>
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--warning avitar-btn--sm"
+                              title="Schedule Activation"
+                              {{on "click" (fn this.scheduleActivation schedule)}}
+                            >
+                              {{lnr-icon "calendar-full"}}
+                            </button>
+                            <button
+                              type="button"
+                              class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-danger"
+                              title="Delete"
+                              {{on "click" (fn this.deleteSchedule schedule)}}
+                            >
+                              {{lnr-icon "trash"}}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+
+              {{! Archived Schedules }}
+              {{#if this.archivedSchedules.length}}
+                <div>
+                  <h4 class="avitar-font-semibold avitar-mb-3 avitar-flex avitar-items-center">
+                    {{lnr-icon "history" class="avitar-text-muted avitar-mr-2"}}
+                    History ({{this.archivedSchedules.length}})
+                  </h4>
+                  <div class="avitar-space-y-2">
+                    {{#each this.archivedSchedules as |schedule|}}
+                      <div class="avitar-border avitar-rounded avitar-p-3 avitar-bg-gray-50">
+                        <div class="avitar-flex avitar-justify-between avitar-items-center">
+                          <div>
+                            <span class="avitar-font-medium avitar-text-muted">{{schedule.name}}</span>
+                            <span class="avitar-text-sm avitar-text-muted avitar-ml-2">
+                              v{{schedule.version}} - {{this.formatDate schedule.effectiveDate}} to {{this.formatDate schedule.endDate}}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                            title="View Details"
+                            {{on "click" (fn this.viewScheduleDetails schedule)}}
+                          >
+                            {{lnr-icon "eye"}}
+                          </button>
+                        </div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+            {{else}}
+              <div class="avitar-empty-state avitar-py-8">
+                {{lnr-icon "layers" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
+                <h3 class="avitar-text-lg avitar-font-semibold">No Fee Schedules</h3>
+                <p class="avitar-text-muted avitar-mb-4">Create the first fee schedule version for this permit type.</p>
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary"
+                  {{on "click" this.openCreateModal}}
+                >
+                  {{lnr-icon "plus-circle" class="avitar-mr-2"}}
+                  Create First Version
+                </button>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+      {{else}}
+        <div class="avitar-card">
+          <div class="avitar-card__body">
+            <div class="avitar-empty-state avitar-py-12">
+              {{lnr-icon "hand" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}
+              <h3 class="avitar-text-lg avitar-font-semibold">Select a Permit Type</h3>
+              <p class="avitar-text-muted">Choose a permit type from the left panel to manage its fee schedules.</p>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+</div>
+
+{{! Fee Schedule Modal }}
+{{#if this.isModalOpen}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeModal}}>
+    <div class="avitar-modal avitar-modal--lg" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{lnr-icon "layers" class="avitar-mr-2"}}
+          {{#if this.isEditMode}}
+            Edit Fee Schedule
+          {{else}}
+            Create Fee Schedule Version
+          {{/if}}
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeModal}}>
+          {{lnr-icon "cross"}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        <div class="avitar-space-y-4">
+          {{! Basic Info }}
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+            <div>
+              <label class="avitar-label">Version Name</label>
+              <input
+                type="text"
+                class="avitar-input"
+                value={{this.formData.name}}
+                {{on "input" (fn this.updateFormField "name")}}
+                disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+              />
+            </div>
+            <div>
+              <label class="avitar-label">Effective Date</label>
+              <input
+                type="date"
+                class="avitar-input"
+                value={{this.formData.effectiveDate}}
+                {{on "input" (fn this.updateFormField "effectiveDate")}}
+                disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+              />
+            </div>
+          </div>
+
+          {{! Change Reason }}
+          <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+            <div>
+              <label class="avitar-label">Change Reason</label>
+              <select
+                class="avitar-select"
+                {{on "change" (fn this.updateFormField "changeReason")}}
+                disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+              >
+                {{#each this.changeReasonOptions as |reasonOption|}}
+                  <option value={{reasonOption.value}} selected={{eq this.formData.changeReason reasonOption.value}}>
+                    {{reasonOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+            <div>
+              <label class="avitar-label">Calculation Type</label>
+              <select
+                class="avitar-select"
+                {{on "change" (fn this.updateFeeConfigField "calculationType")}}
+                disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+              >
+                {{#each this.calculationTypeOptions as |calcOption|}}
+                  <option value={{calcOption.value}} selected={{eq this.formData.feeConfiguration.calculationType calcOption.value}}>
+                    {{calcOption.label}}
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+          </div>
+
+          {{! Fee Configuration }}
+          <div class="avitar-border avitar-rounded avitar-p-4">
+            <h4 class="avitar-font-semibold avitar-mb-3">Fee Configuration</h4>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4">
+              <div>
+                <label class="avitar-label">Base Amount ($)</label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  step="0.01"
+                  min="0"
+                  value={{this.formData.feeConfiguration.baseAmount}}
+                  {{on "input" (fn this.updateFeeConfigField "baseAmount")}}
+                  disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                />
+              </div>
+
+              {{#if (eq this.formData.feeConfiguration.calculationType "per_sqft")}}
+                <div>
+                  <label class="avitar-label">Per Sq Ft Rate ($)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    step="0.01"
+                    min="0"
+                    value={{this.formData.feeConfiguration.perSqftRate}}
+                    {{on "input" (fn this.updateFeeConfigField "perSqftRate")}}
+                    disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                  />
+                </div>
+              {{/if}}
+
+              {{#if (eq this.formData.feeConfiguration.calculationType "percentage")}}
+                <div>
+                  <label class="avitar-label">Percentage Rate (%)</label>
+                  <input
+                    type="number"
+                    class="avitar-input"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={{this.formData.feeConfiguration.percentageRate}}
+                    {{on "input" (fn this.updateFeeConfigField "percentageRate")}}
+                    disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                  />
+                </div>
+              {{/if}}
+            </div>
+
+            <div class="avitar-grid avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
+              <div>
+                <label class="avitar-label">Minimum Fee ($)</label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  step="0.01"
+                  min="0"
+                  value={{this.formData.feeConfiguration.minimumFee}}
+                  {{on "input" (fn this.updateFeeConfigField "minimumFee")}}
+                  disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                />
+              </div>
+              <div>
+                <label class="avitar-label">Maximum Fee ($) <span class="avitar-text-muted">(optional)</span></label>
+                <input
+                  type="number"
+                  class="avitar-input"
+                  step="0.01"
+                  min="0"
+                  value={{this.formData.feeConfiguration.maximumFee}}
+                  {{on "input" (fn this.updateFeeConfigField "maximumFee")}}
+                  placeholder="No limit"
+                  disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                />
+              </div>
+            </div>
+          </div>
+
+          {{! Additional Fees }}
+          <div class="avitar-border avitar-rounded avitar-p-4">
+            <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-3">
+              <h4 class="avitar-font-semibold">Additional Fees</h4>
+              {{#if (or (not this.selectedSchedule) (eq this.selectedSchedule.status "draft"))}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--ghost avitar-btn--sm"
+                  {{on "click" this.addAdditionalFee}}
+                >
+                  {{lnr-icon "plus-circle" class="avitar-mr-1"}}
+                  Add Fee
+                </button>
+              {{/if}}
+            </div>
+
+            {{#if this.formData.feeConfiguration.additionalFees.length}}
+              <div class="avitar-space-y-3">
+                {{#each this.formData.feeConfiguration.additionalFees as |fee index|}}
+                  <div class="avitar-border avitar-rounded avitar-p-3 avitar-bg-gray-50">
+                    <div class="avitar-grid avitar-grid-cols-4 avitar-gap-3">
+                      <div>
+                        <label class="avitar-label avitar-text-xs">Name</label>
+                        <input
+                          type="text"
+                          class="avitar-input avitar-input--sm"
+                          value={{fee.name}}
+                          {{on "input" (fn this.updateAdditionalFee index "name")}}
+                          disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                        />
+                      </div>
+                      <div>
+                        <label class="avitar-label avitar-text-xs">Type</label>
+                        <select
+                          class="avitar-select avitar-select--sm"
+                          {{on "change" (fn this.updateAdditionalFee index "type")}}
+                          disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                        >
+                          {{#each this.additionalFeeTypeOptions as |typeOption|}}
+                            <option value={{typeOption.value}} selected={{eq fee.type typeOption.value}}>
+                              {{typeOption.label}}
+                            </option>
+                          {{/each}}
+                        </select>
+                      </div>
+                      <div>
+                        <label class="avitar-label avitar-text-xs">Amount ($)</label>
+                        <input
+                          type="number"
+                          class="avitar-input avitar-input--sm"
+                          step="0.01"
+                          min="0"
+                          value={{fee.amount}}
+                          {{on "input" (fn this.updateAdditionalFee index "amount")}}
+                          disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                        />
+                      </div>
+                      <div class="avitar-flex avitar-items-end avitar-gap-2">
+                        <label class="avitar-flex avitar-items-center avitar-gap-1 avitar-text-sm">
+                          <input
+                            type="checkbox"
+                            class="avitar-checkbox"
+                            checked={{fee.isOptional}}
+                            {{on "change" (fn this.updateAdditionalFee index "isOptional")}}
+                            disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+                          />
+                          Optional
+                        </label>
+                        {{#if (or (not this.selectedSchedule) (eq this.selectedSchedule.status "draft"))}}
+                          <button
+                            type="button"
+                            class="avitar-btn avitar-btn--ghost avitar-btn--sm avitar-text-danger"
+                            {{on "click" (fn this.removeAdditionalFee index)}}
+                          >
+                            {{lnr-icon "trash"}}
+                          </button>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            {{else}}
+              <p class="avitar-text-sm avitar-text-muted">No additional fees configured.</p>
+            {{/if}}
+          </div>
+
+          {{! Change Notes }}
+          <div>
+            <label class="avitar-label">Change Notes</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              placeholder="Describe the changes in this version..."
+              value={{this.formData.changeNotes}}
+              {{on "input" (fn this.updateFormField "changeNotes")}}
+              disabled={{if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft")) true}}
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeModal}}
+        >
+          {{#if (and this.selectedSchedule (not-eq this.selectedSchedule.status "draft"))}}
+            Close
+          {{else}}
+            Cancel
+          {{/if}}
+        </button>
+        {{#if (or (not this.selectedSchedule) (eq this.selectedSchedule.status "draft"))}}
+          <button
+            type="button"
+            class="avitar-btn avitar-btn--primary"
+            {{on "click" this.saveSchedule}}
+            disabled={{this.isSaving}}
+          >
+            {{#if this.isSaving}}
+              {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
+              Saving...
+            {{else}}
+              {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
+              {{#if this.isEditMode}}
+                Update Schedule
+              {{else}}
+                Create Schedule
+              {{/if}}
+            {{/if}}
+          </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+{{/if}}

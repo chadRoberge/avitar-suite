@@ -7,6 +7,11 @@ export default class LandDetailsController extends Controller {
   @service api;
   @service assessing;
   @service loading;
+  @service router;
+
+  // Query params for year selection
+  queryParams = ['year'];
+  @tracked year = new Date().getFullYear();
 
   @tracked isZoneModalOpen = false;
   @tracked editingZone = null;
@@ -18,6 +23,31 @@ export default class LandDetailsController extends Controller {
   @tracked editingTierZone = null;
   @tracked tierUpdateCounter = 0; // Simple counter to force reactivity
   @tracked zoneUpdateCounter = 0; // Simple counter to force zone reactivity
+
+  // Year-aware computed properties
+  get configYear() {
+    return this.model?.configYear || this.year;
+  }
+
+  get isYearLocked() {
+    return this.model?.isYearLocked || false;
+  }
+
+  get availableYears() {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear + 2; y >= currentYear - 5; y--) {
+      years.push(y);
+    }
+    return years;
+  }
+
+  @action
+  changeYear(event) {
+    const newYear = parseInt(event.target.value, 10);
+    this.year = newYear;
+    // Router will refresh model due to queryParams config
+  }
 
   // Computed property to ensure zone data is reactive
   get reactiveZones() {
@@ -160,6 +190,14 @@ export default class LandDetailsController extends Controller {
 
   @action
   async saveLadder(ladderData) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const { zoneId, tiers } = ladderData;
@@ -183,6 +221,7 @@ export default class LandDetailsController extends Controller {
               {
                 acreage: formTier.acreage,
                 value: formTier.value,
+                effective_year: this.configYear,
               },
             );
             savedTiers.push(response.tier);
@@ -205,6 +244,7 @@ export default class LandDetailsController extends Controller {
               {
                 acreage: formTier.acreage,
                 value: formTier.value,
+                effective_year: this.configYear,
               },
             );
             savedTiers.push(response.tier);
@@ -278,6 +318,14 @@ export default class LandDetailsController extends Controller {
 
   @action
   async saveTier(tierData) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const zoneId = this.editingTierZone.id;
@@ -285,12 +333,18 @@ export default class LandDetailsController extends Controller {
       console.log('Saving tier:', tierData);
       console.log('Zone ID:', zoneId);
 
+      // Add effective_year to tier data
+      const tierDataWithYear = {
+        ...tierData,
+        effective_year: this.configYear,
+      };
+
       let savedTier;
       if (tierData.id) {
         // Update existing tier
         const response = await this.api.put(
           `/municipalities/${municipalityId}/zones/${zoneId}/land-ladder/${tierData.id}`,
-          tierData,
+          tierDataWithYear,
         );
         console.log('Update response:', response);
         savedTier = response.tier;
@@ -298,7 +352,7 @@ export default class LandDetailsController extends Controller {
         // Create new tier
         const response = await this.api.post(
           `/municipalities/${municipalityId}/zones/${zoneId}/land-ladder`,
-          tierData,
+          tierDataWithYear,
         );
         console.log('Create response:', response);
         savedTier = response.tier;
@@ -369,6 +423,14 @@ export default class LandDetailsController extends Controller {
 
   @action
   async deleteTier(zone, tier) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this tier?')) {
       try {
         const municipalityId = this.model.municipality.id;

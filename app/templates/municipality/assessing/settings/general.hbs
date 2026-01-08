@@ -5,6 +5,129 @@
     <div class="avitar-page-subtitle">Configure general assessing parameters</div>
   </div>
 
+  {{!-- Assessment Years Management Section --}}
+  <div class="avitar-card avitar-mb-6">
+    <div class="avitar-card__header">
+      <h3 class="avitar-card__title">{{{lnr-icon "calendar-full" class="avitar-mr-2"}}}Assessment Years</h3>
+      <div class="avitar-card__subtitle">Manage assessment years and visibility</div>
+    </div>
+
+    <div class="avitar-card__body">
+      {{#if this.isLoadingYears}}
+        <div class="avitar-flex avitar-items-center avitar-justify-center avitar-py-8">
+          {{{lnr-icon "sync" class="avitar-spin avitar-text-2xl avitar-text-muted"}}}
+          <span class="avitar-ml-2 avitar-text-muted">Loading years...</span>
+        </div>
+      {{else}}
+        {{!-- Create New Year Form --}}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-6">
+          <h4 class="avitar-font-semibold avitar-mb-3">{{{lnr-icon "plus-circle" class="avitar-mr-2"}}}Create New Assessment Year</h4>
+          <div class="avitar-flex avitar-gap-4 avitar-items-end">
+            <div class="avitar-form-group avitar-mb-0">
+              <label class="avitar-label">Copy From Year</label>
+              <select class="avitar-select" {{on "change" this.updateSourceYear}}>
+                {{#each this.yearManagementData.years as |yearInfo|}}
+                  <option value={{yearInfo.year}} selected={{eq yearInfo.year this.effectiveSourceYear}}>
+                    {{yearInfo.year}} ({{yearInfo.propertyCount}} properties)
+                  </option>
+                {{/each}}
+              </select>
+            </div>
+            <div class="avitar-form-group avitar-mb-0">
+              <label class="avitar-label">New Year</label>
+              <input
+                type="number"
+                class="avitar-input"
+                value={{this.effectiveTargetYear}}
+                min="2000"
+                max="2099"
+                {{on "input" this.updateTargetYear}}
+              >
+            </div>
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--primary"
+              {{on "click" this.createNewYear}}
+              disabled={{this.isCreatingYear}}
+            >
+              {{#if this.isCreatingYear}}
+                {{{lnr-icon "sync" class="avitar-spin avitar-mr-2"}}}
+                Creating...
+              {{else}}
+                {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+                Create Year
+              {{/if}}
+            </button>
+          </div>
+          <p class="avitar-text-sm avitar-text-muted avitar-mt-2">
+            New years are hidden by default so you can work on revaluations before publishing.
+          </p>
+        </div>
+
+        {{!-- Available Years Table --}}
+        <h4 class="avitar-font-semibold avitar-mb-3">Available Assessment Years</h4>
+        {{#if this.yearManagementData.years.length}}
+          <table class="avitar-table avitar-table--hover">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Properties</th>
+                <th>Visibility</th>
+                <th class="avitar-text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each this.yearManagementData.years as |yearInfo|}}
+                <tr>
+                  <td>
+                    <span class="avitar-font-semibold">{{yearInfo.year}}</span>
+                    {{#if (eq yearInfo.year this.yearManagementData.currentTaxYear)}}
+                      <span class="avitar-badge avitar-badge--primary avitar-badge--sm avitar-ml-2">Current</span>
+                    {{/if}}
+                  </td>
+                  <td>{{yearInfo.propertyCount}} properties</td>
+                  <td>
+                    {{#if yearInfo.isHidden}}
+                      <span class="avitar-badge avitar-badge--warning">
+                        {{{lnr-icon "lock" class="avitar-mr-1"}}}Hidden
+                      </span>
+                    {{else}}
+                      <span class="avitar-badge avitar-badge--success">
+                        {{{lnr-icon "eye" class="avitar-mr-1"}}}Public
+                      </span>
+                    {{/if}}
+                  </td>
+                  <td class="avitar-text-right">
+                    <button
+                      type="button"
+                      class="avitar-btn avitar-btn--sm {{if yearInfo.isHidden 'avitar-btn--success' 'avitar-btn--warning'}}"
+                      {{on "click" (fn this.toggleYearVisibility yearInfo.year (not yearInfo.isHidden))}}
+                      disabled={{this.isTogglingYear}}
+                    >
+                      {{#if yearInfo.isHidden}}
+                        {{{lnr-icon "eye" class="avitar-mr-1"}}}
+                        Show to Public
+                      {{else}}
+                        {{{lnr-icon "lock" class="avitar-mr-1"}}}
+                        Hide from Public
+                      {{/if}}
+                    </button>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        {{else}}
+          <div class="avitar-empty-state avitar-py-8">
+            {{{lnr-icon "calendar-full" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}}
+            <h3 class="avitar-text-lg avitar-font-semibold">No Assessment Years</h3>
+            <p class="avitar-text-muted">Create your first assessment year to get started.</p>
+          </div>
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+
   <div class="avitar-card">
     <div class="avitar-card__header">
       <h3 class="avitar-card__title">Assessment Configuration</h3>
@@ -132,7 +255,7 @@
 
         <div class="avitar-form-actions">
           <button type="submit" class="avitar-btn avitar-btn--primary">
-            <i class="fas fa-save avitar-mr-2"></i>
+            {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
             Save Settings
           </button>
           <button type="button" class="avitar-btn avitar-btn--secondary">

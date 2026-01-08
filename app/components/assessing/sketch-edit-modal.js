@@ -86,9 +86,9 @@ export default class SketchEditModalComponent extends Component {
           return;
         }
 
-        // Convert points to decimal rate (points are stored as percentages)
-        const rate = factor.points / 100;
-        console.log(`🧐 Calculated rate: ${rate}`);
+        // Use points directly as the multiplier (e.g., 0.5 = 50% of area, 1.0 = full area)
+        const rate = factor.points;
+        console.log(`🧐 Using rate directly: ${rate}`);
         console.log(
           `🧐 Setting map key: "${factor.displayText.toUpperCase()}"`,
         );

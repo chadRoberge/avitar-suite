@@ -62,6 +62,11 @@ export default class StripePaymentModalComponent extends Component {
 
       this.stripe = await loadStripe(stripeKey);
       console.log('Stripe initialized successfully');
+
+      // If modal is already open and waiting, initialize elements now
+      if (this.args.isOpen && !this.isInitialized) {
+        this.initializePaymentElements();
+      }
     } catch (error) {
       console.error('Failed to initialize Stripe:', error);
       this.errorMessage = 'Failed to load payment form';
@@ -70,13 +75,32 @@ export default class StripePaymentModalComponent extends Component {
 
   // Initialize payment elements when modal opens
   @action
-  initializePaymentElements() {
-    if (this.isInitialized || !this.stripe || !this.args.isOpen) return;
+  initializePaymentElements(retryCount = 0) {
+    if (this.isInitialized) return;
+
+    // If Stripe isn't ready yet, retry later
+    if (!this.stripe) {
+      console.log('Stripe not ready, will retry when loaded...');
+      return;
+    }
+
+    if (!this.args.isOpen) return;
 
     console.log('Initializing payment elements...');
 
     // Wait for DOM to be ready
     setTimeout(() => {
+      const cardContainer = document.getElementById('card-element');
+
+      // If DOM not ready yet, retry a few times
+      if (!cardContainer && retryCount < 5) {
+        console.log(
+          `Card element not found, retrying... (${retryCount + 1}/5)`,
+        );
+        setTimeout(() => this.initializePaymentElements(retryCount + 1), 200);
+        return;
+      }
+
       this.initializePaymentRequest();
       this.mountCardElement();
       this.isInitialized = true;
@@ -170,11 +194,23 @@ export default class StripePaymentModalComponent extends Component {
   }
 
   mountCardElement() {
-    if (!this.stripe || this.cardElement) return;
+    console.log('mountCardElement called', {
+      hasStripe: !!this.stripe,
+      hasCardElement: !!this.cardElement,
+    });
+
+    if (!this.stripe || this.cardElement) {
+      console.log('Skipping mount - stripe or cardElement already exists');
+      return;
+    }
 
     const cardElementContainer = document.getElementById('card-element');
-    if (!cardElementContainer) return;
+    if (!cardElementContainer) {
+      console.log('Card element container not found in DOM');
+      return;
+    }
 
+    console.log('Mounting Stripe card element...');
     const elements = this.stripe.elements();
     this.cardElement = elements.create('card', {
       style: {
@@ -195,6 +231,7 @@ export default class StripePaymentModalComponent extends Component {
     });
 
     this.cardElement.mount('#card-element');
+    console.log('Stripe card element mounted successfully');
 
     // Listen for errors
     this.cardElement.on('change', (event) => {

@@ -5,6 +5,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { requireModuleAccess } = require('../middleware/moduleAuth');
 
 // GET /api/municipalities/:municipalityId/exemption-types - Get all exemption types for municipality
+// Supports year parameter for year-aware queries (inheritance pattern)
 router.get(
   '/municipalities/:municipalityId/exemption-types',
   authenticateToken,
@@ -12,11 +13,45 @@ router.get(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
+      const requestedYear = parseInt(req.query.year) || new Date().getFullYear();
+
+      console.log(
+        `[ExemptionType] Finding types for municipality ${municipalityId}, year <= ${requestedYear}`,
+      );
+
+      // Find the most recent effective year <= requested year
+      const latestType = await ExemptionType.findOne({
+        municipality_id: municipalityId,
+        effective_year: { $lte: requestedYear },
+        is_active: true,
+      })
+        .sort({ effective_year: -1 })
+        .select('effective_year');
+
+      if (!latestType) {
+        console.log(
+          `[ExemptionType] No types found for year <= ${requestedYear}`,
+        );
+        return res.json({
+          exemptionTypes: [],
+          grouped: {},
+          year: requestedYear,
+          isYearLocked: false,
+        });
+      }
+
+      const effectiveYear = latestType.effective_year;
+      console.log(`[ExemptionType] Found latest year: ${effectiveYear}`);
 
       const exemptionTypes = await ExemptionType.find({
         municipality_id: municipalityId,
+        effective_year: effectiveYear,
         is_active: true,
       }).sort({ sort_order: 1, category: 1, subcategory: 1 });
+
+      console.log(
+        `[ExemptionType] Returning ${exemptionTypes.length} types`,
+      );
 
       // Group by category for easier frontend consumption
       const grouped = {};
@@ -30,6 +65,8 @@ router.get(
       res.json({
         exemptionTypes,
         grouped,
+        year: effectiveYear,
+        isYearLocked: effectiveYear < requestedYear, // Locked if viewing inherited year
       });
     } catch (error) {
       console.error('Error fetching exemption types:', error);
@@ -281,6 +318,7 @@ router.put(
 );
 
 // POST /api/municipalities/:municipalityId/exemption-types/initialize - Initialize base exemption types
+// Supports year parameter to set effective_year on created types
 router.post(
   '/municipalities/:municipalityId/exemption-types/initialize',
   authenticateToken,
@@ -288,6 +326,11 @@ router.post(
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
+      const effectiveYear = parseInt(req.query.year) || new Date().getFullYear();
+
+      console.log(
+        `[ExemptionType] Initializing types for municipality ${municipalityId}, year ${effectiveYear}`,
+      );
 
       // Define the base exemption types that should exist
       const baseExemptionTypes = [
@@ -413,6 +456,7 @@ router.post(
           const newExemptionType = new ExemptionType({
             ...exemptionTypeData,
             municipality_id: municipalityId,
+            effective_year: effectiveYear,
             is_active: true,
             created_by: req.user.id,
             updated_by: req.user.id,
@@ -423,6 +467,10 @@ router.post(
           existing++;
         }
       }
+
+      console.log(
+        `[ExemptionType] Initialized: ${created} created, ${existing} already existed`,
+      );
 
       res.json({
         success: true,
@@ -438,6 +486,7 @@ router.post(
 );
 
 // POST /api/municipalities/:municipalityId/exemption-types - Create a new exemption type
+// Supports year query parameter or effective_year in body
 router.post(
   '/municipalities/:municipalityId/exemption-types',
   authenticateToken,
@@ -446,11 +495,16 @@ router.post(
     try {
       const { municipalityId } = req.params;
       const exemptionTypeData = req.body;
+      const effectiveYear =
+        exemptionTypeData.effective_year ||
+        parseInt(req.query.year) ||
+        new Date().getFullYear();
 
       // Create new exemption type
       const newExemptionType = new ExemptionType({
         ...exemptionTypeData,
         municipality_id: municipalityId,
+        effective_year: effectiveYear,
         created_by: req.user.id,
         updated_by: req.user.id,
       });

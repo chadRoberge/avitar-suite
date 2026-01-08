@@ -1,0 +1,88 @@
+{{#if @isOpen}}
+  {{!-- Trigger getter to update form --}}
+  {{this.modalData}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" @onClose}}>
+    <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">{{if this.isEditing "Edit Sub Area Factor" "Add Sub Area Factor"}}</h2>
+        <button type="button" class="avitar-modal__close" {{on "click" @onClose}}>
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form {{on "submit" this.handleSubmit}} class="avitar-modal__body">
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sub-area-description">Description</label>
+            <input
+              id="sub-area-description"
+              type="text"
+              class="avitar-input"
+              value={{this.description}}
+              {{on "input" this.updateDescription}}
+              required
+              placeholder="e.g., Finished Basement"
+            />
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sub-area-display-text">Display Text (15 chars max)</label>
+            <input
+              id="sub-area-display-text"
+              type="text"
+              class="avitar-input"
+              value={{this.displayText}}
+              {{on "input" this.updateDisplayText}}
+              required
+              maxlength="15"
+              placeholder="e.g., FIN-BSMT"
+            />
+          </div>
+        </div>
+
+        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sub-area-points">Points</label>
+            <input
+              id="sub-area-points"
+              type="number"
+              step="0.01"
+              min="-1000"
+              max="1000"
+              class="avitar-input"
+              value={{this.points}}
+              {{on "input" this.updatePoints}}
+              required
+              placeholder="e.g., 0.75"
+            />
+            <small class="avitar-text-muted avitar-text-xs">Decimal values allowed (e.g., 0.75, 1.5)</small>
+          </div>
+
+          <div class="avitar-form-group">
+            <label class="avitar-label" for="sub-area-living-space">Living Space</label>
+            <select
+              id="sub-area-living-space"
+              class="avitar-select"
+              value={{this.livingSpace}}
+              {{on "change" this.updateLivingSpace}}
+              required
+            >
+              <option value="">Select living space...</option>
+              <option value="true" selected={{eq this.livingSpace "true"}}>Yes (Living Space)</option>
+              <option value="false" selected={{eq this.livingSpace "false"}}>No (Not Living Space)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="avitar-modal__footer avitar-mt-6">
+          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" @onClose}}>
+            Cancel
+          </button>
+          <button type="submit" class="avitar-btn avitar-btn--primary" disabled={{not this.isValid}}>
+            {{if this.isEditing "Update Factor" "Add Factor"}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{{/if}}

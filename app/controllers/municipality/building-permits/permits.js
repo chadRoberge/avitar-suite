@@ -5,6 +5,8 @@ import { inject as service } from '@ember/service';
 
 export default class MunicipalityBuildingPermitsPermitsController extends Controller {
   @service router;
+  @service api;
+  @service municipality;
   @service('current-user') currentUser;
 
   // Query params
@@ -14,46 +16,109 @@ export default class MunicipalityBuildingPermitsPermitsController extends Contro
   @tracked status = '';
   @tracked search = '';
   @tracked page = 1;
-  @tracked tab = 'all'; // 'all' or 'my'
+  @tracked tab = 'all'; // 'all', 'my', or 'review'
+
+  // Requires review state
+  @tracked requiresReviewPermits = [];
+  @tracked isLoadingReviewPermits = false;
+  @tracked userDepartment = null;
 
   // Check if user is residential (contractor or citizen)
   get isResidentialUser() {
     return this.currentUser.isContractorOrCitizen;
   }
 
-  // Get current user ID for filtering
+  // Get current user ID for filtering (as string for comparison)
   get currentUserId() {
-    return this.currentUser.user?._id;
+    const id = this.currentUser.user?._id;
+    return id ? String(id) : null;
   }
 
-  // Get contractor ID for filtering
+  // Get contractor ID for filtering (as string for comparison)
   get contractorId() {
-    return this.currentUser.user?.contractor_id;
+    const id = this.currentUser.user?.contractor_id;
+    return id ? String(id) : null;
+  }
+
+  // Helper to safely get ID as string
+  _toIdString(id) {
+    if (!id) return null;
+    // Handle populated objects with _id
+    if (typeof id === 'object' && id._id) {
+      return String(id._id);
+    }
+    return String(id);
+  }
+
+  // Helper to filter permits owned by the current user (for contractors/citizens)
+  _filterUserOwnedPermits(permits) {
+    const currentUserId = this.currentUserId;
+    const contractorId = this.contractorId;
+
+    return permits.filter((permit) => {
+      // Check all possible ownership fields
+      const submittedById = this._toIdString(permit.submitted_by);
+      const createdById = this._toIdString(permit.createdBy);
+      const permitContractorId = this._toIdString(permit.contractor_id);
+      const applicantId = this._toIdString(permit.applicantUserId);
+
+      // Match on any ownership field
+      if (submittedById === currentUserId) return true;
+      if (createdById === currentUserId) return true;
+      if (contractorId && permitContractorId === contractorId) return true;
+      if (applicantId === currentUserId) return true;
+
+      return false;
+    });
   }
 
   // Filter permits based on active tab
   get displayedPermits() {
+    if (this.tab === 'review') {
+      // Return the loaded requires review permits
+      return this.requiresReviewPermits;
+    }
+
     const permits = this.model.permits || [];
 
+    // "My Permits" tab - filter based on user type
     if (this.tab === 'my') {
-      // Filter to show only user's permits
+      // For residential users (contractors/citizens): show permits they own
+      if (this.isResidentialUser) {
+        return this._filterUserOwnedPermits(permits);
+      }
+
+      // For municipal staff: show permits assigned to them
+      const userDepartment =
+        this.currentUser.currentMunicipalPermissions?.department;
+
       return permits.filter((permit) => {
-        // Check if submitted by this user
-        if (permit.submitted_by?._id === this.currentUserId) {
+        // Check if assigned as inspector
+        const assignedInspectorId = this._toIdString(permit.assignedInspector);
+        if (assignedInspectorId === this.currentUserId) {
           return true;
         }
-        // Check if contractor matches (for contractor users)
-        if (this.contractorId && permit.contractor_id === this.contractorId) {
+        // Check if assigned as reviewer
+        const assignedReviewerId = this._toIdString(permit.assignedReviewer);
+        if (assignedReviewerId === this.currentUserId) {
           return true;
         }
-        // Check applicant user ID
-        if (permit.applicantUserId === this.currentUserId) {
-          return true;
+        // Check if user's department has a pending review
+        if (userDepartment && permit.departmentReviews?.length > 0) {
+          const hasPendingReview = permit.departmentReviews.some(
+            (r) =>
+              r.department === userDepartment &&
+              ['pending', 'in_review'].includes(r.status),
+          );
+          if (hasPendingReview) {
+            return true;
+          }
         }
         return false;
       });
     }
 
+    // "All" tab - show all permits for the municipality
     return permits;
   }
 
@@ -64,25 +129,55 @@ export default class MunicipalityBuildingPermitsPermitsController extends Contro
 
   get myPermitsCount() {
     const permits = this.model.permits || [];
+
+    // For residential users: count permits they own
+    if (this.isResidentialUser) {
+      return this._filterUserOwnedPermits(permits).length;
+    }
+
+    // For municipal staff: count permits assigned to them or pending their review
+    const userDepartment =
+      this.currentUser.currentMunicipalPermissions?.department;
+
     return permits.filter((permit) => {
-      if (permit.submitted_by?._id === this.currentUserId) {
+      const assignedInspectorId = this._toIdString(permit.assignedInspector);
+      if (assignedInspectorId === this.currentUserId) {
         return true;
       }
-      if (this.contractorId && permit.contractor_id === this.contractorId) {
+      const assignedReviewerId = this._toIdString(permit.assignedReviewer);
+      if (assignedReviewerId === this.currentUserId) {
         return true;
       }
-      if (permit.applicantUserId === this.currentUserId) {
-        return true;
+      if (userDepartment && permit.departmentReviews?.length > 0) {
+        const hasPendingReview = permit.departmentReviews.some(
+          (r) =>
+            r.department === userDepartment &&
+            ['pending', 'in_review'].includes(r.status),
+        );
+        if (hasPendingReview) {
+          return true;
+        }
       }
       return false;
     }).length;
   }
 
+  get requiresReviewCount() {
+    return this.municipality.pendingReviewsCount || 0;
+  }
+
+  // Check if user has a department (for showing Requires Review tab)
+  get canSeeReviewTab() {
+    return (
+      !this.isResidentialUser &&
+      this.currentUser.currentMunicipalPermissions?.department
+    );
+  }
+
   // Status options for filter
   get statusOptions() {
     return [
-      { value: '', label: 'Active (Not Completed)' },
-      { value: 'all', label: 'All Permits' },
+      { value: '', label: 'All Statuses' },
       { value: 'draft', label: 'Draft' },
       { value: 'submitted', label: 'Submitted' },
       { value: 'under_review', label: 'Under Review' },
@@ -207,13 +302,68 @@ export default class MunicipalityBuildingPermitsPermitsController extends Contro
   }
 
   @action
+  reviewPermit(permit) {
+    // Get the user's department from the permit's departmentReviews
+    const userDepartment =
+      this.currentUser.currentMunicipalPermissions?.department;
+
+    // Find the user's department review on this permit
+    const review = permit.departmentReviews?.find(
+      (r) =>
+        r.department === userDepartment &&
+        ['pending', 'in_review'].includes(r.status),
+    );
+
+    if (review) {
+      this.router.transitionTo(
+        'municipality.building-permits.review',
+        permit._id,
+        review.department,
+      );
+    } else {
+      // Fallback to permit view if no reviewable department found
+      this.router.transitionTo(
+        'municipality.building-permits.permit',
+        permit._id,
+      );
+    }
+  }
+
+  @action
   stopPropagation(event) {
     event.stopPropagation();
   }
 
   @action
-  setTab(tabName) {
+  async setTab(tabName) {
     this.tab = tabName;
     this.page = 1; // Reset to first page when switching tabs
+
+    // Load requires review permits when switching to review tab
+    if (tabName === 'review') {
+      await this.loadRequiresReviewPermits();
+    }
+  }
+
+  async loadRequiresReviewPermits() {
+    this.isLoadingReviewPermits = true;
+
+    try {
+      const municipalityId = this.model.municipalityId;
+      const response = await this.api.get(
+        `/municipalities/${municipalityId}/permits/requires-review`,
+      );
+
+      this.requiresReviewPermits = response.permits || [];
+      this.userDepartment = response.department;
+
+      // Refresh the badge count in navigation
+      await this.municipality.loadPendingReviewsCount();
+    } catch (error) {
+      console.error('Error loading requires review permits:', error);
+      this.requiresReviewPermits = [];
+    } finally {
+      this.isLoadingReviewPermits = false;
+    }
   }
 }

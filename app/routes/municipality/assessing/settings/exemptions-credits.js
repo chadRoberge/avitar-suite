@@ -4,10 +4,13 @@ import { inject as service } from '@ember/service';
 export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends Route {
   @service api;
   @service assessing;
+  @service municipality;
 
   async model() {
     const parentModel = this.modelFor('municipality.assessing.settings');
     const municipalityId = parentModel.municipality?.id;
+    // Use the year from the main assessment year selector
+    const year = this.municipality.selectedAssessmentYear || new Date().getFullYear();
 
     if (!municipalityId) {
       throw new Error('Municipality not found');
@@ -15,8 +18,9 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends
 
     try {
       // Fetch exemption types directly (new approach)
+      // Pass year parameter to year-aware endpoint
       let response = await this.api.get(
-        `/municipalities/${municipalityId}/exemption-types`,
+        `/municipalities/${municipalityId}/exemption-types?year=${year}`,
         {},
         { showLoading: false },
       );
@@ -30,11 +34,11 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends
         );
         try {
           await this.api.post(
-            `/municipalities/${municipalityId}/exemption-types/initialize`,
+            `/municipalities/${municipalityId}/exemption-types/initialize?year=${year}`,
           );
           // Fetch again after initialization
           response = await this.api.get(
-            `/municipalities/${municipalityId}/exemption-types`,
+            `/municipalities/${municipalityId}/exemption-types?year=${year}`,
             {},
             { showLoading: false },
           );
@@ -43,6 +47,10 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends
           console.warn('Failed to initialize exemption types:', initError);
         }
       }
+
+      // Extract year and lock status from response
+      const configYear = response.year || year;
+      const isYearLocked = response.isYearLocked || false;
 
       const grouped = response.grouped || {};
 
@@ -170,6 +178,8 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends
         exemptionTypes: exemptionTypesData,
         exemptionTypesRaw: exemptionTypes,
         exemptionTypesGrouped: grouped,
+        configYear: configYear,
+        isYearLocked: isYearLocked,
       };
     } catch (error) {
       console.error('Error loading exemption types:', error);
@@ -204,6 +214,8 @@ export default class MunicipalityAssessingSettingsExemptionsCreditsRoute extends
         exemptionTypes: {},
         exemptionTypesRaw: [],
         exemptionTypesGrouped: {},
+        configYear: year,
+        isYearLocked: false,
       };
     }
   }

@@ -5,13 +5,46 @@
       <h1 class="avitar-page-title avitar-skinny">Zones & Land Curves</h1>
       <div class="avitar-page-subtitle">Configure zones and land valuation ladders</div>
     </div>
-    <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+    <div class="avitar-flex-5 avitar-flex avitar-justify-end avitar-items-center avitar-gap-4">
+      {{!-- Year Selector --}}
+      <div class="avitar-flex avitar-items-center avitar-gap-2">
+        <label class="avitar-text-sm avitar-font-medium">Config Year:</label>
+        <select class="avitar-select avitar-select--sm" style="width: 100px;" {{on "change" this.changeYear}}>
+          {{#each this.availableYears as |yearOption|}}
+            <option value={{yearOption}} selected={{eq this.configYear yearOption}}>
+              {{yearOption}}
+            </option>
+          {{/each}}
+        </select>
+        {{#if this.isYearLocked}}
+          <span class="avitar-badge avitar-badge--warning avitar-ml-2">
+            {{lnr-icon "lock" class="avitar-mr-1"}}
+            Locked
+          </span>
+        {{/if}}
+      </div>
       <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.openNewZoneModal}}>
-        <i class="fas fa-plus avitar-mr-2"></i>
+        {{lnr-icon "plus-circle" class="avitar-mr-2"}}
         Add New Zone
       </button>
     </div>
   </div>
+
+  {{!-- Year Locked Warning Banner --}}
+  {{#if this.isYearLocked}}
+    <div class="avitar-alert avitar-alert--warning avitar-mb-4">
+      <div class="avitar-flex avitar-items-center avitar-gap-3">
+        {{lnr-icon "lock" class="avitar-text-lg"}}
+        <div>
+          <strong>Configuration Locked</strong>
+          <p class="avitar-text-sm avitar-mb-0">
+            The configuration for year {{this.configYear}} is locked and cannot be modified.
+            Select a different year to make changes.
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/if}}
   {{!-- Zone Cards with Integrated Land Ladders --}}
   {{#each this.reactiveZones as |zone|}}
   {{#let (get this.laddersByZone zone.id) as |ladder|}}
@@ -30,12 +63,12 @@
           </div>
         </div>
         <div class="avitar-flex avitar-gap-2">
-          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" (fn this.openEditZoneModal zone)}}>
-            <i class="fas fa-edit avitar-mr-1"></i>
+          <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--sm" {{on "click" (fn this.openEditZoneModal zone)}} disabled={{this.isYearLocked}}>
+            {{lnr-icon "pencil" class="avitar-mr-1"}}
             Edit Zone
           </button>
-          <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--sm" {{on "click" (fn this.deleteZone zone.id)}}>
-            <i class="fas fa-trash avitar-mr-1"></i>
+          <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--sm" {{on "click" (fn this.deleteZone zone.id)}} disabled={{this.isYearLocked}}>
+            {{lnr-icon "trash" class="avitar-mr-1"}}
             Delete
           </button>
         </div>
@@ -46,12 +79,12 @@
       <div class="avitar-flex avitar-justify-between avitar-items-center avitar-mb-4">
         <h4 class="avitar-font-semibold">Land Valuation Ladder</h4>
         <div class="avitar-flex avitar-gap-2">
-          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" (fn this.openNewTierModal zone)}}>
-            <i class="fas fa-plus avitar-mr-1"></i>
+          <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm" {{on "click" (fn this.openNewTierModal zone)}} disabled={{this.isYearLocked}}>
+            {{lnr-icon "plus-circle" class="avitar-mr-1"}}
             Add Tier
           </button>
-          <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--sm" {{on "click" (fn this.openLadderModal zone)}}>
-            <i class="fas fa-edit avitar-mr-1"></i>
+          <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--sm" {{on "click" (fn this.openLadderModal zone)}} disabled={{this.isYearLocked}}>
+            {{lnr-icon "pencil" class="avitar-mr-1"}}
             Edit All
           </button>
         </div>
@@ -80,11 +113,11 @@
                     </span>
                   </td>
                   <td class="avitar-table__actions">
-                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.openTierModal zone tier)}} title="Edit Tier">
-                      <i class="fas fa-edit"></i>
+                    <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.openTierModal zone tier)}} title="Edit Tier" disabled={{this.isYearLocked}}>
+                      {{lnr-icon "pencil"}}
                     </button>
-                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteTier zone tier)}} title="Remove Tier">
-                      <i class="fas fa-times"></i>
+                    <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteTier zone tier)}} title="Remove Tier" disabled={{this.isYearLocked}}>
+                      {{lnr-icon "cross"}}
                     </button>
                   </td>
                 </tr>
@@ -111,11 +144,11 @@
       </div>
       {{else}}
       <div class="avitar-empty-state avitar-text-center avitar-py-6">
-        <i class="fas fa-layer-group avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        {{lnr-icon "layers" class="avitar-text-3xl avitar-text-muted avitar-mb-3"}}
         <div class="avitar-font-semibold avitar-mb-2">No Land Ladder</div>
         <div class="avitar-text-muted avitar-mb-4">Create a land valuation ladder for this zone</div>
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.openLadderModal zone)}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.openLadderModal zone)}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Create Land Ladder
         </button>
       </div>

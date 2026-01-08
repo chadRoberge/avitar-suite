@@ -33,27 +33,42 @@ export default class PropertyRecordCardModalComponent extends Component {
     return this.municipality.currentMunicipality || null;
   }
 
+  _hasInitialized = false;
+
   constructor() {
     super(...arguments);
 
-    // Load sketch sub area factors for GLA calculation
-    this.loadSketchSubAreaFactors();
+    // Don't load data on construction - wait until modal is opened
+    // This prevents unnecessary API calls on every page load
 
     // Set up realtime listener for immediate sketch updates
     this.sketchUpdateUnsubscribe = this.realtime.on(
       'sketch:updated',
       (data) => {
-        // Only refresh if this property is affected
-        if (data.propertyId === this.selectedProperty?.id) {
+        // Only refresh if this property is affected and modal is open
+        if (this.args.isOpen && data.propertyId === this.selectedProperty?.id) {
           this.refreshData();
         }
       },
     );
+  }
 
-    // Load data immediately if modal is already open and property is selected
-    if (this.args.isOpen && this.selectedProperty) {
-      this.loadPropertyData();
+  /**
+   * Initialize data when modal is first opened
+   * Called from template to trigger lazy loading
+   */
+  get shouldInitialize() {
+    if (this.args.isOpen && !this._hasInitialized) {
+      this._hasInitialized = true;
+      // Use setTimeout to avoid triggering during render
+      setTimeout(() => {
+        this.loadSketchSubAreaFactors();
+        if (this.selectedProperty) {
+          this.loadPropertyData();
+        }
+      }, 0);
     }
+    return this._hasInitialized;
   }
 
   willDestroy() {
@@ -78,6 +93,24 @@ export default class PropertyRecordCardModalComponent extends Component {
 
   @action
   printCard() {
+    // Simple approach: Just print the modal as-is, let CSS handle hiding chrome
+    // The modal pages are already sized correctly (8in high with 0.25in margins)
+
+    // Detect Safari for orientation reminder
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    if (isSafari) {
+      const confirmed = window.confirm(
+        'Safari Print Notice:\n\n' +
+        'Please select "Landscape" orientation in the print dialog for proper formatting.\n\n' +
+        'Click OK to continue to print, or Cancel to go back.'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    // Just print - let the print CSS in printing.css handle everything
     window.print();
   }
 

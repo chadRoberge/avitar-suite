@@ -203,7 +203,10 @@ router.post('/register', async (req, res) => {
         console.log(`✅ Welcome email sent to ${user.email}`);
       })
       .catch((error) => {
-        console.error(`❌ Failed to send welcome email to ${user.email}:`, error.message);
+        console.error(
+          `❌ Failed to send welcome email to ${user.email}:`,
+          error.message,
+        );
       });
 
     res.status(201).json({

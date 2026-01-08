@@ -4,9 +4,16 @@ import { inject as service } from '@ember/service';
 export default class NeighborhoodsRoute extends BaseRoute {
   @service api;
 
-  async model() {
+  queryParams = {
+    year: {
+      refreshModel: true,
+    },
+  };
+
+  async model(params) {
     const parentModel = this.modelFor('municipality.assessing.settings');
     const municipalityId = parentModel.municipality.id;
+    const year = params.year || new Date().getFullYear();
 
     // Return optimistic model immediately
     const optimisticModel = {
@@ -18,15 +25,17 @@ export default class NeighborhoodsRoute extends BaseRoute {
       roadAttributes: [],
       topologyAttributes: [],
       landTaxationCategories: [],
+      configYear: year,
+      isYearLocked: false,
     };
 
     // Use optimistic loading to fetch data in background
     return this.optimisticModel(
-      this.fetchNeighborhoodsData(municipalityId, optimisticModel),
+      this.fetchNeighborhoodsData(municipalityId, year, optimisticModel),
     );
   }
 
-  async fetchNeighborhoodsData(municipalityId, optimisticModel) {
+  async fetchNeighborhoodsData(municipalityId, year, optimisticModel) {
     try {
       // Fetch all neighborhood-related data in parallel
       const [
@@ -38,10 +47,10 @@ export default class NeighborhoodsRoute extends BaseRoute {
         topologyAttributesResponse,
         landTaxationCategoriesResponse,
       ] = await Promise.all([
-        // Fetch neighborhood codes
+        // Fetch neighborhood codes (year-aware)
         this.api
           .get(
-            `/municipalities/${municipalityId}/neighborhood-codes`,
+            `/municipalities/${municipalityId}/neighborhood-codes?year=${year}`,
             {},
             {
               showLoading: false, // Don't show loading for individual requests since we have global loading
@@ -138,6 +147,11 @@ export default class NeighborhoodsRoute extends BaseRoute {
           }),
       ]);
 
+      // Extract year and lock status from neighborhood codes response
+      const configYear =
+        neighborhoodCodesResponse.year || optimisticModel.configYear;
+      const isYearLocked = neighborhoodCodesResponse.isYearLocked || false;
+
       return {
         ...optimisticModel,
         neighborhoodCodes: neighborhoodCodesResponse.neighborhoodCodes || [],
@@ -148,6 +162,8 @@ export default class NeighborhoodsRoute extends BaseRoute {
         topologyAttributes: topologyAttributesResponse.topologyAttributes || [],
         landTaxationCategories:
           landTaxationCategoriesResponse.landTaxationCategories || [],
+        configYear: configYear,
+        isYearLocked: isYearLocked,
       };
     } catch (error) {
       console.error('Error loading neighborhoods data:', error);

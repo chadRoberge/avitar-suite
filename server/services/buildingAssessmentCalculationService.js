@@ -26,17 +26,12 @@ class BuildingAssessmentCalculationService {
         `Initializing building assessment calculator for municipality: ${municipalityId}, year: ${currentYear}`,
       );
 
-      // Load all reference data in parallel
+      // Load all reference data in parallel using year-aware queries
+      // This uses temporal range to get the correct configuration for the requested year
       const [buildingFeatureCodes, buildingCodes, calculationConfig] =
         await Promise.all([
-          BuildingFeatureCode.find({
-            municipalityId: municipalityId,
-            isActive: true,
-          }),
-          BuildingCode.find({
-            municipalityId: municipalityId,
-            isActive: true,
-          }),
+          BuildingFeatureCode.findByMunicipalityForYear(municipalityId, currentYear),
+          BuildingCode.findByMunicipalityForYear(municipalityId, currentYear),
           BuildingCalculationConfig.getOrCreateForMunicipality(
             municipalityId,
             currentYear,
@@ -113,166 +108,305 @@ class BuildingAssessmentCalculationService {
    * @param {Object} options - Calculation options
    * @returns {Object} Summary of recalculation results
    */
+  /**
+   * Recalculate all building assessments for a municipality
+   * Optimized with bulk writes and progress callback support
+   * @param {String} municipalityId - Municipality ID
+   * @param {Number} effectiveYear - Assessment year
+   * @param {Object} options - Configuration options
+   * @param {Number} options.batchSize - Batch size for processing (default: 500)
+   * @param {Function} options.onProgress - Progress callback (progress, message)
+   * @param {Boolean} options.save - Whether to save changes (default: true)
+   */
   async recalculateAllProperties(
     municipalityId,
     effectiveYear = null,
     options = {},
   ) {
     const currentYear = effectiveYear || new Date().getFullYear();
+    const batchSize = options.batchSize || 500; // Increased default batch size
+    const onProgress = options.onProgress || (() => {});
+
     await this.initialize(municipalityId, currentYear);
 
     console.log(
       `Starting municipality-wide building recalculation for: ${municipalityId}, year: ${currentYear}`,
     );
 
-    const batchSize = options.batchSize || 100;
     let processedCount = 0;
     let updatedCount = 0;
     let errorCount = 0;
+    let createdCount = 0;
+    let changedCount = 0;
     const errors = [];
 
     try {
-      // Get total count for progress tracking
-      const totalCount = await BuildingAssessment.countDocuments({
+      // Check if assessments exist for the target year
+      let totalCount = await BuildingAssessment.countDocuments({
         municipality_id: municipalityId,
         effective_year: currentYear,
       });
 
-      console.log(`Found ${totalCount} building assessments to recalculate`);
+      // Send initial progress
+      onProgress({
+        phase: 'initializing',
+        progress: 0,
+        message: `Found ${totalCount} building assessments`,
+        totalCount,
+        processedCount: 0,
+      });
 
-      // Process in batches to avoid memory issues
+      // If no assessments exist for target year, copy from most recent year using bulk insert
+      if (totalCount === 0) {
+        onProgress({
+          phase: 'copying',
+          progress: 0,
+          message: `No assessments for ${currentYear}. Looking for source year...`,
+        });
+
+        const mostRecentAssessment = await BuildingAssessment.findOne({
+          municipality_id: municipalityId,
+        }).sort({ effective_year: -1 });
+
+        if (mostRecentAssessment) {
+          const sourceYear = mostRecentAssessment.effective_year;
+
+          onProgress({
+            phase: 'copying',
+            progress: 5,
+            message: `Copying assessments from ${sourceYear} to ${currentYear}...`,
+          });
+
+          // Use aggregation pipeline with $merge for fast bulk copy
+          const copyResult = await BuildingAssessment.aggregate([
+            {
+              $match: {
+                municipality_id: municipalityId,
+                effective_year: sourceYear,
+              },
+            },
+            {
+              $addFields: {
+                previous_version_id: '$_id',
+                effective_year: currentYear,
+                created_at: new Date(),
+                updated_at: new Date(),
+                last_calculated: null,
+              },
+            },
+            {
+              $unset: '_id',
+            },
+            {
+              $merge: {
+                into: 'buildingassessments',
+                whenMatched: 'keepExisting',
+                whenNotMatched: 'insert',
+              },
+            },
+          ]);
+
+          // Get count of newly created assessments
+          totalCount = await BuildingAssessment.countDocuments({
+            municipality_id: municipalityId,
+            effective_year: currentYear,
+          });
+          createdCount = totalCount;
+
+          onProgress({
+            phase: 'copying',
+            progress: 10,
+            message: `Created ${createdCount} assessments for ${currentYear}`,
+            createdCount,
+          });
+        } else {
+          onProgress({
+            phase: 'complete',
+            progress: 100,
+            message: 'No building assessments found to recalculate',
+          });
+          return {
+            municipalityId,
+            year: currentYear,
+            totalProperties: 0,
+            processedCount: 0,
+            createdCount: 0,
+            updatedCount: 0,
+            changedCount: 0,
+            errorCount: 0,
+            message: 'No building assessments found to recalculate',
+            completedAt: new Date(),
+          };
+        }
+      }
+
+      onProgress({
+        phase: 'calculating',
+        progress: 10,
+        message: `Processing ${totalCount} building assessments...`,
+        totalCount,
+      });
+
+      // Process in batches using bulk writes for speed
+      const allPropertyIds = new Set();
+
       for (let offset = 0; offset < totalCount; offset += batchSize) {
+        // Fetch batch with lean() for faster reads
         const buildingAssessments = await BuildingAssessment.find({
           municipality_id: municipalityId,
           effective_year: currentYear,
         })
           .skip(offset)
-          .limit(batchSize);
+          .limit(batchSize)
+          .lean();
 
-        // Process batch
-        const batchPromises = buildingAssessments.map(
-          async (buildingAssessment) => {
-            try {
-              const calculatedValues =
-                this.calculateBuildingAssessment(buildingAssessment);
+        // Calculate all values in memory (no DB calls)
+        const bulkOps = [];
+        const batchPropertyIds = new Set();
 
-              if (!calculatedValues.error) {
-                // Update building assessment with new calculated values (rounded to nearest hundred)
-                buildingAssessment.building_value =
-                  Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
-                buildingAssessment.replacement_cost_new =
-                  calculatedValues.replacementCostNew;
-                buildingAssessment.assessed_value =
-                  Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
-                buildingAssessment.base_rate = calculatedValues.baseRate;
-                buildingAssessment.age = calculatedValues.buildingAge;
-                buildingAssessment.calculation_details = calculatedValues;
-                buildingAssessment.last_calculated = new Date();
+        for (const assessment of buildingAssessments) {
+          try {
+            const calculatedValues = this.calculator.calculateBuildingValue(
+              assessment,
+              this.referenceData.calculationConfig,
+            );
 
-                // Update normal depreciation percentage if calculated
-                if (!buildingAssessment.depreciation) {
-                  buildingAssessment.depreciation = {
-                    normal: { description: '', percentage: 0 },
-                    physical: { notes: '', percentage: 0 },
-                    functional: { notes: '', percentage: 0 },
-                    economic: { notes: '', percentage: 0 },
-                    temporary: { notes: '', percentage: 0 },
-                  };
-                }
+            if (!calculatedValues.error) {
+              const newBuildingValue =
+                Math.round((calculatedValues.buildingValue || 0) / 100) * 100;
+              const oldBuildingValue = assessment.building_value || 0;
 
-                // Update normal depreciation from calculation
-                if (
-                  calculatedValues.buildingAge > 0 &&
-                  calculatedValues.baseDepreciationRate > 0
-                ) {
-                  if (!buildingAssessment.depreciation.normal) {
-                    buildingAssessment.depreciation.normal = {
-                      description: '',
-                      percentage: 0,
-                    };
-                  }
-                  buildingAssessment.depreciation.normal.percentage =
-                    calculatedValues.normalDepreciation * 100;
-                }
-
-                if (options.save !== false) {
-                  await buildingAssessment.save();
-                }
-
-                return {
-                  success: true,
-                  propertyId: buildingAssessment.property_id,
-                  cardNumber: buildingAssessment.card_number,
-                  values: calculatedValues,
-                };
-              } else {
-                return {
-                  success: false,
-                  propertyId: buildingAssessment.property_id,
-                  cardNumber: buildingAssessment.card_number,
-                  error: calculatedValues.error,
-                };
+              // Track if value actually changed
+              const valueChanged = Math.abs(newBuildingValue - oldBuildingValue) > 0;
+              if (valueChanged) {
+                changedCount++;
               }
-            } catch (error) {
-              console.error(
-                `Error calculating building assessment ${buildingAssessment._id}:`,
-                error,
-              );
-              return {
-                success: false,
-                propertyId: buildingAssessment.property_id,
-                cardNumber: buildingAssessment.card_number,
-                error: error.message,
+
+              // Prepare depreciation update
+              const depreciation = assessment.depreciation || {
+                normal: { description: '', percentage: 0 },
+                physical: { notes: '', percentage: 0 },
+                functional: { notes: '', percentage: 0 },
+                economic: { notes: '', percentage: 0 },
+                temporary: { notes: '', percentage: 0 },
               };
+
+              if (
+                calculatedValues.buildingAge > 0 &&
+                calculatedValues.baseDepreciationRate > 0
+              ) {
+                depreciation.normal = depreciation.normal || { description: '', percentage: 0 };
+                depreciation.normal.percentage = calculatedValues.normalDepreciation * 100;
+              }
+
+              // Add to bulk operations
+              bulkOps.push({
+                updateOne: {
+                  filter: { _id: assessment._id },
+                  update: {
+                    $set: {
+                      building_value: newBuildingValue,
+                      replacement_cost_new: calculatedValues.replacementCostNew,
+                      assessed_value: newBuildingValue,
+                      base_rate: calculatedValues.baseRate,
+                      age: calculatedValues.buildingAge,
+                      calculation_details: calculatedValues,
+                      last_calculated: new Date(),
+                      depreciation: depreciation,
+                      updated_at: new Date(),
+                    },
+                  },
+                },
+              });
+
+              batchPropertyIds.add(assessment.property_id.toString());
+              updatedCount++;
+            } else {
+              errorCount++;
+              if (errors.length < 10) {
+                errors.push({
+                  propertyId: assessment.property_id,
+                  cardNumber: assessment.card_number,
+                  error: calculatedValues.error,
+                });
+              }
             }
-          },
-        );
-
-        const results = await Promise.all(batchPromises);
-
-        // Collect unique property IDs that need totals updated
-        const propertyIdsToUpdate = new Set();
-
-        // Count results
-        results.forEach((result) => {
-          processedCount++;
-          if (result.success) {
-            updatedCount++;
-            propertyIdsToUpdate.add(result.propertyId.toString());
-          } else {
+          } catch (error) {
             errorCount++;
-            errors.push(result);
+            if (errors.length < 10) {
+              errors.push({
+                propertyId: assessment.property_id,
+                cardNumber: assessment.card_number,
+                error: error.message,
+              });
+            }
           }
-        });
-
-        // Update property totals for all affected properties in this batch
-        if (propertyIdsToUpdate.size > 0) {
-          await this.updatePropertyTotals(
-            Array.from(propertyIdsToUpdate),
-            currentYear,
-          );
-          console.log(
-            `Updated totals for ${propertyIdsToUpdate.size} properties in batch`,
-          );
+          processedCount++;
         }
 
-        // Log progress
-        const progress = Math.round((processedCount / totalCount) * 100);
-        console.log(
-          `Progress: ${progress}% (${processedCount}/${totalCount}) - Updated: ${updatedCount}, Errors: ${errorCount}`,
-        );
+        // Execute bulk write for this batch
+        if (bulkOps.length > 0 && options.save !== false) {
+          await BuildingAssessment.bulkWrite(bulkOps, { ordered: false });
+        }
+
+        // Collect property IDs for total updates
+        batchPropertyIds.forEach((id) => allPropertyIds.add(id));
+
+        // Calculate and send progress
+        const progress = Math.round(10 + (processedCount / totalCount) * 70);
+        onProgress({
+          phase: 'calculating',
+          progress,
+          message: `Processed ${processedCount} of ${totalCount} assessments`,
+          totalCount,
+          processedCount,
+          updatedCount,
+          changedCount,
+          errorCount,
+        });
+      }
+
+      // Update property totals in batches
+      onProgress({
+        phase: 'updating_totals',
+        progress: 80,
+        message: `Updating totals for ${allPropertyIds.size} properties...`,
+      });
+
+      const propertyIdArray = Array.from(allPropertyIds);
+      const totalBatchSize = 100;
+
+      for (let i = 0; i < propertyIdArray.length; i += totalBatchSize) {
+        const batch = propertyIdArray.slice(i, i + totalBatchSize);
+        await this.updatePropertyTotals(batch, currentYear);
+
+        const totalProgress = Math.round(80 + ((i + batch.length) / propertyIdArray.length) * 20);
+        onProgress({
+          phase: 'updating_totals',
+          progress: totalProgress,
+          message: `Updated totals for ${Math.min(i + totalBatchSize, propertyIdArray.length)} of ${propertyIdArray.length} properties`,
+        });
       }
 
       const summary = {
         municipalityId,
         year: currentYear,
         totalProperties: totalCount,
+        createdCount,
         processedCount,
         updatedCount,
+        changedCount,
         errorCount,
-        errors: errors.slice(0, 10), // Limit error details
+        errors: errors.slice(0, 10),
         completedAt: new Date(),
       };
+
+      onProgress({
+        phase: 'complete',
+        progress: 100,
+        message: `Completed: ${updatedCount} updated, ${changedCount} changed values, ${errorCount} errors`,
+        ...summary,
+      });
 
       console.log(
         'Municipality-wide building recalculation completed:',
@@ -284,6 +418,12 @@ class BuildingAssessmentCalculationService {
         'Failed to complete municipality-wide building recalculation:',
         error,
       );
+      onProgress({
+        phase: 'error',
+        progress: 0,
+        message: `Error: ${error.message}`,
+        error: error.message,
+      });
       throw error;
     }
   }

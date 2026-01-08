@@ -143,6 +143,7 @@ Router.map(function () {
         this.route('inspection-checklists'); // Inspection checklist templates
         this.route('users'); // Users and inspectors management
         this.route('documents'); // Document library management
+        this.route('fee-schedules'); // Fee schedule version management
 
         // Residential user account settings
         this.route('account'); // Profile/personal info

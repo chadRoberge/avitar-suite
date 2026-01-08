@@ -135,47 +135,21 @@ async function getPropertyAssessmentComponents(
       // Since cardLandFeatures is already filtered by cardNumber, we can access the first result
       const cardFeatures = cardLandFeatures[0]; // Most recent record for this card
 
-      console.log(`🌳 LAND CALCULATION - Card ${cardNumber}:`, {
-        cardNumber,
-        baseLandValue:
-          landAssessment?.calculated_totals?.totalAssessedValue || 0,
-        cardFeaturesFound: !!cardFeatures,
-        cardFeaturesCardNumber: cardFeatures?.card_number,
-        viewValue: cardFeatures?.land?.view_value || 0,
-        waterfrontValue: cardFeatures?.land?.waterfront_value || 0,
-      });
-
       if (cardNumber === 1) {
         // Card 1 gets base land value + card-specific features
         landValue = landAssessment?.calculated_totals?.totalAssessedValue || 0;
-        console.log(
-          `🌳 Card 1 - Starting with base land: $${landValue.toLocaleString()}`,
-        );
 
         if (cardFeatures?.land) {
           const viewValue = cardFeatures.land.view_value || 0;
           const waterfrontValue = cardFeatures.land.waterfront_value || 0;
           landValue += viewValue + waterfrontValue;
-          console.log(
-            `🌳 Card 1 - Added view ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`,
-          );
         }
       } else {
         // Card 2+ gets only card-specific view/waterfront values
-        console.log(
-          `🌳 Card ${cardNumber} - Should get ONLY view/waterfront (NO base land)`,
-        );
         if (cardFeatures?.land) {
           const viewValue = cardFeatures.land.view_value || 0;
           const waterfrontValue = cardFeatures.land.waterfront_value || 0;
           landValue = viewValue + waterfrontValue;
-          console.log(
-            `🌳 Card ${cardNumber} - View ($${viewValue.toLocaleString()}) + waterfront ($${waterfrontValue.toLocaleString()}) = $${landValue.toLocaleString()}`,
-          );
-        } else {
-          console.log(
-            `🌳 Card ${cardNumber} - No card features found, land value = $0`,
-          );
         }
       }
 
@@ -188,11 +162,6 @@ async function getPropertyAssessmentComponents(
         waterfrontValue: cardFeatures?.land?.waterfront_value || 0,
         cardNumber: cardNumber,
       };
-
-      console.log(
-        `🌳 FINAL LAND VALUE for Card ${cardNumber}: $${landValue.toLocaleString()}`,
-        landComponents,
-      );
     } else {
       // Property-wide calculation (sum all cards)
       landValue = landAssessment?.calculated_totals?.totalAssessedValue || 0;
@@ -224,30 +193,12 @@ async function getPropertyAssessmentComponents(
     // Calculate building value - buildingAssessments is already filtered by cardNumber if provided
     const buildingValue = buildingAssessments.reduce((total, building) => {
       const value = building.building_value || building.assessed_value || 0;
-      const context = cardNumber
-        ? `Card ${cardNumber} calculation`
-        : 'Property-wide calculation';
-      console.log(
-        `[${context}] Building assessment found for Card ${building.card_number}, Value: $${value.toLocaleString()}`,
-      );
       return total + value;
     }, 0);
 
     // Calculate features value using the new feature calculator
     const featureCalculations = calculateFeatureTotals(features);
     const featuresValue = featureCalculations.totalFeaturesValue;
-
-    console.log(
-      `Assessment components for property ${propertyId}${cardNumber ? ` Card ${cardNumber}` : ''}:`,
-      {
-        landValue: landValue,
-        landComponents: landComponents,
-        buildingValue: buildingValue,
-        featuresValue: featuresValue,
-        featureCount: featureCalculations.featureCount,
-        buildingRecords: buildingAssessments.length,
-      },
-    );
 
     // TODO: Add sketch value calculation when sketch model is implemented
     const sketchValue = 0;
@@ -259,18 +210,6 @@ async function getPropertyAssessmentComponents(
       (line) => (line.currentUseCredit || 0) > 0,
     );
     const hasCurrentUse = topLevelCredit || landLineCredits;
-
-    console.log(`🌾 Current Use Detection:`, {
-      hasCurrentUse,
-      topLevelCredit,
-      landLineCredits,
-      currentUseCredit: landAssessment?.current_use_credit || 0,
-      landLinesWithCredit: (landAssessment?.land_use_details || []).filter(
-        (line) => (line.currentUseCredit || 0) > 0,
-      ).length,
-      propertyId,
-      cardNumber: cardNumber || 'all cards',
-    });
 
     return {
       landValue,
@@ -415,10 +354,6 @@ async function updatePropertyTotalAssessment(
       }
 
       await yearAssessment.save();
-
-      console.log(
-        `Updated ${currentYear} total assessment for property ${propertyId}: $${newTotalValue.toLocaleString()} (Land: $${roundedLandValue.toLocaleString()}, Building: $${roundedBuildingValue.toLocaleString()}, Features: $${roundedFeaturesValue.toLocaleString()})`,
-      );
     } else {
       // Create assessment record for current year with temporal values
       const assessmentData = {
@@ -452,10 +387,6 @@ async function updatePropertyTotalAssessment(
       }
 
       yearAssessment = await PropertyAssessment.create(assessmentData);
-
-      console.log(
-        `Created ${currentYear} assessment for property ${propertyId}: $${newTotalValue.toLocaleString()}`,
-      );
     }
 
     // Also update the denormalized value in PropertyTreeNode
@@ -465,9 +396,6 @@ async function updatePropertyTotalAssessment(
         assessed_value: newTotalValue,
         last_updated: new Date(),
       });
-      console.log(
-        `Updated PropertyTreeNode assessed_value to $${newTotalValue.toLocaleString()}`,
-      );
     } catch (updateError) {
       console.warn(
         'Failed to update PropertyTreeNode assessed_value:',
@@ -537,10 +465,6 @@ async function massRecalculateAssessments(
       });
     }
   }
-
-  console.log(
-    `Mass recalculation completed: ${results.successful.length} successful, ${results.failed.length} failed`,
-  );
 
   return results;
 }
@@ -627,13 +551,6 @@ async function massRevaluation(
     }
   }
 
-  console.log(
-    `Mass revaluation completed: ${results.successful.length} successful, ${results.failed.length} failed`,
-  );
-  console.log(
-    `Total value change: $${(results.totalValueAfter - results.totalValueBefore).toLocaleString()}`,
-  );
-
   return results;
 }
 
@@ -686,17 +603,6 @@ async function updateCardAssessment(
     const roundedFeaturesValue = roundToNearestHundred(
       components.featuresValue,
     );
-
-    console.log(`  📊 Card ${cardNumber} Final Assessment:`, {
-      hasCurrentUse: components.hasCurrentUse,
-      land: `$${roundedLandValue.toLocaleString()}`,
-      landRaw: components.landValue,
-      building: `$${roundedBuildingValue.toLocaleString()}`,
-      improvements: `$${roundedFeaturesValue.toLocaleString()}`,
-      total: `$${cardTotal.toLocaleString()}`,
-      totalShouldBeRounded: !components.hasCurrentUse,
-      landComponents: components.components.landComponents,
-    });
 
     return {
       card_number: cardNumber,
@@ -761,10 +667,6 @@ async function updateParcelAssessment(
     }
 
     const totalCards = property.cards?.total_cards || 1;
-
-    console.log(
-      `\n🔄 Updating Parcel Assessment for property ${propertyId} (${totalCards} card${totalCards > 1 ? 's' : ''})`,
-    );
 
     // Calculate assessment for EACH CARD
     const cardAssessments = [];
@@ -882,23 +784,6 @@ async function updateParcelAssessment(
         assessment_year: currentYear,
       },
       last_updated: new Date(),
-    });
-
-    console.log(`\n✅ Parcel Assessment Updated:`, {
-      propertyId: propertyId.toString().substring(0, 8) + '...',
-      totalCards,
-      parcelTotal: `$${parcelTotals.total_assessed_value.toLocaleString()}`,
-      breakdown: {
-        land: `$${parcelTotals.total_land_value.toLocaleString()}`,
-        building: `$${parcelTotals.total_building_value.toLocaleString()}`,
-        improvements: `$${parcelTotals.total_improvements_value.toLocaleString()}`,
-      },
-      change:
-        changeAmount > 0
-          ? `+$${changeAmount.toLocaleString()}`
-          : `$${changeAmount.toLocaleString()}`,
-      changePercent: `${changePercentage}%`,
-      calculationTime: `${calculationDuration}ms`,
     });
 
     return {

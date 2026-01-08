@@ -82,9 +82,53 @@ uppercase {
   margin-bottom: 15px;
 }
 
-/* Property Record Card Pages */
+/* Property Record Pages - Individual page containers */
+.property-record-page {
+  padding: .25in;
+  background: white;
+  border-bottom: 2px dashed #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.property-record-page:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Generic selector for all pages */
+[class*="property-record-page--"] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 11in;
+  margin: 0 auto 1rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  border-radius: 8px;
+  overflow: visible;
+}
+
+/* Visual separator between cards (not pages within same card) */
+[class*="property-record-page--card-"][class*="-page-1"] {
+  /* Page 1 of each card - no top separator needed */
+}
+
+/* Page 2 of each card - visual connection to page 1 */
+[class*="property-record-page--card-"][class*="-page-2"] {
+  margin-top: -0.5rem;
+  border-top: 2px dashed #adb5bd;
+  padding-top: 0.5rem;
+}
+
+/* Add visual break before each new card (except first) */
+[class*="property-record-page--card-"][class*="-page-1"]:not(:first-child) {
+  margin-top: 2rem;
+  border-top: 3px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+/* Legacy support - hide old card page classes */
 .property-record-card-page {
-  padding: 30px;
+  padding: .25in;
   background: white;
   border-bottom: 3px solid #dee2e6;
   margin-bottom: 2rem;
@@ -95,8 +139,7 @@ uppercase {
   margin-bottom: 0;
 }
 
-.property-record-card-page--1,
-.property-record-card-page--2 {
+[class*="property-record-card-page--"] {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -104,7 +147,7 @@ uppercase {
   margin: 0 auto;
   box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Flex layout content groups for landscape page */
@@ -114,14 +157,15 @@ uppercase {
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* Page 2 content visual separation */
-.property-record-card-page [style*="page-break-before"] {
+/* Page 2 content visual separation (screen only) */
+.print-page-break {
   border-top: 2px dashed #dee2e6;
   margin: 1rem 0;
   position: relative;
+  height: auto;
 }
 
-.property-record-card-page [style*="page-break-before"]::after {
+.print-page-break::after {
   content: "Page 2";
   position: absolute;
   top: -12px;
@@ -135,12 +179,12 @@ uppercase {
 
 /* Individual row height constraints */
 .property-record-owner-row {
-  min-height: 1.5in;
+  min-height: 1.4in;
   overflow: hidden;
 }
 
 .property-record-listing-row {
-  min-height: 1.5in;
+  min-height: 1.35in;
   overflow: hidden;
 }
 
@@ -170,6 +214,7 @@ uppercase {
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid #2c3e50;
+  font-size: 0.8rem;
 }
 
 .property-record-card__header h3 {
@@ -393,10 +438,33 @@ uppercase {
 
 /* Screen display for landscape layout */
 @media screen {
-  .property-record-card-page--1,
-  .property-record-card-page--2 {
+  [class*="property-record-card-page--"] {
     margin: 20px auto; /* Center on screen */
     box-shadow: 0 0 10px rgb(0 0 0 / 10%); /* Paper effect */
+  }
+}
+
+/* =========================================
+   PRINT OVERRIDES
+   Main print styles are in printing.css
+   ========================================= */
+@media print {
+  /* Screen-specific styles that need to be reset for print */
+  [class*="property-record-page--"] {
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    padding: 0.1in !important;
+  }
+
+  /* Legacy support */
+  [class*="property-record-card-page--"] {
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
   }
 }
 

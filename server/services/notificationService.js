@@ -198,6 +198,7 @@ class NotificationService {
   }) {
     // Map permit status to template type
     const templateTypeMap = {
+      submitted: 'permit_submitted',
       approved: 'permit_approved',
       rejected: 'permit_rejected',
       under_review: 'permit_under_review',
@@ -214,7 +215,9 @@ class NotificationService {
 
     // Prepare SMS message
     let smsMessage = '';
-    if (status === 'approved') {
+    if (status === 'submitted') {
+      smsMessage = `Your permit ${permitNumber} has been submitted for review. Check email for details.`;
+    } else if (status === 'approved') {
       smsMessage = `Your permit ${permitNumber} has been approved. Check email for details.`;
     } else if (status === 'rejected') {
       smsMessage = `Your permit ${permitNumber} was rejected. Check email for details.`;
@@ -374,15 +377,33 @@ class NotificationService {
     reviewStatus,
     reviewedBy,
     conditions,
+    reviewComments,
+    permitId,
+    allDepartmentReviews,
   }) {
     const statusText =
       reviewStatus === 'approved'
         ? 'approved'
         : reviewStatus === 'rejected'
           ? 'rejected'
-          : 'completed with revisions requested';
+          : reviewStatus === 'revisions_requested'
+            ? 'needs revisions'
+            : reviewStatus === 'conditionally_approved'
+              ? 'conditionally approved'
+              : 'completed';
 
-    const smsMessage = `${department} review ${statusText} for permit ${permitNumber}.`;
+    const smsMessage = `${department} review ${statusText} for permit ${permitNumber}. Check email for details.`;
+
+    // Build permit URL for the email
+    const baseUrl = process.env.APP_URL || 'https://app.avitar.com';
+    const permitUrl = `${baseUrl}/my-permits/permit/${permitId}`;
+
+    // Format department reviews for email display
+    const departmentReviews = (allDepartmentReviews || []).map((review) => ({
+      ...review,
+      statusDisplay: this.formatReviewStatus(review.status),
+      statusColor: this.getStatusColor(review.status),
+    }));
 
     return await this.sendNotification({
       userId,
@@ -395,10 +416,83 @@ class NotificationService {
         reviewStatus,
         reviewedBy,
         conditions,
+        reviewComments,
+        permitUrl,
+        departmentReviews,
+        hasPendingReviews: departmentReviews.some(
+          (r) => r.status === 'pending',
+        ),
       },
       subject: `${department} Review ${statusText.charAt(0).toUpperCase() + statusText.slice(1)} - ${permitNumber}`,
       smsMessage,
     });
+  }
+
+  /**
+   * Send permit fully approved notification (all departments approved)
+   */
+  async sendPermitApproved({
+    userId,
+    municipalityId,
+    permitNumber,
+    permitId,
+    allDepartmentReviews,
+    permitData,
+  }) {
+    const smsMessage = `Great news! Your permit ${permitNumber} has been approved by all departments and is ready to be picked up or printed.`;
+
+    const baseUrl = process.env.APP_URL || 'https://app.avitar.com';
+    const permitUrl = `${baseUrl}/my-permits/permit/${permitId}`;
+
+    // Format department reviews for email display
+    const departmentReviews = (allDepartmentReviews || []).map((review) => ({
+      ...review,
+      statusDisplay: this.formatReviewStatus(review.status),
+      statusColor: this.getStatusColor(review.status),
+    }));
+
+    return await this.sendNotification({
+      userId,
+      notificationType: 'permit_status_changes',
+      templateType: 'permit_fully_approved',
+      municipalityId,
+      data: {
+        permitNumber,
+        permitUrl,
+        departmentReviews,
+        ...permitData,
+      },
+      subject: `Permit Approved - ${permitNumber} - Ready for Pickup`,
+      smsMessage,
+    });
+  }
+
+  /**
+   * Format review status for display
+   */
+  formatReviewStatus(status) {
+    const statusMap = {
+      pending: 'Pending',
+      approved: 'Approved',
+      conditionally_approved: 'Conditionally Approved',
+      rejected: 'Rejected',
+      revisions_requested: 'Revisions Requested',
+    };
+    return statusMap[status] || status;
+  }
+
+  /**
+   * Get color for review status
+   */
+  getStatusColor(status) {
+    const colorMap = {
+      pending: '#6b7280', // gray
+      approved: '#10b981', // green
+      conditionally_approved: '#f59e0b', // amber
+      rejected: '#ef4444', // red
+      revisions_requested: '#f59e0b', // amber
+    };
+    return colorMap[status] || '#6b7280';
   }
 
   /**

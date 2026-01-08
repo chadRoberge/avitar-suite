@@ -1,5 +1,7 @@
 {{#if @isOpen}}
-{{!-- Trigger data loading when modal opens --}}
+{{!-- Trigger lazy initialization when modal opens --}}
+{{#if this.shouldInitialize}}{{!-- Loads sketch factors on first open --}}{{/if}}
+{{!-- Trigger data loading for property changes --}}
 {{this.triggerDataLoading}}
 {{!-- Full Page Modal Overlay --}}
 {{!-- template-lint-disable no-invalid-interactive --}}

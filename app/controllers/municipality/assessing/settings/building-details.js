@@ -7,6 +7,17 @@ import BuildingAssessmentCalculator from 'avitar-suite/utils/building-assessment
 export default class BuildingDetailsController extends Controller {
   @service api;
   @service router;
+  @service municipality;
+  @service loading;
+
+  // Year-aware computed properties - uses municipality service's selectedAssessmentYear
+  get configYear() {
+    return this.model?.configYear || this.municipality.selectedAssessmentYear || new Date().getFullYear();
+  }
+
+  get isYearLocked() {
+    return this.model?.isYearLocked || false;
+  }
 
   // Building rate code tracking
   @tracked isAddingBuildingCode = false;
@@ -64,6 +75,10 @@ export default class BuildingDetailsController extends Controller {
   @tracked newSubAreaDisplayText = '';
   @tracked newSubAreaPoints = '';
   @tracked newSubAreaLivingSpace = '';
+
+  // Sub area factor modal
+  @tracked showSubAreaFactorModal = false;
+  @tracked subAreaFactorToEdit = null;
 
   // Update counters for reactivity
   @tracked featureCodeUpdateCounter = 0;
@@ -383,6 +398,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveBuildingCode() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const codeData = {
@@ -392,6 +415,7 @@ export default class BuildingDetailsController extends Controller {
         buildingType: this.newBuildingType,
         sizeAdjustmentCategory: this.newSizeAdjustmentCategory,
         depreciation: parseFloat(this.newBuildingDepreciation),
+        effective_year: this.configYear,
       };
 
       // Validate
@@ -469,6 +493,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async deleteBuildingCode(buildingCode) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this building code?')) {
       try {
         const municipalityId = this.model.municipality.id;
@@ -572,13 +604,22 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveFeatureCode() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const codeData = {
         description: this.newFeatureDescription.trim(),
         displayText: this.newFeatureDisplayText.trim(),
-        points: parseInt(this.newFeaturePoints, 10),
+        points: parseFloat(this.newFeaturePoints),
         featureType: this.newFeatureType,
+        effective_year: this.configYear,
       };
 
       // Validate
@@ -599,23 +640,37 @@ export default class BuildingDetailsController extends Controller {
       let savedCode;
       if (this.isEditingFeatureCode && this.editingFeatureCode) {
         // Update existing feature code
+        // Include year param for copy-on-write support (creates new code for target year if editing inherited/locked data)
         const response = await this.api.put(
-          `/municipalities/${municipalityId}/building-feature-codes/${this.editingFeatureCode._id || this.editingFeatureCode.id}`,
+          `/municipalities/${municipalityId}/building-feature-codes/${this.editingFeatureCode._id || this.editingFeatureCode.id}?year=${this.configYear}`,
           codeData,
         );
         savedCode = response.buildingFeatureCode;
 
-        // Update in local model
-        const codeIndex = this.model.buildingFeatureCodes.findIndex(
-          (c) =>
-            (c._id || c.id) ===
-            (this.editingFeatureCode._id || this.editingFeatureCode.id),
-        );
-        if (codeIndex !== -1) {
-          this.model.buildingFeatureCodes[codeIndex] = savedCode;
-          this.model.buildingFeatureCodes = [
-            ...this.model.buildingFeatureCodes,
-          ];
+        // Handle copy-on-write case: when editing inherited/locked data, a NEW code is created
+        // Remove the old code and add the new one
+        if (response.copyOnWrite) {
+          // Remove the old code from the displayed list (it now has effective_year_end set)
+          const oldCodeId = this.editingFeatureCode._id || this.editingFeatureCode.id;
+          this.model.buildingFeatureCodes = this.model.buildingFeatureCodes.filter(
+            (c) => (c._id || c.id) !== oldCodeId
+          );
+          // Add the new code
+          this.model.buildingFeatureCodes.push(savedCode);
+          this.model.buildingFeatureCodes = [...this.model.buildingFeatureCodes];
+        } else {
+          // Regular update - replace in local model
+          const codeIndex = this.model.buildingFeatureCodes.findIndex(
+            (c) =>
+              (c._id || c.id) ===
+              (this.editingFeatureCode._id || this.editingFeatureCode.id),
+          );
+          if (codeIndex !== -1) {
+            this.model.buildingFeatureCodes[codeIndex] = savedCode;
+            this.model.buildingFeatureCodes = [
+              ...this.model.buildingFeatureCodes,
+            ];
+          }
         }
       } else {
         // Create new feature code
@@ -661,11 +716,20 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async deleteFeatureCode(featureCode) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this feature code?')) {
       try {
         const municipalityId = this.model.municipality.id;
+        // Include year param for temporal deletion support
         await this.api.delete(
-          `/municipalities/${municipalityId}/building-feature-codes/${featureCode._id || featureCode.id}`,
+          `/municipalities/${municipalityId}/building-feature-codes/${featureCode._id || featureCode.id}?year=${this.configYear}`,
         );
 
         // Remove from local model
@@ -755,13 +819,22 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveSubAreaFactor() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const factorData = {
         description: this.newSubAreaDescription.trim(),
         displayText: this.newSubAreaDisplayText.trim(),
-        points: parseInt(this.newSubAreaPoints, 10),
+        points: parseFloat(this.newSubAreaPoints),
         livingSpace: this.newSubAreaLivingSpace === 'true',
+        effective_year: this.configYear,
       };
 
       // Validate
@@ -834,6 +907,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async deleteSubAreaFactor(subAreaFactor) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this sub area factor?')) {
       try {
         const municipalityId = this.model.municipality.id;
@@ -859,6 +940,87 @@ export default class BuildingDetailsController extends Controller {
         console.error('Error deleting sub area factor:', error);
         alert('Error deleting sub area factor. Please try again.');
       }
+    }
+  }
+
+  // Sub area factor modal actions
+  @action
+  openSubAreaFactorModal(factor = null) {
+    this.subAreaFactorToEdit = factor;
+    this.showSubAreaFactorModal = true;
+  }
+
+  @action
+  closeSubAreaFactorModal() {
+    this.showSubAreaFactorModal = false;
+    this.subAreaFactorToEdit = null;
+  }
+
+  @action
+  async saveSubAreaFactorFromModal(factorData) {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
+    try {
+      const municipalityId = this.model.municipality.id;
+      const payload = {
+        description: factorData.description,
+        displayText: factorData.displayText,
+        points: factorData.points,
+        livingSpace: factorData.livingSpace,
+        effective_year: this.configYear,
+      };
+
+      let savedFactor;
+      if (factorData.id) {
+        // Update existing sub area factor
+        const response = await this.api.put(
+          `/municipalities/${municipalityId}/sketch-sub-area-factors/${factorData.id}`,
+          payload,
+        );
+        savedFactor = response.sketchSubAreaFactor;
+
+        // Update in local model
+        const factorIndex = this.model.sketchSubAreaFactors.findIndex(
+          (f) => (f._id || f.id) === factorData.id,
+        );
+        if (factorIndex !== -1) {
+          this.model.sketchSubAreaFactors[factorIndex] = savedFactor;
+          this.model.sketchSubAreaFactors = [
+            ...this.model.sketchSubAreaFactors,
+          ];
+        }
+      } else {
+        // Create new sub area factor
+        const response = await this.api.post(
+          `/municipalities/${municipalityId}/sketch-sub-area-factors`,
+          payload,
+        );
+        savedFactor = response.sketchSubAreaFactor;
+
+        // Add to local model
+        if (!this.model.sketchSubAreaFactors) {
+          this.model.sketchSubAreaFactors = [];
+        }
+        this.model.sketchSubAreaFactors.push(savedFactor);
+        this.model.sketchSubAreaFactors = [...this.model.sketchSubAreaFactors];
+      }
+
+      this.model = { ...this.model };
+
+      // Force reactivity
+      this.subAreaFactorUpdateCounter++;
+
+      // Close the modal
+      this.closeSubAreaFactorModal();
+    } catch (error) {
+      console.error('Error saving sub area factor:', error);
+      alert('Error saving sub area factor. Please try again.');
     }
   }
 
@@ -896,6 +1058,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveMiscellaneousPoints() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
       const pointsData = {
@@ -988,6 +1158,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveCalculationSettings() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     try {
       const municipalityId = this.model.municipality.id;
 
@@ -1097,6 +1275,84 @@ export default class BuildingDetailsController extends Controller {
     }
   }
 
+  /**
+   * Poll for recalculation job progress and update loading service
+   */
+  async _pollRecalculationProgress(municipalityId, jobId) {
+    const pollInterval = 750; // Poll every 750ms (reduced from 500ms to avoid flicker)
+    const maxPolls = 400; // Max 5 minutes of polling
+    let pollCount = 0;
+    let lastMessage = '';
+
+    const loadingId = this.loading.startLoading('Starting recalculation...');
+
+    return new Promise((resolve, reject) => {
+      const poll = async () => {
+        try {
+          pollCount++;
+
+          const progressResponse = await this.api.get(
+            `/municipalities/${municipalityId}/building-assessments/recalculation-progress/${jobId}`,
+          );
+
+          const job = progressResponse.job;
+
+          // Only update message if it changed
+          const newMessage = job.message || 'Processing...';
+          if (newMessage !== lastMessage) {
+            this.loading.setMessage(newMessage);
+            lastMessage = newMessage;
+          }
+
+          // Update progress (the service handles change detection internally)
+          this.loading.setProgress({
+            percentage: job.progress || 0,
+            currentPhase: job.phase,
+            totalItems: job.totalCount,
+            processedItems: job.processedCount,
+            updatedCount: job.updatedCount,
+            changedCount: job.changedCount,
+            errorCount: job.errorCount,
+          });
+
+          // Check if job is complete
+          if (job.status === 'completed') {
+            this.loading.stopLoading(loadingId);
+            this.loading.clearProgress();
+            resolve(job);
+            return;
+          }
+
+          // Check if job failed
+          if (job.status === 'failed') {
+            this.loading.stopLoading(loadingId);
+            this.loading.clearProgress();
+            reject(new Error(job.error || 'Recalculation failed'));
+            return;
+          }
+
+          // Check if we've exceeded max polls
+          if (pollCount >= maxPolls) {
+            this.loading.stopLoading(loadingId);
+            this.loading.clearProgress();
+            reject(new Error('Recalculation timed out'));
+            return;
+          }
+
+          // Continue polling
+          setTimeout(poll, pollInterval);
+        } catch (error) {
+          this.loading.stopLoading(loadingId);
+          this.loading.clearProgress();
+          reject(error);
+        }
+      };
+
+      // Start polling
+      poll();
+    });
+  }
+
   @action
   async startMassRecalculation() {
     if (
@@ -1112,7 +1368,9 @@ export default class BuildingDetailsController extends Controller {
       this.recalculationResult = null;
 
       const municipalityId = this.model.municipality.id;
-      const response = await this.api.post(
+
+      // Start the job and get jobId
+      const startResponse = await this.api.post(
         `/municipalities/${municipalityId}/building-assessments/mass-recalculate`,
         {
           year: this.massRecalcYear,
@@ -1120,7 +1378,21 @@ export default class BuildingDetailsController extends Controller {
         },
       );
 
-      this.recalculationResult = response;
+      if (!startResponse.jobId) {
+        throw new Error('Failed to start recalculation job');
+      }
+
+      // Poll for progress
+      const result = await this._pollRecalculationProgress(
+        municipalityId,
+        startResponse.jobId,
+      );
+
+      this.recalculationResult = {
+        success: true,
+        message: `Completed: ${result.updatedCount || 0} assessments processed, ${result.changedCount || 0} values changed`,
+        result: result.result,
+      };
 
       // Refresh status after completion
       await this.refreshRecalculationStatus();
@@ -1132,6 +1404,7 @@ export default class BuildingDetailsController extends Controller {
       this.recalculationResult = {
         success: false,
         message:
+          error.message ||
           error.response?.data?.message ||
           'Mass recalculation failed. Please try again.',
       };
@@ -1155,7 +1428,9 @@ export default class BuildingDetailsController extends Controller {
       this.recalculationResult = null;
 
       const municipalityId = this.model.municipality.id;
-      const response = await this.api.post(
+
+      // Start the job and get jobId
+      const startResponse = await this.api.post(
         `/municipalities/${municipalityId}/building-assessments/mass-recalculate`,
         {
           year: this.massRecalcYear,
@@ -1170,7 +1445,21 @@ export default class BuildingDetailsController extends Controller {
         },
       );
 
-      this.recalculationResult = response;
+      if (!startResponse.jobId) {
+        throw new Error('Failed to start recalculation job');
+      }
+
+      // Poll for progress
+      const result = await this._pollRecalculationProgress(
+        municipalityId,
+        startResponse.jobId,
+      );
+
+      this.recalculationResult = {
+        success: true,
+        message: `Completed: ${result.updatedCount || 0} assessments processed, ${result.changedCount || 0} values changed`,
+        result: result.result,
+      };
 
       // Refresh status after completion
       await this.refreshRecalculationStatus();
@@ -1182,6 +1471,7 @@ export default class BuildingDetailsController extends Controller {
       this.recalculationResult = {
         success: false,
         message:
+          error.message ||
           error.response?.data?.message ||
           'Filtered recalculation failed. Please try again.',
       };
@@ -1251,6 +1541,14 @@ export default class BuildingDetailsController extends Controller {
 
   @action
   async saveEconomiesOfScale() {
+    // Check if year is locked
+    if (this.isYearLocked) {
+      alert(
+        `Configuration for year ${this.configYear} is locked and cannot be modified.`,
+      );
+      return;
+    }
+
     this.isSavingEconomies = true;
     this.economiesSaveStatus = null;
 

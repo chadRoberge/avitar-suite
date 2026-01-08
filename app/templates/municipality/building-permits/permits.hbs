@@ -23,6 +23,21 @@
           My Permits
           <span class="avitar-badge avitar-badge--sm avitar-ml-2">{{this.myPermitsCount}}</span>
         </button>
+        {{#if this.canSeeReviewTab}}
+          <button
+            type="button"
+            class="avitar-tab {{if (eq this.tab 'review') 'avitar-tab--active'}}"
+            {{on "click" (fn this.setTab "review")}}
+          >
+            {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+            Requires Review
+            {{#if this.requiresReviewCount}}
+              <span class="avitar-badge avitar-badge--danger avitar-badge--sm avitar-ml-2">{{this.requiresReviewCount}}</span>
+            {{else}}
+              <span class="avitar-badge avitar-badge--sm avitar-ml-2">0</span>
+            {{/if}}
+          </button>
+        {{/if}}
       </div>
     </div>
 
@@ -88,7 +103,13 @@
 
         {{! Stats }}
         <div class="avitar-text-sm avitar-text-muted avitar-whitespace-nowrap">
-          {{#if (eq this.tab "my")}}
+          {{#if (eq this.tab "review")}}
+            {{#if this.userDepartment}}
+              Showing {{this.displayedPermits.length}} permits awaiting {{this.userDepartment}} review
+            {{else}}
+              Showing {{this.displayedPermits.length}} permits requiring your review
+            {{/if}}
+          {{else if (eq this.tab "my")}}
             Showing {{this.displayedPermits.length}} of {{this.myPermitsCount}} my permits
           {{else}}
             Showing {{this.displayedPermits.length}} of {{@model.pagination.total}} permits
@@ -175,14 +196,34 @@
                     {{/if}}
                   </td>
                   <td class="avitar-text-right" {{on "click" this.stopPropagation}}>
-                    <button
-                      type="button"
-                      class="avitar-btn avitar-btn--sm avitar-btn--primary"
-                      {{on "click" (fn this.viewPermit permit)}}
-                    >
-                      {{{lnr-icon "eye" class="avitar-mr-2"}}}
-                      View
-                    </button>
+                    {{#if (eq this.tab "review")}}
+                      <div class="avitar-flex avitar-gap-2 avitar-justify-end">
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--success"
+                          {{on "click" (fn this.reviewPermit permit)}}
+                        >
+                          {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+                          Review
+                        </button>
+                        <button
+                          type="button"
+                          class="avitar-btn avitar-btn--sm avitar-btn--secondary"
+                          {{on "click" (fn this.viewPermit permit)}}
+                        >
+                          {{{lnr-icon "eye"}}}
+                        </button>
+                      </div>
+                    {{else}}
+                      <button
+                        type="button"
+                        class="avitar-btn avitar-btn--sm avitar-btn--primary"
+                        {{on "click" (fn this.viewPermit permit)}}
+                      >
+                        {{{lnr-icon "eye" class="avitar-mr-2"}}}
+                        View
+                      </button>
+                    {{/if}}
                   </td>
                 </tr>
               {{/each}}
@@ -218,43 +259,57 @@
         {{/if}}
       {{else}}
         <div class="avitar-empty-state avitar-py-8">
-          {{{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}}
-          <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
-            {{#if (eq this.tab "my")}}
-              No Permits Yet
-            {{else}}
-              No Permits Found
-            {{/if}}
-          </h3>
-          <p class="avitar-text-muted avitar-mb-4">
-            {{#if (eq this.tab "my")}}
-              {{#if this.search}}
-                No permits you've pulled match your search criteria.
+          {{#if this.isLoadingReviewPermits}}
+            {{{lnr-icon "sync" class="avitar-text-3xl avitar-text-muted avitar-mb-4 avitar-spin"}}}
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">Loading...</h3>
+            <p class="avitar-text-muted avitar-mb-4">Fetching permits requiring your review</p>
+          {{else}}
+            {{{lnr-icon "file-empty" class="avitar-text-3xl avitar-text-muted avitar-mb-4"}}}
+            <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">
+              {{#if (eq this.tab "review")}}
+                No Permits Require Review
+              {{else if (eq this.tab "my")}}
+                No Permits Yet
               {{else}}
-                You haven't pulled any permits in this municipality yet.
+                No Permits Found
               {{/if}}
-            {{else}}
-              {{#if this.search}}
-                No permits match your search criteria.
+            </h3>
+            <p class="avitar-text-muted avitar-mb-4">
+              {{#if (eq this.tab "review")}}
+                {{#if this.userDepartment}}
+                  There are no permits awaiting {{this.userDepartment}} review.
+                {{else}}
+                  There are no permits requiring your department's review at this time.
+                {{/if}}
+              {{else if (eq this.tab "my")}}
+                {{#if this.search}}
+                  No permits you've pulled match your search criteria.
+                {{else}}
+                  You haven't pulled any permits in this municipality yet.
+                {{/if}}
               {{else}}
-                No permits found for the selected filters.
+                {{#if this.search}}
+                  No permits match your search criteria.
+                {{else}}
+                  No permits found for the selected filters.
+                {{/if}}
               {{/if}}
+            </p>
+            {{#if this.search}}
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--secondary"
+                {{on "click" this.clearSearch}}
+              >
+                {{{lnr-icon "cross" class="avitar-mr-2"}}}
+                Clear Search
+              </button>
+            {{else if (eq this.tab "my")}}
+              <LinkTo @route="municipality.building-permits.find" class="avitar-btn avitar-btn--primary">
+                {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
+                Start a New Permit
+              </LinkTo>
             {{/if}}
-          </p>
-          {{#if this.search}}
-            <button
-              type="button"
-              class="avitar-btn avitar-btn--secondary"
-              {{on "click" this.clearSearch}}
-            >
-              {{{lnr-icon "cross" class="avitar-mr-2"}}}
-              Clear Search
-            </button>
-          {{else if (eq this.tab "my")}}
-            <LinkTo @route="municipality.building-permits.find" class="avitar-btn avitar-btn--primary">
-              {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
-              Start a New Permit
-            </LinkTo>
           {{/if}}
         </div>
       {{/if}}

@@ -8,8 +8,24 @@ export default class MunicipalityAssessingSettingsGeneralRoute extends Route {
   async model() {
     const parentModel = this.modelFor('municipality.assessing.settings');
 
+    // Load year management data
+    let yearManagementData = {
+      years: [],
+      hiddenYears: [],
+      currentTaxYear: null,
+    };
+    try {
+      const response = await this.assessing.getYearManagementData();
+      if (response.success) {
+        yearManagementData = response;
+      }
+    } catch (error) {
+      console.error('Failed to load year management data:', error);
+    }
+
     return {
       ...parentModel,
+      yearManagementData,
       generalSettings: {
         // Default assessment year
         assessmentYear: new Date().getFullYear(),

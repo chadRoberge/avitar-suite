@@ -77,8 +77,8 @@
           >
             {{{lnr-icon "file-empty" class="avitar-mr-2"}}}
             Documents
-            {{#if @model.files.length}}
-              <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{@model.files.length}}</span>
+            {{#if this.files.length}}
+              <span class="avitar-badge avitar-badge--primary avitar-ml-2">{{this.files.length}}</span>
             {{/if}}
           </button>
           <button
@@ -119,6 +119,44 @@
 
     {{! Scrollable Tab Content }}
     <div class="permit-detail__content">
+      {{! Revisions Required Alert Banner - Prominent at top }}
+      {{#if this.canResubmit}}
+        <div class="avitar-bg-warning-light avitar-border-l-4 avitar-border-warning avitar-p-4 avitar-mb-4 avitar-rounded-r">
+          <div class="avitar-flex avitar-items-center avitar-gap-4">
+            <div class="avitar-flex-shrink-0">
+              <div class="avitar-w-12 avitar-h-12 avitar-rounded-full avitar-bg-warning avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                {{{lnr-icon "warning" class="avitar-text-xl"}}}
+              </div>
+            </div>
+            <div class="avitar-flex-1">
+              <h3 class="avitar-font-bold avitar-text-lg avitar-mb-1">Action Required: Revisions Requested</h3>
+              <p class="avitar-text-sm avitar-text-gray-700">
+                The following departments have requested changes: <strong>{{join this.departmentsRequestingRevisions ", "}}</strong>
+              </p>
+              <p class="avitar-text-xs avitar-text-muted avitar-mt-1">
+                Please review the feedback in the Communications tab and make the required changes before resubmitting.
+              </p>
+            </div>
+            <div class="avitar-flex-shrink-0">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--warning"
+                {{on "click" this.openResubmitModal}}
+                disabled={{this.isResubmitting}}
+              >
+                {{#if this.isResubmitting}}
+                  {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+                  Resubmitting...
+                {{else}}
+                  {{{lnr-icon "redo" class="avitar-mr-2"}}}
+                  Resubmit for Review
+                {{/if}}
+              </button>
+            </div>
+          </div>
+        </div>
+      {{/if}}
+
       {{! Overview Tab }}
       {{#if (eq this.activeTab 'overview')}}
     <div class="avitar-flex avitar-gap-6 avitar-flex-wrap">
@@ -236,13 +274,44 @@
           </div>
           <div class="avitar-card__body">
             <div class="avitar-flex avitar-flex-col avitar-gap-2">
+              {{#if this.canMarkAsPaid}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--success avitar-justify-start"
+                  {{on "click" this.openMarkPaidModal}}
+                >
+                  {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+                  Record Payment
+                </button>
+              {{/if}}
+              {{#if this.canPayOnline}}
+                <button
+                  type="button"
+                  class="avitar-btn avitar-btn--primary avitar-justify-start"
+                  {{on "click" this.initiatePayment}}
+                  disabled={{this.isProcessingPayment}}
+                >
+                  {{#if this.isProcessingPayment}}
+                    {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+                    Processing...
+                  {{else}}
+                    <i class="fas fa-credit-card avitar-mr-2"></i>
+                    Pay Online & Submit
+                  {{/if}}
+                </button>
+              {{/if}}
               {{#if this.canReviewPermit}}
                 <button type="button" class="avitar-btn avitar-btn--primary avitar-justify-start" {{on "click" this.reviewPermit}}>
                   {{{lnr-icon "clipboard"}}}
                   <span class="avitar-ml-2">Review Permit</span>
                 </button>
               {{/if}}
-              <button type="button" class="avitar-btn avitar-btn--secondary avitar-justify-start">
+              <button
+                type="button"
+                class="avitar-btn avitar-btn--secondary avitar-justify-start"
+                {{on "click" this.openScheduleInspectionModal}}
+                disabled={{not this.canScheduleInspection}}
+              >
                 {{{lnr-icon "calendar-full" class="avitar-mr-2"}}}
                 Schedule Inspection
               </button>
@@ -314,8 +383,13 @@
           <i class="fas fa-clipboard-check avitar-mr-2"></i>
           Inspections
         </h3>
-        <button type="button" class="avitar-btn avitar-btn--primary avitar-btn--sm">
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--primary avitar-btn--sm"
+          {{on "click" this.openScheduleInspectionModal}}
+          disabled={{not this.canScheduleInspection}}
+        >
+          {{{lnr-icon "plus-circle" class="avitar-mr-2"}}}
           Schedule Inspection
         </button>
       </div>
@@ -465,15 +539,21 @@
             {{#each this.displayedComments as |comment|}}
               <div class="avitar-flex avitar-gap-3 avitar-mb-4">
                 <div class="avitar-flex avitar-items-center avitar-justify-center avitar-bg-primary avitar-text-white avitar-rounded-full avitar-w-10 avitar-h-10 avitar-flex-shrink-0">
-                  <i class="fas fa-user"></i>
+                  {{{lnr-icon "user"}}}
                 </div>
                 <div class="avitar-flex-1">
-                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1">
+                  <div class="avitar-flex avitar-items-center avitar-gap-2 avitar-mb-1 avitar-flex-wrap">
                     <span class="avitar-font-medium">{{comment.authorName}}</span>
+                    {{#if comment.department}}
+                      <span class="avitar-badge avitar-badge--info avitar-badge--sm">
+                        {{{lnr-icon "briefcase" class="avitar-mr-1"}}}
+                        {{comment.department}}
+                      </span>
+                    {{/if}}
                     <span class="avitar-text-xs avitar-text-gray-500">{{date-format comment.createdAt "MMM DD, YYYY hh:mm A"}}</span>
                     {{#if (eq comment.visibility 'private')}}
                       <span class="avitar-badge avitar-badge--warning avitar-badge--sm">
-                        <i class="fas fa-lock avitar-mr-1"></i>
+                        {{{lnr-icon "lock" class="avitar-mr-1"}}}
                         Internal
                       </span>
                     {{/if}}
@@ -486,7 +566,7 @@
             {{/each}}
           {{else}}
             <div class="avitar-text-center avitar-text-gray-500 avitar-py-8">
-              <i class="fas fa-comment-slash avitar-text-4xl avitar-mb-3"></i>
+              {{{lnr-icon "bubble" class="avitar-text-4xl avitar-mb-3"}}}
               <p>No {{if (eq this.chatView 'private') 'internal' 'public'}} comments yet. Start the conversation!</p>
             </div>
           {{/if}}
@@ -582,3 +662,210 @@
     </div>
   </div>
 {{/if}}
+
+{{! Stripe Payment Modal }}
+{{#if this.showPaymentModal}}
+  <StripePaymentModal
+    @isOpen={{this.showPaymentModal}}
+    @onClose={{this.closePaymentModal}}
+    @onSuccess={{this.handlePaymentSuccess}}
+    @clientSecret={{this.clientSecret}}
+    @stripeAccountId={{this.stripeAccountId}}
+    @title="Pay for Permit"
+    @description={{concat "Payment for permit #" @model.permit.permitNumber}}
+    @amount={{this.paymentBreakdown.totalAmount}}
+    @isPermitPayment={{true}}
+    @paymentBreakdown={{this.paymentBreakdown}}
+  />
+{{/if}}
+
+{{! Mark as Paid Modal (Staff Only) }}
+{{#if this.showMarkPaidModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeMarkPaidModal}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+          Record Payment
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeMarkPaidModal}} aria-label="Close">
+          {{{lnr-icon "cross"}}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{! Payment Summary }}
+        <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4 avitar-border avitar-border-gray-200">
+          <div class="avitar-flex avitar-justify-between avitar-items-center">
+            <div>
+              <div class="avitar-text-sm avitar-text-muted">Permit</div>
+              <div class="avitar-font-semibold">{{@model.permit.permitNumber}}</div>
+            </div>
+            <div class="avitar-text-right">
+              <div class="avitar-text-sm avitar-text-muted">Amount Due</div>
+              <div class="avitar-text-2xl avitar-font-bold avitar-text-primary">
+                {{format-currency @model.permit.totalFees}}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="avitar-space-y-4">
+          {{! Payment Method }}
+          <div>
+            <label class="avitar-label">Payment Method <span class="avitar-text-danger">*</span></label>
+            <select
+              class="avitar-select"
+              {{on "change" (fn this.updateMarkPaidField "markPaidPaymentMethod")}}
+            >
+              {{#each this.paymentMethodOptions as |methodOption|}}
+                <option value={{methodOption.value}} selected={{eq this.markPaidPaymentMethod methodOption.value}}>
+                  {{methodOption.label}}
+                </option>
+              {{/each}}
+            </select>
+          </div>
+
+          {{! Receipt/Check Number }}
+          <div>
+            <label class="avitar-label">Receipt / Check Number</label>
+            <input
+              type="text"
+              class="avitar-input"
+              placeholder="e.g., Check #1234"
+              value={{this.markPaidReceiptNumber}}
+              {{on "input" (fn this.updateMarkPaidField "markPaidReceiptNumber")}}
+            />
+          </div>
+
+          {{! Notes }}
+          <div>
+            <label class="avitar-label">Notes</label>
+            <textarea
+              class="avitar-input"
+              rows="3"
+              placeholder="Optional notes about the payment..."
+              {{on "input" (fn this.updateMarkPaidField "markPaidNotes")}}
+            >{{this.markPaidNotes}}</textarea>
+          </div>
+        </div>
+
+        {{! Info Notice }}
+        <div class="avitar-bg-info-light avitar-p-3 avitar-rounded avitar-mt-4 avitar-border avitar-border-info">
+          <div class="avitar-flex avitar-items-start avitar-gap-2">
+            {{{lnr-icon "question-circle" class="avitar-text-info avitar-mt-1"}}}
+            <p class="avitar-text-sm avitar-text-info">
+              Recording this payment will mark all fees as paid and submit the permit for department review.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeMarkPaidModal}}
+          disabled={{this.isMarkingAsPaid}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--success"
+          {{on "click" this.confirmMarkAsPaid}}
+          disabled={{this.isMarkingAsPaid}}
+        >
+          {{#if this.isMarkingAsPaid}}
+            {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+            Recording...
+          {{else}}
+            {{{lnr-icon "checkmark-circle" class="avitar-mr-2"}}}
+            Record Payment
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Resubmit Permit Modal (for Applicants) }}
+{{#if this.showResubmitModal}}
+  <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.closeResubmitModal}}>
+    <div class="avitar-modal" {{on "click" this.stopPropagation}} role="dialog" aria-modal="true">
+      <div class="avitar-modal__header">
+        <h2 class="avitar-modal__title">
+          {{{lnr-icon "redo" class="avitar-mr-2"}}}
+          Resubmit Permit for Review
+        </h2>
+        <button type="button" class="avitar-modal__close" {{on "click" this.closeResubmitModal}} aria-label="Close">
+          {{{lnr-icon "cross"}}}
+        </button>
+      </div>
+
+      <div class="avitar-modal__body">
+        {{! Warning Notice }}
+        <div class="avitar-bg-warning-light avitar-p-4 avitar-rounded avitar-mb-4 avitar-border avitar-border-warning">
+          <div class="avitar-flex avitar-items-start avitar-gap-3">
+            <i class="fas fa-exclamation-triangle avitar-text-warning avitar-mt-1"></i>
+            <div>
+              <p class="avitar-font-semibold avitar-mb-1">Before Resubmitting</p>
+              <p class="avitar-text-sm avitar-text-muted">
+                Please ensure you have addressed all feedback from the following departments:
+                <strong>{{join this.departmentsRequestingRevisions ", "}}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {{! Optional Message }}
+        <div>
+          <label class="avitar-label">Message to Reviewers (Optional)</label>
+          <textarea
+            class="avitar-input"
+            rows="4"
+            placeholder="Describe the changes you made to address the requested revisions..."
+            value={{this.resubmitMessage}}
+            {{on "input" this.updateResubmitMessage}}
+          ></textarea>
+          <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+            This message will be visible to the reviewing departments.
+          </p>
+        </div>
+      </div>
+
+      <div class="avitar-modal__footer">
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--secondary"
+          {{on "click" this.closeResubmitModal}}
+          disabled={{this.isResubmitting}}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="avitar-btn avitar-btn--warning"
+          {{on "click" this.resubmitPermit}}
+          disabled={{this.isResubmitting}}
+        >
+          {{#if this.isResubmitting}}
+            {{{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}}
+            Resubmitting...
+          {{else}}
+            {{{lnr-icon "redo" class="avitar-mr-2"}}}
+            Resubmit for Review
+          {{/if}}
+        </button>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+{{! Schedule Inspection Modal }}
+<Contractor::ScheduleInspectionModal
+  @permit={{@model.permit}}
+  @isOpen={{this.showScheduleInspectionModal}}
+  @onClose={{this.closeScheduleInspectionModal}}
+  @onSchedule={{this.scheduleInspection}}
+/>

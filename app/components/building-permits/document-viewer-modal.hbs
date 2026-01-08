@@ -37,7 +37,7 @@
                   src={{this.computedFileUrl}}
                   alt={{@file.displayName}}
                   class="avitar-shadow-lg"
-                  style="max-width: 100%; height: auto; transform: scale({{div this.zoomLevel 100}}); transition: transform 0.2s ease;"
+                  style="max-width: 100%; height: auto; transform: scale({{this.zoomScale}}); transition: transform 0.2s ease;"
                 />
               </div>
             {{/if}}

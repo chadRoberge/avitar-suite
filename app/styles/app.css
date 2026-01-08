@@ -3044,6 +3044,7 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -3412,7 +3413,9 @@ body {
   box-shadow: var(--shadow-xl);
   text-align: center;
   min-width: 200px;
-  max-width: 300px;
+  max-width: 320px;
+  width: 90%;
+  overflow: hidden;
   animation: fadeInUp 0.3s ease-out;
 }
 
@@ -3437,6 +3440,7 @@ body {
 
 .loading-overlay__progress {
   margin-top: var(--space-4);
+  width: 100%;
 }
 
 .loading-overlay__phase {
@@ -3459,13 +3463,14 @@ body {
   height: 100%;
   background: var(--avitar-green);
   border-radius: var(--radius-full);
-  transition: width 0.3s ease;
+  transition: width 0.5s ease-out;
 }
 
 .loading-overlay__progress-text {
   color: var(--color-gray-600);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
 }
 
 .loading-overlay__time-remaining {
@@ -4953,7 +4958,9 @@ main.municipality-page.has-sidebar {
 /* Tab content area - needs padding-top to account for fixed tabs */
 .permit-detail__content {
   padding: var(--space-6);
-  padding-top: calc(var(--space-6) + 60px); /* Account for fixed tab bar height */
+  padding-top: calc(
+    var(--space-6) + 60px
+  ); /* Account for fixed tab bar height */
 }
 
 /* Chat messages scrollable area */

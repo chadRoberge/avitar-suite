@@ -64,8 +64,10 @@ export default class DepreciationEditModalComponent extends Component {
 
       // Set individual tracked properties
       this.yearBuilt = this.args.buildingAssessment.year_built || '';
-      this.normalDescription =
+      // Normalize the description to title case for dropdown matching
+      const rawDescription =
         this.args.buildingAssessment.depreciation?.normal?.description || '';
+      this.normalDescription = this.normalizeCondition(rawDescription);
       this.normalPercentage = initialNormalPercentage;
       this.physicalNotes =
         this.args.buildingAssessment.depreciation?.physical?.notes || '';
@@ -108,6 +110,31 @@ export default class DepreciationEditModalComponent extends Component {
       normalPercentage: this.normalPercentage,
     });
   }
+
+  // Normalize condition string to title case for dropdown matching
+  normalizeCondition(value) {
+    if (!value) return '';
+    // Map of uppercase to proper case
+    const conditionMap = {
+      EXCELLENT: 'Excellent',
+      'VERY GOOD': 'Very Good',
+      GOOD: 'Good',
+      AVERAGE: 'Average',
+      FAIR: 'Fair',
+      POOR: 'Poor',
+      'VERY POOR': 'Very Poor',
+    };
+    const upperValue = value.toUpperCase();
+    return conditionMap[upperValue] || value;
+  }
+
+  // Helper for template to check if condition matches (case-insensitive)
+  isCondition = (conditionValue) => {
+    if (!this.normalDescription) return false;
+    return (
+      this.normalDescription.toUpperCase() === conditionValue.toUpperCase()
+    );
+  };
 
   @action
   close() {

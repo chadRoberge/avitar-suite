@@ -13,9 +13,6 @@ export default class BuildingPermitsInspectionChecklistComponent extends Compone
   @tracked savingItemIds = [];
   @tracked expandedNoteIds = []; // Track which items have expanded notes
 
-  // Debounce timers for each item
-  debounceTimers = {};
-
   @action
   toggleNoteExpanded(itemId) {
     if (this.expandedNoteIds.includes(itemId)) {
@@ -86,22 +83,32 @@ export default class BuildingPermitsInspectionChecklistComponent extends Compone
   }
 
   @action
-  updateItemNotes(item, event) {
+  async saveNotesOnBlur(item, event) {
+    const newNotes = event.target.value;
+
+    // Update the local item (without triggering array reactivity)
     const itemIndex = this.checklist.findIndex((i) => i._id === item._id);
-    if (itemIndex === -1) return;
-
-    this.checklist[itemIndex].notes = event.target.value;
-    this.checklist = [...this.checklist];
-
-    // Debounced save (waits 500ms after last keystroke)
-    if (this.debounceTimers[item._id]) {
-      clearTimeout(this.debounceTimers[item._id]);
+    if (itemIndex !== -1) {
+      this.checklist[itemIndex].notes = newNotes;
     }
 
-    this.debounceTimers[item._id] = setTimeout(() => {
-      this.saveChecklistItem(item._id, { notes: event.target.value });
-      delete this.debounceTimers[item._id];
-    }, 500);
+    // Save to server silently (no loading indicator, no checklist refresh)
+    await this.saveNotesSilently(item._id, newNotes);
+  }
+
+  /**
+   * Save notes without triggering any UI updates that could cause focus issues
+   */
+  async saveNotesSilently(itemId, notes) {
+    try {
+      await this.api.patch(
+        `/municipalities/${this.args.municipalityId}/inspections/${this.args.inspection.id}/checklist/${itemId}`,
+        { notes },
+      );
+    } catch (error) {
+      console.error('Error saving checklist notes:', error);
+      this.notifications.error('Failed to save notes');
+    }
   }
 
   async saveChecklistItem(itemId, updates) {

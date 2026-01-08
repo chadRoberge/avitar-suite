@@ -11,12 +11,17 @@ export default class MunicipalityController extends Controller {
   get shouldShowPropertySidebar() {
     const routeName = this.router.currentRouteName;
 
+    // Return false if route isn't determined yet (during initial render/transition)
+    if (!routeName) {
+      return false;
+    }
+
     // Show sidebar only on assessing routes and building-permits find route
     return (
-      (routeName?.startsWith('municipality.assessing') &&
-        !routeName?.startsWith('municipality.assessing.settings') &&
-        !routeName?.startsWith('municipality.assessing.reports') &&
-        !routeName?.startsWith('municipality.assessing.revaluation')) ||
+      (routeName.startsWith('municipality.assessing') &&
+        !routeName.startsWith('municipality.assessing.settings') &&
+        !routeName.startsWith('municipality.assessing.reports') &&
+        !routeName.startsWith('municipality.assessing.revaluation')) ||
       routeName === 'municipality.building-permits.find'
     );
   }

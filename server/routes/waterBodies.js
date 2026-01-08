@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const WaterBody = require('../models/WaterBody');
 const WaterBodyLadder = require('../models/WaterBodyLadder');
+const {
+  checkYearLock,
+  getEffectiveYear,
+  isYearLocked,
+} = require('../middleware/checkYearLock');
 
 // Get all water bodies for a municipality
 router.get('/municipalities/:municipalityId/water-bodies', async (req, res) => {
@@ -158,18 +163,11 @@ router.delete(
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      console.log(
-        'Deleting water body:',
-        waterBodyId,
-        'for municipality:',
-        municipalityId,
-      );
 
       const waterBody = await WaterBody.findByMunicipalityAndId(
         municipalityId,
         waterBodyId,
       );
-      console.log('Found water body:', waterBody ? 'Yes' : 'No');
 
       if (!waterBody) {
         return res.status(404).json({
@@ -180,15 +178,12 @@ router.delete(
 
       waterBody.isActive = false;
       await waterBody.save();
-      console.log('Water body soft deleted');
 
       // Also soft delete associated ladder entries
-      const WaterBodyLadder = require('../models/WaterBodyLadder');
       await WaterBodyLadder.updateMany(
         { waterBodyId, isActive: true },
         { isActive: false },
       );
-      console.log('Associated ladder entries soft deleted');
 
       res.json({
         success: true,
@@ -229,20 +224,30 @@ router.post(
 // === WATER BODY LADDER ROUTES ===
 
 // Get ladder entries for a water body
+// @query year - optional, defaults to current year
 router.get(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder',
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
+      const year = getEffectiveYear(req);
+
+      // Use year-aware query method
       const ladderEntries =
-        await WaterBodyLadder.findByMunicipalityAndWaterBody(
+        await WaterBodyLadder.findByMunicipalityAndWaterBodyForYear(
           municipalityId,
           waterBodyId,
+          year,
         );
+
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(municipalityId, year);
 
       res.json({
         success: true,
         ladderEntries,
+        year,
+        isYearLocked: yearLocked,
       });
     } catch (error) {
       console.error('Error fetching water body ladder:', error);
@@ -255,17 +260,28 @@ router.get(
 );
 
 // Get all ladders for a municipality
+// @query year - optional, defaults to current year
 router.get(
   '/municipalities/:municipalityId/water-body-ladders',
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const ladderEntries =
-        await WaterBodyLadder.findByMunicipality(municipalityId);
+      const year = getEffectiveYear(req);
+
+      // Use year-aware query method
+      const ladderEntries = await WaterBodyLadder.findByMunicipalityForYear(
+        municipalityId,
+        year,
+      );
+
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(municipalityId, year);
 
       res.json({
         success: true,
         ladderEntries,
+        year,
+        isYearLocked: yearLocked,
       });
     } catch (error) {
       console.error('Error fetching water body ladders:', error);
@@ -278,12 +294,14 @@ router.get(
 );
 
 // Create a ladder entry
+// @body effective_year - required, the year for this configuration
 router.post(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder',
+  checkYearLock,
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      const { frontage, factor, order } = req.body;
+      const { frontage, factor, order, effective_year } = req.body;
 
       // Validation
       if (frontage === undefined || factor === undefined) {
@@ -293,12 +311,20 @@ router.post(
         });
       }
 
+      if (!effective_year) {
+        return res.status(400).json({
+          success: false,
+          message: 'effective_year is required',
+        });
+      }
+
       const ladderEntry = new WaterBodyLadder({
         municipalityId,
         waterBodyId,
         frontage,
         factor,
         order: order || 0,
+        effective_year,
       });
 
       await ladderEntry.save();
@@ -314,7 +340,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message:
-            'A ladder entry with this frontage already exists for this water body',
+            'A ladder entry with this frontage already exists for this water body and year',
         });
       }
 
@@ -327,12 +353,14 @@ router.post(
 );
 
 // Bulk update/create ladder entries for a water body
+// @body effective_year - required, the year for this configuration
 router.put(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder/bulk',
+  checkYearLock,
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      const { entries } = req.body;
+      const { entries, effective_year } = req.body;
 
       if (!entries || !Array.isArray(entries)) {
         return res.status(400).json({
@@ -341,9 +369,16 @@ router.put(
         });
       }
 
-      // First, soft delete all existing entries for this water body
+      if (!effective_year) {
+        return res.status(400).json({
+          success: false,
+          message: 'effective_year is required',
+        });
+      }
+
+      // First, soft delete all existing entries for this water body and year
       await WaterBodyLadder.updateMany(
-        { municipalityId, waterBodyId, isActive: true },
+        { municipalityId, waterBodyId, effective_year, isActive: true },
         { isActive: false },
       );
 
@@ -365,6 +400,7 @@ router.put(
           frontage,
           factor,
           order: order || 0,
+          effective_year,
         });
 
         await ladderEntry.save();
@@ -386,12 +422,17 @@ router.put(
 );
 
 // Update a ladder entry
+// Supports copy-on-write: if editing an inherited entry from a locked year,
+// creates a new entry for the target year instead of modifying the original
 router.put(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder/:ladderEntryId',
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId, ladderEntryId } = req.params;
       const { frontage, factor, order } = req.body;
+
+      // Get the target year from query params (the year the user is currently viewing)
+      const targetYear = getEffectiveYear(req);
 
       const ladderEntry = await WaterBodyLadder.findOne({
         _id: ladderEntryId,
@@ -407,6 +448,77 @@ router.put(
         });
       }
 
+      const sourceYear = ladderEntry.effective_year;
+      const sourceYearLocked = await isYearLocked(municipalityId, sourceYear);
+      const isInherited = sourceYear !== targetYear;
+
+      // If editing an inherited entry OR the source year is locked, use copy-on-write
+      if (isInherited || sourceYearLocked) {
+        // Check if the target year is locked
+        const targetYearLocked = await isYearLocked(municipalityId, targetYear);
+        if (targetYearLocked) {
+          return res.status(403).json({
+            success: false,
+            message: `Configuration for year ${targetYear} is locked and cannot be modified.`,
+            isYearLocked: true,
+          });
+        }
+
+        // Check if an entry with this frontage already exists for target year
+        const existingTargetEntry = await WaterBodyLadder.findOne({
+          waterBodyId,
+          frontage: frontage !== undefined ? frontage : ladderEntry.frontage,
+          effective_year: targetYear,
+          isActive: true,
+        });
+
+        if (existingTargetEntry) {
+          // Update the existing target year entry instead
+          if (frontage !== undefined) existingTargetEntry.frontage = frontage;
+          if (factor !== undefined) existingTargetEntry.factor = factor;
+          if (order !== undefined) existingTargetEntry.order = order;
+          await existingTargetEntry.save();
+
+          return res.json({
+            success: true,
+            ladderEntry: existingTargetEntry,
+            copyOnWrite: true,
+            message: `Updated existing entry for year ${targetYear}`,
+          });
+        }
+
+        // Create a new entry for the target year (copy-on-write)
+        const newEntry = new WaterBodyLadder({
+          frontage: frontage !== undefined ? frontage : ladderEntry.frontage,
+          factor: factor !== undefined ? factor : ladderEntry.factor,
+          order: order !== undefined ? order : ladderEntry.order,
+          waterBodyId,
+          municipalityId,
+          effective_year: targetYear,
+          effective_year_end: null,
+          previous_version_id: ladderEntryId,
+          next_version_id: null,
+          isActive: true,
+        });
+
+        await newEntry.save();
+
+        // Update the source entry with version chain
+        await WaterBodyLadder.findByIdAndUpdate(ladderEntryId, {
+          effective_year_end: targetYear,
+          next_version_id: newEntry._id,
+        });
+
+        return res.status(201).json({
+          success: true,
+          ladderEntry: newEntry,
+          copyOnWrite: true,
+          previousVersionId: ladderEntryId,
+          message: `Created new entry for year ${targetYear} (supersedes entry from ${sourceYear})`,
+        });
+      }
+
+      // Direct update for non-inherited, non-locked entries
       if (frontage !== undefined) ladderEntry.frontage = frontage;
       if (factor !== undefined) ladderEntry.factor = factor;
       if (order !== undefined) ladderEntry.order = order;
@@ -424,7 +536,7 @@ router.put(
         return res.status(400).json({
           success: false,
           message:
-            'A ladder entry with this frontage already exists for this water body',
+            'A ladder entry with this frontage already exists for this water body and year',
         });
       }
 
@@ -437,11 +549,16 @@ router.put(
 );
 
 // Delete a ladder entry
+// Supports temporal deletion: if deleting an inherited entry from a locked year,
+// marks it as ending in the target year instead of permanently deleting
 router.delete(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder/:ladderEntryId',
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId, ladderEntryId } = req.params;
+
+      // Get the target year from query params (the year the user is currently viewing)
+      const targetYear = getEffectiveYear(req);
 
       const ladderEntry = await WaterBodyLadder.findOne({
         _id: ladderEntryId,
@@ -457,6 +574,37 @@ router.delete(
         });
       }
 
+      const sourceYear = ladderEntry.effective_year;
+      const sourceYearLocked = await isYearLocked(municipalityId, sourceYear);
+      const isInherited = sourceYear !== targetYear;
+
+      // If deleting an inherited entry OR the source year is locked, use temporal deletion
+      if (isInherited || sourceYearLocked) {
+        // Check if the target year is locked
+        const targetYearLocked = await isYearLocked(municipalityId, targetYear);
+        if (targetYearLocked) {
+          return res.status(403).json({
+            success: false,
+            message: `Configuration for year ${targetYear} is locked and cannot be modified.`,
+            isYearLocked: true,
+          });
+        }
+
+        // Temporal delete: mark the entry as ending in the target year
+        // This hides it for targetYear and all future years
+        await WaterBodyLadder.findByIdAndUpdate(ladderEntryId, {
+          effective_year_end: targetYear,
+        });
+
+        return res.json({
+          success: true,
+          message: `Ladder entry hidden for year ${targetYear} and beyond`,
+          temporalDelete: true,
+          effectiveYearEnd: targetYear,
+        });
+      }
+
+      // Direct delete for entries from the current unlocked year
       ladderEntry.isActive = false;
       await ladderEntry.save();
 
@@ -475,15 +623,59 @@ router.delete(
 );
 
 // Create default ladder for a water body
+// @body effective_year - required, the year for this configuration
 router.post(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/ladder/defaults',
+  checkYearLock,
   async (req, res) => {
     try {
       const { municipalityId, waterBodyId } = req.params;
-      const ladderEntries = await WaterBodyLadder.createDefaults(
-        municipalityId,
-        waterBodyId,
-      );
+      const { effective_year } = req.body;
+
+      if (!effective_year) {
+        return res.status(400).json({
+          success: false,
+          message: 'effective_year is required',
+        });
+      }
+
+      // Note: createDefaults needs to be updated to accept effective_year
+      // For now, create defaults with the specified year
+      const defaults = [
+        { frontage: 50, factor: 80, order: 1 },
+        { frontage: 100, factor: 100, order: 2 },
+        { frontage: 200, factor: 120, order: 3 },
+        { frontage: 500, factor: 150, order: 4 },
+      ];
+
+      const ladderEntries = [];
+      for (const defaultEntry of defaults) {
+        try {
+          const existing = await WaterBodyLadder.findOne({
+            municipalityId,
+            waterBodyId,
+            frontage: defaultEntry.frontage,
+            effective_year,
+            isActive: true,
+          });
+
+          if (!existing) {
+            const created = await WaterBodyLadder.create({
+              municipalityId,
+              waterBodyId,
+              ...defaultEntry,
+              effective_year,
+            });
+            ladderEntries.push(created);
+          } else {
+            ladderEntries.push(existing);
+          }
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+      }
 
       res.json({
         success: true,
@@ -500,12 +692,14 @@ router.post(
 );
 
 // Calculate value for a given frontage
+// @query year - optional, defaults to current year
 router.post(
   '/municipalities/:municipalityId/water-bodies/:waterBodyId/calculate-value',
   async (req, res) => {
     try {
       const { waterBodyId } = req.params;
       const { frontage } = req.body;
+      const year = getEffectiveYear(req);
 
       if (frontage === undefined) {
         return res.status(400).json({
@@ -514,15 +708,18 @@ router.post(
         });
       }
 
-      const calculatedValue = await WaterBodyLadder.calculateValue(
+      // Use year-aware calculation method
+      const calculatedValue = await WaterBodyLadder.calculateValueForYear(
         waterBodyId,
         frontage,
+        year,
       );
 
       res.json({
         success: true,
         frontage,
         calculatedValue,
+        year,
       });
     } catch (error) {
       console.error('Error calculating value:', error);

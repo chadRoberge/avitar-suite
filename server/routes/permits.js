@@ -11,6 +11,7 @@ const PropertyTreeNode = require('../models/PropertyTreeNode');
 const BuildingAssessment = require('../models/BuildingAssessment');
 const Contractor = require('../models/Contractor');
 const Municipality = require('../models/Municipality');
+const FeeSchedule = require('../models/FeeSchedule');
 const { authenticateToken } = require('../middleware/auth');
 const mongoose = require('mongoose');
 const stripeService = require('../services/stripeService');
@@ -477,6 +478,42 @@ router.put('/permits/:permitId', authenticateToken, async (req, res) => {
         console.error(
           'Failed to send department assignment notifications:',
           notificationError,
+        );
+        // Don't fail the request if notification fails
+      }
+
+      // Send confirmation notification to the applicant
+      try {
+        const applicantUserId = permit.submitted_by || permit.createdBy;
+        if (applicantUserId) {
+          const baseUrl = process.env.APP_URL || 'https://app.avitar.com';
+          const permitUrl = `${baseUrl}/my-permits/permit/${permit._id}`;
+
+          await notificationService.sendPermitStatusNotification({
+            userId: applicantUserId.toString(),
+            municipalityId: permit.municipalityId.toString(),
+            permitNumber: permit.permitNumber,
+            status: 'submitted',
+            permitData: {
+              permitType: permit.permitTypeId?.name || permit.type,
+              propertyAddress:
+                permit.propertyId?.location?.address || permit.propertyAddress,
+              applicantName:
+                permit.applicant?.name || req.user.fullName || req.user.email,
+              submittedDate: new Date(),
+              permitUrl,
+              municipalityName:
+                permit.municipalityId?.name || 'the municipality',
+            },
+          });
+          console.log(
+            `📧 Permit submitted confirmation sent to applicant for permit ${permit.permitNumber}`,
+          );
+        }
+      } catch (applicantNotificationError) {
+        console.error(
+          'Failed to send permit submitted confirmation to applicant:',
+          applicantNotificationError,
         );
         // Don't fail the request if notification fails
       }
@@ -1351,6 +1388,141 @@ router.get(
 );
 
 /**
+ * GET /api/municipalities/:municipalityId/permits/pending-reviews-count
+ * Get count of permits that require the current user's department review
+ * Returns count for badge display in navigation
+ */
+router.get(
+  '/municipalities/:municipalityId/permits/pending-reviews-count',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      // Only municipal staff have department reviews
+      if (
+        req.user.global_role === 'contractor' ||
+        req.user.global_role === 'citizen'
+      ) {
+        return res.json({ count: 0 });
+      }
+
+      // Get user's department for this municipality
+      const municipalPermission = req.user.municipal_permissions?.find(
+        (perm) => perm.municipality_id.toString() === municipalityId.toString(),
+      );
+
+      const userDepartment = municipalPermission?.department;
+
+      // Avitar staff without a specific department won't have pending reviews
+      if (!userDepartment) {
+        return res.json({ count: 0 });
+      }
+
+      // Count permits with pending reviews for this user's department
+      // Use $elemMatch to ensure both department AND status match on the SAME review
+      const count = await Permit.countDocuments({
+        municipalityId: new mongoose.Types.ObjectId(municipalityId),
+        isActive: true,
+        departmentReviews: {
+          $elemMatch: {
+            department: userDepartment,
+            status: { $in: ['pending', 'in_review'] },
+          },
+        },
+      });
+
+      res.json({ count });
+    } catch (error) {
+      console.error('Error fetching pending reviews count:', error);
+      res.status(500).json({
+        error: 'Failed to fetch pending reviews count',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * GET /api/municipalities/:municipalityId/permits/requires-review
+ * Get permits that require the current user's department review
+ */
+router.get(
+  '/municipalities/:municipalityId/permits/requires-review',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+
+      // Only municipal staff have department reviews
+      if (
+        req.user.global_role === 'contractor' ||
+        req.user.global_role === 'citizen'
+      ) {
+        return res.json({ permits: [], count: 0 });
+      }
+
+      // Get user's department for this municipality
+      const municipalPermission = req.user.municipal_permissions?.find(
+        (perm) => perm.municipality_id.toString() === municipalityId.toString(),
+      );
+
+      const userDepartment = municipalPermission?.department;
+
+      // Avitar staff without a specific department won't have pending reviews
+      if (!userDepartment) {
+        return res.json({ permits: [], count: 0 });
+      }
+
+      // Find permits with pending reviews for this user's department
+      // Use $elemMatch to ensure both department AND status match on the SAME review
+      const permits = await Permit.find({
+        municipalityId: new mongoose.Types.ObjectId(municipalityId),
+        isActive: true,
+        departmentReviews: {
+          $elemMatch: {
+            department: userDepartment,
+            status: { $in: ['pending', 'in_review'] },
+          },
+        },
+      })
+        .populate('propertyId', 'pid_formatted location.address')
+        .populate('permitTypeId', 'name category')
+        .populate('submitted_by', 'first_name last_name email')
+        .sort({ applicationDate: -1 })
+        .lean();
+
+      // Add the user's department review status to each permit for easy access
+      const permitsWithReviewInfo = permits.map((permit) => {
+        const userReview = permit.departmentReviews.find(
+          (r) =>
+            r.department === userDepartment &&
+            ['pending', 'in_review'].includes(r.status),
+        );
+        return {
+          ...permit,
+          userDepartmentReview: userReview,
+        };
+      });
+
+      res.json({
+        permits: permitsWithReviewInfo,
+        count: permitsWithReviewInfo.length,
+        department: userDepartment,
+      });
+    } catch (error) {
+      console.error('Error fetching requires review permits:', error);
+      res.status(500).json({
+        error: 'Failed to fetch requires review permits',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
  * GET /api/municipalities/:municipalityId/permits
  * Get all permits for a municipality with optional filters
  *
@@ -1442,7 +1614,7 @@ router.get(
         isActive: true,
       };
 
-      // Filter by year (default to active permits if no year specified)
+      // Filter by year if specified
       if (year && year !== 'null' && year !== '') {
         const startDate = new Date(`${year}-01-01`);
         const endDate = new Date(`${year}-12-31T23:59:59`);
@@ -1450,10 +1622,8 @@ router.get(
           $gte: startDate,
           $lte: endDate,
         };
-      } else {
-        // Default: only show non-completed permits
-        query.status = { $nin: ['completed', 'closed', 'cancelled'] };
       }
+      // Note: No default status filter - show all permits by default
 
       // Filter by permit type
       if (permitTypeId && permitTypeId !== 'null' && permitTypeId !== '') {
@@ -1500,6 +1670,7 @@ router.get(
         .populate('assignedInspector', 'first_name last_name')
         .populate('assignedReviewer', 'first_name last_name')
         .populate('submitted_by', 'first_name last_name email')
+        .populate('createdBy', 'first_name last_name email')
         .sort({ applicationDate: -1 })
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
@@ -1685,6 +1856,7 @@ router.post(
         projectOwnerId: req.user._id,
         status: 'draft',
         createdBy: req.user._id,
+        submitted_by: req.user._id, // Track who submitted the project
         updatedBy: req.user._id,
         // Denormalize property data
         pidRaw: property.pid_raw,
@@ -1762,6 +1934,7 @@ router.post(
             type: permitType.name,
             status: 'draft',
             createdBy: req.user._id,
+            submitted_by: req.user._id, // Track who submitted the permit
             updatedBy: req.user._id,
             pidRaw: property.pid_raw,
             pidFormatted: property.pid_formatted,
@@ -1901,54 +2074,110 @@ router.post(
         };
       }
 
-      // Calculate fees from permit type
+      // Calculate fees from permit type - check for versioned FeeSchedule first
       const fees = [];
-      if (permitType && permitType.feeSchedule) {
-        const feeSchedule = permitType.feeSchedule;
-        let baseFeeAmount = 0;
+      let feeScheduleSnapshot = null;
 
-        switch (feeSchedule.calculationType) {
-          case 'flat':
-            baseFeeAmount = feeSchedule.baseAmount || 0;
-            break;
+      if (permitType) {
+        // Try to get active versioned fee schedule first
+        const activeFeeSchedule = await FeeSchedule.getActiveSchedule(
+          permitType._id,
+        );
 
-          case 'per_sqft':
-            const sqft = permitData.squareFootage || 0;
-            baseFeeAmount =
-              (feeSchedule.baseAmount || 0) +
-              sqft * (feeSchedule.perSqftRate || 0);
-            break;
-
-          case 'percentage':
-            const estimatedValue = permitData.estimatedValue || 0;
-            const percentageRate = feeSchedule.perSqftRate || 0; // Reusing this field for percentage
-            baseFeeAmount =
-              (feeSchedule.baseAmount || 0) +
-              estimatedValue * (percentageRate / 100);
-            break;
-
-          case 'custom':
-            // For custom formulas, use base amount as default
-            // TODO: Implement custom formula evaluation if needed
-            baseFeeAmount = feeSchedule.baseAmount || 0;
-            break;
-
-          default:
-            baseFeeAmount = feeSchedule.baseAmount || 0;
-        }
-
-        // Add base permit fee
-        if (baseFeeAmount > 0) {
-          fees.push({
-            type: 'base',
-            description: `${permitType.name} - Base Fee`,
-            amount: Math.round(baseFeeAmount * 100) / 100, // Round to 2 decimals
-            paid: false,
+        if (activeFeeSchedule) {
+          // Use versioned fee schedule - calculate fees and create snapshot
+          const calculation = activeFeeSchedule.calculateFees({
+            squareFootage: permitData.squareFootage,
+            estimatedValue: permitData.estimatedValue,
+            units: permitData.units,
           });
+
+          // Add base permit fee
+          if (calculation.baseFee > 0) {
+            fees.push({
+              type: 'base',
+              description: `${permitType.name} - Base Fee`,
+              amount: Math.round(calculation.baseFee * 100) / 100,
+              paid: false,
+            });
+          }
+
+          // Add additional fees (non-optional only)
+          for (const addlFee of calculation.additionalFees) {
+            if (!addlFee.isOptional && addlFee.amount > 0) {
+              fees.push({
+                type: addlFee.type || 'other',
+                description: addlFee.name,
+                amount: Math.round(addlFee.amount * 100) / 100,
+                paid: false,
+              });
+            }
+          }
+
+          // Create snapshot for audit trail
+          feeScheduleSnapshot = {
+            feeScheduleId: activeFeeSchedule._id,
+            version: activeFeeSchedule.version,
+            effectiveDate: activeFeeSchedule.effectiveDate,
+            feeConfiguration: activeFeeSchedule.feeConfiguration.toObject
+              ? activeFeeSchedule.feeConfiguration.toObject()
+              : activeFeeSchedule.feeConfiguration,
+            calculatedFees: {
+              baseFee: calculation.baseFee,
+              additionalFees: calculation.additionalFees,
+              totalFee: calculation.totalFee,
+            },
+            capturedAt: new Date(),
+          };
+        } else if (permitType.feeSchedule) {
+          // Fall back to embedded fee schedule (legacy)
+          const feeSchedule = permitType.feeSchedule;
+          let baseFeeAmount = 0;
+
+          switch (feeSchedule.calculationType) {
+            case 'flat':
+              baseFeeAmount = feeSchedule.baseAmount || 0;
+              break;
+
+            case 'per_sqft':
+              const sqft = permitData.squareFootage || 0;
+              baseFeeAmount =
+                (feeSchedule.baseAmount || 0) +
+                sqft * (feeSchedule.perSqftRate || 0);
+              break;
+
+            case 'percentage':
+              const estimatedValue = permitData.estimatedValue || 0;
+              const percentageRate = feeSchedule.perSqftRate || 0;
+              baseFeeAmount =
+                (feeSchedule.baseAmount || 0) +
+                estimatedValue * (percentageRate / 100);
+              break;
+
+            case 'custom':
+              baseFeeAmount = feeSchedule.baseAmount || 0;
+              break;
+
+            default:
+              baseFeeAmount = feeSchedule.baseAmount || 0;
+          }
+
+          // Add base permit fee
+          if (baseFeeAmount > 0) {
+            fees.push({
+              type: 'base',
+              description: `${permitType.name} - Base Fee`,
+              amount: Math.round(baseFeeAmount * 100) / 100,
+              paid: false,
+            });
+          }
         }
       }
 
       permitData.fees = fees;
+      if (feeScheduleSnapshot) {
+        permitData.feeScheduleSnapshot = feeScheduleSnapshot;
+      }
 
       // Initialize department reviews from permit type
       const departmentReviews = [];
@@ -1974,6 +2203,7 @@ router.post(
         municipalityId,
         permitNumber,
         createdBy: req.user._id,
+        submitted_by: req.user._id, // Track who submitted the permit
         updatedBy: req.user._id,
         statusHistory: [
           {
@@ -2789,11 +3019,33 @@ router.post(
               `📧 Department assignment notifications sent for ${review.department} on permit ${permit.permitNumber}`,
             );
           }
+
+          // Send confirmation notification to the applicant
+          const applicantUserId = permit.submitted_by || permit.createdBy;
+          if (applicantUserId) {
+            const baseUrl = process.env.APP_URL || 'https://app.avitar.com';
+            const permitUrl = `${baseUrl}/my-permits/permit/${permit._id}`;
+
+            await notificationService.sendPermitStatusNotification({
+              userId: applicantUserId.toString(),
+              municipalityId: permit.municipalityId.toString(),
+              permitNumber: permit.permitNumber,
+              status: 'submitted',
+              permitData: {
+                permitType: permitType,
+                propertyAddress: propertyAddress,
+                applicantName: applicantName,
+                submittedDate: new Date(),
+                permitUrl,
+                municipalityName: municipality.name || 'the municipality',
+              },
+            });
+            console.log(
+              `📧 Permit submitted confirmation sent to applicant for permit ${permit.permitNumber}`,
+            );
+          }
         } catch (notificationError) {
-          console.error(
-            'Failed to send department assignment notifications:',
-            notificationError,
-          );
+          console.error('Failed to send notifications:', notificationError);
           // Don't fail the request if notification fails
         }
       }
@@ -2825,6 +3077,168 @@ router.post(
   },
 );
 
+/**
+ * @route   POST /api/municipalities/:municipalityId/permits/:permitId/mark-paid
+ * @desc    Mark permit as paid (for in-person/check payments) - Municipal staff only
+ * @access  Private (municipal staff with building_permit update permission)
+ */
+router.post(
+  '/municipalities/:municipalityId/permits/:permitId/mark-paid',
+  authenticateToken,
+  checkMunicipalityAccess,
+  async (req, res) => {
+    try {
+      const { municipalityId, permitId } = req.params;
+      const { paymentMethod, receiptNumber, notes } = req.body;
+
+      // Validate payment method
+      const validPaymentMethods = ['cash', 'check', 'money_order', 'other'];
+      if (!paymentMethod || !validPaymentMethods.includes(paymentMethod)) {
+        return res.status(400).json({
+          success: false,
+          message: `Payment method is required. Valid options: ${validPaymentMethods.join(', ')}`,
+        });
+      }
+
+      // Get permit
+      const permit = await Permit.findById(permitId);
+      if (!permit) {
+        return res.status(404).json({
+          success: false,
+          message: 'Permit not found',
+        });
+      }
+
+      // Verify permit belongs to this municipality
+      if (permit.municipalityId.toString() !== municipalityId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Permit does not belong to this municipality',
+        });
+      }
+
+      // Check if user is municipal staff (has any access to this municipality)
+      // This allows admins, supervisors, inspectors, and any other staff to record payments
+      const isAvitarStaff =
+        req.user.global_role === 'avitar_staff' ||
+        req.user.global_role === 'avitar_admin';
+      const municipalPermission =
+        req.user.getMunicipalityPermission(municipalityId);
+      const hasMunicipalAccess = !!municipalPermission;
+
+      if (!isAvitarStaff && !hasMunicipalAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to mark permits as paid',
+        });
+      }
+
+      // Mark all fees as paid
+      const paymentDate = new Date();
+      let totalPaid = 0;
+
+      permit.fees.forEach((fee) => {
+        if (!fee.paid) {
+          fee.paid = true;
+          fee.paidDate = paymentDate;
+          fee.paidAmount = fee.amount;
+          fee.paymentMethod = paymentMethod;
+          fee.receiptNumber = receiptNumber || `MANUAL-${Date.now()}`;
+          totalPaid += fee.amount;
+        }
+      });
+
+      // Add internal note about payment
+      const paymentNote = `Payment received: $${totalPaid.toFixed(2)} via ${paymentMethod}${receiptNumber ? ` (Receipt: ${receiptNumber})` : ''}${notes ? `. Notes: ${notes}` : ''}`;
+      permit.addInternalNote(
+        req.user._id,
+        req.user.fullName || req.user.email,
+        paymentNote,
+      );
+
+      // Update permit status to submitted if it was pending_payment
+      const wasWaitingForPayment =
+        permit.status === 'pending_payment' || permit.status === 'draft';
+      if (wasWaitingForPayment) {
+        permit.updateStatus(
+          'submitted',
+          req.user._id,
+          req.user.fullName || req.user.email,
+          'Permit submitted after payment received',
+        );
+      }
+
+      await permit.save();
+
+      console.log('🟢 Permit marked as paid by staff:', permitId);
+
+      // If permit was just submitted, notify department reviewers
+      if (wasWaitingForPayment) {
+        try {
+          const notificationService = require('../services/notificationService');
+
+          // Populate permit type and property to get details
+          await permit.populate('permitTypeId');
+          await permit.populate('propertyId');
+
+          const permitType = permit.permitTypeId?.name || permit.type;
+          const propertyAddress = permit.propertyId?.location?.address || 'N/A';
+          const applicantName = permit.applicant?.name || 'Unknown';
+
+          // Notify each department assigned to review this permit
+          for (const review of permit.departmentReviews) {
+            await notificationService.notifyDepartmentReviewers({
+              municipalityId: permit.municipalityId,
+              department: review.department,
+              notificationType: 'assignment',
+              notificationData: {
+                permitNumber: permit.permitNumber,
+                permitType: permitType,
+                department: review.department,
+                propertyAddress: propertyAddress,
+                applicantName: applicantName,
+                permitId: permit._id.toString(),
+              },
+            });
+          }
+
+          console.log(
+            `📧 Department assignment notifications sent for permit ${permit.permitNumber}`,
+          );
+        } catch (notificationError) {
+          console.error(
+            'Failed to send department assignment notifications:',
+            notificationError,
+          );
+          // Don't fail the request if notification fails
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Permit marked as paid and submitted for review',
+        permit: {
+          id: permit._id,
+          permitNumber: permit.permitNumber,
+          status: permit.status,
+          paymentStatus: 'paid',
+          totalFees: permit.totalFees,
+          totalPaid: permit.totalPaid,
+          paymentDate: paymentDate,
+          paymentMethod: paymentMethod,
+        },
+      });
+    } catch (error) {
+      console.error('❌ Error marking permit as paid:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to mark permit as paid',
+        error: error.message,
+      });
+    }
+  },
+);
+
 // ===================================================================
 // DEPARTMENT REVIEW ENDPOINTS
 // ===================================================================
@@ -2840,7 +3254,13 @@ router.put(
   async (req, res) => {
     try {
       const { municipalityId, permitId, departmentName } = req.params;
-      const { status, comments, conditions, requestedRevisions } = req.body;
+      const {
+        status,
+        comments,
+        conditions,
+        requestedRevisions,
+        commentVisibility,
+      } = req.body;
 
       const permit = await Permit.findOne({
         _id: permitId,
@@ -2887,11 +3307,25 @@ router.put(
             ? `${req.user.first_name} ${req.user.last_name}`
             : req.user.email;
 
+        // Determine comment visibility:
+        // - Use explicit choice if provided
+        // - Default to 'public' for statuses requiring applicant action (revisions_requested, conditionally_approved)
+        // - Default to 'internal' for other statuses
+        let finalVisibility = commentVisibility;
+        if (!finalVisibility) {
+          finalVisibility = [
+            'revisions_requested',
+            'conditionally_approved',
+          ].includes(status)
+            ? 'public'
+            : 'internal';
+        }
+
         const comment = new PermitComment({
           municipalityId,
           permitId,
           content: comments.trim(),
-          visibility: 'internal',
+          visibility: finalVisibility,
           authorId: req.user._id,
           authorName: reviewerName,
           department: departmentName,
@@ -2908,6 +3342,10 @@ router.put(
           ['approved', 'conditionally_approved', 'rejected'].includes(r.status),
         );
 
+      // Track if overall permit status changed
+      let permitStatusChanged = false;
+      let previousStatus = permit.status;
+
       if (allReviewsComplete) {
         const allApproved = permit.departmentReviews
           .filter((r) => r.required)
@@ -2921,8 +3359,10 @@ router.put(
 
         if (anyRejected) {
           permit.status = 'denied';
+          permitStatusChanged = previousStatus !== 'denied';
         } else if (allApproved) {
           permit.status = 'approved';
+          permitStatusChanged = previousStatus !== 'approved';
         }
       }
 
@@ -2934,7 +3374,7 @@ router.put(
         'first_name last_name email',
       );
 
-      // Send notification to permit applicant about review completion
+      // Send notifications to permit applicant
       try {
         const notificationService = require('../services/notificationService');
 
@@ -2943,27 +3383,91 @@ router.put(
             ? `${req.user.first_name} ${req.user.last_name}`
             : req.user.email;
 
-        // Notify the permit applicant/owner
+        // Notify the permit applicant/owner about department review completion
         if (permit.submitted_by) {
-          await notificationService.sendDepartmentReviewCompleted({
-            userId: permit.submitted_by.toString(),
-            municipalityId: municipalityId,
-            permitNumber: permit.permitNumber,
-            department: departmentName,
-            reviewStatus: status,
-            reviewedBy: reviewerName,
-            conditions: conditions || [],
-          });
-
-          console.log(
-            `📧 Review completion notification sent for permit ${permit.permitNumber}, department ${departmentName}`,
+          // Build department review summary for the email
+          const allDepartmentReviews = permit.departmentReviews.map(
+            (review) => ({
+              department: review.department,
+              status: review.status || 'pending',
+              required: review.required,
+              reviewedBy: review.reviewedBy
+                ? `${review.reviewedBy.first_name || ''} ${review.reviewedBy.last_name || ''}`.trim()
+                : null,
+              reviewedAt: review.reviewedAt,
+            }),
           );
+
+          // Check if all required reviews are now approved
+          const allRequiredApproved = permit.departmentReviews
+            .filter((r) => r.required)
+            .every((r) =>
+              ['approved', 'conditionally_approved'].includes(r.status),
+            );
+
+          // If all departments approved, send "permit ready" notification
+          if (
+            allRequiredApproved &&
+            permitStatusChanged &&
+            permit.status === 'approved'
+          ) {
+            await notificationService.sendPermitApproved({
+              userId: permit.submitted_by.toString(),
+              municipalityId: municipalityId,
+              permitNumber: permit.permitNumber,
+              permitId: permitId,
+              allDepartmentReviews,
+              permitData: {
+                permitType: permit.permitType,
+                propertyAddress: permit.propertyAddress,
+                applicantName: permit.applicantName,
+              },
+            });
+
+            console.log(
+              `📧 Permit fully approved notification sent for permit ${permit.permitNumber}`,
+            );
+          } else {
+            // Send individual department review completion notification
+            await notificationService.sendDepartmentReviewCompleted({
+              userId: permit.submitted_by.toString(),
+              municipalityId: municipalityId,
+              permitNumber: permit.permitNumber,
+              department: departmentName,
+              reviewStatus: status,
+              reviewedBy: reviewerName,
+              conditions: conditions || [],
+              reviewComments: comments || '',
+              permitId: permitId,
+              allDepartmentReviews,
+            });
+
+            console.log(
+              `📧 Review completion notification sent for permit ${permit.permitNumber}, department ${departmentName}`,
+            );
+          }
+
+          // If permit was denied, also send denial notification
+          if (permitStatusChanged && permit.status === 'denied') {
+            await notificationService.sendPermitStatusNotification({
+              userId: permit.submitted_by.toString(),
+              municipalityId: municipalityId,
+              permitNumber: permit.permitNumber,
+              status: 'rejected',
+              permitData: {
+                permitType: permit.permitType,
+                propertyAddress: permit.propertyAddress,
+                applicantName: permit.applicantName,
+              },
+            });
+
+            console.log(
+              `📧 Permit denial notification sent for permit ${permit.permitNumber}`,
+            );
+          }
         }
       } catch (notificationError) {
-        console.error(
-          'Failed to send review completion notification:',
-          notificationError,
-        );
+        console.error('Failed to send notification:', notificationError);
         // Don't fail the request if notification fails
       }
 
@@ -2975,6 +3479,141 @@ router.put(
       console.error('❌ Error submitting department review:', error);
       res.status(500).json({
         error: 'Failed to submit review',
+        message: error.message,
+      });
+    }
+  },
+);
+
+/**
+ * POST /municipalities/:municipalityId/permits/:permitId/resubmit
+ * Resubmit a permit after applicant makes revisions
+ * Resets department reviews that requested revisions back to pending
+ * Available only to permit owner (contractor or applicant)
+ */
+router.post(
+  '/municipalities/:municipalityId/permits/:permitId/resubmit',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId, permitId } = req.params;
+      const { message } = req.body;
+
+      const permit = await Permit.findOne({
+        _id: permitId,
+        municipalityId,
+      }).populate('submitted_by', 'first_name last_name email');
+
+      if (!permit) {
+        return res.status(404).json({ error: 'Permit not found' });
+      }
+
+      // Verify user owns this permit
+      const userId = req.user._id.toString();
+      const isOwner =
+        permit.submitted_by?._id?.toString() === userId ||
+        permit.contractor_id?.toString() === req.user.contractor_id ||
+        permit.applicantUserId?.toString() === userId;
+
+      if (!isOwner) {
+        return res.status(403).json({
+          error: 'You do not have permission to resubmit this permit',
+        });
+      }
+
+      // Check that there are revisions_requested reviews
+      const revisionsRequested = permit.departmentReviews.filter(
+        (r) => r.status === 'revisions_requested',
+      );
+
+      if (revisionsRequested.length === 0) {
+        return res.status(400).json({
+          error: 'No department reviews are requesting revisions',
+        });
+      }
+
+      // Reset department reviews that requested revisions back to pending
+      permit.departmentReviews.forEach((review) => {
+        if (review.status === 'revisions_requested') {
+          review.status = 'pending';
+          review.requiresReReview = true;
+          review.previousReviewedBy = review.reviewedBy;
+          review.previousReviewedAt = review.reviewedAt;
+          review.reviewedBy = null;
+          review.reviewedAt = null;
+        }
+      });
+
+      // Update permit status back to under_review
+      permit.status = 'under_review';
+      permit.resubmittedAt = new Date();
+      permit.resubmittedBy = req.user._id;
+
+      await permit.save();
+
+      // Create a system comment for the resubmission
+      const PermitComment = require('../models/PermitComment');
+      const applicantName =
+        req.user.first_name && req.user.last_name
+          ? `${req.user.first_name} ${req.user.last_name}`
+          : req.user.email;
+
+      const commentContent = message
+        ? `Permit resubmitted by ${applicantName}: ${message}`
+        : `Permit resubmitted by ${applicantName} after addressing requested revisions.`;
+
+      const resubmitComment = new PermitComment({
+        municipalityId,
+        permitId,
+        content: commentContent,
+        visibility: 'internal',
+        authorId: req.user._id,
+        authorName: applicantName,
+        isSystemGenerated: true,
+        attachments: [],
+      });
+
+      await resubmitComment.save();
+
+      // Send notifications to department reviewers
+      try {
+        const notificationService = require('../services/notificationService');
+
+        // Notify each department that needs to re-review
+        for (const review of revisionsRequested) {
+          // Find users assigned to this department (simplified - could be enhanced)
+          console.log(
+            `📧 Permit ${permit.permitNumber} resubmitted for ${review.department} re-review`,
+          );
+        }
+
+        // Also notify via the notification service if available
+        if (notificationService.sendPermitResubmitted) {
+          await notificationService.sendPermitResubmitted({
+            municipalityId,
+            permitId,
+            permitNumber: permit.permitNumber,
+            resubmittedBy: applicantName,
+            departments: revisionsRequested.map((r) => r.department),
+          });
+        }
+      } catch (notificationError) {
+        console.error(
+          'Failed to send resubmission notifications:',
+          notificationError,
+        );
+        // Don't fail the request if notification fails
+      }
+
+      res.json({
+        permit,
+        message: 'Permit resubmitted successfully',
+        departmentsReset: revisionsRequested.map((r) => r.department),
+      });
+    } catch (error) {
+      console.error('❌ Error resubmitting permit:', error);
+      res.status(500).json({
+        error: 'Failed to resubmit permit',
         message: error.message,
       });
     }
@@ -3202,15 +3841,30 @@ router.get(
       }
 
       // Check if user has access to this permit
-      const isContractor =
-        req.user.global_role === 'contractor' &&
-        permit.contractor_id?.toString() === req.user.contractor_id?.toString();
+      const userId = req.user._id?.toString();
+      const userContractorId = req.user.contractor_id?.toString();
+
+      // Check permit ownership (for contractors/citizens)
+      const isPermitOwner =
+        permit.submitted_by?.toString() === userId ||
+        permit.createdBy?.toString() === userId ||
+        permit.applicantUserId?.toString() === userId ||
+        (userContractorId &&
+          permit.contractor_id?.toString() === userContractorId);
+
+      // Check if contractor or citizen
+      const isResidentialUser =
+        req.user.global_role === 'contractor' ||
+        req.user.global_role === 'citizen';
+
+      // Check if municipal staff
       const isMunicipalStaff =
         req.user.global_role === 'avitar_staff' ||
         req.user.global_role === 'avitar_admin' ||
         req.user.hasAccessToMunicipality(municipalityId);
 
-      if (!isContractor && !isMunicipalStaff) {
+      // Allow access if: municipal staff OR (residential user who owns the permit)
+      if (!isMunicipalStaff && !(isResidentialUser && isPermitOwner)) {
         return res.status(403).json({ error: 'Access denied to this permit' });
       }
 
@@ -3681,6 +4335,12 @@ router.patch(
         return res.status(404).json({ error: 'Inspection not found' });
       }
 
+      // Fetch the associated permit for notifications
+      let permit = null;
+      if (inspection.permitId) {
+        permit = await Permit.findById(inspection.permitId);
+      }
+
       const oldStatus = inspection.status;
       const oldResult = inspection.result;
 
@@ -3966,8 +4626,76 @@ router.post(
 
       await inspection.save();
 
-      // TODO: Send email notifications to applicant and inspector
-      // This will be implemented in the email notification task
+      // Send email notifications to applicant and inspector
+      try {
+        const notificationService = require('../services/notificationService');
+
+        // Format the scheduled date for display
+        const formattedDate = new Date(requestedDate).toLocaleDateString(
+          'en-US',
+          {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          },
+        );
+
+        // Get municipality name for email
+        const municipalityDoc = await Municipality.findById(municipalityId);
+
+        const inspectionData = {
+          permitNumber: permit.permitNumber,
+          inspectionDate: formattedDate,
+          inspectionType: type,
+          inspectionTime: scheduledTimeSlot || 'TBD',
+          propertyAddress:
+            permit.propertyAddress || permit.propertyId?.propertyAddress,
+          inspectorName: `${inspectorUser.first_name} ${inspectorUser.last_name}`,
+          inspectorPhone: inspectorUser.phone || '',
+          contactName: contactName || permit.applicant?.name,
+          contactPhone: contactPhone || permit.applicant?.phone,
+          accessInstructions: accessInstructions || 'None provided',
+          applicantName: permit.applicant?.name || contactName || 'Applicant',
+          municipalityName: municipalityDoc?.name || 'the municipality',
+        };
+
+        // Notify the permit applicant
+        const applicantUserId = permit.submitted_by || permit.createdBy;
+        if (applicantUserId) {
+          await notificationService.sendInspectionNotification({
+            userId: applicantUserId.toString(),
+            municipalityId,
+            inspectionType: 'scheduled',
+            inspectionData,
+          });
+          console.log(
+            `📧 Inspection scheduled notification sent to applicant for permit ${permit.permitNumber}`,
+          );
+        }
+
+        // Also notify the inspector
+        if (assignedInspector.userId) {
+          await notificationService.sendInspectionNotification({
+            userId: assignedInspector.userId.toString(),
+            municipalityId,
+            inspectionType: 'scheduled',
+            inspectionData: {
+              ...inspectionData,
+              isInspectorNotification: true,
+            },
+          });
+          console.log(
+            `📧 Inspection scheduled notification sent to inspector ${inspectorUser.email}`,
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          'Failed to send inspection notification:',
+          notificationError,
+        );
+        // Don't fail the request if notification fails
+      }
 
       res.status(201).json({
         inspection: await inspection.populate([

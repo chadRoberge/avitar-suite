@@ -111,6 +111,19 @@ async function getActiveSubscriptionSources(user, context = {}) {
 }
 
 /**
+ * Essential transactional notifications that should always be sent
+ * These are critical for user experience and don't require paid subscription
+ */
+const ESSENTIAL_NOTIFICATIONS = [
+  'permit_status_changes', // Permit approved/rejected/submitted
+  'permit_review_completed', // Department review completed
+  'permit_review_assignment', // Department staff assigned to review a permit
+  'permit_comment', // New comment on permit
+  'inspection_notifications', // Inspection scheduled/passed/failed
+  'account_notifications', // Password reset, email verification, etc.
+];
+
+/**
  * Check if user can receive a notification
  * @param {String} userId - User ID
  * @param {String} notificationType - Type of notification (e.g., 'inspection_notifications')
@@ -149,7 +162,22 @@ async function canUserReceiveNotification(
       };
     }
 
-    // 3. Get active subscription sources
+    // 3. Check if this is an essential transactional notification
+    // These always go through (email only) if user hasn't opted out
+    const isEssential = ESSENTIAL_NOTIFICATIONS.includes(notificationType);
+    if (isEssential) {
+      return {
+        allowed: true,
+        channels: { email: userPrefs.email, sms: false }, // SMS still requires subscription
+        userOptOut: false,
+        reason: 'Essential transactional notification - always allowed',
+        payingSources: [
+          { type: 'system', name: 'Essential Notification', tier: 'free' },
+        ],
+      };
+    }
+
+    // 4. Get active subscription sources (for non-essential/premium notifications)
     const sources = await getActiveSubscriptionSources(user, context);
 
     if (sources.length === 0) {
@@ -157,12 +185,12 @@ async function canUserReceiveNotification(
         allowed: false,
         channels: { email: false, sms: false },
         userOptOut: false,
-        reason: 'No active subscriptions found',
+        reason: 'No active subscriptions found for premium notifications',
         payingSources: [],
       };
     }
 
-    // 4. Check if ANY source has the required features (OR logic)
+    // 5. Check if ANY source has the required features (OR logic)
     const allowedChannels = {
       email: false,
       sms: false,
@@ -227,7 +255,7 @@ async function canUserReceiveNotification(
       }
     }
 
-    // 5. Return result
+    // 6. Return result
     const allowed = allowedChannels.email || allowedChannels.sms;
 
     return {

@@ -5,16 +5,49 @@
       <h1 class="avitar-page-title avitar-skinny">Waterfront Settings</h1>
       <div class="avitar-page-subtitle">Configure waterfront properties and attributes</div>
     </div>
-    <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+    <div class="avitar-flex-5 avitar-flex avitar-justify-end avitar-items-center avitar-gap-3">
+      {{!-- Year Selector --}}
+      <div class="avitar-flex avitar-items-center avitar-gap-2">
+        <label class="avitar-text-sm avitar-font-medium">Config Year:</label>
+        <select class="avitar-select avitar-select--sm" style="width: 100px;" {{on "change" this.changeYear}}>
+          {{#each this.availableYears as |yearOption|}}
+            <option value={{yearOption}} selected={{eq this.configYear yearOption}}>
+              {{yearOption}}
+            </option>
+          {{/each}}
+        </select>
+        {{#if this.isYearLocked}}
+          <span class="avitar-badge avitar-badge--warning avitar-ml-2">
+            {{lnr-icon "lock" class="avitar-mr-1"}}
+            Locked
+          </span>
+        {{/if}}
+      </div>
       {{! Editor level (2) and above in Assessing module can add water bodies }}
       {{#if (has-module-role this.currentUser "assessing" 2)}}
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.openNewWaterBodyModal}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.openNewWaterBodyModal}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add Water Body
         </button>
       {{/if}}
     </div>
   </div>
+
+  {{!-- Year Locked Warning Banner --}}
+  {{#if this.isYearLocked}}
+    <div class="avitar-alert avitar-alert--warning avitar-mb-4">
+      <div class="avitar-flex avitar-items-center avitar-gap-3">
+        {{lnr-icon "lock" class="avitar-text-lg"}}
+        <div>
+          <strong>Configuration Locked</strong>
+          <p class="avitar-text-sm avitar-mb-0">
+            The configuration for year {{this.configYear}} is locked and cannot be modified.
+            Select a different year to make changes.
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/if}}
   {{!-- Water Body Cards with Integrated Ladders --}}
   {{#each this.reactiveWaterBodies as |waterBody|}}
   {{#let (get this.laddersByWaterBody waterBody.stringId) as |ladder|}}

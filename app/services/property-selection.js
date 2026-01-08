@@ -50,7 +50,12 @@ export default class PropertySelectionService extends Service {
     return true;
   }
 
-  setSelectedProperty(property) {
+  /**
+   * Set the selected property
+   * @param {object} property - The property to select
+   * @param {object} options - Options (reserved for future use)
+   */
+  setSelectedProperty(property, options = {}) {
     this.selectedProperty = property;
   }
 

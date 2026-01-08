@@ -26,6 +26,18 @@ const buildingAssessmentSchema = new mongoose.Schema(
     // Assessment year this record applies to
     effective_year: { type: Number, required: true, index: true },
 
+    // Version tracking for copy-on-write pattern
+    previous_version_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingAssessment',
+      default: null,
+    },
+    next_version_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingAssessment',
+      default: null,
+    },
+
     // Basic Building Information
     building_model: { type: String, trim: true },
     frame: { type: mongoose.Schema.Types.ObjectId, ref: 'BuildingFeatureCode' },
@@ -527,7 +539,7 @@ buildingAssessmentSchema.methods.calculateAndUpdateValue = async function (
       this.age = calculations.buildingAge; // Store the calculated age
       this.last_calculated = new Date();
 
-      // Update normal depreciation percentage if it was calculated (not manually entered)
+      // Update depreciation fields
       if (!this.depreciation) {
         this.depreciation = {
           normal: { description: '', percentage: 0 },
@@ -538,29 +550,21 @@ buildingAssessmentSchema.methods.calculateAndUpdateValue = async function (
         };
       }
 
-      // Only update the normal depreciation percentage if it was calculated, preserve user-entered values
-      if (
-        this.depreciation?.normal?.percentage === null ||
-        this.depreciation?.normal?.percentage === undefined
-      ) {
-        if (!this.depreciation.normal) {
-          this.depreciation.normal = { description: '', percentage: 0 };
-        }
-        // Store as percentage (calculations.normalDepreciation is already decimal, so multiply by 100)
-        this.depreciation.normal.percentage =
-          calculations.normalDepreciation * 100;
-      } else if (
-        calculations.buildingAge > 0 &&
-        calculations.baseDepreciationRate > 0
-      ) {
-        // Always update if we have valid age and base rate, even if user had previous value
-        // This ensures the depreciation stays current with building age and condition
-        if (!this.depreciation.normal) {
-          this.depreciation.normal = { description: '', percentage: 0 };
-        }
+      // Ensure normal depreciation object exists
+      if (!this.depreciation.normal) {
+        this.depreciation.normal = { description: '', percentage: 0 };
+      }
+
+      // Update normal depreciation percentage from calculation
+      // (calculations use the description/condition factor if set)
+      if (calculations.buildingAge > 0 && calculations.baseDepreciationRate > 0) {
+        // Store as percentage (calculations.normalDepreciation is decimal, so multiply by 100)
         this.depreciation.normal.percentage =
           calculations.normalDepreciation * 100;
       }
+
+      // Store total depreciation (as percentage)
+      this.total_depreciation = calculations.totalDepreciation * 100;
 
       // Store calculation breakdown for transparency
       this.calculation_details = calculations;
@@ -819,6 +823,349 @@ buildingAssessmentSchema.statics.getBuildingTypeStatistics = async function (
       manufactured: { count: 0, median: 0, average: 0, min: 0, max: 0 },
     };
   }
+};
+
+/**
+ * Get effective building assessment for a property/card/year using temporal query
+ * Returns the most recent record where effective_year <= requested year
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} cardNumber - Card number
+ * @param {number} year - Assessment year
+ * @param {Object} options - Query options (populate, etc.)
+ * @returns {Object|null} - The effective building assessment
+ */
+buildingAssessmentSchema.statics.getForPropertyYear = async function (
+  propertyId,
+  cardNumber = 1,
+  year = null,
+  options = {},
+) {
+  const currentYear = year || new Date().getFullYear();
+
+  let query = this.findOne({
+    property_id: propertyId,
+    card_number: cardNumber,
+    effective_year: { $lte: currentYear },
+  }).sort({ effective_year: -1 });
+
+  // Apply populates if requested
+  if (options.populate) {
+    if (Array.isArray(options.populate)) {
+      options.populate.forEach((field) => {
+        query = query.populate(field);
+      });
+    } else {
+      query = query.populate(options.populate);
+    }
+  }
+
+  return query;
+};
+
+/**
+ * Get all effective building assessments for a property (all cards) for a year
+ * Uses aggregation to get most recent record per card
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} year - Assessment year
+ * @returns {Array} - Array of effective building assessments per card
+ */
+buildingAssessmentSchema.statics.getEffectiveCardsForProperty = async function (
+  propertyId,
+  year = null,
+) {
+  const currentYear = year || new Date().getFullYear();
+
+  return this.aggregate([
+    {
+      $match: {
+        property_id: new mongoose.Types.ObjectId(propertyId),
+        effective_year: { $lte: currentYear },
+      },
+    },
+    { $sort: { card_number: 1, effective_year: -1 } },
+    {
+      $group: {
+        _id: '$card_number',
+        doc: { $first: '$$ROOT' },
+      },
+    },
+    { $replaceRoot: { newRoot: '$doc' } },
+    { $sort: { card_number: 1 } },
+  ]);
+};
+
+/**
+ * Sanitize assessment data by removing invalid ObjectId values
+ * Fields that expect ObjectId references but receive invalid strings are removed
+ */
+function sanitizeAssessmentData(data) {
+  const objectIdFields = [
+    'frame',
+    'base_type',
+    'quality',
+    'exterior_wall',
+    'interior_wall',
+    'roofing',
+    'roof_style',
+    'flooring',
+    'heating_fuel',
+    'heating_type',
+    'air_conditioning',
+    'generator',
+    'story_height',
+    'ceiling_height',
+  ];
+
+  const sanitized = { ...data };
+
+  for (const field of objectIdFields) {
+    if (sanitized[field] !== undefined && sanitized[field] !== null) {
+      const value = sanitized[field];
+      // Check if it's a valid ObjectId (24 hex characters or already an ObjectId)
+      if (typeof value === 'string') {
+        if (!/^[0-9a-fA-F]{24}$/.test(value)) {
+          // Invalid ObjectId string - remove it
+          delete sanitized[field];
+        }
+      } else if (typeof value !== 'object' || !value._bsontype) {
+        // Not a valid ObjectId object - remove it
+        delete sanitized[field];
+      }
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Update building assessment for a property/card/year using copy-on-write
+ * If the year doesn't have a record, copies from the effective record
+ * @param {ObjectId} propertyId - Property ID
+ * @param {ObjectId} municipalityId - Municipality ID
+ * @param {number} cardNumber - Card number
+ * @param {Object} assessmentData - Data to update
+ * @param {ObjectId} userId - User ID for audit
+ * @param {number} year - Assessment year
+ * @returns {Object} - The created or updated building assessment
+ */
+buildingAssessmentSchema.statics.updateForPropertyCardYear = async function (
+  propertyId,
+  municipalityId,
+  cardNumber,
+  assessmentData,
+  userId,
+  year = null,
+) {
+  const currentYear = year || new Date().getFullYear();
+
+  // Sanitize incoming data to remove invalid ObjectId values
+  const cleanedData = sanitizeAssessmentData(assessmentData);
+
+  // Check if record for this year exists
+  let record = await this.findOne({
+    property_id: propertyId,
+    card_number: cardNumber,
+    effective_year: currentYear,
+  });
+
+  if (record) {
+    // Deep merge depreciation to preserve all nested properties
+    if (cleanedData.depreciation) {
+      if (!record.depreciation) {
+        record.depreciation = {
+          normal: { description: '', percentage: 0 },
+          physical: { notes: '', percentage: 0 },
+          functional: { notes: '', percentage: 0 },
+          economic: { notes: '', percentage: 0 },
+          temporary: { notes: '', percentage: 0 },
+        };
+      }
+
+      // Merge each depreciation type separately to preserve all fields
+      if (cleanedData.depreciation.normal) {
+        record.depreciation.normal = {
+          ...record.depreciation.normal,
+          ...cleanedData.depreciation.normal,
+        };
+      }
+      if (cleanedData.depreciation.physical) {
+        record.depreciation.physical = {
+          ...record.depreciation.physical,
+          ...cleanedData.depreciation.physical,
+        };
+      }
+      if (cleanedData.depreciation.functional) {
+        record.depreciation.functional = {
+          ...record.depreciation.functional,
+          ...cleanedData.depreciation.functional,
+        };
+      }
+      if (cleanedData.depreciation.economic) {
+        record.depreciation.economic = {
+          ...record.depreciation.economic,
+          ...cleanedData.depreciation.economic,
+        };
+      }
+      if (cleanedData.depreciation.temporary) {
+        record.depreciation.temporary = {
+          ...record.depreciation.temporary,
+          ...cleanedData.depreciation.temporary,
+        };
+      }
+
+      // Remove depreciation from cleanedData to avoid shallow overwrite
+      const { depreciation: _depToIgnore, ...restData } = cleanedData;
+      void _depToIgnore; // Suppress unused variable warning
+      Object.assign(record, restData);
+    } else {
+      // No depreciation in update, just do regular assign
+      Object.assign(record, cleanedData);
+    }
+
+    record.municipality_id = municipalityId;
+    record.updated_by = userId;
+    record.updated_at = new Date();
+    record.last_changed = new Date();
+
+    // Recalculate value
+    try {
+      await record.calculateAndUpdateValue();
+    } catch (calcError) {
+      console.warn('Failed to calculate value during update:', calcError.message);
+    }
+
+    await record.save();
+    return record;
+  }
+
+  // Get effective record to copy from (copy-on-write)
+  const effectiveRecord = await this.getForPropertyYear(propertyId, cardNumber, currentYear);
+
+  if (effectiveRecord) {
+    // Copy from effective record
+    const recordData = effectiveRecord.toObject();
+    delete recordData._id;
+    delete recordData.createdAt;
+    delete recordData.updatedAt;
+
+    // Deep merge depreciation from existing record and new data
+    let mergedDepreciation = recordData.depreciation || {
+      normal: { description: '', percentage: 0 },
+      physical: { notes: '', percentage: 0 },
+      functional: { notes: '', percentage: 0 },
+      economic: { notes: '', percentage: 0 },
+      temporary: { notes: '', percentage: 0 },
+    };
+
+    if (cleanedData.depreciation) {
+      if (cleanedData.depreciation.normal) {
+        mergedDepreciation.normal = {
+          ...mergedDepreciation.normal,
+          ...cleanedData.depreciation.normal,
+        };
+      }
+      if (cleanedData.depreciation.physical) {
+        mergedDepreciation.physical = {
+          ...mergedDepreciation.physical,
+          ...cleanedData.depreciation.physical,
+        };
+      }
+      if (cleanedData.depreciation.functional) {
+        mergedDepreciation.functional = {
+          ...mergedDepreciation.functional,
+          ...cleanedData.depreciation.functional,
+        };
+      }
+      if (cleanedData.depreciation.economic) {
+        mergedDepreciation.economic = {
+          ...mergedDepreciation.economic,
+          ...cleanedData.depreciation.economic,
+        };
+      }
+      if (cleanedData.depreciation.temporary) {
+        mergedDepreciation.temporary = {
+          ...mergedDepreciation.temporary,
+          ...cleanedData.depreciation.temporary,
+        };
+      }
+    }
+
+    // Remove depreciation from cleanedData to use merged version
+    const { depreciation: _depToRemove, ...restCleanedData } = cleanedData;
+    void _depToRemove; // Suppress unused variable warning
+
+    record = new this({
+      ...recordData,
+      ...restCleanedData,
+      depreciation: mergedDepreciation,
+      property_id: propertyId,
+      municipality_id: municipalityId,
+      card_number: cardNumber,
+      effective_year: currentYear,
+      created_by: userId,
+      created_at: new Date(),
+      updated_by: userId,
+      updated_at: new Date(),
+      last_changed: new Date(),
+      change_reason: cleanedData.change_reason || 'cyclical_review',
+    });
+  } else {
+    // No prior record - create new
+    record = new this({
+      property_id: propertyId,
+      municipality_id: municipalityId,
+      card_number: cardNumber,
+      effective_year: currentYear,
+      ...cleanedData,
+      created_by: userId,
+      created_at: new Date(),
+      updated_by: userId,
+      updated_at: new Date(),
+    });
+  }
+
+  // Calculate value before saving
+  try {
+    await record.calculateAndUpdateValue();
+  } catch (calcError) {
+    console.warn('Failed to calculate value during creation:', calcError.message);
+  }
+
+  await record.save();
+  return record;
+};
+
+/**
+ * Get year history for a property/card showing inherited vs explicit values
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} cardNumber - Card number
+ * @param {number} startYear - Start year
+ * @param {number} endYear - End year
+ * @returns {Array} - Year history with inheritance info
+ */
+buildingAssessmentSchema.statics.getYearHistory = async function (
+  propertyId,
+  cardNumber,
+  startYear,
+  endYear,
+) {
+  const history = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    const record = await this.getForPropertyYear(propertyId, cardNumber, year);
+
+    history.push({
+      year,
+      effectiveYear: record?.effective_year || null,
+      isInherited: record ? record.effective_year !== year : true,
+      hasData: !!record,
+      buildingValue: record?.building_value || 0,
+      effectiveArea: record?.effective_area || 0,
+      yearBuilt: record?.year_built || null,
+    });
+  }
+
+  return history;
 };
 
 // Trigger parcel assessment update after remove

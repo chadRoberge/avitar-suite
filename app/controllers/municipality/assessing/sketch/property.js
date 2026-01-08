@@ -55,13 +55,13 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
     const currentAssessmentYear =
       this.model.selectedAssessmentYear || this.model.property.tax_year;
 
-    // Filter sketches for the current property, card, and assessment year
+    // Filter sketches for the current property, card, and effective year
     let cardSketches =
       this.model.sketches?.filter(
         (s) =>
           s.card_number === this.model.property.current_card &&
           s.property_id === this.model.property.id &&
-          s.assessment_year === currentAssessmentYear,
+          s.effective_year === currentAssessmentYear,
       ) || [];
 
     // If no sketches found for current year, try to find the latest version
@@ -92,7 +92,7 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
         id: s.id,
         property_id: s.property_id,
         card_number: s.card_number,
-        assessment_year: s.assessment_year,
+        effective_year: s.effective_year,
         version: s.__v,
         shapes_count: s.shapes?.length || 0,
         created_at: s.created_at,
@@ -158,7 +158,7 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
         id: s.id || s._id,
         property_id: s.property_id,
         card_number: s.card_number,
-        assessment_year: s.assessment_year,
+        effective_year: s.effective_year,
         shapes_count: s.shapes?.length || 0,
         name: s.name,
       }));
@@ -179,7 +179,7 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
           id: sketch.id,
           property_id: sketch.property_id,
           card_number: sketch.card_number,
-          assessment_year: sketch.assessment_year,
+          effective_year: sketch.effective_year,
           shapes_count: sketch.shapes_count,
           name: sketch.name,
         });
@@ -195,10 +195,10 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
 
       if (propertyCardSketches.length > 0) {
         console.log(
-          '📋 Found sketches for this property/card but different assessment year:',
+          '📋 Found sketches for this property/card but different effective year:',
           {
             foundSketches: propertyCardSketches.length,
-            sketchYears: propertyCardSketches.map((s) => s.assessment_year),
+            sketchYears: propertyCardSketches.map((s) => s.effective_year),
             requestedYear:
               this.model.selectedAssessmentYear || this.model.property.tax_year,
           },
@@ -207,15 +207,15 @@ export default class MunicipalityAssessingSketchPropertyController extends Contr
         // Use the most recent sketch if no exact year match
         const mostRecentSketch = propertyCardSketches.reduce(
           (latest, current) => {
-            const latestYear = latest.assessment_year || 0;
-            const currentYear = current.assessment_year || 0;
+            const latestYear = latest.effective_year || 0;
+            const currentYear = current.effective_year || 0;
             return currentYear > latestYear ? current : latest;
           },
         );
 
         console.log('🎯 Using most recent sketch as fallback:', {
           sketchId: mostRecentSketch._id || mostRecentSketch.id,
-          year: mostRecentSketch.assessment_year,
+          year: mostRecentSketch.effective_year,
           shapesCount: mostRecentSketch.shapes?.length || 0,
         });
 

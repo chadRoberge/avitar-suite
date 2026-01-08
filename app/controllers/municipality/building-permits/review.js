@@ -8,6 +8,7 @@ export default class MunicipalityBuildingPermitsReviewController extends Control
   @service router;
   @service notifications;
   @service('current-user') currentUser;
+  @service municipality;
 
   // Tab state
   @tracked activeTab = 'documents';
@@ -22,6 +23,9 @@ export default class MunicipalityBuildingPermitsReviewController extends Control
   // Loading states
   @tracked isSubmittingReview = false;
   @tracked isAddingComment = false;
+
+  // Comment visibility for applicant (when requesting revisions or conditional approval)
+  @tracked shareWithApplicant = true;
 
   // Comment state
   @tracked newComment = '';
@@ -59,6 +63,21 @@ export default class MunicipalityBuildingPermitsReviewController extends Control
       this.reviewStatus !== 'pending' &&
       (this.reviewStatus === 'approved' || this.reviewNotes.trim().length > 0)
     );
+  }
+
+  // Show visibility toggle for statuses that require applicant action
+  get showVisibilityToggle() {
+    return ['revisions_requested', 'conditionally_approved'].includes(
+      this.reviewStatus,
+    );
+  }
+
+  // Get the comment visibility based on toggle
+  get commentVisibility() {
+    if (!this.showVisibilityToggle) {
+      return 'internal';
+    }
+    return this.shareWithApplicant ? 'public' : 'internal';
   }
 
   get reviewStatusOptions() {
@@ -238,6 +257,11 @@ export default class MunicipalityBuildingPermitsReviewController extends Control
     this.reviewStatus = status;
   }
 
+  @action
+  toggleShareWithApplicant() {
+    this.shareWithApplicant = !this.shareWithApplicant;
+  }
+
   // Conditions actions
   @action
   updateNewCondition(event) {
@@ -392,10 +416,24 @@ export default class MunicipalityBuildingPermitsReviewController extends Control
           status: this.reviewStatus,
           comments: this.reviewNotes.trim(),
           conditions: this.conditions,
+          commentVisibility: this.commentVisibility,
         },
       );
 
       this.notifications.success('Review submitted successfully');
+
+      // Refresh the pending reviews count badge
+      console.log('[Review] About to refresh pending reviews count');
+      console.log('[Review] Municipality service:', this.municipality);
+      console.log(
+        '[Review] Current municipality:',
+        this.municipality.currentMunicipality,
+      );
+      await this.municipality.loadPendingReviewsCount();
+      console.log(
+        '[Review] Pending reviews count refreshed:',
+        this.municipality.pendingReviewsCount,
+      );
 
       // Navigate back to queue
       this.router.transitionTo('municipality.building-permits.queue');

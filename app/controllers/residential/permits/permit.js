@@ -14,6 +14,9 @@ export default class ResidentialPermitsPermitController extends Controller {
   @tracked showUploadDocumentModal = false;
   @tracked showAddCommentModal = false;
   @tracked isLoading = false;
+  @tracked isResubmitting = false;
+  @tracked showResubmitModal = false;
+  @tracked resubmitMessage = '';
 
   // Document viewer state
   @tracked showDocumentViewer = false;
@@ -58,6 +61,19 @@ export default class ResidentialPermitsPermitController extends Controller {
     // Get department reviews from permit data
     // This will come from the backend - format: [{ department, approved, reviewedAt, reviewedBy }]
     return this.permit.departmentReviews || [];
+  }
+
+  // Check if applicant can resubmit the permit (when revisions are requested)
+  get canResubmit() {
+    const reviews = this.departmentReviews;
+    return reviews.some((r) => r.status === 'revisions_requested');
+  }
+
+  // Get list of departments that requested revisions
+  get departmentsRequestingRevisions() {
+    return this.departmentReviews
+      .filter((r) => r.status === 'revisions_requested')
+      .map((r) => r.department);
   }
 
   get canScheduleInspection() {
@@ -286,5 +302,58 @@ export default class ResidentialPermitsPermitController extends Controller {
   @action
   stopPropagation(event) {
     event.stopPropagation();
+  }
+
+  // Resubmit actions
+  @action
+  openResubmitModal() {
+    this.showResubmitModal = true;
+    this.resubmitMessage = '';
+  }
+
+  @action
+  closeResubmitModal() {
+    this.showResubmitModal = false;
+    this.resubmitMessage = '';
+  }
+
+  @action
+  updateResubmitMessage(event) {
+    this.resubmitMessage = event.target.value;
+  }
+
+  @action
+  async resubmitPermit() {
+    if (
+      !confirm(
+        'Are you sure you want to resubmit this permit? The requesting departments will be notified to re-review.',
+      )
+    ) {
+      return;
+    }
+
+    this.isResubmitting = true;
+    try {
+      // Extract municipalityId - handle both string and ObjectId
+      const municipalityId =
+        this.permit.municipalityId?._id || this.permit.municipalityId;
+
+      await this.hybridApi.post(
+        `/municipalities/${municipalityId}/permits/${this.permit._id}/resubmit`,
+        {
+          message: this.resubmitMessage.trim() || null,
+        },
+      );
+
+      this.notifications.success(
+        'Permit resubmitted successfully! Reviewers have been notified.',
+      );
+      this.closeResubmitModal();
+      await this.refreshData();
+    } catch (error) {
+      this.notifications.error(error.message || 'Failed to resubmit permit');
+    } finally {
+      this.isResubmitting = false;
+    }
   }
 }

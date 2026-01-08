@@ -2,36 +2,39 @@
   {{! Dropdown Button }}
   <button
     type="button"
-    class="avitar-btn avitar-btn--{{this.currentStatusOption.color}}"
+    class="avitar-btn avitar-btn--{{this.currentStatusOption.color}} avitar-btn--sm"
     {{on "click" this.toggleDropdown}}
     disabled={{this.isChanging}}
   >
-    <i class="fas fa-{{this.currentStatusOption.icon}} avitar-mr-2"></i>
-    Status: {{this.currentStatusOption.label}}
-    <i class="fas fa-chevron-down avitar-ml-2"></i>
+    {{lnr-icon "cog" class="avitar-mr-2"}}
+    Change Status
+    {{lnr-icon "chevron-down" class="avitar-ml-2"}}
   </button>
 
   {{! Dropdown Menu }}
   {{#if this.isOpen}}
     <div
       class="avitar-dropdown__menu avitar-dropdown__menu--right avitar-shadow-lg"
+      style="min-width: 200px;"
       {{on "click" this.stopPropagation}}
     >
-      <div class="avitar-dropdown__header">
-        <h4 class="avitar-font-semibold">Change Inspection Status</h4>
+      <div class="avitar-dropdown__header avitar-p-3 avitar-border-b">
+        <h4 class="avitar-font-semibold avitar-text-sm">Change Inspection Status</h4>
       </div>
 
-      <div class="avitar-dropdown__content">
-        {{#each this.availableStatusOptions as |statusOption|}}
-          <button
-            type="button"
-            class="avitar-dropdown__item"
-            {{on "click" (fn this.selectStatus statusOption.value)}}
-          >
-            <i class="fas fa-{{statusOption.icon}} avitar-mr-2 avitar-text-{{statusOption.color}}"></i>
-            {{statusOption.label}}
-          </button>
-        {{/each}}
+      <div class="avitar-p-2">
+        <div class="avitar-flex avitar-flex-col avitar-gap-2">
+          {{#each this.availableStatusOptions as |statusOption|}}
+            <button
+              type="button"
+              class="avitar-btn avitar-btn--{{statusOption.color}} avitar-btn--sm avitar-w-full avitar-justify-start"
+              {{on "click" (fn this.selectStatus statusOption.value)}}
+            >
+              {{lnr-icon "chevron-right" class="avitar-mr-2"}}
+              {{statusOption.label}}
+            </button>
+          {{/each}}
+        </div>
       </div>
     </div>
 
@@ -49,15 +52,16 @@
       <div class="avitar-modal avitar-modal--md" {{on "click" this.stopPropagation}}>
         <div class="avitar-modal__header">
           <h2 class="avitar-modal__title">
-            <i class="fas fa-{{if (eq this.selectedStatus 'completed') 'check-circle' 'times-circle'}} avitar-mr-2"></i>
             {{#if (eq this.selectedStatus "completed")}}
+              {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
               Complete Inspection
             {{else if (eq this.selectedStatus "cancelled")}}
+              {{lnr-icon "cross-circle" class="avitar-mr-2"}}
               Cancel Inspection
             {{/if}}
           </h2>
           <button type="button" class="avitar-modal__close" {{on "click" this.closeConfirmModal}}>
-            <i class="fas fa-times"></i>
+            {{lnr-icon "cross"}}
           </button>
         </div>
 
@@ -92,7 +96,7 @@
 
           {{#if (eq this.selectedStatus "completed")}}
             <div class="avitar-alert avitar-alert--info avitar-mt-4">
-              <i class="fas fa-info-circle avitar-mr-2"></i>
+              {{lnr-icon "question-circle" class="avitar-mr-2"}}
               Ensure all required checklist items are completed before marking this inspection as complete.
             </div>
           {{/if}}
@@ -114,13 +118,14 @@
             disabled={{this.isChanging}}
           >
             {{#if this.isChanging}}
-              <i class="fas fa-spinner fa-spin avitar-mr-2"></i>
+              {{lnr-icon "sync" class="avitar-mr-2 avitar-spin"}}
               Updating...
             {{else}}
-              <i class="fas fa-{{if (eq this.selectedStatus 'completed') 'check' 'times'}} avitar-mr-2"></i>
               {{#if (eq this.selectedStatus "completed")}}
+                {{lnr-icon "checkmark-circle" class="avitar-mr-2"}}
                 Complete Inspection
               {{else if (eq this.selectedStatus "cancelled")}}
+                {{lnr-icon "cross-circle" class="avitar-mr-2"}}
                 Cancel Inspection
               {{/if}}
             {{/if}}

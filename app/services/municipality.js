@@ -13,6 +13,8 @@ export default class MunicipalityService extends Service {
   @tracked availableMunicipalities = [];
   @tracked isLoading = false;
   @tracked inspectionsTodayCount = 0;
+  @tracked pendingReviewsCount = 0;
+  @tracked selectedAssessmentYear = new Date().getFullYear();
 
   async loadMunicipality(slug) {
     this.isLoading = true;
@@ -25,12 +27,13 @@ export default class MunicipalityService extends Service {
       // Store in session
       this.session.set('selectedMunicipality', slug);
 
-      // Load today's inspection count for badge (only for municipal staff)
+      // Load counts for badges (only for municipal staff)
       if (
         this.hasModule('building_permit') &&
         !this.currentUser.isContractorOrCitizen
       ) {
         await this.loadInspectionsTodayCount();
+        await this.loadPendingReviewsCount();
       }
 
       return this.currentMunicipality;
@@ -64,6 +67,38 @@ export default class MunicipalityService extends Service {
     } catch (error) {
       console.error('Failed to load today inspection count:', error);
       this.inspectionsTodayCount = 0;
+    }
+  }
+
+  async loadPendingReviewsCount() {
+    console.log('[Municipality] loadPendingReviewsCount called');
+    console.log(
+      '[Municipality] currentMunicipality:',
+      this.currentMunicipality,
+    );
+
+    if (!this.currentMunicipality) {
+      console.log('[Municipality] No current municipality, returning early');
+      return;
+    }
+
+    try {
+      console.log(
+        '[Municipality] Fetching pending reviews count for:',
+        this.currentMunicipality.id,
+      );
+      const response = await this.api.get(
+        `/municipalities/${this.currentMunicipality.id}/permits/pending-reviews-count`,
+      );
+      console.log('[Municipality] Response:', response);
+      this.pendingReviewsCount = response.count || 0;
+      console.log(
+        '[Municipality] Updated pendingReviewsCount to:',
+        this.pendingReviewsCount,
+      );
+    } catch (error) {
+      console.error('Failed to load pending reviews count:', error);
+      this.pendingReviewsCount = 0;
     }
   }
 
@@ -323,6 +358,8 @@ export default class MunicipalityService extends Service {
           title: 'Permits',
           route: 'municipality.building-permits.permits',
           icon: 'file-alt',
+          badge: this.pendingReviewsCount > 0 ? this.pendingReviewsCount : null,
+          badgeClass: 'avitar-badge--danger',
         },
         {
           title: 'Projects',
@@ -361,7 +398,7 @@ export default class MunicipalityService extends Service {
       nav.push({
         title: 'Building Permits',
         route: 'municipality.building-permits',
-        icon: 'tool',
+        icon: 'construction',
         children: buildingPermitChildren,
       });
     }

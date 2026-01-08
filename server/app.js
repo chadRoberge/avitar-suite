@@ -59,6 +59,7 @@ const importRoutes = require('./routes/import');
 const permitRoutes = require('./routes/permits');
 const permitTypeRoutes = require('./routes/permitTypes');
 const projectTypeRoutes = require('./routes/projectTypes');
+const feeScheduleRoutes = require('./routes/feeSchedules');
 const contractorRoutes = require('./routes/contractors');
 const contractorVerificationRoutes = require('./routes/contractorVerification');
 const citizenRoutes = require('./routes/citizens');
@@ -71,6 +72,10 @@ const {
   initializeChangeStreams,
   shutdown: changeStreamShutdown,
 } = require('./routes/change-stream');
+const {
+  startFeeScheduleActivator,
+  stopFeeScheduleActivator,
+} = require('./jobs/feeScheduleActivator');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -82,6 +87,7 @@ connectDB();
 app.use(
   helmet({
     frameguard: false, // Disable frameguard to allow cross-origin iframes from our frontend
+    crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin resource loading for images/files
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -197,6 +203,7 @@ app.use('/api', importRoutes);
 app.use('/api', permitRoutes);
 app.use('/api', permitTypeRoutes);
 app.use('/api', projectTypeRoutes);
+app.use('/api', feeScheduleRoutes);
 app.use('/api/contractors', contractorRoutes);
 app.use('/api/contractor-verification', contractorVerificationRoutes);
 app.use('/api/citizens', citizenRoutes);
@@ -282,6 +289,14 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     } catch (error) {
       console.error('❌ Failed to initialize change streams:', error);
     }
+
+    // Start fee schedule activator job
+    try {
+      startFeeScheduleActivator();
+      console.log('📅 Fee Schedule Activator job started');
+    } catch (error) {
+      console.error('❌ Failed to start fee schedule activator:', error);
+    }
   });
 } else {
   console.log('🔄 Running in serverless mode (Vercel)');
@@ -297,6 +312,13 @@ const gracefulShutdown = async (signal) => {
     console.log('✅ Change streams shut down successfully');
   } catch (error) {
     console.error('❌ Error during change stream shutdown:', error);
+  }
+
+  try {
+    stopFeeScheduleActivator();
+    console.log('✅ Fee schedule activator shut down successfully');
+  } catch (error) {
+    console.error('❌ Error during fee schedule activator shutdown:', error);
   }
 
   process.exit(0);

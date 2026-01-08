@@ -263,21 +263,21 @@ router.post(
           const permit = await Permit.findById(permitId);
 
           if (permit) {
-            // Check if contractor owns this permit
-            if (
-              req.user.global_role === 'contractor' &&
-              permit.contractor_id &&
-              permit.contractor_id.toString() ===
-                req.user.contractor_id?.toString()
-            ) {
-              hasPermission = true;
-            }
-            // Check if citizen created this permit
-            else if (
-              req.user.global_role === 'citizen' &&
-              permit.applicant?.userId &&
-              permit.applicant.userId.toString() === req.user._id?.toString()
-            ) {
+            const userId = req.user._id?.toString();
+            const userContractorId = req.user.contractor_id?.toString();
+
+            // Check all possible ownership fields
+            const isOwner =
+              // Contractor ownership
+              (userContractorId &&
+                permit.contractor_id?.toString() === userContractorId) ||
+              // User ownership via various fields
+              (userId && permit.submitted_by?.toString() === userId) ||
+              (userId && permit.createdBy?.toString() === userId) ||
+              (userId && permit.applicantUserId?.toString() === userId) ||
+              (userId && permit.applicant?.userId?.toString() === userId);
+
+            if (isOwner) {
               hasPermission = true;
             }
           }
@@ -714,6 +714,10 @@ router.get('/files/:fileId/download', authenticateToken, async (req, res) => {
       `${disposition}; filename="${file.originalName}"`,
     );
     res.setHeader('Content-Length', fileBuffer.length);
+
+    // Allow cross-origin resource loading for images/files in the document viewer
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
     res.send(fileBuffer);
   } catch (error) {

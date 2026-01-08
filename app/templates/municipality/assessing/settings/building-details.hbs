@@ -4,16 +4,38 @@
     <div class="avitar-flex avitar-flex-row avitar-justify-between avitar-items-center avitar-mb-2">
       <div class="avitar-flex-5">
         <h1 class="avitar-page-title avitar-skinny">Building Details</h1>
-        <div class="avitar-page-subtitle">Configure building rate codes and classification settings</div>
+        <div class="avitar-page-subtitle">Configure building rate codes and classification settings for {{this.configYear}}</div>
       </div>
-      <div class="avitar-flex-5 avitar-flex avitar-justify-end">
+      <div class="avitar-flex-5 avitar-flex avitar-justify-end avitar-items-center avitar-gap-3">
+        {{#if this.isYearLocked}}
+          <span class="avitar-badge avitar-badge--warning">
+            {{lnr-icon "lock" class="avitar-mr-1"}}
+            {{this.configYear}} Locked
+          </span>
+        {{/if}}
         <button type="button" class="avitar-btn avitar-btn--outline avitar-btn--sm" {{on "click" this.showGuidelines}} title="Show Guidelines">
-          <i class="fas fa-question-circle"></i>
+          {{lnr-icon "question-circle"}}
           Guidelines
         </button>
       </div>
     </div>
   </div>
+
+  {{!-- Year Locked Warning Banner --}}
+  {{#if this.isYearLocked}}
+    <div class="avitar-alert avitar-alert--warning avitar-mb-4">
+      <div class="avitar-flex avitar-items-center avitar-gap-3">
+        {{lnr-icon "lock" class="avitar-text-lg"}}
+        <div>
+          <strong>Configuration Locked</strong>
+          <p class="avitar-text-sm avitar-mb-0">
+            The configuration for year {{this.configYear}} is locked and cannot be modified.
+            Select a different year to make changes.
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/if}}
   {{!-- Building Rate Codes Section --}}
   <div class="avitar-card avitar-mb-6">
     <div class="avitar-card__header avitar-card__header--colored">
@@ -23,8 +45,8 @@
           <div class="avitar-card__subtitle">3-letter codes with descriptions, rates, and building type classifications</div>
         </div>
         {{#unless (or this.isAddingBuildingCode this.isEditingBuildingCode)}}
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add Building Code
         </button>
         {{/unless}}
@@ -114,11 +136,11 @@
               </td>
               <td>{{code.depreciation}}%</td>
               <td class="avitar-table__actions">
-                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingBuildingCode code)}} title="Edit">
-                  <i class="fas fa-edit"></i>
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingBuildingCode code)}} title="Edit" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "pencil"}}
                 </button>
-                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteBuildingCode code)}} title="Delete">
-                  <i class="fas fa-trash"></i>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteBuildingCode code)}} title="Delete" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "trash"}}
                 </button>
               </td>
             </tr>
@@ -128,11 +150,11 @@
       </div>
       {{else}}
       <div class="avitar-empty-state avitar-text-center avitar-py-6">
-        <i class="fas fa-building avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        {{lnr-icon "apartment" class="avitar-text-3xl avitar-text-muted avitar-mb-3"}}
         <div class="avitar-font-semibold avitar-mb-2">No Building Codes</div>
         <div class="avitar-text-muted avitar-mb-4">Add your first building code to get started</div>
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingBuildingCode}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add First Building Code
         </button>
       </div>
@@ -148,8 +170,8 @@
           <div class="avitar-card__subtitle">Point-based codes for Interior Wall features</div>
         </div>
         {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add Interior Wall Code
         </button>
         {{/unless}}
@@ -176,11 +198,11 @@
               <td>{{code.description}}</td>
               <td>{{code.points}}</td>
               <td class="avitar-table__actions">
-                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
-                  <i class="fas fa-edit"></i>
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "pencil"}}
                 </button>
-                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
-                  <i class="fas fa-trash"></i>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "trash"}}
                 </button>
               </td>
             </tr>
@@ -190,11 +212,11 @@
       </div>
       {{else}}
       <div class="avitar-empty-state avitar-text-center avitar-py-6">
-        <i class="fas fa-th-large avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        {{lnr-icon "layers" class="avitar-text-3xl avitar-text-muted avitar-mb-3"}}
         <div class="avitar-font-semibold avitar-mb-2">No Interior Wall Codes</div>
         <div class="avitar-text-muted avitar-mb-4">Add interior wall feature codes to get started</div>
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "interior_wall")}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add First Interior Wall Code
         </button>
       </div>
@@ -210,8 +232,8 @@
           <div class="avitar-card__subtitle">Point-based codes for Exterior Wall features</div>
         </div>
         {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add Exterior Wall Code
         </button>
         {{/unless}}
@@ -238,11 +260,11 @@
               <td>{{code.description}}</td>
               <td>{{code.points}}</td>
               <td class="avitar-table__actions">
-                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit">
-                  <i class="fas fa-edit"></i>
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingFeatureCode code)}} title="Edit" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "pencil"}}
                 </button>
-                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete">
-                  <i class="fas fa-trash"></i>
+                <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteFeatureCode code)}} title="Delete" disabled={{this.isYearLocked}}>
+                  {{lnr-icon "trash"}}
                 </button>
               </td>
             </tr>
@@ -252,11 +274,11 @@
       </div>
       {{else}}
       <div class="avitar-empty-state avitar-text-center avitar-py-6">
-        <i class="fas fa-building avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
+        {{lnr-icon "apartment" class="avitar-text-3xl avitar-text-muted avitar-mb-3"}}
         <div class="avitar-font-semibold avitar-mb-2">No Exterior Wall Codes</div>
         <div class="avitar-text-muted avitar-mb-4">Add exterior wall feature codes to get started</div>
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}}>
-          <i class="fas fa-plus avitar-mr-2"></i>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.startAddingFeatureCodeForType "exterior_wall")}} disabled={{this.isYearLocked}}>
+          {{lnr-icon "plus-circle" class="avitar-mr-2"}}
           Add First Exterior Wall Code
         </button>
       </div>
@@ -1737,54 +1759,13 @@
           <h3 class="avitar-card__title">Sketch Sub Area Factors</h3>
           <div class="avitar-card__subtitle">Point-based factors for sketch sub areas with living space designation</div>
         </div>
-        {{#unless (or this.isAddingSubAreaFactor this.isEditingSubAreaFactor)}}
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingSubAreaFactor}}>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.openSubAreaFactorModal null)}}>
           <i class="fas fa-plus avitar-mr-2"></i>
           Add Sub Area Factor
         </button>
-        {{/unless}}
       </div>
     </div>
     <div class="avitar-card__body">
-      {{#if (or this.isAddingSubAreaFactor this.isEditingSubAreaFactor)}}
-      <div class="avitar-bg-gray-50 avitar-p-4 avitar-rounded avitar-mb-4">
-        <h4 class="avitar-font-semibold avitar-mb-3">
-          {{if this.isEditingSubAreaFactor "Edit Sub Area Factor" "Add New Sub Area Factor"}}
-        </h4>
-        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4">
-          <div class="avitar-form-group">
-            <label class="avitar-label">Description</label>
-            <input type="text" class="avitar-input" value={{this.newSubAreaDescription}} {{on "input" this.updateSubAreaDescription}} placeholder="e.g., Finished Basement" />
-          </div>
-          <div class="avitar-form-group">
-            <label class="avitar-label">Display Text (15 chars max)</label>
-            <input type="text" class="avitar-input" value={{this.newSubAreaDisplayText}} {{on "input" this.updateSubAreaDisplayText}} placeholder="e.g., FIN-BSMT" maxlength="15" />
-          </div>
-        </div>
-        <div class="avitar-grid avitar-grid-cols-1 md:avitar-grid-cols-2 avitar-gap-4 avitar-mt-4">
-          <div class="avitar-form-group">
-            <label class="avitar-label">Points</label>
-            <input type="number" class="avitar-input" value={{this.newSubAreaPoints}} {{on "input" this.updateSubAreaPoints}} step="1" min="-1000" max="1000" placeholder="e.g., 50" />
-          </div>
-          <div class="avitar-form-group">
-            <label class="avitar-label">Living Space</label>
-            <select class="avitar-select" value={{this.newSubAreaLivingSpace}} {{on "change" this.updateSubAreaLivingSpace}}>
-              <option value="">Select living space...</option>
-              <option value="true">Yes (Living Space)</option>
-              <option value="false">No (Not Living Space)</option>
-            </select>
-          </div>
-        </div>
-        <div class="avitar-flex avitar-gap-2 avitar-mt-4">
-          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.saveSubAreaFactor}}>
-            {{if this.isEditingSubAreaFactor "Update Factor" "Save Factor"}}
-          </button>
-          <button type="button" class="avitar-btn avitar-btn--secondary" {{on "click" (if this.isEditingSubAreaFactor this.cancelEditingSubAreaFactor this.cancelAddingSubAreaFactor)}}>
-            Cancel
-          </button>
-        </div>
-      </div>
-      {{/if}}
       {{#if this.reactiveSubAreaFactors.length}}
       <div class="avitar-table-container">
         <table class="avitar-table">
@@ -1811,7 +1792,7 @@
                 </span>
               </td>
               <td class="avitar-table__actions">
-                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.startEditingSubAreaFactor factor)}} title="Edit">
+                <button type="button" class="avitar-btn avitar-btn--secondary avitar-btn--xs" {{on "click" (fn this.openSubAreaFactorModal factor)}} title="Edit">
                   <i class="fas fa-edit"></i>
                 </button>
                 <button type="button" class="avitar-btn avitar-btn--danger avitar-btn--xs" {{on "click" (fn this.deleteSubAreaFactor factor)}} title="Delete">
@@ -1828,7 +1809,7 @@
         <i class="fas fa-th-large avitar-text-3xl avitar-text-muted avitar-mb-3"></i>
         <div class="avitar-font-semibold avitar-mb-2">No Sub Area Factors</div>
         <div class="avitar-text-muted avitar-mb-4">Add your first sketch sub area factor to get started</div>
-        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingSubAreaFactor}}>
+        <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" (fn this.openSubAreaFactorModal null)}}>
           <i class="fas fa-plus avitar-mr-2"></i>
           Add First Sub Area Factor
         </button>
@@ -1836,6 +1817,14 @@
       {{/if}}
     </div>
   </div>
+
+  {{!-- Sub Area Factor Edit Modal --}}
+  <Assessing::SubAreaFactorEditModal
+    @isOpen={{this.showSubAreaFactorModal}}
+    @factor={{this.subAreaFactorToEdit}}
+    @onClose={{this.closeSubAreaFactorModal}}
+    @onSave={{this.saveSubAreaFactorFromModal}}
+  />
   {{!-- Guidelines Modal --}}
   {{#if this.showGuidelinesModal}}
   <div class="avitar-modal-overlay avitar-modal-overlay--visible" {{on "click" this.hideGuidelines}}>
@@ -1941,7 +1930,7 @@
           </div>
           <div class="avitar-form-group">
             <label class="avitar-label">Points</label>
-            <input type="number" class="avitar-input" value={{this.newFeaturePoints}} {{on "input" this.updateFeaturePoints}} step="1" min="-1000" max="1000" placeholder="e.g., 25" />
+            <input type="number" class="avitar-input" value={{this.newFeaturePoints}} {{on "input" this.updateFeaturePoints}} step="0.01" min="-1000" max="1000" placeholder="e.g., 0.98" />
           </div>
         </div>
       </div>

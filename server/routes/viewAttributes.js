@@ -2,19 +2,35 @@ const express = require('express');
 const router = express.Router();
 const ViewAttribute = require('../models/ViewAttribute');
 const PropertyView = require('../models/PropertyView');
+const {
+  checkYearLock,
+  getEffectiveYear,
+  isYearLocked,
+} = require('../middleware/checkYearLock');
 
 // Get all view attributes for a municipality
+// @query year - optional, defaults to current year
 router.get(
   '/municipalities/:municipalityId/view-attributes',
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const viewAttributes =
-        await ViewAttribute.findByMunicipality(municipalityId);
+      const year = getEffectiveYear(req);
+
+      // Use year-aware query method
+      const viewAttributes = await ViewAttribute.findByMunicipalityForYear(
+        municipalityId,
+        year,
+      );
+
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(municipalityId, year);
 
       res.json({
         success: true,
         viewAttributes,
+        year,
+        isYearLocked: yearLocked,
       });
     } catch (error) {
       console.error('Error fetching view attributes:', error);
@@ -27,19 +43,29 @@ router.get(
 );
 
 // Get all view attributes of a specific type for a municipality
+// @query year - optional, defaults to current year
 router.get(
   '/municipalities/:municipalityId/view-attributes/type/:attributeType',
   async (req, res) => {
     try {
       const { municipalityId, attributeType } = req.params;
-      const viewAttributes = await ViewAttribute.findByMunicipalityAndType(
+      const year = getEffectiveYear(req);
+
+      // Use year-aware query method
+      const viewAttributes = await ViewAttribute.findByMunicipalityAndTypeForYear(
         municipalityId,
         attributeType,
+        year,
       );
+
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(municipalityId, year);
 
       res.json({
         success: true,
         viewAttributes,
+        year,
+        isYearLocked: yearLocked,
       });
     } catch (error) {
       console.error('Error fetching view attributes by type:', error);
@@ -84,35 +110,39 @@ router.get(
 );
 
 // Create a new view attribute
+// @body effective_year - required, the year for this configuration
 router.post(
   '/municipalities/:municipalityId/view-attributes',
+  checkYearLock,
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const { attributeType, name, description, displayText, factor } =
-        req.body;
+      const {
+        attributeType,
+        name,
+        description,
+        displayText,
+        factor,
+        effective_year,
+      } = req.body;
 
-      console.log('POST /view-attributes - municipalityId:', municipalityId);
-      console.log('POST /view-attributes - body:', req.body);
-
-      // Validation (simplified to match waterfront)
+      // Validation
       if (
         !attributeType ||
         !name ||
         !description ||
         !displayText ||
-        factor === undefined
+        factor === undefined ||
+        !effective_year
       ) {
-        console.log('Validation failed - missing required fields');
         return res.status(400).json({
           success: false,
           message:
-            'Attribute type, name, description, display text, and factor are required',
+            'Attribute type, name, description, display text, factor, and effective_year are required',
         });
       }
 
       if (factor < 0 || factor > 1000) {
-        console.log('Validation failed - factor out of range:', factor);
         return res.status(400).json({
           success: false,
           message: 'Factor must be between 0 and 1000',
@@ -126,9 +156,9 @@ router.post(
         description,
         displayText,
         factor,
+        effective_year,
       });
 
-      console.log('Creating view attribute:', viewAttribute);
       await viewAttribute.save();
 
       res.status(201).json({
@@ -142,7 +172,7 @@ router.post(
         return res.status(400).json({
           success: false,
           message:
-            'A view attribute with this name already exists for this type',
+            'A view attribute with this name already exists for this type and year',
         });
       }
 
@@ -171,6 +201,19 @@ router.put(
         return res.status(404).json({
           success: false,
           message: 'View attribute not found',
+        });
+      }
+
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(
+        municipalityId,
+        viewAttribute.effective_year,
+      );
+      if (yearLocked) {
+        return res.status(403).json({
+          success: false,
+          message: `Configuration for year ${viewAttribute.effective_year} is locked and cannot be modified.`,
+          isYearLocked: true,
         });
       }
 
@@ -215,7 +258,6 @@ router.put(
 
       // Update all property views that reference this attribute
       try {
-        console.log('Updating property views for attribute:', attributeId);
         const updatedViewsCount = await PropertyView.updateViewsForAttribute(
           attributeId,
           viewAttribute,
@@ -242,7 +284,7 @@ router.put(
         return res.status(400).json({
           success: false,
           message:
-            'A view attribute with this name already exists for this type',
+            'A view attribute with this name already exists for this type and year',
         });
       }
 
@@ -273,6 +315,19 @@ router.delete(
         });
       }
 
+      // Check if the year is locked
+      const yearLocked = await isYearLocked(
+        municipalityId,
+        viewAttribute.effective_year,
+      );
+      if (yearLocked) {
+        return res.status(403).json({
+          success: false,
+          message: `Configuration for year ${viewAttribute.effective_year} is locked and cannot be modified.`,
+          isYearLocked: true,
+        });
+      }
+
       viewAttribute.isActive = false;
       await viewAttribute.save();
 
@@ -291,12 +346,110 @@ router.delete(
 );
 
 // Create default view attributes for a municipality
+// @body effective_year - required, the year for this configuration
 router.post(
   '/municipalities/:municipalityId/view-attributes/defaults',
+  checkYearLock,
   async (req, res) => {
     try {
       const { municipalityId } = req.params;
-      const viewAttributes = await ViewAttribute.createDefaults(municipalityId);
+      const { effective_year } = req.body;
+
+      if (!effective_year) {
+        return res.status(400).json({
+          success: false,
+          message: 'effective_year is required',
+        });
+      }
+
+      // Create defaults with the specified year
+      const defaults = [
+        {
+          attributeType: 'subject',
+          name: 'Mountains',
+          description:
+            'View of mountain regions that extend 100+ feet out of the ground',
+          displayText: 'Mountains',
+          factor: 100,
+        },
+        {
+          attributeType: 'subject',
+          name: 'Ocean',
+          description: 'View of open ocean water',
+          displayText: 'Ocean View',
+          factor: 120,
+        },
+        {
+          attributeType: 'width',
+          name: 'Panoramic',
+          description: 'Wide panoramic view covering 180 degrees or more',
+          displayText: 'Panoramic',
+          factor: 150,
+        },
+        {
+          attributeType: 'width',
+          name: 'Partial',
+          description: 'Limited view covering less than 90 degrees',
+          displayText: 'Partial View',
+          factor: 80,
+        },
+        {
+          attributeType: 'distance',
+          name: 'Close',
+          description: 'View subject is within 1 mile',
+          displayText: 'Close Distance',
+          factor: 130,
+        },
+        {
+          attributeType: 'distance',
+          name: 'Distant',
+          description: 'View subject is more than 5 miles away',
+          displayText: 'Distant View',
+          factor: 90,
+        },
+        {
+          attributeType: 'depth',
+          name: 'Deep',
+          description: 'Extensive depth with multiple layers of view',
+          displayText: 'Deep View',
+          factor: 110,
+        },
+        {
+          attributeType: 'depth',
+          name: 'Shallow',
+          description: 'Limited depth with obstructed or shallow view',
+          displayText: 'Shallow View',
+          factor: 85,
+        },
+      ];
+
+      const viewAttributes = [];
+      for (const defaultAttr of defaults) {
+        try {
+          const existing = await ViewAttribute.findOne({
+            municipalityId,
+            attributeType: defaultAttr.attributeType,
+            name: defaultAttr.name,
+            effective_year,
+            isActive: true,
+          });
+
+          if (!existing) {
+            const created = await ViewAttribute.create({
+              municipalityId,
+              ...defaultAttr,
+              effective_year,
+            });
+            viewAttributes.push(created);
+          } else {
+            viewAttributes.push(existing);
+          }
+        } catch (err) {
+          if (err.code !== 11000) {
+            throw err;
+          }
+        }
+      }
 
       res.json({
         success: true,

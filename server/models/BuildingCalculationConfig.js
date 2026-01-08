@@ -8,12 +8,28 @@ const buildingCalculationConfigSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Municipality',
       required: true,
-      unique: true, // One config per municipality
       index: true,
     },
 
     // Assessment year this config applies to
     effective_year: { type: Number, required: true, index: true },
+
+    // The first year where this config is NO LONGER effective (null = still active)
+    effective_year_end: { type: Number, default: null, index: true },
+
+    // Version chain for tracking changes across years
+    previous_version_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingCalculationConfig',
+      default: null,
+    },
+    next_version_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BuildingCalculationConfig',
+      default: null,
+    },
+
+    isActive: { type: Boolean, default: true },
 
     // Bedroom/Bathroom rate calculator configuration
     bedroom_bath_config: {
@@ -155,26 +171,67 @@ buildingCalculationConfigSchema.pre('save', function (next) {
   next();
 });
 
+// Static method to find config for a municipality for a specific year
+// Uses temporal range: effective_year <= year AND (effective_year_end is null OR effective_year_end > year)
+buildingCalculationConfigSchema.statics.findForMunicipalityYear = async function (
+  municipalityId,
+  year,
+) {
+  return this.findOne({
+    municipality_id: municipalityId,
+    effective_year: { $lte: year },
+    $or: [
+      { effective_year_end: null },
+      { effective_year_end: { $exists: false } },
+      { effective_year_end: { $gt: year } },
+    ],
+    // Match records without isActive field or with isActive: true
+    $and: [{ $or: [{ isActive: { $exists: false } }, { isActive: true }] }],
+  }).sort({ effective_year: -1 }); // Get the most recent one if multiple match
+};
+
 // Static method to get or create config for a municipality
 buildingCalculationConfigSchema.statics.getOrCreateForMunicipality =
   async function (municipalityId, year = null) {
     const currentYear = year || new Date().getFullYear();
 
+    // First, try to find an exact match for this year (include records without isActive field)
     let config = await this.findOne({
       municipality_id: municipalityId,
       effective_year: currentYear,
+      $or: [{ isActive: { $exists: false } }, { isActive: true }],
     });
 
-    if (!config) {
-      config = new this({
-        municipality_id: municipalityId,
-        effective_year: currentYear,
-      });
-      await config.save();
+    if (config) {
+      return config;
     }
+
+    // Next, try to find an inherited config (from a previous year that's still effective)
+    config = await this.findForMunicipalityYear(municipalityId, currentYear);
+
+    if (config) {
+      return config;
+    }
+
+    // No config exists, create a new one
+    config = new this({
+      municipality_id: municipalityId,
+      effective_year: currentYear,
+    });
+    await config.save();
 
     return config;
   };
+
+// Get distinct years that have config data for a municipality
+buildingCalculationConfigSchema.statics.getAvailableYears = async function (
+  municipalityId,
+) {
+  return this.distinct('effective_year', {
+    municipality_id: municipalityId,
+    $or: [{ isActive: { $exists: false } }, { isActive: true }],
+  });
+};
 
 // Instance method to convert to calculation config object
 buildingCalculationConfigSchema.methods.toCalculationConfig = function () {

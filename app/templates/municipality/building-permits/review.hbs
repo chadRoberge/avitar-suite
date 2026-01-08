@@ -304,6 +304,34 @@
             </div>
           {{/if}}
 
+          {{! Applicant Visibility Toggle (for revisions_requested and conditionally_approved) }}
+          {{#if this.showVisibilityToggle}}
+            <div class="avitar-p-4 avitar-bg-warning-light avitar-border avitar-border-warning avitar-rounded">
+              <div class="avitar-flex avitar-items-start avitar-gap-3">
+                <div class="avitar-mt-1">
+                  <i class="fas fa-eye avitar-text-warning"></i>
+                </div>
+                <div class="avitar-flex-1">
+                  <label class="avitar-flex avitar-items-center avitar-gap-3 avitar-cursor-pointer">
+                    <input
+                      type="checkbox"
+                      class="avitar-checkbox"
+                      checked={{this.shareWithApplicant}}
+                      {{on "change" this.toggleShareWithApplicant}} />
+                    <span class="avitar-font-semibold avitar-text-sm">Share feedback with applicant</span>
+                  </label>
+                  <p class="avitar-text-xs avitar-text-muted avitar-mt-2">
+                    {{#if this.shareWithApplicant}}
+                      Your review notes will be visible to the applicant in their Communications tab so they can address the required changes.
+                    {{else}}
+                      Your review notes will only be visible to municipal staff. The applicant will not see this feedback.
+                    {{/if}}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {{/if}}
+
           {{! Submit Button }}
           <button
             type="button"

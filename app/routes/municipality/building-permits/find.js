@@ -8,12 +8,6 @@ export default class MunicipalityBuildingPermitsFindRoute extends Route {
   @service('property-selection') propertySelection;
   @service router;
 
-  queryParams = {
-    property_id: {
-      refreshModel: false,
-    },
-  };
-
   async model() {
     const municipalityId = this.municipality.currentMunicipality?.id;
 

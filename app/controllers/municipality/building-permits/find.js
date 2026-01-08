@@ -10,9 +10,6 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
   @service router;
   @service('property-selection') propertySelection;
 
-  queryParams = ['property_id'];
-
-  @tracked property_id = null;
   @tracked permits = [];
   @tracked projects = [];
   @tracked isLoadingPermits = false;
@@ -23,12 +20,10 @@ export default class MunicipalityBuildingPermitsFindController extends Controlle
 
   @action
   onPropertyChanged(element, [property]) {
-    // Called when property selection changes
+    // Called when property selection changes (via did-update modifier)
     if (property) {
-      this.property_id = property.id;
       this.loadPermitsForProperty(property.id);
     } else {
-      this.property_id = null;
       this.permits = [];
       this.projects = [];
     }

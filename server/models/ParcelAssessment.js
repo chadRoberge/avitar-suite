@@ -261,6 +261,156 @@ parcelAssessmentSchema.statics.getSignificantChanges = async function (
   }).sort({ change_percentage: -1 });
 };
 
+/**
+ * Get effective records for all properties in a municipality for a given year
+ * Uses temporal query to get most recent record <= year for each property
+ * @param {ObjectId} municipalityId - Municipality ID
+ * @param {number} year - Assessment year
+ * @param {Object} options - Query options (limit, skip, sort)
+ * @returns {Array} - Array of effective parcel assessments
+ */
+parcelAssessmentSchema.statics.getEffectiveParcelsForYear = async function (
+  municipalityId,
+  year,
+  options = {},
+) {
+  const { limit = 0, skip = 0, sort = { 'parcel_totals.total_assessed_value': -1 } } = options;
+
+  const pipeline = [
+    {
+      $match: {
+        municipality_id: municipalityId,
+        effective_year: { $lte: year },
+      },
+    },
+    { $sort: { property_id: 1, effective_year: -1 } },
+    {
+      $group: {
+        _id: '$property_id',
+        doc: { $first: '$$ROOT' },
+      },
+    },
+    { $replaceRoot: { newRoot: '$doc' } },
+  ];
+
+  // Add optional sorting
+  if (Object.keys(sort).length > 0) {
+    pipeline.push({ $sort: sort });
+  }
+
+  // Add pagination
+  if (skip > 0) {
+    pipeline.push({ $skip: skip });
+  }
+  if (limit > 0) {
+    pipeline.push({ $limit: limit });
+  }
+
+  return this.aggregate(pipeline);
+};
+
+/**
+ * Get full year history for a property showing inherited vs explicit values
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} startYear - Start year for history
+ * @param {number} endYear - End year for history
+ * @returns {Array} - Array with year, effectiveYear, isInherited, and values
+ */
+parcelAssessmentSchema.statics.getFullYearHistory = async function (
+  propertyId,
+  startYear,
+  endYear,
+) {
+  const history = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    const record = await this.getCurrentParcel(propertyId, year);
+
+    history.push({
+      year,
+      effectiveYear: record?.effective_year || null,
+      isInherited: record ? record.effective_year !== year : true,
+      hasData: !!record,
+      totalAssessedValue: record?.parcel_totals?.total_assessed_value || 0,
+      totalLandValue: record?.parcel_totals?.total_land_value || 0,
+      totalBuildingValue: record?.parcel_totals?.total_building_value || 0,
+      totalImprovementsValue: record?.parcel_totals?.total_improvements_value || 0,
+    });
+  }
+
+  return history;
+};
+
+/**
+ * Create or update a parcel assessment for a specific year using copy-on-write
+ * If the year doesn't have a record, copies from the effective record
+ * @param {ObjectId} propertyId - Property ID
+ * @param {ObjectId} municipalityId - Municipality ID
+ * @param {number} year - Assessment year
+ * @param {Object} updateData - Data to update
+ * @param {Object} options - Options (userId, trigger)
+ * @returns {Object} - The created or updated parcel assessment
+ */
+parcelAssessmentSchema.statics.updateForYear = async function (
+  propertyId,
+  municipalityId,
+  year,
+  updateData,
+  options = {},
+) {
+  const { userId = null, trigger = 'manual_update' } = options;
+
+  // Check if record for this year exists
+  let record = await this.findOne({
+    property_id: propertyId,
+    municipality_id: municipalityId,
+    effective_year: year,
+  });
+
+  if (record) {
+    // Update existing record
+    Object.assign(record, updateData);
+    record.last_calculated = new Date();
+    record.calculated_by = userId;
+    record.calculation_trigger = trigger;
+    await record.save();
+    return record;
+  }
+
+  // Get effective record to copy from
+  const effectiveRecord = await this.getCurrentParcel(propertyId, year);
+
+  if (effectiveRecord) {
+    // Copy from effective record
+    const recordData = effectiveRecord.toObject();
+    delete recordData._id;
+    delete recordData.createdAt;
+    delete recordData.updatedAt;
+
+    record = await this.create({
+      ...recordData,
+      ...updateData,
+      effective_year: year,
+      last_calculated: new Date(),
+      calculated_by: userId,
+      calculation_trigger: trigger,
+    });
+  } else {
+    // No prior record - create new
+    record = await this.create({
+      property_id: propertyId,
+      municipality_id: municipalityId,
+      effective_year: year,
+      ...updateData,
+      last_calculated: new Date(),
+      calculated_by: userId,
+      calculation_trigger: trigger,
+    });
+  }
+
+  return record;
+};
+
 // Pre-save hook to ensure card_assessments are sorted by card_number
 parcelAssessmentSchema.pre('save', function (next) {
   if (this.card_assessments && this.card_assessments.length > 0) {

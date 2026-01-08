@@ -37,6 +37,13 @@ const viewAttributeSchema = new mongoose.Schema({
     min: 0,
     max: 1000,
   },
+  effective_year: {
+    type: Number,
+    required: true,
+    index: true,
+    min: 2000,
+    max: 2099,
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -51,11 +58,12 @@ const viewAttributeSchema = new mongoose.Schema({
   },
 });
 
-// Compound index for unique attribute names per type per municipality
+// Compound index for unique attribute names per type per municipality per year
 viewAttributeSchema.index(
-  { municipalityId: 1, attributeType: 1, name: 1, isActive: 1 },
+  { municipalityId: 1, attributeType: 1, name: 1, effective_year: 1, isActive: 1 },
   { unique: true },
 );
+viewAttributeSchema.index({ municipalityId: 1, effective_year: 1 });
 
 // Update the updatedAt field on save
 viewAttributeSchema.pre('save', function (next) {
@@ -63,7 +71,7 @@ viewAttributeSchema.pre('save', function (next) {
   next();
 });
 
-// Static method to find by municipality, type, and ID
+// Static method to find by municipality, type, and ID (legacy)
 viewAttributeSchema.statics.findByMunicipalityAndId = function (
   municipalityId,
   attributeId,
@@ -71,7 +79,7 @@ viewAttributeSchema.statics.findByMunicipalityAndId = function (
   return this.findOne({ _id: attributeId, municipalityId, isActive: true });
 };
 
-// Static method to find all by municipality and type
+// Static method to find all by municipality and type (legacy)
 viewAttributeSchema.statics.findByMunicipalityAndType = function (
   municipalityId,
   attributeType,
@@ -81,11 +89,90 @@ viewAttributeSchema.statics.findByMunicipalityAndType = function (
   });
 };
 
-// Static method to find all by municipality
+// Static method to find all by municipality and type for a specific year
+// Uses inheritance: finds most recent year <= requested year
+viewAttributeSchema.statics.findByMunicipalityAndTypeForYear = async function (
+  municipalityId,
+  attributeType,
+  year,
+) {
+  // Find the most recent effective year for this attribute type
+  const latestAttr = await this.findOne({
+    municipalityId,
+    attributeType,
+    effective_year: { $lte: year },
+    isActive: true,
+  })
+    .sort({ effective_year: -1 })
+    .select('effective_year');
+
+  if (!latestAttr) return [];
+
+  return this.find({
+    municipalityId,
+    attributeType,
+    effective_year: latestAttr.effective_year,
+    isActive: true,
+  }).sort({ name: 1 });
+};
+
+// Static method to find all by municipality (legacy)
 viewAttributeSchema.statics.findByMunicipality = function (municipalityId) {
   return this.find({ municipalityId, isActive: true }).sort({
     attributeType: 1,
     name: 1,
+  });
+};
+
+// Static method to find all by municipality for a specific year
+// Uses inheritance: finds most recent year <= requested year for each attribute type
+viewAttributeSchema.statics.findByMunicipalityForYear = async function (
+  municipalityId,
+  year,
+) {
+  // Find all attributes for this municipality with effective_year <= year
+  const allAttrs = await this.find({
+    municipalityId,
+    effective_year: { $lte: year },
+    isActive: true,
+  })
+    .sort({ effective_year: -1, attributeType: 1, name: 1 })
+    .lean();
+
+  // Group by attribute type and name, keep only from most recent year for each type
+  const typeGroups = {};
+  allAttrs.forEach((attr) => {
+    const typeKey = attr.attributeType;
+    if (!typeGroups[typeKey]) {
+      typeGroups[typeKey] = {
+        effectiveYear: attr.effective_year,
+        attrs: [],
+      };
+    }
+    // Only add attributes from the effective year (most recent) for this type
+    if (attr.effective_year === typeGroups[typeKey].effectiveYear) {
+      typeGroups[typeKey].attrs.push(attr);
+    }
+  });
+
+  // Flatten back to array sorted by type and name
+  const result = [];
+  Object.values(typeGroups).forEach((group) => {
+    group.attrs.forEach((attr) => result.push(attr));
+  });
+
+  return result.sort((a, b) => {
+    if (a.attributeType < b.attributeType) return -1;
+    if (a.attributeType > b.attributeType) return 1;
+    return a.name.localeCompare(b.name);
+  });
+};
+
+// Get distinct years that have view attribute data for a municipality
+viewAttributeSchema.statics.getAvailableYears = async function (municipalityId) {
+  return this.distinct('effective_year', {
+    municipalityId,
+    isActive: true,
   });
 };
 

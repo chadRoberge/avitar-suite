@@ -3,6 +3,9 @@
     <h3 class="avitar-card__title">
       <i class="fas fa-comments avitar-mr-2"></i>
       Communications
+      {{#if this.hasDepartmentFeedback}}
+        <span class="avitar-badge avitar-badge--warning avitar-ml-2">Action Required</span>
+      {{/if}}
     </h3>
     <button
       type="button"
@@ -14,22 +17,70 @@
     </button>
   </div>
   <div class="avitar-card__body">
-    {{#if this.publicComments.length}}
+    {{! Department Feedback Section - Shown at the top with warning styling }}
+    {{#if this.hasDepartmentFeedback}}
+      <div class="avitar-mb-6">
+        <div class="avitar-card avitar-bg-warning-light avitar-border avitar-border-warning">
+          <div class="avitar-card__header avitar-bg-warning avitar-text-white avitar-py-2">
+            <h4 class="avitar-text-sm avitar-font-semibold avitar-flex avitar-items-center">
+              <i class="fas fa-clipboard-list avitar-mr-2"></i>
+              Department Review Feedback
+            </h4>
+          </div>
+          <div class="avitar-card__body avitar-p-0">
+            {{#each this.departmentFeedback as |feedback|}}
+              <div class="avitar-p-4 {{unless (eq feedback this.departmentFeedback.lastObject) 'avitar-border-b avitar-border-warning'}}">
+                <div class="avitar-flex avitar-gap-3">
+                  <div class="avitar-flex-shrink-0">
+                    <div class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-warning avitar-text-white avitar-flex avitar-items-center avitar-justify-center">
+                      <i class="fas fa-building"></i>
+                    </div>
+                  </div>
+                  <div class="avitar-flex-1">
+                    <div class="avitar-flex avitar-items-start avitar-justify-between avitar-mb-2">
+                      <div>
+                        <div class="avitar-font-semibold">
+                          {{feedback.department}} Department
+                        </div>
+                        <div class="avitar-text-xs avitar-text-muted">
+                          {{#if feedback.authorName}}
+                            {{feedback.authorName}} &bull;
+                          {{/if}}
+                          {{date-format feedback.createdAt "MMM DD, YYYY h:mm a"}}
+                        </div>
+                      </div>
+                    </div>
+                    <p class="avitar-text-sm">{{or feedback.content feedback.text}}</p>
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        </div>
+        <p class="avitar-text-xs avitar-text-muted avitar-mt-2 avitar-flex avitar-items-center">
+          <i class="fas fa-info-circle avitar-mr-2"></i>
+          Please address the above feedback and resubmit your permit when ready.
+        </p>
+      </div>
+    {{/if}}
+
+    {{! Regular Comments Section }}
+    {{#if this.regularComments.length}}
       <div class="avitar-space-y-4">
-        {{#each this.publicComments as |comment|}}
+        {{#each this.regularComments as |comment|}}
           <div class="avitar-card avitar-bg-gray-50">
             <div class="avitar-card__body avitar-p-4">
               <div class="avitar-flex avitar-gap-3">
                 <div class="avitar-flex-shrink-0">
                   <div class="avitar-w-10 avitar-h-10 avitar-rounded-full avitar-bg-primary avitar-text-white avitar-flex avitar-items-center avitar-justify-center avitar-font-semibold">
-                    {{substring comment.author.name 0 1}}
+                    {{substring (or comment.author.name comment.authorName "?") 0 1}}
                   </div>
                 </div>
                 <div class="avitar-flex-1">
                   <div class="avitar-flex avitar-items-start avitar-justify-between avitar-mb-2">
                     <div>
                       <div class="avitar-font-semibold">
-                        {{comment.author.name}}
+                        {{or comment.author.name comment.authorName}}
                         {{#if (eq comment.author._id @currentUser._id)}}
                           <span class="avitar-badge avitar-badge--sm avitar-badge--secondary avitar-ml-2">You</span>
                         {{/if}}
@@ -39,14 +90,14 @@
                       </div>
                     </div>
                   </div>
-                  <p class="avitar-text-sm">{{comment.text}}</p>
+                  <p class="avitar-text-sm">{{or comment.content comment.text}}</p>
                 </div>
               </div>
             </div>
           </div>
         {{/each}}
       </div>
-    {{else}}
+    {{else if (not this.hasDepartmentFeedback)}}
       <div class="avitar-empty-state avitar-py-8">
         <i class="fas fa-comments fa-3x avitar-text-muted avitar-mb-4"></i>
         <h3 class="avitar-text-lg avitar-font-semibold avitar-mb-2">

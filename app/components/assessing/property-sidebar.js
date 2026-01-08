@@ -26,6 +26,8 @@ export default class PropertySidebarComponent extends Component {
   @tracked originalProperties = []; // Store original properties for clearing query
   @tracked lastMunicipalityId = null;
 
+  _hasInitialized = false;
+
   constructor() {
     super(...arguments);
 
@@ -39,15 +41,8 @@ export default class PropertySidebarComponent extends Component {
       );
     }
 
-    // Only load properties if municipality changed or properties not loaded yet
-    const currentMunicipalityId = this.municipality.currentMunicipality?.id;
-    if (
-      !this.properties.length ||
-      this.lastMunicipalityId !== currentMunicipalityId
-    ) {
-      this.lastMunicipalityId = currentMunicipalityId;
-      this.loadProperties();
-    }
+    // Don't load properties in constructor - use lazy loading via shouldInitialize getter
+    // This prevents unnecessary API calls if component is briefly instantiated
 
     // Listen for background refresh completion
     this.hybridApi.on(
@@ -55,6 +50,68 @@ export default class PropertySidebarComponent extends Component {
       this,
       this.handlePropertiesRefreshed,
     );
+  }
+
+  /**
+   * Check if we should load properties on the current route
+   * Only load on assessing routes and building-permits.find
+   */
+  get shouldLoadOnCurrentRoute() {
+    const routeName = this.router.currentRouteName;
+    if (!routeName) return false;
+
+    // Only load on assessing routes (except settings/reports/revaluation)
+    const isAssessingRoute =
+      routeName.startsWith('municipality.assessing') &&
+      !routeName.startsWith('municipality.assessing.settings') &&
+      !routeName.startsWith('municipality.assessing.reports') &&
+      !routeName.startsWith('municipality.assessing.revaluation');
+
+    // Or on building-permits.find specifically
+    const isBuildingPermitsFind =
+      routeName === 'municipality.building-permits.find';
+
+    return isAssessingRoute || isBuildingPermitsFind;
+  }
+
+  /**
+   * Lazy initialize properties when component is rendered
+   * Called from template to trigger loading
+   */
+  get shouldInitialize() {
+    console.log(
+      '🔍 [PropertySidebar] shouldInitialize called, _hasInitialized:',
+      this._hasInitialized,
+      'route:',
+      this.router.currentRouteName,
+    );
+
+    // Skip loading if we're not on an appropriate route
+    if (!this.shouldLoadOnCurrentRoute) {
+      console.log(
+        '🔍 [PropertySidebar] Skipping load - not on assessing route',
+      );
+      return false;
+    }
+
+    if (!this._hasInitialized) {
+      this._hasInitialized = true;
+      const currentMunicipalityId = this.municipality.currentMunicipality?.id;
+      console.log(
+        '🔍 [PropertySidebar] Initializing for municipality:',
+        currentMunicipalityId,
+      );
+      if (
+        !this.properties.length ||
+        this.lastMunicipalityId !== currentMunicipalityId
+      ) {
+        this.lastMunicipalityId = currentMunicipalityId;
+        // Use setTimeout to avoid triggering during render
+        console.log('🔍 [PropertySidebar] Scheduling loadProperties');
+        setTimeout(() => this.loadProperties(), 0);
+      }
+    }
+    return this._hasInitialized;
   }
 
   @action

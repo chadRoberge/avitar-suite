@@ -1,9 +1,46 @@
 {{!-- Feature Details Settings --}}
 <div class="avitar-content">
   <div class="avitar-page-header avitar-mb-2">
-    <h1 class="avitar-page-title avitar-skinny">Feature Details</h1>
-    <div class="avitar-page-subtitle">Configure property feature codes</div>
+    <div class="avitar-flex avitar-justify-between avitar-items-center">
+      <div>
+        <h1 class="avitar-page-title avitar-skinny">Feature Details</h1>
+        <div class="avitar-page-subtitle">Configure property feature codes</div>
+      </div>
+      {{!-- Year Selector --}}
+      <div class="avitar-flex avitar-items-center avitar-gap-2">
+        <label class="avitar-text-sm avitar-font-medium">Config Year:</label>
+        <select class="avitar-select avitar-select--sm" style="width: 100px;" {{on "change" this.changeYear}}>
+          {{#each this.availableYears as |yearOption|}}
+            <option value={{yearOption}} selected={{eq this.configYear yearOption}}>
+              {{yearOption}}
+            </option>
+          {{/each}}
+        </select>
+        {{#if this.isYearLocked}}
+          <span class="avitar-badge avitar-badge--warning avitar-ml-2">
+            {{lnr-icon "lock" class="avitar-mr-1"}}
+            Locked
+          </span>
+        {{/if}}
+      </div>
+    </div>
   </div>
+
+  {{!-- Year Locked Warning Banner --}}
+  {{#if this.isYearLocked}}
+    <div class="avitar-alert avitar-alert--warning avitar-mb-4">
+      <div class="avitar-flex avitar-items-center avitar-gap-3">
+        {{lnr-icon "lock" class="avitar-text-lg"}}
+        <div>
+          <strong>Configuration Locked</strong>
+          <p class="avitar-text-sm avitar-mb-0">
+            The configuration for year {{this.configYear}} is locked and cannot be modified.
+            Select a different year to make changes.
+          </p>
+        </div>
+      </div>
+    </div>
+  {{/if}}
 
   <div class="avitar-card">
     <div class="avitar-card__header avitar-card__header--colored">
@@ -13,8 +50,8 @@
           <div class="avitar-card__subtitle">Codes with descriptions, rates, size adjustments, and measurement types</div>
         </div>
         {{#unless (or this.isAddingFeatureCode this.isEditingFeatureCode)}}
-          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingFeatureCode}}>
-            <i class="fas fa-plus avitar-mr-2"></i>
+          <button type="button" class="avitar-btn avitar-btn--primary" {{on "click" this.startAddingFeatureCode}} disabled={{this.isYearLocked}}>
+            {{lnr-icon "plus-circle" class="avitar-mr-2"}}
             Add Feature Code
           </button>
         {{/unless}}

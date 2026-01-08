@@ -171,14 +171,19 @@ export default class BuildingEditModalComponent extends Component {
         'ceiling_height',
       ];
 
+      // Get the current assessment year from municipality service
+      const year = this.municipality.selectedAssessmentYear || new Date().getFullYear();
+
       const codePromises = featureTypes.map(async (type) => {
         try {
           // Use direct API service to bypass HybridAPI caching issues with query parameters
+          // Include year parameter for temporal inheritance
           const response = await this.assessing.api.get(
-            `/municipalities/${this.municipality.currentMunicipality.id}/building-feature-codes?featureType=${type}`,
+            `/municipalities/${this.municipality.currentMunicipality.id}/building-feature-codes?featureType=${type}&year=${year}`,
           );
-          console.log(`Loaded ${type} codes:`, response);
-          return { type, codes: response };
+          // API returns { buildingFeatureCodes: [...], year, isYearLocked }
+          const codes = response.buildingFeatureCodes || [];
+          return { type, codes };
         } catch (error) {
           console.warn(`Error loading ${type} codes:`, error);
           return { type, codes: [] };
@@ -188,24 +193,16 @@ export default class BuildingEditModalComponent extends Component {
       const results = await Promise.all(codePromises);
 
       // Organize codes by type and ensure _id is a string for comparison
-      this.featureCodes = {};
+      // Build the object first, then assign to trigger reactivity
+      const featureCodesObj = {};
       results.forEach(({ type, codes }) => {
-        // API returns codes directly as an array
         // Ensure _id is a string for comparison in templates
-        this.featureCodes[type] = (codes || []).map((code) => ({
+        featureCodesObj[type] = (codes || []).map((code) => ({
           ...code,
           _id: String(code._id),
         }));
       });
-
-      console.log('Loaded feature codes:', this.featureCodes);
-      console.log('Feature codes count by type:');
-      Object.keys(this.featureCodes).forEach((type) => {
-        console.log(`- ${type}:`, this.featureCodes[type]?.length || 0);
-        if (this.featureCodes[type]?.length > 0) {
-          console.log(`  Sample ${type} code:`, this.featureCodes[type][0]);
-        }
-      });
+      this.featureCodes = featureCodesObj;
     } catch (error) {
       console.error('Error loading building feature codes:', error);
     } finally {
@@ -215,16 +212,19 @@ export default class BuildingEditModalComponent extends Component {
 
   async loadBuildingCodes() {
     try {
+      // Get the current assessment year from municipality service
+      const year = this.municipality.selectedAssessmentYear || new Date().getFullYear();
+
       // Use direct API to get building codes (base types) from the correct endpoint
+      // Include year parameter for temporal inheritance
       const response = await this.assessing.api.get(
-        `/municipalities/${this.municipality.currentMunicipality.id}/building-codes`,
+        `/municipalities/${this.municipality.currentMunicipality.id}/building-codes?year=${year}`,
       );
       // Ensure _id is a string for comparison in templates
       this.buildingCodes = (response.buildingCodes || []).map((code) => ({
         ...code,
         _id: String(code._id),
       }));
-      console.log('Loaded building codes:', this.buildingCodes);
     } catch (error) {
       console.error('Error loading building codes:', error);
       this.buildingCodes = [];

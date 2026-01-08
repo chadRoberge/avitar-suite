@@ -1,0 +1,137 @@
+---
+subject: Permit Approved - {{permitNumber}} - Ready for Pickup
+---
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          {{!-- Header --}}
+          <tr>
+            <td style="background-color: #10b981; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">
+                🎉 Permit Approved!
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #d1fae5; font-size: 16px;">
+                All reviews completed successfully
+              </p>
+            </td>
+          </tr>
+
+          {{!-- Content --}}
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151;">
+                Great news! Your permit application has been approved by all required departments and is now ready.
+              </p>
+
+              {{!-- Permit Details --}}
+              <table width="100%" cellpadding="12" cellspacing="0" style="background-color: #ecfdf5; border-radius: 6px; margin: 20px 0; border: 2px solid #10b981;">
+                <tr>
+                  <td style="border-bottom: 1px solid #d1fae5; color: #065f46; font-size: 14px;">
+                    <strong>Permit Number:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #d1fae5; color: #047857; font-size: 18px; font-weight: 600;">
+                    {{permitNumber}}
+                  </td>
+                </tr>
+                {{#if permitType}}
+                <tr>
+                  <td style="border-bottom: 1px solid #d1fae5; color: #065f46; font-size: 14px;">
+                    <strong>Permit Type:</strong>
+                  </td>
+                  <td style="border-bottom: 1px solid #d1fae5; color: #047857; font-size: 14px;">
+                    {{permitType}}
+                  </td>
+                </tr>
+                {{/if}}
+                {{#if propertyAddress}}
+                <tr>
+                  <td style="color: #065f46; font-size: 14px;">
+                    <strong>Property Address:</strong>
+                  </td>
+                  <td style="color: #047857; font-size: 14px;">
+                    {{propertyAddress}}
+                  </td>
+                </tr>
+                {{/if}}
+              </table>
+
+              {{!-- All Department Review Status --}}
+              {{#if departmentReviews}}
+              <div style="margin: 25px 0;">
+                <p style="margin: 0 0 15px 0; font-size: 16px; font-weight: 600; color: #374151;">
+                  Department Reviews:
+                </p>
+                <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
+                  <thead>
+                    <tr style="background-color: #f9fafb;">
+                      <th style="padding: 12px 15px; text-align: left; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Department</th>
+                      <th style="padding: 12px 15px; text-align: center; font-size: 14px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each departmentReviews}}
+                    <tr>
+                      <td style="padding: 12px 15px; font-size: 14px; color: #374151; border-bottom: 1px solid #e5e7eb;">
+                        {{this.department}}
+                      </td>
+                      <td style="padding: 12px 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+                        <span style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #d1fae5; color: #047857;">
+                          ✓ {{this.statusDisplay}}
+                        </span>
+                      </td>
+                    </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+              {{/if}}
+
+              {{!-- Next Steps --}}
+              <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #1e40af;">
+                  <strong>What's Next?</strong>
+                </p>
+                <ul style="margin: 0; padding-left: 20px; color: #1e3a8a; font-size: 14px;">
+                  <li style="margin: 5px 0;">Your permit is now ready to be printed or picked up.</li>
+                  <li style="margin: 5px 0;">Keep a copy of your permit posted at the job site during construction.</li>
+                  <li style="margin: 5px 0;">Schedule required inspections as work progresses.</li>
+                  <li style="margin: 5px 0;">Ensure all work complies with approved plans and local building codes.</li>
+                </ul>
+              </div>
+
+              {{!-- Call to Action --}}
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="{{permitUrl}}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-size: 16px; font-weight: 600;">
+                  View & Print Your Permit
+                </a>
+              </div>
+
+              <p style="margin: 20px 0 0 0; font-size: 14px; color: #6b7280;">
+                If you have questions about your approved permit or need to schedule inspections, please contact the Building Department.
+              </p>
+            </td>
+          </tr>
+
+          {{!-- Footer --}}
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                This is an automated notification from the Avitar Platform<br>
+                © 2025 Avitar. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

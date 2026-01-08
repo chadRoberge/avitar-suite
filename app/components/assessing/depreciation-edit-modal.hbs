@@ -53,13 +53,13 @@
                   {{on "change" this.updateCondition}}
                 >
                   <option value="">Select condition...</option>
-                  <option value="Excellent" selected={{if (eq this.normalDescription "Excellent") "selected"}}>Excellent</option>
-                  <option value="Very Good" selected={{if (eq this.normalDescription "Very Good") "selected"}}>Very Good</option>
-                  <option value="Good" selected={{if (eq this.normalDescription "Good") "selected"}}>Good</option>
-                  <option value="Average" selected={{if (eq this.normalDescription "Average") "selected"}}>Average</option>
-                  <option value="Fair" selected={{if (eq this.normalDescription "Fair") "selected"}}>Fair</option>
-                  <option value="Poor" selected={{if (eq this.normalDescription "Poor") "selected"}}>Poor</option>
-                  <option value="Very Poor" selected={{if (eq this.normalDescription "Very Poor") "selected"}}>Very Poor</option>
+                  <option value="Excellent" selected={{this.isCondition "Excellent"}}>Excellent</option>
+                  <option value="Very Good" selected={{this.isCondition "Very Good"}}>Very Good</option>
+                  <option value="Good" selected={{this.isCondition "Good"}}>Good</option>
+                  <option value="Average" selected={{this.isCondition "Average"}}>Average</option>
+                  <option value="Fair" selected={{this.isCondition "Fair"}}>Fair</option>
+                  <option value="Poor" selected={{this.isCondition "Poor"}}>Poor</option>
+                  <option value="Very Poor" selected={{this.isCondition "Very Poor"}}>Very Poor</option>
                 </select>
               </div>
               <div class="avitar-flex-1">

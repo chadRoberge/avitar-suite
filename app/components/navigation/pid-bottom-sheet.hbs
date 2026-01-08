@@ -1,4 +1,7 @@
 {{!-- PID Bottom Sheet - Mobile Property Selection --}}
+{{!-- Trigger lazy loading when sheet opens --}}
+{{#if this.shouldLoadProperties}}{{!-- Evaluates getter to trigger loading --}}{{/if}}
+
 <Shared::BottomSheet
   @isOpen={{@isOpen}}
   @onClose={{@onClose}}

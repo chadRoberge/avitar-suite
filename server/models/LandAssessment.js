@@ -448,6 +448,230 @@ landAssessmentSchema.statics.getPropertyAssessmentHistory = async function (
     .limit(options.limit || 10);
 };
 
+/**
+ * Get effective land assessment for a property/year using temporal query
+ * Returns the most recent record where effective_year <= requested year
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} year - Assessment year
+ * @param {Object} options - Query options (populate, etc.)
+ * @returns {Object|null} - The effective land assessment
+ */
+landAssessmentSchema.statics.getForPropertyYear = async function (
+  propertyId,
+  year = null,
+  options = {},
+) {
+  const currentYear = year || new Date().getFullYear();
+
+  let query = this.findOne({
+    property_id: propertyId,
+    effective_year: { $lte: currentYear },
+  }).sort({ effective_year: -1 });
+
+  // Apply default populates for full data
+  query = query
+    .populate('zone', 'name description')
+    .populate('neighborhood', 'code description rate')
+    .populate('site_conditions', 'name description factor')
+    .populate('driveway_type', 'name description factor')
+    .populate('road_type', 'name description factor');
+
+  // Apply additional populates if requested
+  if (options.populate) {
+    if (Array.isArray(options.populate)) {
+      options.populate.forEach((field) => {
+        query = query.populate(field);
+      });
+    } else {
+      query = query.populate(options.populate);
+    }
+  }
+
+  return query;
+};
+
+/**
+ * Update land assessment for a property/year using copy-on-write
+ * If the year doesn't have a record, copies from the effective record
+ * @param {ObjectId} propertyId - Property ID
+ * @param {ObjectId} municipalityId - Municipality ID
+ * @param {Object} assessmentData - Data to update
+ * @param {ObjectId} userId - User ID for audit
+ * @param {number} year - Assessment year
+ * @param {Object} auditInfo - Audit information
+ * @returns {Object} - The created or updated land assessment
+ */
+landAssessmentSchema.statics.updateForPropertyYear = async function (
+  propertyId,
+  municipalityId,
+  assessmentData,
+  userId,
+  year = null,
+  auditInfo = {},
+) {
+  const currentYear = year || new Date().getFullYear();
+
+  // Check if record for this year exists
+  let record = await this.findOne({
+    property_id: propertyId,
+    effective_year: currentYear,
+  });
+
+  if (record) {
+    // Update existing record using the standard update method
+    return this.updateForProperty(
+      propertyId,
+      municipalityId,
+      assessmentData,
+      userId,
+      currentYear,
+      auditInfo,
+    );
+  }
+
+  // Get effective record to copy from (copy-on-write)
+  const effectiveRecord = await this.getForPropertyYear(propertyId, currentYear);
+
+  if (effectiveRecord) {
+    // Copy from effective record
+    const recordData = effectiveRecord.toObject();
+    delete recordData._id;
+    delete recordData.__v;
+    delete recordData.createdAt;
+    delete recordData.updatedAt;
+    delete recordData.created_at;
+    delete recordData.updated_at;
+    delete recordData.last_calculated;
+    delete recordData.last_changed;
+
+    const newRecord = new this({
+      ...recordData,
+      ...assessmentData,
+      property_id: propertyId,
+      municipality_id: municipalityId,
+      effective_year: currentYear,
+      created_by: userId,
+      created_at: new Date(),
+      updated_by: userId,
+      updated_at: new Date(),
+      last_changed: new Date(),
+      change_reason: assessmentData.change_reason || 'cyclical_review',
+    });
+
+    newRecord._skipBillingValidation = true;
+    newRecord._auditInfo = {
+      ...auditInfo,
+      user_id: userId,
+      notes: `Copy-on-write from year ${effectiveRecord.effective_year}`,
+    };
+
+    await newRecord.save();
+    return newRecord;
+  } else {
+    // No prior record - create new
+    const newRecord = new this({
+      property_id: propertyId,
+      municipality_id: municipalityId,
+      effective_year: currentYear,
+      ...assessmentData,
+      created_by: userId,
+      created_at: new Date(),
+      updated_by: userId,
+      updated_at: new Date(),
+    });
+
+    newRecord._skipBillingValidation = true;
+    newRecord._auditInfo = {
+      ...auditInfo,
+      user_id: userId,
+    };
+
+    await newRecord.save();
+    return newRecord;
+  }
+};
+
+/**
+ * Get year history for a property showing inherited vs explicit values
+ * @param {ObjectId} propertyId - Property ID
+ * @param {number} startYear - Start year
+ * @param {number} endYear - End year
+ * @returns {Array} - Year history with inheritance info
+ */
+landAssessmentSchema.statics.getYearHistory = async function (
+  propertyId,
+  startYear,
+  endYear,
+) {
+  const history = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    const record = await this.getForPropertyYear(propertyId, year);
+
+    history.push({
+      year,
+      effectiveYear: record?.effective_year || null,
+      isInherited: record ? record.effective_year !== year : true,
+      hasData: !!record,
+      totalLandValue: record?.calculated_totals?.totalAssessedValue || 0,
+      totalAcreage: record?.calculated_totals?.totalAcreage || 0,
+      currentUseCredit: record?.current_use_credit || 0,
+      zone: record?.zone?.name || null,
+      neighborhood: record?.neighborhood?.code || null,
+    });
+  }
+
+  return history;
+};
+
+/**
+ * Get effective land assessments for all properties in a municipality for a year
+ * Uses aggregation to get most recent record per property
+ * @param {ObjectId} municipalityId - Municipality ID
+ * @param {number} year - Assessment year
+ * @param {Object} options - Query options (limit, skip, sort)
+ * @returns {Array} - Array of effective land assessments
+ */
+landAssessmentSchema.statics.getEffectiveForMunicipality = async function (
+  municipalityId,
+  year,
+  options = {},
+) {
+  const { limit = 0, skip = 0, sort = {} } = options;
+
+  const pipeline = [
+    {
+      $match: {
+        municipality_id: municipalityId,
+        effective_year: { $lte: year },
+      },
+    },
+    { $sort: { property_id: 1, effective_year: -1 } },
+    {
+      $group: {
+        _id: '$property_id',
+        doc: { $first: '$$ROOT' },
+      },
+    },
+    { $replaceRoot: { newRoot: '$doc' } },
+  ];
+
+  // Add optional sorting
+  if (Object.keys(sort).length > 0) {
+    pipeline.push({ $sort: sort });
+  }
+
+  // Add pagination
+  if (skip > 0) {
+    pipeline.push({ $skip: skip });
+  }
+  if (limit > 0) {
+    pipeline.push({ $limit: limit });
+  }
+
+  return this.aggregate(pipeline);
+};
+
 // Static method to copy assessment to new year (for year rollover)
 landAssessmentSchema.statics.copyToNewYear = async function (
   propertyId,

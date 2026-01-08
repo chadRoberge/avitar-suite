@@ -185,6 +185,63 @@ const permitSchema = new mongoose.Schema(
       },
     ],
 
+    // Fee Schedule Snapshot - captured at permit submission for audit trail
+    // This preserves the exact fee configuration used when the permit was submitted
+    feeScheduleSnapshot: {
+      feeScheduleId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FeeSchedule',
+      },
+      version: Number,
+      effectiveDate: Date,
+      feeConfiguration: {
+        baseAmount: Number,
+        calculationType: {
+          type: String,
+          enum: ['flat', 'per_sqft', 'percentage', 'tiered', 'custom'],
+        },
+        perSqftRate: Number,
+        percentageRate: Number,
+        minimumFee: Number,
+        maximumFee: Number,
+        formula: String,
+        tiers: [
+          {
+            minValue: Number,
+            maxValue: Number,
+            rate: Number,
+            flatAmount: Number,
+            description: String,
+          },
+        ],
+        additionalFees: [
+          {
+            name: String,
+            type: String,
+            calculationType: String,
+            amount: Number,
+            percentageOfBase: Number,
+            isOptional: Boolean,
+            description: String,
+          },
+        ],
+      },
+      // Calculated fees at time of submission
+      calculatedFees: {
+        baseFee: Number,
+        additionalFees: [
+          {
+            name: String,
+            type: String,
+            amount: Number,
+            isOptional: Boolean,
+          },
+        ],
+        totalFee: Number,
+      },
+      capturedAt: Date,
+    },
+
     // Location data for GIS (copied from property for performance)
     location: {
       type: {

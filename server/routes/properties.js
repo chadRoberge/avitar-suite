@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken } = require('../middleware/auth');
 const PropertyTreeNode = require('../models/PropertyTreeNode');
 const PropertyAssessment = require('../models/PropertyAssessment');
+const ParcelAssessment = require('../models/ParcelAssessment');
 const BuildingAssessment = require('../models/BuildingAssessment');
 const LandAssessment = require('../models/LandAssessment');
 const BuildingCalculationConfig = require('../models/BuildingCalculationConfig');
@@ -21,6 +22,14 @@ const Owner = require('../models/Owner');
 const PropertyOwner = require('../models/PropertyOwner');
 const PropertyExemption = require('../models/PropertyExemption');
 const ExemptionType = require('../models/ExemptionType');
+// Configuration models for year-aware copying
+const LandLadder = require('../models/LandLadder');
+const BuildingCode = require('../models/BuildingCode');
+const BuildingFeatureCode = require('../models/BuildingFeatureCode');
+const WaterBodyLadder = require('../models/WaterBodyLadder');
+const ViewAttribute = require('../models/ViewAttribute');
+const SketchSubAreaFactor = require('../models/SketchSubAreaFactor');
+const { lockYear } = require('../middleware/checkYearLock');
 const {
   formatPid,
   getMapFromPid,
@@ -36,11 +45,225 @@ const {
   roundToNearestHundred,
 } = require('../utils/assessment');
 const BillingPeriodValidator = require('../utils/billingPeriodValidator');
-const {
-  addCardNumbersToFeatures,
-} = require('../migrations/add-card-numbers-to-features');
-
+const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
+
+// In-memory job tracking for recalculation progress
+// Jobs expire after 1 hour
+const recalculationJobs = new Map();
+const JOB_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+
+// Cleanup old jobs periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [jobId, job] of recalculationJobs.entries()) {
+    if (now - job.startedAt > JOB_EXPIRY_MS) {
+      recalculationJobs.delete(jobId);
+    }
+  }
+}, 5 * 60 * 1000); // Check every 5 minutes
+
+// Helper function to check if user is staff (can see hidden years)
+function isUserStaff(user, municipalityId) {
+  if (!user) return false;
+  return (
+    user.isMunicipalStaff ||
+    user.isAvitarStaff ||
+    user.municipal_permissions?.some(
+      (p) =>
+        p.municipality_id.toString() === municipalityId.toString() &&
+        ['admin', 'staff', 'assessor'].includes(p.role),
+    )
+  );
+}
+
+// Fields that should sync across years (factual data, not valuation)
+const FACTUAL_SYNC_FIELDS = {
+  // PropertyTreeNode / Owner fields
+  property: [
+    'owner_name',
+    'owner_address',
+    'mailing_address',
+    'physical_address',
+    'property_class',
+  ],
+  // Building fields that are physical facts
+  building: [
+    'building_type',
+    'year_built',
+    'total_rooms',
+    'bedrooms',
+    'bathrooms',
+    'finished_basement',
+    'garage_type',
+    'garage_capacity',
+    'heating_type',
+    'cooling_type',
+    'stories',
+    'exterior_wall_type',
+    'roof_type',
+    'foundation_type',
+    'gross_living_area',
+    'total_finished_area',
+  ],
+  // Land fields that are physical facts
+  land: ['total_acreage', 'zone', 'frontage', 'depth', 'utilities'],
+};
+
+/**
+ * Sync factual property data changes to hidden revaluation years
+ * This ensures that ownership, physical characteristics, etc. stay consistent
+ * across all assessment years (hidden and visible)
+ *
+ * @param {Object} params - Sync parameters
+ * @param {string} params.municipalityId - Municipality ID
+ * @param {string} params.propertyId - Property ID
+ * @param {Object} params.changes - The changes being made
+ * @param {string} params.dataType - Type of data: 'property', 'building', 'land'
+ * @param {number} params.currentYear - The year being updated
+ * @returns {Promise<Object>} - Sync results
+ */
+async function syncFactualChangesToHiddenYears({
+  municipalityId,
+  propertyId,
+  changes,
+  dataType,
+  currentYear,
+}) {
+  const mongoose = require('mongoose');
+  const results = { synced: 0, skipped: 0, errors: [] };
+
+  try {
+    // Get municipality's hidden years
+    const municipality = await Municipality.findById(municipalityId).select(
+      'assessingSettings.hiddenYears',
+    );
+    const hiddenYears = municipality?.assessingSettings?.hiddenYears || [];
+
+    if (hiddenYears.length === 0) {
+      return results; // No hidden years to sync
+    }
+
+    // Filter to only factual fields for this data type
+    const syncableFields = FACTUAL_SYNC_FIELDS[dataType] || [];
+    const factualChanges = {};
+
+    for (const [key, value] of Object.entries(changes)) {
+      if (syncableFields.includes(key)) {
+        factualChanges[key] = value;
+      }
+    }
+
+    if (Object.keys(factualChanges).length === 0) {
+      return results; // No factual changes to sync
+    }
+
+    console.log(
+      `📋 [Cross-Year Sync] Syncing ${dataType} factual changes to ${hiddenYears.length} hidden years:`,
+      Object.keys(factualChanges),
+    );
+
+    const propertyObjectId = new mongoose.Types.ObjectId(propertyId);
+    const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+    // Sync to each hidden year
+    for (const hiddenYear of hiddenYears) {
+      // Skip if it's the same year being updated
+      if (hiddenYear === currentYear) {
+        results.skipped++;
+        continue;
+      }
+
+      try {
+        let Model;
+        let query;
+
+        switch (dataType) {
+          case 'property':
+            Model = PropertyAssessment;
+            query = {
+              property_id: propertyObjectId,
+              municipality_id: municipalityObjectId,
+              effective_year: hiddenYear,
+            };
+            break;
+          case 'building':
+            Model = BuildingAssessment;
+            query = {
+              property_id: propertyObjectId,
+              municipality_id: municipalityObjectId,
+              effective_year: hiddenYear,
+            };
+            break;
+          case 'land':
+            Model = LandAssessment;
+            query = {
+              property_id: propertyObjectId,
+              municipality_id: municipalityObjectId,
+              effective_year: hiddenYear,
+            };
+            break;
+          default:
+            results.skipped++;
+            continue;
+        }
+
+        const updateResult = await Model.updateOne(query, {
+          $set: {
+            ...factualChanges,
+            updated_at: new Date(),
+            synced_from_year: currentYear,
+          },
+        });
+
+        if (updateResult.modifiedCount > 0) {
+          results.synced++;
+          console.log(
+            `✅ [Cross-Year Sync] Synced ${dataType} to year ${hiddenYear}`,
+          );
+        } else {
+          results.skipped++;
+        }
+      } catch (error) {
+        console.error(
+          `❌ [Cross-Year Sync] Error syncing to year ${hiddenYear}:`,
+          error,
+        );
+        results.errors.push({
+          year: hiddenYear,
+          error: error.message,
+        });
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error('[Cross-Year Sync] Error:', error);
+    results.errors.push({ error: error.message });
+    return results;
+  }
+}
+
+// Helper function to get year filter for queries
+// Returns null if no filter needed (staff user), or { $nin: hiddenYears } for public users
+async function getYearFilter(municipalityId, user) {
+  // Staff can see all years
+  if (isUserStaff(user, municipalityId)) {
+    return null;
+  }
+
+  // Get hidden years from municipality settings
+  const municipality = await Municipality.findById(municipalityId).select(
+    'assessingSettings.hiddenYears',
+  );
+  const hiddenYears = municipality?.assessingSettings?.hiddenYears || [];
+
+  if (hiddenYears.length === 0) {
+    return null;
+  }
+
+  return { $nin: hiddenYears };
+}
 
 // Helper function to build owner information for property responses
 async function buildOwnerInfo(propertyId) {
@@ -753,6 +976,8 @@ router.get('/properties/:id', authenticateToken, async (req, res) => {
         id: property._id.toString(),
         pid_raw: property.pid_raw,
         pid_formatted: pid_formatted,
+        mapNumber: mapNumber, // For PID tree grouping
+        lotSubDisplay: lotSubDisplay, // For PID tree display
         account_number: property.account_number,
         location: {
           street_number: property.location?.street_number,
@@ -1690,6 +1915,25 @@ router.put(
         // Don't fail the land save if recalculation fails
       }
 
+      // Sync factual land data changes to hidden revaluation years
+      try {
+        const syncResult = await syncFactualChangesToHiddenYears({
+          municipalityId,
+          propertyId,
+          changes: assessment,
+          dataType: 'land',
+          currentYear,
+        });
+        if (syncResult.synced > 0) {
+          console.log(
+            `📋 [Land Update] Synced factual changes to ${syncResult.synced} hidden years`,
+          );
+        }
+      } catch (syncError) {
+        console.error('Error syncing land changes to hidden years:', syncError);
+        // Don't fail the land save if sync fails
+      }
+
       res.json({
         success: true,
         message: 'Land assessment updated successfully',
@@ -1706,7 +1950,8 @@ router.put(
 );
 
 // @route   GET /api/properties/:id/assessment/building
-// @desc    Get building assessment data for property
+// @desc    Get building assessment data for property using temporal inheritance
+// @desc    Returns effective assessment for the requested year (may be inherited from prior year)
 // @access  Private
 router.get(
   '/properties/:id/assessment/building',
@@ -1717,17 +1962,18 @@ router.get(
       const { card = 1, assessment_year } = req.query;
       const mongoose = require('mongoose');
       const BuildingAssessment = require('../models/BuildingAssessment');
-      const currentYear = assessment_year
+      const requestedYear = assessment_year
         ? parseInt(assessment_year, 10)
         : new Date().getFullYear();
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
+      const cardNumber = parseInt(card);
 
-      console.log('🏗️ [Building Assessment GET] Request:', {
+      console.log('🏗️ [Building Assessment GET] Request (with temporal inheritance):', {
         propertyId: id,
         propertyObjectId: propertyObjectId.toString(),
-        cardNumber: card,
-        assessmentYear: currentYear,
+        cardNumber: cardNumber,
+        requestedYear: requestedYear,
       });
 
       // First get the property to extract municipality_id
@@ -1746,22 +1992,39 @@ router.get(
         pid: property.pid,
       });
 
-      // Get or create building assessment for this property/card
-      let buildingAssessment =
-        await BuildingAssessment.getOrCreateForPropertyCard(
+      // Use temporal inheritance - get effective assessment for the requested year
+      let buildingAssessment = await BuildingAssessment.getForPropertyYear(
+        propertyObjectId,
+        cardNumber,
+        requestedYear,
+      );
+
+      // If no assessment exists at all, create one for the requested year
+      if (!buildingAssessment) {
+        console.log(
+          `🏗️ [Building Assessment GET] No assessment found, creating new for year ${requestedYear}`,
+        );
+        buildingAssessment = await BuildingAssessment.getOrCreateForPropertyCard(
           propertyObjectId,
           property.municipality_id,
-          parseInt(card),
-          currentYear,
+          cardNumber,
+          requestedYear,
         );
+      }
+
+      // Check if this is inherited data
+      const effectiveYear = buildingAssessment.effective_year;
+      const isInherited = effectiveYear !== requestedYear;
 
       console.log(
-        '🏗️ [Building Assessment GET] Raw assessment from getOrCreate:',
+        '🏗️ [Building Assessment GET] Assessment found:',
         {
           _id: buildingAssessment._id.toString(),
           property_id: buildingAssessment.property_id.toString(),
           card_number: buildingAssessment.card_number,
-          effective_year: buildingAssessment.effective_year,
+          effective_year: effectiveYear,
+          requestedYear: requestedYear,
+          isInherited: isInherited,
           building_value: buildingAssessment.building_value,
           base_type: buildingAssessment.base_type,
         },
@@ -1828,6 +2091,9 @@ router.get(
         depreciation_keys: Object.keys(
           transformedAssessment.depreciation || {},
         ),
+        requestedYear: requestedYear,
+        effectiveYear: effectiveYear,
+        isInherited: isInherited,
       });
 
       res.json({
@@ -1836,6 +2102,9 @@ router.get(
         history: buildingHistory,
         depreciation: transformedAssessment.depreciation || {},
         improvements: [], // Would be populated with improvement records
+        year: requestedYear,
+        effectiveYear: effectiveYear,
+        isInherited: isInherited,
       });
     } catch (error) {
       console.error('Get building assessment error:', {
@@ -1883,7 +2152,8 @@ router.get(
 );
 
 // @route   PATCH /api/properties/:id/assessment/building
-// @desc    Update building assessment data for property
+// @desc    Update building assessment data for property using copy-on-write for temporal data
+// @desc    If editing inherited data, creates a new record for the target year
 // @access  Private
 router.patch(
   '/properties/:id/assessment/building',
@@ -1891,10 +2161,12 @@ router.patch(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { card = 1 } = req.query;
+      const { card = 1, assessment_year } = req.query;
       const buildingData = req.body;
       const mongoose = require('mongoose');
-      const currentYear = new Date().getFullYear();
+      const targetYear = assessment_year
+        ? parseInt(assessment_year, 10)
+        : new Date().getFullYear();
 
       // Check if user has permission to update assessments
       if (
@@ -2003,22 +2275,24 @@ router.patch(
         buildingAssessmentData.depreciation = buildingData.depreciation;
       }
 
-      // Update building assessment using the model's static method
-      console.log('Updating building assessment for property:', {
+      // Update building assessment using copy-on-write pattern
+      // If editing inherited data, this creates a new record for the target year
+      console.log('Updating building assessment for property (with copy-on-write):', {
         propertyId: propertyObjectId,
         municipalityId,
         cardNumber,
+        targetYear,
         userId: req.user._id,
         dataKeys: Object.keys(buildingAssessmentData),
       });
 
-      let buildingAssessment = await BuildingAssessment.updateForPropertyCard(
+      let buildingAssessment = await BuildingAssessment.updateForPropertyCardYear(
         propertyObjectId,
         municipalityId,
         cardNumber,
         buildingAssessmentData,
         req.user._id,
-        currentYear,
+        targetYear,
       );
 
       // Populate ObjectId references so frontend can extract _id for form binding
@@ -2054,10 +2328,39 @@ router.patch(
         story_height_value: buildingAssessment.story_height,
       });
 
+      // Check if this was a copy-on-write (new record created for this year)
+      const wasNewCopy = buildingAssessment.effective_year === targetYear &&
+        buildingAssessment.created_at.getTime() === buildingAssessment.updated_at.getTime();
+
+      // Sync factual building data changes to hidden revaluation years
+      try {
+        const syncResult = await syncFactualChangesToHiddenYears({
+          municipalityId: municipalityId.toString(),
+          propertyId: id,
+          changes: buildingAssessmentData,
+          dataType: 'building',
+          currentYear: targetYear,
+        });
+        if (syncResult.synced > 0) {
+          console.log(
+            `📋 [Building Update] Synced factual changes to ${syncResult.synced} hidden years`,
+          );
+        }
+      } catch (syncError) {
+        console.error(
+          'Error syncing building changes to hidden years:',
+          syncError,
+        );
+        // Don't fail the building save if sync fails
+      }
+
       res.json({
         success: true,
         message: 'Building assessment updated successfully',
         assessment: buildingAssessment,
+        year: targetYear,
+        effectiveYear: buildingAssessment.effective_year,
+        wasNewCopy: wasNewCopy,
       });
     } catch (error) {
       console.error('Update building assessment error:', error);
@@ -2070,7 +2373,7 @@ router.patch(
 );
 
 // @route   POST /api/properties/:id/assessment/building/calculate
-// @desc    Trigger manual building value calculation
+// @desc    Trigger manual building value calculation using temporal inheritance
 // @access  Private
 router.post(
   '/properties/:id/assessment/building/calculate',
@@ -2078,19 +2381,22 @@ router.post(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { card = 1 } = req.query;
+      const { card = 1, assessment_year } = req.query;
       const calculationConfig = req.body;
       const mongoose = require('mongoose');
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
       const cardNumber = parseInt(card);
+      const requestedYear = assessment_year
+        ? parseInt(assessment_year, 10)
+        : new Date().getFullYear();
 
-      // Get the building assessment
-      const buildingAssessment = await BuildingAssessment.findOne({
-        property_id: propertyObjectId,
-        card_number: cardNumber,
-        effective_year: new Date().getFullYear(),
-      });
+      // Get the effective building assessment using temporal inheritance
+      const buildingAssessment = await BuildingAssessment.getForPropertyYear(
+        propertyObjectId,
+        cardNumber,
+        requestedYear,
+      );
 
       if (!buildingAssessment) {
         return res.status(404).json({
@@ -2254,7 +2560,7 @@ router.patch(
 );
 
 // @route   POST /api/municipalities/:municipalityId/building-assessments/mass-recalculate
-// @desc    Trigger mass recalculation of building assessments for municipality
+// @desc    Trigger mass recalculation of building assessments for municipality (async with progress)
 // @access  Private
 router.post(
   '/municipalities/:municipalityId/building-assessments/mass-recalculate',
@@ -2265,58 +2571,170 @@ router.post(
       const { year, filters, batchSize } = req.body;
 
       // Check if user has admin access to this municipality
-      const hasAdminAccess =
-        ['avitar_staff', 'avitar_admin'].includes(req.user.global_role) ||
-        req.user.municipal_permissions?.some(
-          (perm) =>
-            perm.municipality_id.toString() === municipalityId &&
-            perm.module_permissions
-              ?.get?.('assessing')
-              ?.permissions?.includes('admin'),
-        );
+      const isGlobalAdmin = ['avitar_staff', 'avitar_admin'].includes(req.user.global_role);
+
+      let hasMunicipalityAdmin = false;
+      if (req.user.municipal_permissions && Array.isArray(req.user.municipal_permissions)) {
+        for (const perm of req.user.municipal_permissions) {
+          if (perm.municipality_id?.toString() === municipalityId) {
+            if (perm.role === 'admin') {
+              hasMunicipalityAdmin = true;
+              break;
+            }
+            if (perm.module_permissions) {
+              const assessingPerms = perm.module_permissions instanceof Map
+                ? perm.module_permissions.get('assessing')
+                : perm.module_permissions.assessing;
+
+              if (assessingPerms?.role === 'admin' || assessingPerms?.permissions?.includes('admin')) {
+                hasMunicipalityAdmin = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      const hasAdminAccess = isGlobalAdmin || hasMunicipalityAdmin;
 
       if (!hasAdminAccess) {
         return res.status(403).json({
           success: false,
-          message:
-            'Access denied: Admin privileges required for mass recalculation',
+          message: 'Access denied: Admin privileges required for mass recalculation',
         });
       }
 
-      // Use calculation service for mass recalculation
-      const calculationService = new BuildingAssessmentCalculationService();
-      let result;
+      // Create job ID and initialize job tracking
+      const jobId = uuidv4();
+      recalculationJobs.set(jobId, {
+        jobId,
+        municipalityId,
+        year: year || new Date().getFullYear(),
+        status: 'starting',
+        phase: 'initializing',
+        progress: 0,
+        message: 'Starting recalculation...',
+        startedAt: Date.now(),
+        result: null,
+        error: null,
+      });
 
-      if (filters && Object.keys(filters).length > 0) {
-        // For filtered recalculation, we'll use affected properties method
-        // The service expects changeType and changeId, so we'll use 'filter' as changeType
-        // and pass the first filter key as changeId for now
-        const firstFilterKey = Object.keys(filters)[0];
-        result = await calculationService.recalculateAffectedProperties(
-          municipalityId,
-          'filter',
-          firstFilterKey,
-          year,
-        );
-      } else {
-        // For municipality-wide recalculation
-        result = await calculationService.recalculateAllProperties(
-          municipalityId,
-          year,
-          { batchSize },
-        );
+      // Return job ID immediately
+      res.json({
+        success: true,
+        jobId,
+        message: 'Recalculation job started',
+      });
+
+      // Run recalculation in background
+      const calculationService = new BuildingAssessmentCalculationService();
+
+      // Progress callback to update job status
+      const onProgress = (progressData) => {
+        const job = recalculationJobs.get(jobId);
+        if (job) {
+          job.phase = progressData.phase;
+          job.progress = progressData.progress;
+          job.message = progressData.message;
+          job.status = progressData.phase === 'complete' ? 'completed' :
+                       progressData.phase === 'error' ? 'failed' : 'running';
+
+          // Copy all progress data
+          Object.assign(job, progressData);
+        }
+      };
+
+      try {
+        let result;
+        if (filters && Object.keys(filters).length > 0) {
+          const firstFilterKey = Object.keys(filters)[0];
+          result = await calculationService.recalculateAffectedProperties(
+            municipalityId,
+            'filter',
+            firstFilterKey,
+            year,
+          );
+        } else {
+          result = await calculationService.recalculateAllProperties(
+            municipalityId,
+            year,
+            { batchSize, onProgress },
+          );
+        }
+
+        // Update job with final result
+        const job = recalculationJobs.get(jobId);
+        if (job) {
+          job.status = 'completed';
+          job.phase = 'complete';
+          job.progress = 100;
+          job.result = result;
+          job.completedAt = Date.now();
+        }
+      } catch (error) {
+        console.error('Mass building recalculation error:', error);
+        const job = recalculationJobs.get(jobId);
+        if (job) {
+          job.status = 'failed';
+          job.phase = 'error';
+          job.error = error.message;
+          job.completedAt = Date.now();
+        }
+      }
+    } catch (error) {
+      console.error('Mass building recalculation setup error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to start mass building recalculation',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/building-assessments/recalculation-progress/:jobId
+// @desc    Get progress of a running recalculation job
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/building-assessments/recalculation-progress/:jobId',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const job = recalculationJobs.get(jobId);
+
+      if (!job) {
+        return res.status(404).json({
+          success: false,
+          message: 'Job not found or expired',
+        });
       }
 
       res.json({
         success: true,
-        message: 'Mass building recalculation completed successfully',
-        result: result,
+        job: {
+          jobId: job.jobId,
+          status: job.status,
+          phase: job.phase,
+          progress: job.progress,
+          message: job.message,
+          totalCount: job.totalCount,
+          processedCount: job.processedCount,
+          updatedCount: job.updatedCount,
+          changedCount: job.changedCount,
+          errorCount: job.errorCount,
+          createdCount: job.createdCount,
+          result: job.result,
+          error: job.error,
+          startedAt: job.startedAt,
+          completedAt: job.completedAt,
+        },
       });
     } catch (error) {
-      console.error('Mass building recalculation error:', error);
+      console.error('Error fetching recalculation progress:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to complete mass building recalculation',
+        message: 'Failed to fetch recalculation progress',
         error: error.message,
       });
     }
@@ -2894,35 +3312,35 @@ router.put(
 // === PROPERTY SKETCH ENDPOINTS ===
 
 // @route   GET /api/properties/:id/sketches
-// @desc    Get all sketches for a property and card
+// @desc    Get all sketches for a property and card effective for a specific assessment year
+// @desc    Uses temporal inheritance - returns sketches from most recent year <= requested year
 // @access  Private
 router.get('/properties/:id/sketches', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { card = 1 } = req.query;
-    const mongoose = require('mongoose');
+    const { card = 1, year } = req.query;
 
-    const propertyObjectId = new mongoose.Types.ObjectId(id);
     const cardNumber = parseInt(card);
+    const assessmentYear = parseInt(year) || new Date().getFullYear();
 
-    console.log('Sketch query:', {
-      property_id: propertyObjectId,
-      card_number: cardNumber,
-    });
-
-    const sketches = await PropertySketch.find({
-      property_id: propertyObjectId,
-      card_number: cardNumber,
-    }).sort({ created_at: -1 });
-
-    console.log(
-      `Found ${sketches.length} sketches for property ${id}, card ${cardNumber}`,
+    // Use temporal inheritance - finds sketches from most recent year <= requested year
+    const sketches = await PropertySketch.findForPropertyCardYear(
+      id,
+      cardNumber,
+      assessmentYear,
     );
+
+    // Get the effective year from the sketches (they all have the same year)
+    const effectiveYear =
+      sketches.length > 0 ? sketches[0].effective_year : null;
 
     res.json({
       success: true,
       sketches: sketches,
       areaDescriptions: getAreaDescriptionRates(),
+      year: assessmentYear,
+      effectiveYear: effectiveYear,
+      isInherited: effectiveYear !== null && effectiveYear !== assessmentYear,
     });
   } catch (error) {
     console.error('Get sketches error:', error);
@@ -2934,14 +3352,17 @@ router.get('/properties/:id/sketches', authenticateToken, async (req, res) => {
 });
 
 // @route   POST /api/properties/:id/sketches
-// @desc    Create a new sketch for a property
+// @desc    Create a new sketch for a property for a specific assessment year
 // @access  Private
 router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const { card = 1, year } = req.query;
     const mongoose = require('mongoose');
 
     const propertyObjectId = new mongoose.Types.ObjectId(id);
+    const cardNumber = parseInt(card);
+    const targetYear = parseInt(year) || new Date().getFullYear();
 
     // Get property to extract municipality_id
     const property = await PropertyTreeNode.findById(propertyObjectId);
@@ -2956,6 +3377,8 @@ router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
       ...req.body,
       property_id: propertyObjectId,
       municipality_id: property.municipality_id,
+      card_number: cardNumber,
+      effective_year: targetYear,
       created_by: req.user.id,
       updated_by: req.user.id,
     };
@@ -2966,7 +3389,6 @@ router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
     await sketch.save();
 
     // Update building assessment with new effective area from all sketches
-    const cardNumber = parseInt(req.query.card) || 1;
     const assessmentUpdate = await updateBuildingAssessmentFromSketches(
       id,
       cardNumber,
@@ -2976,6 +3398,7 @@ router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
       success: true,
       sketch: sketch,
       buildingAssessmentUpdate: assessmentUpdate,
+      year: targetYear,
     });
   } catch (error) {
     console.error('Create sketch error:', error);
@@ -2987,18 +3410,15 @@ router.post('/properties/:id/sketches', authenticateToken, async (req, res) => {
 });
 
 // @route   PUT /api/properties/:id/sketches/:sketchId
-// @desc    Update a sketch
+// @desc    Update a sketch - uses copy-on-write if editing an inherited sketch
 // @access  Private
 router.put(
   '/properties/:id/sketches/:sketchId',
   authenticateToken,
   async (req, res) => {
-    console.log(`[PUT SKETCH] ========== REQUEST RECEIVED ==========`);
-    console.log(
-      `[PUT SKETCH] Property ID: ${req.params.id}, Sketch ID: ${req.params.sketchId}, Card: ${req.query.card}`,
-    );
-    console.log(`[PUT SKETCH] Request body keys:`, Object.keys(req.body));
-    console.log(`[PUT SKETCH] User:`, req.user?.id || 'No user');
+    const { card = 1, year } = req.query;
+    const cardNumber = parseInt(card);
+    const targetYear = parseInt(year) || new Date().getFullYear();
 
     try {
       const { id, sketchId } = req.params;
@@ -3007,27 +3427,54 @@ router.put(
       const propertyObjectId = new mongoose.Types.ObjectId(id);
       const sketchObjectId = new mongoose.Types.ObjectId(sketchId);
 
-      const sketch = await PropertySketch.findOne({
+      const existingSketch = await PropertySketch.findOne({
         _id: sketchObjectId,
         property_id: propertyObjectId,
       });
 
-      if (!sketch) {
+      if (!existingSketch) {
         return res.status(404).json({
           success: false,
           message: 'Sketch not found',
         });
       }
 
-      // Update sketch data
-      Object.assign(sketch, req.body);
-      sketch.updated_by = req.user.id;
-      sketch.calculateTotals();
+      let savedSketch;
+      let isNewCopy = false;
 
-      await sketch.save();
+      // Check if this is an inherited sketch (different year than target)
+      if (existingSketch.effective_year !== targetYear) {
+        // Copy-on-write: Create a new sketch for the target year
+        const newSketchData = {
+          ...existingSketch.toObject(),
+          ...req.body,
+          _id: undefined, // Remove the old _id to create new document
+          property_id: propertyObjectId,
+          card_number: cardNumber,
+          effective_year: targetYear,
+          created_by: req.user.id,
+          updated_by: req.user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        };
+
+        // Remove MongoDB internal fields
+        delete newSketchData.__v;
+
+        savedSketch = new PropertySketch(newSketchData);
+        savedSketch.calculateTotals();
+        await savedSketch.save();
+        isNewCopy = true;
+      } else {
+        // Update existing sketch in place (same year)
+        Object.assign(existingSketch, req.body);
+        existingSketch.updated_by = req.user.id;
+        existingSketch.calculateTotals();
+        await existingSketch.save();
+        savedSketch = existingSketch;
+      }
 
       // Update building assessment with new effective area from all sketches
-      const cardNumber = parseInt(req.query.card) || 1;
       const assessmentUpdate = await updateBuildingAssessmentFromSketches(
         id,
         cardNumber,
@@ -3035,8 +3482,11 @@ router.put(
 
       res.json({
         success: true,
-        sketch: sketch,
+        sketch: savedSketch,
         buildingAssessmentUpdate: assessmentUpdate,
+        year: targetYear,
+        isNewCopy: isNewCopy,
+        previousYear: isNewCopy ? existingSketch.effective_year : null,
       });
     } catch (error) {
       console.error('Update sketch error:', error);
@@ -3049,7 +3499,7 @@ router.put(
 );
 
 // @route   DELETE /api/properties/:id/sketches/:sketchId
-// @desc    Delete a sketch
+// @desc    Delete a sketch - only allows deleting sketches from the target year
 // @access  Private
 router.delete(
   '/properties/:id/sketches/:sketchId',
@@ -3057,10 +3507,38 @@ router.delete(
   async (req, res) => {
     try {
       const { id, sketchId } = req.params;
+      const { card = 1, year } = req.query;
       const mongoose = require('mongoose');
 
       const propertyObjectId = new mongoose.Types.ObjectId(id);
       const sketchObjectId = new mongoose.Types.ObjectId(sketchId);
+      const cardNumber = parseInt(card);
+      const targetYear = parseInt(year) || new Date().getFullYear();
+
+      // First, find the sketch to check its year
+      const sketch = await PropertySketch.findOne({
+        _id: sketchObjectId,
+        property_id: propertyObjectId,
+      });
+
+      if (!sketch) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sketch not found',
+        });
+      }
+
+      // Only allow deleting sketches from the current target year
+      // Inherited sketches (from previous years) cannot be deleted from a future year view
+      if (sketch.effective_year !== targetYear) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot delete a sketch from year ${sketch.effective_year} while viewing year ${targetYear}. ` +
+            `Switch to year ${sketch.effective_year} to delete this sketch, or create a new sketch for ${targetYear} to override it.`,
+          sketchYear: sketch.effective_year,
+          targetYear: targetYear,
+        });
+      }
 
       const result = await PropertySketch.deleteOne({
         _id: sketchObjectId,
@@ -3075,7 +3553,6 @@ router.delete(
       }
 
       // Update building assessment with new effective area from all sketches
-      const cardNumber = parseInt(req.query.card) || 1;
       const assessmentUpdate = await updateBuildingAssessmentFromSketches(
         id,
         cardNumber,
@@ -3085,6 +3562,7 @@ router.delete(
         success: true,
         message: 'Sketch deleted successfully',
         buildingAssessmentUpdate: assessmentUpdate,
+        year: targetYear,
       });
     } catch (error) {
       console.error('Delete sketch error:', error);
@@ -3283,21 +3761,9 @@ async function updateBuildingAssessmentFromSketches(
   propertyId,
   cardNumber = 1,
 ) {
-  console.log(
-    `[SKETCH UPDATE] ==================== START ====================`,
-  );
-  console.log(
-    `[SKETCH UPDATE] Function called with propertyId: ${propertyId}, cardNumber: ${cardNumber}`,
-  );
-  console.log(`[SKETCH UPDATE] Stack trace:`, new Error().stack);
-
   try {
     const mongoose = require('mongoose');
     const propertyObjectId = new mongoose.Types.ObjectId(propertyId);
-
-    console.log(
-      `[SKETCH UPDATE] Starting update for property ${propertyId}, card ${cardNumber}`,
-    );
 
     // Get the property to find the municipality ID
     const PropertyTreeNode = require('../models/PropertyTreeNode');
@@ -3307,7 +3773,6 @@ async function updateBuildingAssessmentFromSketches(
     }
 
     const municipalityId = property.municipality_id;
-    console.log(`[SKETCH UPDATE] Found municipality ID: ${municipalityId}`);
 
     // Get only the most recent sketch for this property and card to avoid double-counting
     const sketches = await PropertySketch.find({
@@ -3317,33 +3782,11 @@ async function updateBuildingAssessmentFromSketches(
       .sort({ created_at: -1 })
       .limit(1);
 
-    console.log(`[SKETCH UPDATE] Found ${sketches.length} sketches`);
-
     // Calculate total effective area from all sketches
     const totalEffectiveArea = sketches.reduce((sum, sketch) => {
-      // Ensure totals are calculated
       sketch.calculateTotals();
-      console.log(
-        `[SKETCH UPDATE] Sketch ${sketch._id}: total_effective_area = ${sketch.total_effective_area}, total_area = ${sketch.total_area}`,
-      );
-      console.log(
-        `[SKETCH UPDATE] Sketch shapes: ${sketch.shapes.length} shapes`,
-      );
-      sketch.shapes.forEach((shape, index) => {
-        const descLabels =
-          shape.descriptions?.map(
-            (desc) => `${desc.label || 'unknown'}:${desc.effective_area || 0}`,
-          ) || [];
-        console.log(
-          `[SKETCH UPDATE]   Shape ${index}: area = ${shape.area}, effective_area = ${shape.effective_area}, descriptions = [${descLabels.join(', ') || 'none'}]`,
-        );
-      });
       return sum + (sketch.total_effective_area || 0);
     }, 0);
-
-    console.log(
-      `[SKETCH UPDATE] Total effective area calculated: ${totalEffectiveArea}`,
-    );
 
     // Update the building assessment with the new effective area
     const buildingAssessmentData = {
@@ -3351,24 +3794,12 @@ async function updateBuildingAssessmentFromSketches(
       change_reason: 'sketch_update',
     };
 
-    console.log(
-      `[SKETCH UPDATE] Updating building assessment with data:`,
-      buildingAssessmentData,
-    );
-
     // Update building assessment and recalculate
     const updatedAssessment = await BuildingAssessment.updateForPropertyCard(
       propertyObjectId,
       municipalityId,
       cardNumber,
       buildingAssessmentData,
-    );
-
-    console.log(
-      `[SKETCH UPDATE] Updated assessment building_value: ${updatedAssessment?.building_value}`,
-    );
-    console.log(
-      `[SKETCH UPDATE] Updated assessment effective_area: ${updatedAssessment?.effective_area}`,
     );
 
     return {
@@ -4798,32 +5229,6 @@ router.post(
   },
 );
 
-// @route   POST /api/properties/migrate-feature-card-numbers
-// @desc    Migrate existing features to have card_number (run once)
-// @access  Private
-router.post(
-  '/properties/migrate-feature-card-numbers',
-  authenticateToken,
-  async (req, res) => {
-    try {
-      console.log('🔄 Running feature card number migration via API...');
-      await addCardNumbersToFeatures();
-
-      res.json({
-        success: true,
-        message: 'Feature card number migration completed successfully',
-      });
-    } catch (error) {
-      console.error('Migration API error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to run feature card number migration',
-        error: error.message,
-      });
-    }
-  },
-);
-
 // === EXEMPTIONS ENDPOINTS ===
 
 // @route   GET /api/municipalities/:municipalityId/properties/:id/exemptions
@@ -5241,6 +5646,578 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to fetch exemption amounts',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// ===========================================
+// ASSESSMENT YEAR MANAGEMENT ENDPOINTS
+// ===========================================
+
+// @route   GET /api/municipalities/:municipalityId/assessing/available-years
+// @desc    Get available assessment years (filtered for public users)
+// @access  Private
+router.get(
+  '/municipalities/:municipalityId/assessing/available-years',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const mongoose = require('mongoose');
+      const AssessmentYear = require('../models/AssessmentYear');
+
+      const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+      // Get years from AssessmentYear model
+      const assessmentYears = await AssessmentYear.find({
+        municipalityId: municipalityObjectId,
+      })
+        .select('year isHidden isLocked')
+        .sort({ year: -1 });
+
+      // Check if user is staff (can see hidden years)
+      const isStaff =
+        req.user?.isMunicipalStaff ||
+        req.user?.isAvitarStaff ||
+        req.user?.municipal_permissions?.some(
+          (p) =>
+            p.municipality_id.toString() === municipalityId &&
+            ['admin', 'staff', 'assessor'].includes(p.role),
+        );
+
+      const allYears = assessmentYears.map((ay) => ay.year);
+      const hiddenYears = assessmentYears
+        .filter((ay) => ay.isHidden)
+        .map((ay) => ay.year);
+
+      // Filter years for non-staff users
+      let visibleYears = allYears;
+      if (!isStaff && hiddenYears.length > 0) {
+        visibleYears = allYears.filter((year) => !hiddenYears.includes(year));
+      }
+
+      res.json({
+        success: true,
+        years: visibleYears,
+        // Staff gets additional info
+        ...(isStaff && {
+          hiddenYears: hiddenYears,
+          allYears: allYears,
+        }),
+      });
+    } catch (error) {
+      console.error('Get available years error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get available years',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   GET /api/municipalities/:municipalityId/assessing/years
+// @desc    Get year management data (staff only)
+// @access  Private (Staff/Admin only)
+router.get(
+  '/municipalities/:municipalityId/assessing/years',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const mongoose = require('mongoose');
+      const AssessmentYear = require('../models/AssessmentYear');
+
+      // Check if user is staff
+      const isStaff =
+        req.user?.isMunicipalStaff ||
+        req.user?.isAvitarStaff ||
+        req.user?.municipal_permissions?.some(
+          (p) =>
+            p.municipality_id.toString() === municipalityId &&
+            ['admin', 'staff', 'assessor'].includes(p.role),
+        );
+
+      if (!isStaff) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Staff access required.',
+        });
+      }
+
+      // Get municipality
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+      // Get AssessmentYear documents
+      const assessmentYearDocs = await AssessmentYear.find({
+        municipalityId: municipalityObjectId,
+      }).sort({ year: -1 });
+
+      // Build year info array
+      const years = assessmentYearDocs.map((doc) => ({
+        year: doc.year,
+        isHidden: doc.isHidden,
+        isLocked: doc.isLocked,
+        sourceYear: doc.sourceYear,
+        cachedTotals: doc.cachedTotals,
+        createdAt: doc.createdAt,
+      }));
+
+      const hiddenYears = assessmentYearDocs
+        .filter((d) => d.isHidden)
+        .map((d) => d.year);
+
+      const lockedYears = assessmentYearDocs
+        .filter((d) => d.isLocked)
+        .map((d) => d.year);
+
+      res.json({
+        success: true,
+        years,
+        hiddenYears,
+        lockedYears,
+        currentTaxYear: municipality.taxYear,
+      });
+    } catch (error) {
+      console.error('Get year management data error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get year management data',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   POST /api/municipalities/:municipalityId/assessing/years
+// @desc    Create new assessment year using lightweight temporal database approach
+// @desc    Only copies configuration tables - assessment data inherits via temporal queries
+// @access  Private (Staff/Admin only)
+router.post(
+  '/municipalities/:municipalityId/assessing/years',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { sourceYear, targetYear } = req.body;
+      const mongoose = require('mongoose');
+      const AssessmentYear = require('../models/AssessmentYear');
+
+      // Validate input
+      if (!sourceYear || !targetYear) {
+        return res.status(400).json({
+          success: false,
+          message: 'sourceYear and targetYear are required',
+        });
+      }
+
+      if (targetYear < 2000 || targetYear > 2099) {
+        return res.status(400).json({
+          success: false,
+          message: 'targetYear must be between 2000 and 2099',
+        });
+      }
+
+      // Check if user is staff
+      const isStaff =
+        req.user?.isMunicipalStaff ||
+        req.user?.isAvitarStaff ||
+        req.user?.municipal_permissions?.some(
+          (p) =>
+            p.municipality_id.toString() === municipalityId &&
+            ['admin', 'assessor'].includes(p.role),
+        );
+
+      if (!isStaff) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Staff access required.',
+        });
+      }
+
+      // Get municipality
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+      // Check if target year already exists in AssessmentYear
+      const existingYear = await AssessmentYear.findOne({
+        municipalityId: municipalityObjectId,
+        year: targetYear,
+      });
+
+      if (existingYear) {
+        return res.status(400).json({
+          success: false,
+          message: `Assessment year ${targetYear} already exists`,
+        });
+      }
+
+      // Ensure source year AssessmentYear document exists (create if migrating from old system)
+      let sourceAssessmentYear = await AssessmentYear.findOne({
+        municipalityId: municipalityObjectId,
+        year: sourceYear,
+      });
+
+      if (!sourceAssessmentYear) {
+        // Create source year document for migration from old system
+        sourceAssessmentYear = await AssessmentYear.create({
+          municipalityId: municipalityObjectId,
+          year: sourceYear,
+          isLocked: false,
+          isHidden: false,
+        });
+        console.log(`Created AssessmentYear document for existing year ${sourceYear}`);
+      }
+
+      // Create new AssessmentYear document for target year
+      // This is the ONLY document created for the new year initially
+      // Assessment data will inherit from previous years via temporal queries
+      const newAssessmentYear = await AssessmentYear.create({
+        municipalityId: municipalityObjectId,
+        year: targetYear,
+        isLocked: false,
+        isHidden: true, // New years start hidden
+        sourceYear: sourceYear,
+        createdBy: req.user?._id,
+      });
+
+      // Lock the source year
+      sourceAssessmentYear.isLocked = true;
+      await sourceAssessmentYear.save();
+
+      // Configuration tables (LandLadder, BuildingCode, SketchSubAreaFactor, etc.)
+      // use temporal queries - they inherit from the most recent effective_year <= requested year.
+      // No copying needed! New records are only created when a user modifies a rate/code
+      // in the new year (copy-on-write pattern).
+
+      // Update Municipality settings
+      const hiddenYears = municipality.assessingSettings?.hiddenYears || [];
+      const lockedConfigYears = municipality.assessingSettings?.lockedConfigYears || [];
+
+      // Add target year to hidden years (new years start hidden)
+      if (!hiddenYears.includes(targetYear)) {
+        hiddenYears.push(targetYear);
+      }
+
+      // Lock source year in legacy settings
+      if (!lockedConfigYears.includes(sourceYear)) {
+        lockedConfigYears.push(sourceYear);
+      }
+
+      municipality.assessingSettings = {
+        ...municipality.assessingSettings,
+        hiddenYears,
+        lockedConfigYears,
+      };
+      await municipality.save();
+
+      // Calculate initial totals for the new year using temporal queries
+      // This gets effective values inherited from previous years
+      try {
+        await AssessmentYear.recalculateTotals(municipalityObjectId, targetYear);
+      } catch (totalsError) {
+        console.warn('Could not calculate initial totals (non-blocking):', totalsError.message);
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully created assessment year ${targetYear}. All data (assessments and configuration) inherits from ${sourceYear} via temporal queries. Source year ${sourceYear} is now locked.`,
+        assessmentYear: {
+          year: newAssessmentYear.year,
+          isHidden: newAssessmentYear.isHidden,
+          isLocked: newAssessmentYear.isLocked,
+          sourceYear: newAssessmentYear.sourceYear,
+        },
+        isHidden: true,
+        sourceYearLocked: true,
+      });
+    } catch (error) {
+      console.error('Create assessment year error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create assessment year',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   POST /api/municipalities/:municipalityId/assessing/recalculate
+// @desc    Recalculate assessments after rate changes - only creates records where values change
+// @access  Private (Staff/Admin only)
+router.post(
+  '/municipalities/:municipalityId/assessing/recalculate',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId } = req.params;
+      const { year, recalculationType = 'all' } = req.body;
+      const mongoose = require('mongoose');
+      const AssessmentYear = require('../models/AssessmentYear');
+      const CopyOnWriteHelper = require('../utils/copyOnWrite');
+      const { updateParcelAssessment, getPropertyAssessmentComponents, roundToNearestHundred } = require('../utils/assessment');
+
+      const currentYear = year || new Date().getFullYear();
+
+      // Check if user is staff
+      const isStaff =
+        req.user?.isMunicipalStaff ||
+        req.user?.isAvitarStaff ||
+        req.user?.municipal_permissions?.some(
+          (p) =>
+            p.municipality_id.toString() === municipalityId &&
+            ['admin', 'assessor'].includes(p.role),
+        );
+
+      if (!isStaff) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Staff access required.',
+        });
+      }
+
+      const municipalityObjectId = new mongoose.Types.ObjectId(municipalityId);
+
+      // Check if year is locked
+      const assessmentYear = await AssessmentYear.findOne({
+        municipalityId: municipalityObjectId,
+        year: currentYear,
+      });
+
+      if (assessmentYear?.isLocked) {
+        return res.status(400).json({
+          success: false,
+          message: `Year ${currentYear} is locked and cannot be recalculated`,
+        });
+      }
+
+      // Get all properties in municipality
+      const PropertyTreeNode = require('../models/PropertyTreeNode');
+      const properties = await PropertyTreeNode.find({
+        municipality_id: municipalityObjectId,
+      }).select('_id');
+
+      const results = {
+        recordsCreated: 0,
+        recordsUnchanged: 0,
+        recordsUpdated: 0,
+        errors: [],
+        totalProcessed: 0,
+      };
+
+      // Fields to compare for change detection
+      const fieldsToCompare = [
+        'parcel_totals.total_land_value',
+        'parcel_totals.total_building_value',
+        'parcel_totals.total_improvements_value',
+        'parcel_totals.total_assessed_value',
+      ];
+
+      console.log(`Starting recalculation for ${properties.length} properties in year ${currentYear}...`);
+
+      for (const property of properties) {
+        try {
+          const propertyId = property._id;
+
+          // Get effective parcel assessment (inherited from previous year or current)
+          const effectiveParcel = await ParcelAssessment.getCurrentParcel(propertyId, currentYear);
+
+          // Check if record for this year already exists
+          const existingYearRecord = await ParcelAssessment.findOne({
+            property_id: propertyId,
+            municipality_id: municipalityObjectId,
+            effective_year: currentYear,
+          });
+
+          // Calculate new values using current year's rates
+          const components = await getPropertyAssessmentComponents(propertyId, currentYear);
+          const newTotals = {
+            total_land_value: roundToNearestHundred(components.landValue),
+            total_building_value: roundToNearestHundred(components.buildingValue),
+            total_improvements_value: roundToNearestHundred(components.featuresValue),
+            total_assessed_value: roundToNearestHundred(
+              components.landValue + components.buildingValue + components.featuresValue
+            ),
+          };
+
+          // Compare values to detect changes
+          const recordToCompare = existingYearRecord || effectiveParcel;
+          let hasChanges = false;
+
+          if (recordToCompare) {
+            for (const field of fieldsToCompare) {
+              const existingValue = CopyOnWriteHelper.getNestedValue(recordToCompare, field) || 0;
+              const newValue = CopyOnWriteHelper.getNestedValue({ parcel_totals: newTotals }, field) || 0;
+
+              if (Math.abs(existingValue - newValue) > 0.01) {
+                hasChanges = true;
+                break;
+              }
+            }
+          } else {
+            // No existing record - this is a change
+            hasChanges = true;
+          }
+
+          if (hasChanges) {
+            if (existingYearRecord) {
+              // Update existing record for this year
+              existingYearRecord.parcel_totals = newTotals;
+              existingYearRecord.last_calculated = new Date();
+              existingYearRecord.calculation_trigger = 'manual_recalc';
+              existingYearRecord.calculated_by = req.user?._id;
+              await existingYearRecord.save();
+              results.recordsUpdated++;
+            } else {
+              // Create new record with copy-on-write
+              await ParcelAssessment.updateForYear(
+                propertyId,
+                municipalityObjectId,
+                currentYear,
+                {
+                  parcel_totals: newTotals,
+                },
+                {
+                  userId: req.user?._id,
+                  trigger: 'manual_recalc',
+                },
+              );
+              results.recordsCreated++;
+            }
+          } else {
+            // Values unchanged - no new record needed
+            results.recordsUnchanged++;
+          }
+
+          results.totalProcessed++;
+        } catch (error) {
+          results.errors.push({
+            propertyId: property._id,
+            error: error.message,
+          });
+        }
+      }
+
+      // Update AssessmentYear cached totals
+      if (assessmentYear) {
+        await AssessmentYear.recalculateTotals(municipalityObjectId, currentYear);
+        assessmentYear.lastRecalculationAt = new Date();
+        assessmentYear.lastRecalculationType = recalculationType;
+        assessmentYear.lastRecalculationRecordsCreated = results.recordsCreated;
+        await assessmentYear.save();
+      }
+
+      console.log(`Recalculation complete: ${results.recordsCreated} created, ${results.recordsUpdated} updated, ${results.recordsUnchanged} unchanged`);
+
+      res.json({
+        success: true,
+        message: `Recalculation complete. Only properties with value changes received new records.`,
+        year: currentYear,
+        recalculationType,
+        results,
+      });
+    } catch (error) {
+      console.error('Recalculation error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to recalculate assessments',
+        error: error.message,
+      });
+    }
+  },
+);
+
+// @route   PATCH /api/municipalities/:municipalityId/assessing/years/:year/visibility
+// @desc    Toggle year visibility (hide/show from public)
+// @access  Private (Staff/Admin only)
+router.patch(
+  '/municipalities/:municipalityId/assessing/years/:year/visibility',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { municipalityId, year } = req.params;
+      const { hidden } = req.body;
+      const yearNum = parseInt(year);
+
+      if (isNaN(yearNum) || yearNum < 2000 || yearNum > 2099) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid year',
+        });
+      }
+
+      // Check if user is staff
+      const isStaff =
+        req.user?.isMunicipalStaff ||
+        req.user?.isAvitarStaff ||
+        req.user?.municipal_permissions?.some(
+          (p) =>
+            p.municipality_id.toString() === municipalityId &&
+            ['admin', 'assessor'].includes(p.role),
+        );
+
+      if (!isStaff) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Staff access required.',
+        });
+      }
+
+      // Get municipality
+      const municipality = await Municipality.findById(municipalityId);
+      if (!municipality) {
+        return res.status(404).json({
+          success: false,
+          message: 'Municipality not found',
+        });
+      }
+
+      let hiddenYears = municipality.assessingSettings?.hiddenYears || [];
+
+      if (hidden) {
+        // Add to hidden years if not already present
+        if (!hiddenYears.includes(yearNum)) {
+          hiddenYears.push(yearNum);
+        }
+      } else {
+        // Remove from hidden years
+        hiddenYears = hiddenYears.filter((y) => y !== yearNum);
+      }
+
+      municipality.assessingSettings = {
+        ...municipality.assessingSettings,
+        hiddenYears,
+      };
+      await municipality.save();
+
+      res.json({
+        success: true,
+        year: yearNum,
+        isHidden: hidden,
+        hiddenYears,
+      });
+    } catch (error) {
+      console.error('Toggle year visibility error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to toggle year visibility',
         error: error.message,
       });
     }

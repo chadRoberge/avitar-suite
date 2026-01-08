@@ -1,178 +1,178 @@
 const mongoose = require('mongoose');
 
-const exemptionTypeSchema = new mongoose.Schema(
-  {
-    municipality_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Municipality',
-      required: true,
-      index: true,
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    display_name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      enum: [
-        'veteran',
-        'elderly',
-        'blind',
-        'disabled',
-        'charitable',
-        'institutional',
-        'solar',
-        'school_dining',
-        'other',
-      ],
-      required: true,
-      index: true,
-    },
-    subcategory: {
-      type: String,
-      trim: true, // For things like 'elderly_65_74', 'veteran_standard', etc.
-    },
-    exemption_type: {
-      type: String,
-      enum: ['exemption', 'credit'],
-      required: true,
-      index: true,
-    },
-    calculation_method: {
-      type: String,
-      enum: [
-        'fixed_amount',
-        'percentage_of_assessment',
-        'user_entered_amount',
-        'user_entered_percentage',
-      ],
-      default: 'fixed_amount',
-      index: true,
-    },
-    is_multiple_allowed: {
-      type: Boolean,
-      default: false, // For veteran exemptions that can be stacked
-      index: true,
-    },
-    default_exemption_value: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    default_credit_value: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-    default_percentage: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100, // Percentage value (0-100)
-    },
-    min_exemption_amount: {
-      type: Number,
-      min: 0, // Minimum amount for user-entered exemptions
-    },
-    max_exemption_amount: {
-      type: Number,
-      min: 0, // Maximum amount for user-entered exemptions
-    },
-    min_percentage: {
-      type: Number,
-      min: 0,
-      max: 100, // Minimum percentage for user-entered percentages
-    },
-    max_percentage: {
-      type: Number,
-      min: 0,
-      max: 100, // Maximum percentage for user-entered percentages
-    },
-    qualification_criteria: {
-      type: String,
-      trim: true,
-    },
-    requires_documentation: {
-      type: Boolean,
-      default: true,
-    },
-    required_documents: [
-      {
-        type: String,
-        trim: true,
-      },
+const exemptionTypeSchema = new mongoose.Schema({
+  municipality_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Municipality',
+    required: true,
+    index: true,
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  display_name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  category: {
+    type: String,
+    enum: [
+      'veteran',
+      'elderly',
+      'blind',
+      'disabled',
+      'charitable',
+      'institutional',
+      'solar',
+      'school_dining',
+      'other',
     ],
-    age_requirements: {
-      min_age: {
-        type: Number,
-        min: 0,
-      },
-      max_age: {
-        type: Number,
-        min: 0,
-      },
-    },
-    income_requirements: {
-      has_income_limit: {
-        type: Boolean,
-        default: false,
-      },
-      single_income_limit: {
-        type: Number,
-        min: 0,
-      },
-      married_income_limit: {
-        type: Number,
-        min: 0,
-      },
-    },
-    asset_requirements: {
-      has_asset_limit: {
-        type: Boolean,
-        default: false,
-      },
-      single_asset_limit: {
-        type: Number,
-        min: 0,
-      },
-      married_asset_limit: {
-        type: Number,
-        min: 0,
-      },
-    },
-    sort_order: {
+    required: true,
+    index: true,
+  },
+  subcategory: {
+    type: String,
+    trim: true, // For things like 'elderly_65_74', 'veteran_standard', etc.
+  },
+  effective_year: {
+    type: Number,
+    required: true,
+    index: true,
+  },
+  exemption_type: {
+    type: String,
+    enum: ['exemption', 'credit'],
+    required: true,
+    index: true,
+  },
+  calculation_method: {
+    type: String,
+    enum: [
+      'fixed_amount',
+      'percentage_of_assessment',
+      'user_entered_amount',
+      'user_entered_percentage',
+    ],
+    default: 'fixed_amount',
+    index: true,
+  },
+  is_multiple_allowed: {
+    type: Boolean,
+    default: false, // For veteran exemptions that can be stacked
+    index: true,
+  },
+  default_exemption_value: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  default_credit_value: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  default_percentage: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100, // Percentage value (0-100)
+  },
+  min_exemption_amount: {
+    type: Number,
+    min: 0, // Minimum amount for user-entered exemptions
+  },
+  max_exemption_amount: {
+    type: Number,
+    min: 0, // Maximum amount for user-entered exemptions
+  },
+  min_percentage: {
+    type: Number,
+    min: 0,
+    max: 100, // Minimum percentage for user-entered percentages
+  },
+  max_percentage: {
+    type: Number,
+    min: 0,
+    max: 100, // Maximum percentage for user-entered percentages
+  },
+  qualification_criteria: {
+    type: String,
+    trim: true,
+  },
+  requires_documentation: {
+    type: Boolean,
+    default: true,
+  },
+  required_documents: [{
+    type: String,
+    trim: true,
+  }, ],
+  age_requirements: {
+    min_age: {
       type: Number,
-      default: 0,
+      min: 0,
     },
-    is_active: {
+    max_age: {
+      type: Number,
+      min: 0,
+    },
+  },
+  income_requirements: {
+    has_income_limit: {
       type: Boolean,
-      default: true,
-      index: true,
+      default: false,
     },
-    created_at: {
-      type: Date,
-      default: Date.now,
+    single_income_limit: {
+      type: Number,
+      min: 0,
     },
-    updated_at: {
-      type: Date,
-      default: Date.now,
+    married_income_limit: {
+      type: Number,
+      min: 0,
     },
   },
-  {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  asset_requirements: {
+    has_asset_limit: {
+      type: Boolean,
+      default: false,
+    },
+    single_asset_limit: {
+      type: Number,
+      min: 0,
+    },
+    married_asset_limit: {
+      type: Number,
+      min: 0,
+    },
   },
-);
+  sort_order: {
+    type: Number,
+    default: 0,
+  },
+  is_active: {
+    type: Boolean,
+    default: true,
+    index: true,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
+  updated_at: {
+    type: Date,
+    default: Date.now,
+  },
+}, {
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+}, );
 
 // Compound indexes for efficient queries
 exemptionTypeSchema.index({ municipality_id: 1, is_active: 1 });
@@ -187,27 +187,33 @@ exemptionTypeSchema.index({
   sort_order: 1,
   display_name: 1,
 });
+// Unique index to ensure unique names per municipality per year
+exemptionTypeSchema.index(
+  { municipality_id: 1, name: 1, effective_year: 1 },
+  { unique: true },
+);
+exemptionTypeSchema.index({ municipality_id: 1, effective_year: 1 });
 
 // Pre-save middleware to update timestamps
-exemptionTypeSchema.pre('save', function (next) {
+exemptionTypeSchema.pre('save', function(next) {
   this.updated_at = new Date();
   next();
 });
 
 // Instance methods
-exemptionTypeSchema.methods.canBeAppliedMultiple = function () {
+exemptionTypeSchema.methods.canBeAppliedMultiple = function() {
   return this.is_multiple_allowed;
 };
 
-exemptionTypeSchema.methods.calculateExemptionValue = function (
+exemptionTypeSchema.methods.calculateExemptionValue = function(
   assessmentValue,
   userEnteredValue = null,
 ) {
   switch (this.calculation_method) {
     case 'fixed_amount':
-      return this.exemption_type === 'exemption'
-        ? this.default_exemption_value
-        : this.default_credit_value;
+      return this.exemption_type === 'exemption' ?
+        this.default_exemption_value :
+        this.default_credit_value;
 
     case 'percentage_of_assessment':
       if (!assessmentValue) return 0;
@@ -254,14 +260,14 @@ exemptionTypeSchema.methods.calculateExemptionValue = function (
   }
 };
 
-exemptionTypeSchema.methods.isUserInputRequired = function () {
+exemptionTypeSchema.methods.isUserInputRequired = function() {
   return (
     this.calculation_method === 'user_entered_amount' ||
     this.calculation_method === 'user_entered_percentage'
   );
 };
 
-exemptionTypeSchema.methods.getInputType = function () {
+exemptionTypeSchema.methods.getInputType = function() {
   switch (this.calculation_method) {
     case 'user_entered_amount':
       return 'amount';
@@ -273,7 +279,7 @@ exemptionTypeSchema.methods.getInputType = function () {
 };
 
 // Static methods
-exemptionTypeSchema.statics.findByMunicipality = function (
+exemptionTypeSchema.statics.findByMunicipality = function(
   municipalityId,
   activeOnly = true,
 ) {
@@ -284,7 +290,7 @@ exemptionTypeSchema.statics.findByMunicipality = function (
   return this.find(query).sort({ category: 1, name: 1 });
 };
 
-exemptionTypeSchema.statics.findByCategory = function (
+exemptionTypeSchema.statics.findByCategory = function(
   municipalityId,
   category,
   activeOnly = true,
@@ -299,7 +305,7 @@ exemptionTypeSchema.statics.findByCategory = function (
   return this.find(query).sort({ sort_order: 1, display_name: 1 });
 };
 
-exemptionTypeSchema.statics.findAvailableForSelection = function (
+exemptionTypeSchema.statics.findAvailableForSelection = function(
   municipalityId,
   activeOnly = true,
 ) {
@@ -314,7 +320,7 @@ exemptionTypeSchema.statics.findAvailableForSelection = function (
     );
 };
 
-exemptionTypeSchema.statics.findByExemptionType = function (
+exemptionTypeSchema.statics.findByExemptionType = function(
   municipalityId,
   exemptionType,
   activeOnly = true,

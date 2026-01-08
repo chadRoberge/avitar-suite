@@ -1,4 +1,7 @@
 {{!-- Property Sidebar Component --}}
+{{!-- Trigger lazy initialization when component renders --}}
+{{#if this.shouldInitialize}}{{!-- Loads properties on first render --}}{{/if}}
+
 <div class="property-sidebar {{if this.isOpen 'property-sidebar--open' 'property-sidebar--closed'}}">
   
   {{!-- Sidebar Header --}}

@@ -923,7 +923,7 @@
 }
 
 .municipality-selector__trigger:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.5) !important;
+  outline: 2px solid rgb(255 255 255 / 50%) !important;
   outline-offset: 2px;
 }
 
@@ -939,7 +939,7 @@
   height: 0;
   border-left: 5px solid transparent;
   border-right: 5px solid transparent;
-  border-top: 5px solid currentColor;
+  border-top: 5px solid currentcolor;
   margin-left: var(--space-2);
   opacity: 0.8;
 }
@@ -966,7 +966,8 @@
   background: none !important;
 }
 
-.municipality-selector__dropdown .ember-power-select-option[aria-current="true"] {
+.municipality-selector__dropdown
+  .ember-power-select-option[aria-current="true"] {
   background: var(--color-gray-50) !important;
   border-radius: var(--radius-base);
 }
@@ -993,7 +994,7 @@
 .municipality-selector__dropdown .ember-power-select-search-input:focus {
   outline: none;
   border-color: var(--avitar-green);
-  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+  box-shadow: 0 0 0 3px rgb(45 90 39 / 10%);
 }
 
 /* Option styling */
@@ -1020,7 +1021,7 @@
 .municipality-selector__trigger .municipality-selector__logo {
   width: 32px;
   height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgb(255 255 255 / 30%);
 }
 
 /* Initial letter (no logo) */
@@ -1096,7 +1097,7 @@
 }
 
 /* Mobile adjustments */
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .municipality-selector__trigger .municipality-selector__info {
     display: none;
   }

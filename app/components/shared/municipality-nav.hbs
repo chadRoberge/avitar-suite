@@ -14,9 +14,10 @@
       <ul class="avitar-topbar__nav hide-mobile">
         {{#each this.navigationItems as |navItem|}}
           <li class="avitar-topbar__nav-item">
-            <LinkTo
-              @route={{navItem.route}}
+            <a
+              href="#"
               class="avitar-topbar__nav-link {{if (this.isModuleActive navItem) 'avitar-topbar__nav-link--active'}}"
+              {{on "click" (fn this.navigateToModule navItem)}}
             >
               {{lnr-icon navItem.icon}}
               {{navItem.title}}
@@ -25,7 +26,7 @@
                   {{navItem.tier}}
                 </span>
               {{/if}}
-            </LinkTo>
+            </a>
           </li>
         {{/each}}
       </ul>
@@ -36,52 +37,45 @@
       </div>
     {{/if}}
 
-    {{!-- User Actions (desktop only - mobile uses simplified icons) --}}
-    <div class="avitar-topbar__user hide-mobile">
-      {{!-- User Role Badge --}}
+    {{!-- User Actions --}}
+    <div class="avitar-topbar__user">
+      {{!-- User Role Badge (desktop only) --}}
       {{#if this.userRole}}
-        <span class="avitar-badge {{this.userRole.badge}}" title="Your role in this municipality">
+        <span class="avitar-badge {{this.userRole.badge}} hide-mobile" title="Your role in this municipality">
           {{{lnr-icon "user"}}}
           <span class="avitar-ml-1">{{this.userRole.role}}</span>
         </span>
       {{/if}}
 
-      {{!-- Department Badge (if applicable) --}}
+      {{!-- Department Badge (desktop only) --}}
       {{#if this.userDepartment}}
-        <span class="avitar-badge avitar-badge--secondary avitar-ml-2" title="Your department">
+        <span class="avitar-badge avitar-badge--secondary avitar-ml-2 hide-mobile" title="Your department">
           {{{lnr-icon "briefcase"}}}
           <span class="avitar-ml-1">{{this.userDepartment}}</span>
         </span>
       {{/if}}
 
-      {{!-- Subscription Info --}}
+      {{!-- Subscription Info (desktop only) --}}
       {{#if this.municipality.subscriptionInfo}}
-        <span class="avitar-badge avitar-badge--{{this.municipality.subscriptionInfo.tier}} avitar-ml-2">
+        <span class="avitar-badge avitar-badge--{{this.municipality.subscriptionInfo.tier}} avitar-ml-2 hide-mobile">
           {{this.municipality.subscriptionInfo.tier}} Plan
         </span>
       {{/if}}
 
-      {{!-- Logout Button --}}
+      {{!-- User Name and Logout Button --}}
+      {{#if this.userName}}
+        <span class="avitar-text-sm avitar-ml-2 hide-mobile" style="color: white;">
+          {{this.userName}}
+        </span>
+      {{/if}}
       <button
         class="avitar-btn avitar-btn--danger avitar-btn--sm avitar-ml-2"
         {{on "click" this.logout}}
         type="button"
-        title="Logout"
+        title="Logout {{if this.userName this.userName}}"
       >
         {{lnr-icon "exit" class="avitar-mr-1"}}
         Logout
-      </button>
-    </div>
-
-    {{!-- Mobile User Actions (simplified for mobile) --}}
-    <div class="avitar-topbar__user show-mobile">
-      <button
-        class="avitar-btn avitar-btn--ghost avitar-btn--sm"
-        {{on "click" this.logout}}
-        type="button"
-        title="Logout"
-      >
-        {{lnr-icon "exit"}}
       </button>
     </div>
   </nav>
@@ -94,7 +88,7 @@
           <li class="avitar-topbar__nav-item {{if child.dropdown 'avitar-topbar__nav-item--dropdown'}}">
             {{#if child.component}}
               {{!-- Render component directly instead of link --}}
-              {{component child.component property=this.selectedProperty selectedYear=this.assessmentYear onYearChange=this.onAssessmentYearChange onAddToQueue=this.addSelectedToQueue onOpenPrint=this.openPrintModal}}
+              {{component child.component property=this.selectedProperty selectedYear=this.assessmentYear municipalityId=this.currentMunicipalityId onYearChange=this.onAssessmentYearChange onAddToQueue=this.addSelectedToQueue onOpenPrint=this.openPrintModal}}
             {{else if child.dropdown}}
               {{!-- Dropdown navigation item --}}
               <button
@@ -131,7 +125,7 @@
                 <i class="fas fa-{{child.icon}}"></i>
                 {{child.title}}
                 {{#if child.badge}}
-                  <span class="avitar-badge avitar-badge--warning">
+                  <span class="avitar-badge {{if child.badgeClass child.badgeClass 'avitar-badge--warning'}}">
                     {{child.badge}}
                   </span>
                 {{/if}}
@@ -151,7 +145,7 @@
                   {{child.title}}
                 {{/if}}
                 {{#if child.badge}}
-                  <span class="avitar-badge avitar-badge--warning">
+                  <span class="avitar-badge {{if child.badgeClass child.badgeClass 'avitar-badge--warning'}}">
                     {{child.badge}}
                   </span>
                 {{/if}}

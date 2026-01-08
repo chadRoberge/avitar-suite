@@ -4,16 +4,54 @@ const CurrentUse = require('../models/CurrentUse');
 const CurrentUseSettings = require('../models/CurrentUseSettings');
 
 // GET /api/municipalities/:municipalityId/current-use - Get all current use categories for a municipality
+// Supports year parameter for year-aware queries (inheritance pattern)
 router.get('/municipalities/:municipalityId/current-use', async (req, res) => {
   try {
     const { municipalityId } = req.params;
+    const requestedYear = parseInt(req.query.year) || new Date().getFullYear();
+
+    console.log(
+      `[CurrentUse] Finding categories for municipality ${municipalityId}, year <= ${requestedYear}`,
+    );
+
+    // Find the most recent effective year <= requested year
+    const latestCategory = await CurrentUse.findOne({
+      municipalityId,
+      effective_year: { $lte: requestedYear },
+      isActive: true,
+    })
+      .sort({ effective_year: -1 })
+      .select('effective_year');
+
+    if (!latestCategory) {
+      console.log(
+        `[CurrentUse] No categories found for year <= ${requestedYear}`,
+      );
+      return res.json({
+        currentUseCategories: [],
+        year: requestedYear,
+        isYearLocked: false,
+      });
+    }
+
+    const effectiveYear = latestCategory.effective_year;
+    console.log(`[CurrentUse] Found latest year: ${effectiveYear}`);
 
     const currentUseCategories = await CurrentUse.find({
       municipalityId,
+      effective_year: effectiveYear,
       isActive: true,
     }).sort({ code: 1 });
 
-    res.json({ currentUseCategories });
+    console.log(
+      `[CurrentUse] Returning ${currentUseCategories.length} categories`,
+    );
+
+    res.json({
+      currentUseCategories,
+      year: effectiveYear,
+      isYearLocked: effectiveYear < requestedYear, // Locked if viewing inherited year
+    });
   } catch (error) {
     console.error('Error fetching current use categories:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -21,10 +59,14 @@ router.get('/municipalities/:municipalityId/current-use', async (req, res) => {
 });
 
 // POST /api/municipalities/:municipalityId/current-use - Create a new current use category
+// Supports year query parameter or effective_year in body
 router.post('/municipalities/:municipalityId/current-use', async (req, res) => {
   try {
     const { municipalityId } = req.params;
-    const { code, description, displayText, minRate, maxRate } = req.body;
+    const { code, description, displayText, minRate, maxRate, effective_year } =
+      req.body;
+    const effectiveYear =
+      effective_year || parseInt(req.query.year) || new Date().getFullYear();
 
     // Validation
     if (
@@ -65,6 +107,7 @@ router.post('/municipalities/:municipalityId/current-use', async (req, res) => {
       displayText: displayText.trim(),
       minRate: parseFloat(minRate),
       maxRate: parseFloat(maxRate),
+      effective_year: effectiveYear,
     });
 
     const savedCurrentUse = await currentUse.save();

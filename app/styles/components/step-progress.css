@@ -146,7 +146,7 @@
 .avitar-step-progress--vertical {
   flex-direction: column;
   align-items: flex-start;
-  padding: 1.5rem;
+  padding: 0.75rem;
   box-shadow: none;
   border-radius: 0;
   margin-bottom: 0;
@@ -164,12 +164,13 @@
 
 .avitar-step-progress--vertical .avitar-step-progress__content {
   flex: 1;
-  margin-left: 1rem;
+  margin-left: -1rem;
   margin-top: 0.25rem;
 }
 
 .avitar-step-progress--vertical .avitar-step-progress__label {
   margin-top: 0;
+  margin-left: 1.5rem;
   text-align: left;
   font-size: 1rem;
 }
@@ -235,8 +236,18 @@
 }
 
 .avitar-step-progress__department--pending {
-  border-left: 3px solid var(--avitar-yellow);
-  background-color: var(--avitar-yellow-pale);
+  border-left: 3px solid #9ca3af;
+  background-color: #f9fafb;
+}
+
+.avitar-step-progress__department--revisions {
+  border-left: 3px solid #f59e0b;
+  background-color: #fffbeb;
+}
+
+.avitar-step-progress__department--rejected {
+  border-left: 3px solid #ef4444;
+  background-color: #fef2f2;
 }
 
 .avitar-step-progress__department-icon {
@@ -267,6 +278,16 @@
 .avitar-step-progress__department--pending
   .avitar-step-progress__department-icon {
   color: var(--avitar-yellow-dark);
+}
+
+.avitar-step-progress__department--revisions
+  .avitar-step-progress__department-icon {
+  color: #f59e0b;
+}
+
+.avitar-step-progress__department--rejected
+  .avitar-step-progress__department-icon {
+  color: #ef4444;
 }
 
 .avitar-step-progress__department-info {

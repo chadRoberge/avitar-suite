@@ -13,6 +13,10 @@ export default class BuildingPermitsDocumentViewerModalComponent extends Compone
   @tracked zoomLevel = 100; // Zoom level as percentage
   @tracked annotationPanelHovered = false;
 
+  get zoomScale() {
+    return this.zoomLevel / 100;
+  }
+
   get shouldLoadFile() {
     return this.args.isOpen && this.args.file;
   }

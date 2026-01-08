@@ -472,6 +472,37 @@ const municipalitySchema = new mongoose.Schema(
       ],
     },
 
+    // Assessing Module Settings
+    assessingSettings: {
+      // Hidden years are not visible to public users
+      // Staff/assessors can still see and work on hidden years
+      // Used during revaluation periods to prepare data before public release
+      hiddenYears: {
+        type: [Number],
+        default: [],
+        validate: {
+          validator: function (years) {
+            // Ensure all years are valid (between 2000 and 2099)
+            return years.every((year) => year >= 2000 && year <= 2099);
+          },
+          message: 'All hidden years must be between 2000 and 2099',
+        },
+      },
+      // Locked config years prevent changes to configuration tables
+      // Years are automatically locked when a new year is created from them
+      lockedConfigYears: {
+        type: [Number],
+        default: [],
+        validate: {
+          validator: function (years) {
+            // Ensure all years are valid (between 2000 and 2099)
+            return years.every((year) => year >= 2000 && year <= 2099);
+          },
+          message: 'All locked years must be between 2000 and 2099',
+        },
+      },
+    },
+
     // Cache invalidation tracking
     lastModified: {
       type: Date,
